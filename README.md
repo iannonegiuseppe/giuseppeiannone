@@ -84,6 +84,43 @@ back-reference query in the webhook handler or a dedicated "referenced by"
 index — not implemented yet; the type-wide tag is the correctness
 fallback until that's worth the complexity.
 
-Pages that fetch from Sanity must tag their `fetch` calls to match:
-``fetch(url, { next: { tags: [type, `${type}:${slug}`] } })``. Step 9 wires
-this up on the actual proof-of-pipeline pages.
+Pages that fetch from Sanity tag their `client.fetch` calls to match:
+``client.fetch(query, params, { next: { tags: [type, `${type}:${slug}`] } })``
+— see `src/app/[locale]/page.tsx`, `[pillarSlug]/page.tsx`, and
+`[pillarSlug]/[subtopicSlug]/page.tsx`.
+
+## Seeding demo content
+
+`scripts/seed.ts` (`npm run seed`) creates the minimal content needed to
+prove the Sanity → Next.js pipeline end to end: `siteSettings`, `homePage`
+(it/en), one pillar (`disturbi-d-ansia` / `anxiety-disorders`), one subtopic
+(`attacchi-di-panico` / `panic-attacks`), and 3 `faqItem`s — exercising
+every custom Portable Text block (H2/H3, key takeaways, FAQ block, related
+topics, an image with alt) in both locales.
+
+**The pillar/subtopic body copy is deliberately, obviously fake**
+(`[IT segnaposto — H2]`, lorem-ipsum-style filler, `[EN placeholder — H2]`,
+etc.) — never plausible clinical prose. This is a YMYL health site; real
+copy goes through the doctor's review workflow later, not through a seed
+script.
+
+Run it:
+
+```bash
+npm run seed
+```
+
+Before running, create a **temporary, write-scoped** Sanity API token
+(dashboard → API → Tokens → Add API token, "Editor" permission), set it as
+`SANITY_API_WRITE_TOKEN` in `.env.local`, then **delete the token again**
+once the script has finished — it's not meant to be a long-lived credential
+sitting in `.env.local`.
+
+The script is **idempotent**: every document uses a deterministic `_id`
+(`homePage-it`, `pillarPage-anxiety-en`, `faqItem-2-it`, etc.), created via
+`createOrReplace`, so re-running it is always safe and just re-applies the
+same content. It also links each it/en pair with its own
+`translation.metadata` document (matching what
+`@sanity/document-internationalization` expects) and uploads one shared
+placeholder image (looked up by filename first, so it's only uploaded
+once across runs).
