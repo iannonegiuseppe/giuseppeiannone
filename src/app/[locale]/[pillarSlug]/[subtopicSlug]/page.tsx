@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
+import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getSubtopicTrail } from "@/sanity/breadcrumbs";
 import { client } from "@/sanity/client";
+import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
   buildMedicalWebPageJsonLd,
@@ -20,6 +22,7 @@ import {
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { allSubtopicSlugsQuery, subtopicPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+import { TableOfContents } from "@/sanity/TableOfContents";
 
 interface SubtopicPageData {
   _id: string;
@@ -117,14 +120,19 @@ export default async function SubtopicPage({
     medicalEntityType: data.medicalEntityType,
   });
 
+  const headings = extractHeadings(data.body);
+  const headingIds = headingIdsByKey(headings);
+
   return (
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
       <JsonLdScript data={medicalWebPageJsonLd} />
+      <Breadcrumbs trail={trail} />
       <h1>{data.title}</h1>
+      <TableOfContents locale={locale} headings={headings} />
       <PortableText
         value={data.body as never}
-        components={getPortableTextComponents(locale)}
+        components={getPortableTextComponents(locale, headingIds)}
       />
     </main>
   );

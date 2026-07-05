@@ -25,8 +25,28 @@ function hrefFor(locale: string, doc: ReferencedDoc): string {
 // Minimal, unstyled renderers proving every custom block type in the
 // restricted Portable Text schema renders server-side. Styling comes in
 // a later stage.
-export function getPortableTextComponents(locale: string): PortableTextComponents {
+//
+// headingIds maps a block's _key to the anchor id computed by
+// extractHeadings (headings.ts) — the same map used to build the visible
+// TableOfContents, so a jump-link can never point at an id that doesn't
+// exist on the rendered h2/h3.
+export function getPortableTextComponents(
+  locale: string,
+  headingIds?: Map<string, string>,
+): PortableTextComponents {
   return {
+    block: {
+      h2: ({ children, value }) => (
+        <h2 id={value._key ? headingIds?.get(value._key) : undefined}>
+          {children}
+        </h2>
+      ),
+      h3: ({ children, value }) => (
+        <h3 id={value._key ? headingIds?.get(value._key) : undefined}>
+          {children}
+        </h3>
+      ),
+    },
     marks: {
       link: ({ value, children }) => {
         const href = (value?.href as string | undefined) ?? "#";

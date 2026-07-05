@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
+import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { client } from "@/sanity/client";
+import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
   buildFaqPageJsonLd,
@@ -18,6 +20,7 @@ import { pillarLocalizedPaths, pillarPath } from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { pillarPageQuery, pillarSlugsQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+import { TableOfContents } from "@/sanity/TableOfContents";
 
 interface PillarPageData {
   _id: string;
@@ -99,15 +102,20 @@ export default async function PillarPage({
   const faqPageJsonLd =
     faqEntries.length > 0 ? buildFaqPageJsonLd(faqEntries) : undefined;
 
+  const headings = extractHeadings(data.body);
+  const headingIds = headingIdsByKey(headings);
+
   return (
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
       <JsonLdScript data={medicalWebPageJsonLd} />
       {faqPageJsonLd ? <JsonLdScript data={faqPageJsonLd} /> : null}
+      <Breadcrumbs trail={trail} />
       <h1>{data.title}</h1>
+      <TableOfContents locale={locale} headings={headings} />
       <PortableText
         value={data.body as never}
-        components={getPortableTextComponents(locale)}
+        components={getPortableTextComponents(locale, headingIds)}
       />
     </main>
   );

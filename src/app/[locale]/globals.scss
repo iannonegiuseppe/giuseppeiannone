@@ -43,6 +43,15 @@ a {
   text-decoration: none;
 }
 
+// Table of Contents jump-links (Stage 2 Step 6): smooth scrolling is a
+// pure-CSS enhancement, no client JS — and only applied when the visitor
+// hasn't requested reduced motion.
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 // --- Base typography ---------------------------------------------------
 body {
   display: flex;
