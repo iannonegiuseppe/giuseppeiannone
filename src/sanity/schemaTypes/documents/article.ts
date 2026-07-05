@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { SlugLockedAfterPublish } from "../../components/SlugLockedAfterPublish";
 import { languageField } from "../lib/languageField";
 
 // No author reference: there's exactly one author (the singleton), so the
@@ -20,6 +21,7 @@ export const article = defineType({
       type: "slug",
       options: { source: "title", maxLength: 96 },
       validation: (Rule) => Rule.required(),
+      components: { input: SlugLockedAfterPublish },
     }),
     defineField({
       name: "publishedAt",

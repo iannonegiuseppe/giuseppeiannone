@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { SlugLockedAfterPublish } from "../../components/SlugLockedAfterPublish";
 import { languageField } from "../lib/languageField";
 
 export const locationPage = defineType({
@@ -18,6 +19,7 @@ export const locationPage = defineType({
       type: "slug",
       options: { source: "title", maxLength: 96 },
       validation: (Rule) => Rule.required(),
+      components: { input: SlugLockedAfterPublish },
     }),
     defineField({
       name: "address",
