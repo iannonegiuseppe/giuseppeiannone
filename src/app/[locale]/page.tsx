@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/client";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -15,10 +15,10 @@ interface HomePageData {
 }
 
 function getHomePage(locale: string) {
-  return client.fetch<HomePageData | null>(
+  return sanityFetch<HomePageData | null>(
     homePageQuery,
     { locale },
-    { next: { tags: ["homePage"] } },
+    ["homePage"],
   );
 }
 
@@ -33,7 +33,7 @@ export async function generateMetadata({
     getSiteSettings(locale),
   ]);
 
-  return buildMetadata({
+  return await buildMetadata({
     locale: locale as "it" | "en",
     title: data?.title ?? "",
     seo: data?.seo,

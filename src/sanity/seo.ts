@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { Image } from "sanity";
-import { client } from "./client";
+import { isDraftModeEnabled, sanityFetch } from "./client";
 import { urlFor } from "./image";
 import { getSiteUrl, resolveRobots } from "./metadata";
 import { siteSettingsQuery } from "./queries";
@@ -32,10 +32,10 @@ interface SiteSettingsData {
 }
 
 export function getSiteSettings(locale: string) {
-  return client.fetch<SiteSettingsData | null>(
+  return sanityFetch<SiteSettingsData | null>(
     siteSettingsQuery,
     { locale },
-    { next: { tags: ["siteSettings"] } },
+    ["siteSettings"],
   );
 }
 
@@ -58,15 +58,19 @@ interface BuildMetadataArgs {
   localizedPaths: Partial<Record<Locale, string>>;
 }
 
-export function buildMetadata({
+export async function buildMetadata({
   locale,
   title,
   seo,
   siteName,
   siteSeo,
   localizedPaths,
-}: BuildMetadataArgs): Metadata {
+}: BuildMetadataArgs): Promise<Metadata> {
   const siteUrl = getSiteUrl();
+  // Draft-mode responses must never be indexable, on top of never being
+  // cached (see sanityFetch) — this holds regardless of the document's
+  // own seo.noIndex value.
+  const isDraft = await isDraftModeEnabled();
 
   // Fallback title template ("{page} | {site}") only applies when the
   // document doesn't have its own seo.metaTitle — editors who write a
@@ -99,7 +103,7 @@ export function buildMetadata({
       canonical,
       languages,
     },
-    robots: resolveRobots(seo?.noIndex),
+    robots: resolveRobots(seo?.noIndex || isDraft),
     openGraph: {
       title: finalTitle,
       description,

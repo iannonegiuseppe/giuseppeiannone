@@ -8,7 +8,9 @@ import {
 import { visionTool } from "@sanity/vision";
 import type { DocumentActionComponent } from "sanity";
 import { defineConfig } from "sanity";
+import { presentationTool } from "sanity/presentation";
 import { structureTool } from "sanity/structure";
+import { presentationLocations } from "./src/sanity/presentationLocations";
 import { schemaTypes } from "./src/sanity/schemaTypes";
 import { PROTECTED_TYPES, structure, TRANSLATABLE_TYPES } from "./src/sanity/structure";
 
@@ -54,6 +56,21 @@ export default defineConfig({
         { id: "en", title: "English" },
       ],
       schemaTypes: [...TRANSLATABLE_TYPES],
+    }),
+    presentationTool({
+      // previewUrl.initial is intentionally omitted: it defaults to
+      // location.origin, which is already correct for localhost, every
+      // Vercel preview deployment, and production alike, without any
+      // manual env-var branching (VERCEL_URL isn't NEXT_PUBLIC_-prefixed,
+      // so it wouldn't even be available in this client-side bundle).
+      previewUrl: {
+        previewMode: {
+          enable: "/api/draft-mode/enable",
+        },
+      },
+      resolve: {
+        locations: presentationLocations,
+      },
     }),
   ],
   document: {

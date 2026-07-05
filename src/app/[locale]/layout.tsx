@@ -4,7 +4,7 @@ import { Fraunces, Work_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
-import { client } from "@/sanity/client";
+import { sanityFetch } from "@/sanity/client";
 import {
   buildMedicalBusinessJsonLd,
   buildPersonJsonLd,
@@ -39,10 +39,10 @@ export function generateStaticParams() {
 }
 
 function getLocations(locale: string) {
-  return client.fetch<{ title: string; address?: string }[]>(
+  return sanityFetch<{ title: string; address?: string }[]>(
     locationsQuery,
     { locale },
-    { next: { tags: ["locationPage"] } },
+    ["locationPage"],
   );
 }
 

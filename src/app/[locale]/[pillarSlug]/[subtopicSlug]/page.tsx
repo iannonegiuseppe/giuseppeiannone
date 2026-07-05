@@ -4,7 +4,7 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getSubtopicTrail } from "@/sanity/breadcrumbs";
-import { client } from "@/sanity/client";
+import { client, sanityFetch } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -35,10 +35,10 @@ interface SubtopicPageData {
 }
 
 function getSubtopicPage(locale: string, pillarSlug: string, slug: string) {
-  return client.fetch<SubtopicPageData | null>(
+  return sanityFetch<SubtopicPageData | null>(
     subtopicPageQuery,
     { locale, pillarSlug, slug },
-    { next: { tags: ["subtopicPage", `subtopicPage:${slug}`] } },
+    ["subtopicPage", `subtopicPage:${slug}`],
   );
 }
 
@@ -75,7 +75,7 @@ export async function generateMetadata({
     getSiteSettings(locale),
   ]);
 
-  return buildMetadata({
+  return await buildMetadata({
     locale: locale as "it" | "en",
     title: data?.title ?? "",
     seo: data?.seo,

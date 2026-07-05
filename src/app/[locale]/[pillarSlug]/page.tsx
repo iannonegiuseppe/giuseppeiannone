@@ -4,7 +4,7 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
-import { client } from "@/sanity/client";
+import { client, sanityFetch } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -32,11 +32,10 @@ interface PillarPageData {
 }
 
 function getPillarPage(locale: string, slug: string) {
-  return client.fetch<PillarPageData | null>(
-    pillarPageQuery,
-    { locale, slug },
-    { next: { tags: ["pillarPage", `pillarPage:${slug}`] } },
-  );
+  return sanityFetch<PillarPageData | null>(pillarPageQuery, { locale, slug }, [
+    "pillarPage",
+    `pillarPage:${slug}`,
+  ]);
 }
 
 export async function generateStaticParams({
@@ -62,7 +61,7 @@ export async function generateMetadata({
     getSiteSettings(locale),
   ]);
 
-  return buildMetadata({
+  return await buildMetadata({
     locale: locale as "it" | "en",
     title: data?.title ?? "",
     seo: data?.seo,
