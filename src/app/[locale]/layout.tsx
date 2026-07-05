@@ -4,7 +4,15 @@ import { Fraunces, Work_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
-import { resolveRobots } from "@/sanity/metadata";
+import { client } from "@/sanity/client";
+import {
+  buildMedicalBusinessJsonLd,
+  buildPersonJsonLd,
+} from "@/sanity/jsonLd";
+import { JsonLdScript } from "@/sanity/JsonLdScript";
+import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
+import { locationsQuery } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/seo";
 import "./globals.scss";
 
 const fraunces = Fraunces({
@@ -30,6 +38,14 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+function getLocations(locale: string) {
+  return client.fetch<{ title: string; address?: string }[]>(
+    locationsQuery,
+    { locale },
+    { next: { tags: ["locationPage"] } },
+  );
+}
+
 export default async function LocaleLayout({
   children,
   params,
@@ -45,6 +61,28 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
+  const [siteSettings, locations] = await Promise.all([
+    getSiteSettings(locale),
+    getLocations(locale),
+  ]);
+
+  const siteUrl = getSiteUrl();
+  const personJsonLd = siteSettings?.author?.name
+    ? buildPersonJsonLd({
+        author: siteSettings.author,
+        siteUrl,
+        socialLinks: siteSettings.socialLinks,
+      })
+    : undefined;
+  const medicalBusinessJsonLd =
+    siteSettings?.title && locations.length > 0
+      ? buildMedicalBusinessJsonLd({
+          name: siteSettings.title,
+          siteUrl,
+          locations,
+        })
+      : undefined;
+
   return (
     <html
       lang={locale}
@@ -52,6 +90,10 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {personJsonLd ? <JsonLdScript data={personJsonLd} /> : null}
+        {medicalBusinessJsonLd ? (
+          <JsonLdScript data={medicalBusinessJsonLd} />
+        ) : null}
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>

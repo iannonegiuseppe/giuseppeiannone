@@ -44,7 +44,19 @@ const alternatesProjection = `
 export const siteSettingsQuery = defineQuery(`
   *[_type == "siteSettings" && language == $locale][0]{
     title,
-    seo
+    seo,
+    author,
+    socialLinks
+  }
+`);
+
+// locationPage is protected to exactly two (Milan, Monza; see
+// structure.ts), so this always returns at most 2 documents for the
+// requested locale.
+export const locationsQuery = defineQuery(`
+  *[_type == "locationPage" && language == $locale]{
+    title,
+    address
   }
 `);
 
@@ -62,6 +74,7 @@ export const pillarPageQuery = defineQuery(`
     title,
     ${bodyProjection},
     seo,
+    medicalEntityType,
     ${alternatesProjection}
   }
 `);
@@ -79,8 +92,10 @@ export const subtopicPageQuery = defineQuery(`
   ][0]{
     _id,
     title,
+    "parentPillarTitle": parentPillar->title,
     ${bodyProjection},
     seo,
+    medicalEntityType,
     ${alternatesProjection}
   }
 `);

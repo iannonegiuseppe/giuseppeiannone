@@ -12,9 +12,23 @@ export interface SeoFields {
   noIndex?: boolean;
 }
 
+export interface AuthorFields {
+  name: string;
+  credentials?: string;
+  registrationNumber?: string;
+}
+
+export interface SocialLinks {
+  instagram?: string;
+  linkedin?: string;
+  facebook?: string;
+}
+
 interface SiteSettingsData {
   title: string;
   seo?: SeoFields;
+  author?: AuthorFields;
+  socialLinks?: SocialLinks;
 }
 
 export function getSiteSettings(locale: string) {

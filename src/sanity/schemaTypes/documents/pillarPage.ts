@@ -1,6 +1,7 @@
 import { defineField, defineType } from "sanity";
 import { SlugLockedAfterPublish } from "../../components/SlugLockedAfterPublish";
 import { languageField } from "../lib/languageField";
+import { medicalEntityTypeField } from "../lib/medicalEntityTypeField";
 
 export const pillarPage = defineType({
   name: "pillarPage",
@@ -31,6 +32,7 @@ export const pillarPage = defineType({
       title: "SEO",
       type: "seo",
     }),
+    medicalEntityTypeField(),
     languageField(),
   ],
 });

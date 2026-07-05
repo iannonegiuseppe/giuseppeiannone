@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
+import { getSubtopicTrail } from "@/sanity/breadcrumbs";
 import { client } from "@/sanity/client";
+import {
+  buildBreadcrumbListJsonLd,
+  buildMedicalWebPageJsonLd,
+  type MedicalEntityType,
+} from "@/sanity/jsonLd";
+import { JsonLdScript } from "@/sanity/JsonLdScript";
+import { getSiteUrl } from "@/sanity/metadata";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { allSubtopicSlugsQuery, subtopicPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -16,8 +24,10 @@ interface AlternateEntry {
 interface SubtopicPageData {
   _id: string;
   title: string;
+  parentPillarTitle?: string;
   body: unknown;
   seo?: SeoFields;
+  medicalEntityType?: MedicalEntityType;
   alternates?: AlternateEntry[];
 }
 
@@ -42,6 +52,13 @@ function buildLocalizedPaths(alternates: AlternateEntry[] | undefined) {
   }
 
   return paths;
+}
+
+function currentParentSlug(
+  alternates: AlternateEntry[] | undefined,
+  locale: string,
+) {
+  return alternates?.find((alt) => alt.language === locale)?.parentSlug;
 }
 
 export async function generateStaticParams({
@@ -91,8 +108,36 @@ export default async function SubtopicPage({
   const data = await getSubtopicPage(locale, pillarSlug, subtopicSlug);
   if (!data) notFound();
 
+  const typedLocale = locale as "it" | "en";
+  const siteUrl = getSiteUrl();
+  const localizedPaths = buildLocalizedPaths(data.alternates);
+  const path =
+    localizedPaths[typedLocale] ?? `/${pillarSlug}/${subtopicSlug}`;
+  const pageUrl = `${siteUrl}${path}`;
+  const parentSlug =
+    currentParentSlug(data.alternates, locale) ?? pillarSlug;
+  const pillarPath =
+    typedLocale === "it" ? `/${parentSlug}` : `/en/${parentSlug}`;
+
+  const trail = await getSubtopicTrail(
+    typedLocale,
+    data.parentPillarTitle ?? "",
+    pillarPath,
+    data.title,
+    path,
+  );
+  const breadcrumbJsonLd = buildBreadcrumbListJsonLd(trail, siteUrl);
+  const medicalWebPageJsonLd = buildMedicalWebPageJsonLd({
+    url: pageUrl,
+    name: data.title,
+    description: data.seo?.metaDescription,
+    medicalEntityType: data.medicalEntityType,
+  });
+
   return (
     <main>
+      <JsonLdScript data={breadcrumbJsonLd} />
+      <JsonLdScript data={medicalWebPageJsonLd} />
       <h1>{data.title}</h1>
       <PortableText
         value={data.body as never}

@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
+import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { client } from "@/sanity/client";
+import {
+  buildBreadcrumbListJsonLd,
+  buildFaqPageJsonLd,
+  buildMedicalWebPageJsonLd,
+  extractFaqEntries,
+  type MedicalEntityType,
+} from "@/sanity/jsonLd";
+import { JsonLdScript } from "@/sanity/JsonLdScript";
+import { getSiteUrl } from "@/sanity/metadata";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { pillarPageQuery, pillarSlugsQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -18,6 +28,7 @@ interface PillarPageData {
   title: string;
   body: unknown;
   seo?: SeoFields;
+  medicalEntityType?: MedicalEntityType;
   alternates?: AlternateEntry[];
 }
 
@@ -85,8 +96,28 @@ export default async function PillarPage({
   const data = await getPillarPage(locale, pillarSlug);
   if (!data) notFound();
 
+  const typedLocale = locale as "it" | "en";
+  const siteUrl = getSiteUrl();
+  const path = buildLocalizedPaths(data.alternates)[typedLocale] ?? `/${pillarSlug}`;
+  const pageUrl = `${siteUrl}${path}`;
+
+  const trail = await getPillarTrail(typedLocale, data.title, path);
+  const breadcrumbJsonLd = buildBreadcrumbListJsonLd(trail, siteUrl);
+  const medicalWebPageJsonLd = buildMedicalWebPageJsonLd({
+    url: pageUrl,
+    name: data.title,
+    description: data.seo?.metaDescription,
+    medicalEntityType: data.medicalEntityType,
+  });
+  const faqEntries = extractFaqEntries(data.body);
+  const faqPageJsonLd =
+    faqEntries.length > 0 ? buildFaqPageJsonLd(faqEntries) : undefined;
+
   return (
     <main>
+      <JsonLdScript data={breadcrumbJsonLd} />
+      <JsonLdScript data={medicalWebPageJsonLd} />
+      {faqPageJsonLd ? <JsonLdScript data={faqPageJsonLd} /> : null}
       <h1>{data.title}</h1>
       <PortableText
         value={data.body as never}

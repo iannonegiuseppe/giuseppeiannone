@@ -81,6 +81,18 @@ export const siteSettings = defineType({
         }),
       ],
     }),
+    defineField({
+      name: "socialLinks",
+      title: "Social profiles",
+      description:
+        "Used for JSON-LD sameAs (Stage 2 Step 4). Leave blank until real profiles exist — omitted entirely from structured data when empty.",
+      type: "object",
+      fields: [
+        defineField({ name: "instagram", title: "Instagram URL", type: "url" }),
+        defineField({ name: "linkedin", title: "LinkedIn URL", type: "url" }),
+        defineField({ name: "facebook", title: "Facebook URL", type: "url" }),
+      ],
+    }),
     languageField(),
   ],
 });
