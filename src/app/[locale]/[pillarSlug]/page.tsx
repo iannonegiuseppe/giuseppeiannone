@@ -3,14 +3,22 @@ import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { client } from "@/sanity/client";
-import { resolveRobots } from "@/sanity/metadata";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { pillarPageQuery, pillarSlugsQuery } from "@/sanity/queries";
+import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+
+interface AlternateEntry {
+  language: string;
+  slug?: string;
+  parentSlug?: string | null;
+}
 
 interface PillarPageData {
+  _id: string;
   title: string;
   body: unknown;
-  seo?: { metaTitle?: string; metaDescription?: string; noIndex?: boolean };
+  seo?: SeoFields;
+  alternates?: AlternateEntry[];
 }
 
 function getPillarPage(locale: string, slug: string) {
@@ -19,6 +27,18 @@ function getPillarPage(locale: string, slug: string) {
     { locale, slug },
     { next: { tags: ["pillarPage", `pillarPage:${slug}`] } },
   );
+}
+
+function buildLocalizedPaths(alternates: AlternateEntry[] | undefined) {
+  const paths: Partial<Record<"it" | "en", string>> = {};
+
+  for (const alt of alternates ?? []) {
+    if (!alt.slug || (alt.language !== "it" && alt.language !== "en")) continue;
+    paths[alt.language] =
+      alt.language === "it" ? `/${alt.slug}` : `/en/${alt.slug}`;
+  }
+
+  return paths;
 }
 
 export async function generateStaticParams({
@@ -39,13 +59,19 @@ export async function generateMetadata({
   params: Promise<{ locale: string; pillarSlug: string }>;
 }): Promise<Metadata> {
   const { locale, pillarSlug } = await params;
-  const data = await getPillarPage(locale, pillarSlug);
+  const [data, siteSettings] = await Promise.all([
+    getPillarPage(locale, pillarSlug),
+    getSiteSettings(locale),
+  ]);
 
-  return {
-    title: data?.seo?.metaTitle ?? data?.title,
-    description: data?.seo?.metaDescription,
-    robots: resolveRobots(data?.seo?.noIndex),
-  };
+  return buildMetadata({
+    locale: locale as "it" | "en",
+    title: data?.title ?? "",
+    seo: data?.seo,
+    siteName: siteSettings?.title ?? "",
+    siteSeo: siteSettings?.seo,
+    localizedPaths: buildLocalizedPaths(data?.alternates),
+  });
 }
 
 export default async function PillarPage({

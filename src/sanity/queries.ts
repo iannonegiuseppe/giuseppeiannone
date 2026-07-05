@@ -29,6 +29,25 @@ const bodyProjection = `
   }
 `;
 
+// Resolves this document's it/en siblings via its translation.metadata
+// document (^ refers to the enclosing document from within the subquery),
+// so pages can build reciprocal hreflang links without a second
+// round-trip. parentSlug is only meaningful for subtopicPage siblings.
+const alternatesProjection = `
+  "alternates": *[_type == "translation.metadata" && references(^._id)][0].translations[]{
+    language,
+    "slug": value->slug.current,
+    "parentSlug": value->parentPillar->slug.current
+  }
+`;
+
+export const siteSettingsQuery = defineQuery(`
+  *[_type == "siteSettings" && language == $locale][0]{
+    title,
+    seo
+  }
+`);
+
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,
@@ -39,9 +58,11 @@ export const homePageQuery = defineQuery(`
 
 export const pillarPageQuery = defineQuery(`
   *[_type == "pillarPage" && language == $locale && slug.current == $slug][0]{
+    _id,
     title,
     ${bodyProjection},
-    seo
+    seo,
+    ${alternatesProjection}
   }
 `);
 
@@ -56,9 +77,11 @@ export const subtopicPageQuery = defineQuery(`
     slug.current == $slug &&
     parentPillar->slug.current == $pillarSlug
   ][0]{
+    _id,
     title,
     ${bodyProjection},
-    seo
+    seo,
+    ${alternatesProjection}
   }
 `);
 

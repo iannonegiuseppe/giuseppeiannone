@@ -3,15 +3,15 @@ import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { client } from "@/sanity/client";
-import { resolveRobots } from "@/sanity/metadata";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { homePageQuery } from "@/sanity/queries";
+import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import styles from "./page.module.scss";
 
 interface HomePageData {
   title: string;
   body: unknown;
-  seo?: { metaTitle?: string; metaDescription?: string; noIndex?: boolean };
+  seo?: SeoFields;
 }
 
 function getHomePage(locale: string) {
@@ -28,13 +28,19 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const data = await getHomePage(locale);
+  const [data, siteSettings] = await Promise.all([
+    getHomePage(locale),
+    getSiteSettings(locale),
+  ]);
 
-  return {
-    title: data?.seo?.metaTitle ?? data?.title,
-    description: data?.seo?.metaDescription,
-    robots: resolveRobots(data?.seo?.noIndex),
-  };
+  return buildMetadata({
+    locale: locale as "it" | "en",
+    title: data?.title ?? "",
+    seo: data?.seo,
+    siteName: siteSettings?.title ?? "",
+    siteSeo: siteSettings?.seo,
+    localizedPaths: { it: "/", en: "/en" },
+  });
 }
 
 export default async function Home({
