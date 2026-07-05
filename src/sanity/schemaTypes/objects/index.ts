@@ -1,5 +1,6 @@
 import { conditionCard } from "./conditionCard";
 import { ctaBlock } from "./ctaBlock";
+import { faqAnswer } from "./faqAnswer";
 import { faqBlock } from "./faqBlock";
 import { keyTakeaways } from "./keyTakeaways";
 import { portableText } from "./portableText";
@@ -16,4 +17,5 @@ export const objectTypes = [
   conditionCard,
   treatmentCard,
   portableText,
+  faqAnswer,
 ];

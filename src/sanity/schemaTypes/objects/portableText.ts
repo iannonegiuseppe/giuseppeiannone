@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { linkAnnotation } from "./linkAnnotation";
 
 // Restricted rich text: H2/H3 only (H1 always comes from the document
 // title), paragraphs, bold/italic, links, lists, blockquote, images with
@@ -27,37 +28,7 @@ export const portableText = defineType({
           { title: "Bold", value: "strong" },
           { title: "Italic", value: "em" },
         ],
-        annotations: [
-          defineField({
-            name: "link",
-            title: "Link",
-            type: "object",
-            fields: [
-              defineField({
-                name: "href",
-                title: "URL",
-                type: "url",
-                validation: (Rule) =>
-                  Rule.required().uri({
-                    scheme: ["http", "https", "mailto", "tel"],
-                    allowRelative: true,
-                  }),
-              }),
-              defineField({
-                name: "nofollow",
-                title: 'Add rel="nofollow"',
-                description:
-                  "For sponsored or untrusted external links. Has no effect on internal (relative) links.",
-                type: "boolean",
-                initialValue: false,
-              }),
-            ],
-          }),
-          // Rendering note (for the future Portable Text serializer, not
-          // stored here): external links (absolute http/https href) should
-          // get rel="noopener" automatically; append "nofollow" only when
-          // this field is set. Internal (relative) links get no rel.
-        ],
+        annotations: [linkAnnotation()],
       },
     }),
     defineArrayMember({
