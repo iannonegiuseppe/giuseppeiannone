@@ -1,0 +1,6 @@
+{
+  "HomePage": {
+    "title": "Styling foundation wired up",
+    "description": "This placeholder proves the SCSS Modules + design-token pipeline and i18n routing work. It will be replaced by real pages once content and Sanity are wired in."
+  }
+}
