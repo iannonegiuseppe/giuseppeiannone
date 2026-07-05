@@ -6,19 +6,87 @@ decisions, and [CLAUDE.md](./CLAUDE.md) for working conventions.
 
 ## Getting started
 
+Prerequisites: Node ≥24.14.0 (see `.nvmrc`), npm, and a Sanity project you
+have API access to.
+
 ```bash
 npm install
+cp .env.example .env.local   # then fill in real values, see below
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) for the site, or
-[http://localhost:3000/studio](http://localhost:3000/studio) for the Sanity
-Studio. Copy `.env.example` to `.env.local` and fill in real values first
-(see that file for what each variable is for).
+Open [http://localhost:3000](http://localhost:3000) for the site (Italian,
+default/unprefixed), [http://localhost:3000/en](http://localhost:3000/en)
+for English, or [http://localhost:3000/studio](http://localhost:3000/studio)
+for the Sanity Studio.
 
-Full setup docs, environment variable reference, and a manual verification
-checklist land in Step 10 of the build — this README is a work in progress
-until then.
+## Environment variables
+
+All variables are declared in `.env.example`; copy it to `.env.local` and
+fill in real values there (`.env.local` is gitignored).
+
+| Variable | Required for | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Everything | Public — exposed to the browser (Studio + client reads). |
+| `NEXT_PUBLIC_SANITY_DATASET` | Everything | Defaults to `production`. Public, same reason as above. |
+| `SANITY_API_READ_TOKEN` | Server-side reads | Server-only. Used by `src/sanity/client.ts` for authenticated/draft reads. |
+| `SANITY_REVALIDATE_SECRET` | The revalidation webhook | Must match the secret configured on the Sanity webhook — see below. |
+| `NEXT_PUBLIC_ENABLE_INDEXING` | Controlling search visibility | Defaults to unset (= hidden). Set to `"true"` only when ready to let the site be indexed — see `src/app/robots.ts` and `src/sanity/metadata.ts`. |
+| `SANITY_API_WRITE_TOKEN` | `npm run seed` only | **Temporary** — see [Temporary tokens](#temporary-tokens) below. Not needed for normal dev/build. |
+
+## Available scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server (Turbopack) at `localhost:3000`. |
+| `npm run build` | Production build. Also runs the TypeScript check. |
+| `npm run start` | Serve the production build (run `build` first). |
+| `npm run lint` | ESLint. |
+| `npm run seed` | Seed demo content into Sanity — see [Seeding demo content](#seeding-demo-content). |
+
+## Project structure
+
+```text
+sanity.config.ts, sanity.cli.ts   Sanity Studio config (root, so the CLI finds them)
+scripts/seed.ts                   Idempotent demo-content seed script
+
+src/
+  app/
+    [locale]/                     Localized site (it unprefixed, en under /en)
+      layout.tsx                  Root layout for the site: <html lang>, fonts,
+                                   NextIntlClientProvider, generateStaticParams,
+                                   site-wide metadata/robots default
+      page.tsx                    Homepage — fetches Sanity's homePage doc
+      [pillarSlug]/page.tsx       Pillar (topic hub) page
+      [pillarSlug]/[subtopicSlug]/page.tsx   Subtopic page
+    studio/                       Embedded Sanity Studio at /studio — its own
+                                   root layout (outside next-intl entirely)
+    api/revalidate/route.ts       Sanity webhook handler (tag-based ISR)
+    robots.ts                     robots.txt, gated by NEXT_PUBLIC_ENABLE_INDEXING
+  proxy.ts                        next-intl locale routing (Next.js 16 renamed
+                                   the "middleware" file convention to "proxy")
+  i18n/                           next-intl routing/navigation/request config
+  styles/                         _tokens.scss, _mixins.scss (design-token layer)
+  sanity/
+    client.ts                     Typed read client (useCdn: false)
+    image.ts                      Sanity image URL builder
+    queries.ts                    GROQ queries (with the shared body projection
+                                   that expands reference-bearing custom blocks)
+    portableTextComponents.tsx    Server-side renderers for every custom block
+    metadata.ts                   robots.index resolution (site toggle + per-doc noIndex)
+    structure.ts                  Custom desk structure + singleton/locationPage
+                                   protection sets (SINGLETON_TYPES, PROTECTED_TYPES,
+                                   TRANSLATABLE_TYPES)
+    components/
+      SlugLockedAfterPublish.tsx  Custom slug input: read-only once published
+    schemaTypes/
+      documents/                  One file per document type
+      objects/                    Reusable objects + the restricted Portable Text schema
+      lib/                        Shared field helpers (e.g. languageField)
+
+messages/it.json, messages/en.json   next-intl UI-chrome strings (currently
+                                      empty — all page content lives in Sanity)
+```
 
 ## Sanity webhook (content revalidation)
 
@@ -110,11 +178,7 @@ Run it:
 npm run seed
 ```
 
-Before running, create a **temporary, write-scoped** Sanity API token
-(dashboard → API → Tokens → Add API token, "Editor" permission), set it as
-`SANITY_API_WRITE_TOKEN` in `.env.local`, then **delete the token again**
-once the script has finished — it's not meant to be a long-lived credential
-sitting in `.env.local`.
+This requires `SANITY_API_WRITE_TOKEN` — see [Temporary tokens](#temporary-tokens).
 
 The script is **idempotent**: every document uses a deterministic `_id`
 (`homePage-it`, `pillarPage-anxiety-en`, `faqItem-2-it`, etc.), created via
@@ -124,3 +188,65 @@ same content. It also links each it/en pair with its own
 `@sanity/document-internationalization` expects) and uploads one shared
 placeholder image (looked up by filename first, so it's only uploaded
 once across runs).
+
+## Temporary tokens
+
+`npm run seed` needs a Sanity API token with write access
+(`SANITY_API_WRITE_TOKEN`) — the normal `SANITY_API_READ_TOKEN` used by the
+running site is deliberately read-only and must stay that way.
+
+Every time you need to (re-)run the seed script:
+
+1. Sanity dashboard → project → **API → Tokens → Add API token**.
+2. Name it something identifiable (e.g. `seed-script-temp`), permission
+   **Editor**.
+3. Paste it into `.env.local` as `SANITY_API_WRITE_TOKEN`.
+4. Run `npm run seed`.
+5. **Delete the token** from the Sanity dashboard, and clear the value from
+   `.env.local`.
+
+Don't leave a write-capable token sitting in `.env.local` (or anywhere else)
+between runs — create it, use it, revoke it, every time. This applies to
+any future one-off script that needs write access too, not just this one.
+
+## For the content editor
+
+This section is intentionally short — it'll grow into full handover
+material once real page design/content lands. For now:
+
+- **Log in** at `/studio` (e.g. `https://<the-live-domain>/studio`) with the
+  account the developer invited you with.
+- **Where things live**: the left-hand menu is grouped into **Pages**,
+  **Knowledge Base**, **Blog**, **FAQ**, and **Settings**. Site-wide pages
+  (Home, About, Method, Pricing, Contact) and Settings are single fixed
+  documents — you edit them directly, there's no "create a new one."
+- **Italian first, then English**: create and publish the Italian version
+  of a page first. Once published, open its **Translations** menu (in the
+  document toolbar) to create the English version — English is only
+  reachable that way, not from the main "+ Create" button, so an Italian
+  and English page can never accidentally end up unpaired.
+- **Why the URL (slug) field locks**: once a page has been published, its
+  slug becomes read-only. This is deliberate — changing a published page's
+  URL breaks links and search rankings. If a live page's URL genuinely
+  needs to change, ask the developer.
+
+## Stage 1 (foundation) verification checklist
+
+What "done" means for this stage — see [SPEC.md](./SPEC.md) for the full
+brief. Re-run this after any change to the foundation layer.
+
+- [ ] `npm run dev` starts cleanly, no errors in the terminal.
+- [ ] `/` resolves (Italian, unprefixed) and `/en` resolves (English,
+      prefixed); each shows its own title/body and a `noindex` robots tag
+      while `NEXT_PUBLIC_ENABLE_INDEXING` is unset.
+- [ ] `/studio` opens, shows the five desk structure groups (Pages,
+      Knowledge Base, Blog, FAQ, Settings), and the guardrails hold:
+      singletons and Locations have no Delete/Duplicate and don't appear in
+      "+ Create"; translatable types offer only Italiano/English creation
+      templates (no bare, language-less option); a published document's
+      slug is locked, a fresh draft's isn't.
+- [ ] Editing and publishing a demo document, then firing the Sanity
+      webhook, revalidates the corresponding page (content changes without
+      a rebuild).
+- [ ] `npm run build` succeeds; `npx tsc --noEmit`, `npm run lint`, and
+      `npx sanity schemas validate` are all clean.
