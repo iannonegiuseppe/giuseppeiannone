@@ -4,5 +4,16 @@
   },
   "TableOfContents": {
     "label": "Indice"
+  },
+  "NotFound": {
+    "title": "Pagina non trovata",
+    "description": "La pagina che stai cercando non esiste o è stata spostata.",
+    "backHome": "Torna alla home"
+  },
+  "ErrorPage": {
+    "title": "Qualcosa è andato storto",
+    "description": "Si è verificato un errore imprevisto. Riprova o torna alla home.",
+    "retry": "Riprova",
+    "backHome": "Torna alla home"
   }
 }

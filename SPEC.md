@@ -103,3 +103,19 @@ those pages are eventually built.
   assumed to work — `Article` JSON-LD (author, dates) and `MedicalBusiness` JSON-LD
   reuse from `src/sanity/jsonLd.ts`, sitemap entries from the sitemap generator
   (Stage 2 Step 5), and the full Metadata API layer (`src/sanity/seo.ts`) per page.
+
+## Known items
+
+Confirmed real, low-severity, not fixed yet — tracked here so they don't get
+rediscovered from scratch later.
+
+- **Empty-title `<head>` on 404s from `[pillarSlug]`/`[subtopicSlug]`** (found
+  verifying Stage 2 Step 8): `generateMetadata` and the page component each fetch
+  the document independently. When the slug doesn't resolve, `generateMetadata`
+  still runs and builds a title from `data?.title ?? ""`, producing an empty
+  `<title> | Giuseppe Iannone – ...</title>` tag before the page component's own
+  `notFound()` call swaps in `not-found.tsx`'s content. `robots` still correctly
+  resolves to `noindex` either way, so this is cosmetic, not an indexing bug.
+  Revisit when Stage 3 builds out the full route set — likely fix: resolve the
+  document once (shared between `generateMetadata` and the page component) and
+  make that resolution `notFound()`-aware, rather than querying twice.
