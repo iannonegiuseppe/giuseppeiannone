@@ -111,3 +111,36 @@ export const allSubtopicSlugsQuery = defineQuery(`
     "subtopicSlug": slug.current
   }
 `);
+
+// --- sitemap.xml (Step 5) -----------------------------------------------
+// Not locale-scoped: sitemap.ts runs once and emits entries for every
+// language itself, each with reciprocal hreflang alternates (same
+// mechanism as generateMetadata's canonical/hreflang, Step 3).
+// seo.noIndex != true reads as "true" only for an explicit noIndex, so
+// documents without an seo object at all are still included by default.
+
+export const sitemapHomePagesQuery = defineQuery(`
+  *[_type == "homePage" && seo.noIndex != true]{
+    language,
+    _updatedAt
+  }
+`);
+
+export const sitemapPillarsQuery = defineQuery(`
+  *[_type == "pillarPage" && seo.noIndex != true]{
+    language,
+    "slug": slug.current,
+    _updatedAt,
+    ${alternatesProjection}
+  }
+`);
+
+export const sitemapSubtopicsQuery = defineQuery(`
+  *[_type == "subtopicPage" && seo.noIndex != true]{
+    language,
+    "slug": slug.current,
+    "parentSlug": parentPillar->slug.current,
+    _updatedAt,
+    ${alternatesProjection}
+  }
+`);

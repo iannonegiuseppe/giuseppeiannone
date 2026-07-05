@@ -1,14 +1,32 @@
 import type { MetadataRoute } from "next";
-import { isProductionDeployment } from "@/sanity/metadata";
+import { getSiteUrl, isProductionDeployment } from "@/sanity/metadata";
 
-// Placeholder policy — replaced with the full bot-allow list (Stage 2 Step
-// 5) and the *.vercel.app disallow-everything override. For now this just
-// keeps non-production deployments (local dev, previews) fully disallowed,
-// matching the meta-robots default in src/sanity/metadata.ts.
+// Bot-allow policy — see SPEC.md's "robots.txt bot-allow policy" section.
+// GPTBot/Google-Extended are allowed here but flagged there as a
+// provisional default pending client confirmation, not a settled decision.
+const NAMED_BOTS = [
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "PerplexityBot",
+  "Perplexity-User",
+  "Claude-SearchBot",
+  "Claude-User",
+  "GPTBot",
+  "Google-Extended",
+];
+
+const DISALLOWED_PATHS = ["/studio", "/api/"];
+
 export default function robots(): MetadataRoute.Robots {
   if (!isProductionDeployment()) {
     return { rules: { userAgent: "*", disallow: "/" } };
   }
 
-  return { rules: { userAgent: "*", allow: "/" } };
+  return {
+    rules: [
+      { userAgent: NAMED_BOTS, allow: "/", disallow: DISALLOWED_PATHS },
+      { userAgent: "*", allow: "/", disallow: DISALLOWED_PATHS },
+    ],
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
+  };
 }

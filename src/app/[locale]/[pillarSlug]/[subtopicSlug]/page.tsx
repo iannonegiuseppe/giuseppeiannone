@@ -11,15 +11,15 @@ import {
 } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
+import type { AlternateEntry } from "@/sanity/paths";
+import {
+  pillarPath as buildPillarPath,
+  subtopicLocalizedPaths,
+  subtopicPath,
+} from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { allSubtopicSlugsQuery, subtopicPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
-
-interface AlternateEntry {
-  language: string;
-  slug?: string;
-  parentSlug?: string | null;
-}
 
 interface SubtopicPageData {
   _id: string;
@@ -37,21 +37,6 @@ function getSubtopicPage(locale: string, pillarSlug: string, slug: string) {
     { locale, pillarSlug, slug },
     { next: { tags: ["subtopicPage", `subtopicPage:${slug}`] } },
   );
-}
-
-function buildLocalizedPaths(alternates: AlternateEntry[] | undefined) {
-  const paths: Partial<Record<"it" | "en", string>> = {};
-
-  for (const alt of alternates ?? []) {
-    if (!alt.slug || !alt.parentSlug) continue;
-    if (alt.language !== "it" && alt.language !== "en") continue;
-    paths[alt.language] =
-      alt.language === "it"
-        ? `/${alt.parentSlug}/${alt.slug}`
-        : `/en/${alt.parentSlug}/${alt.slug}`;
-  }
-
-  return paths;
 }
 
 function currentParentSlug(
@@ -93,7 +78,7 @@ export async function generateMetadata({
     seo: data?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
-    localizedPaths: buildLocalizedPaths(data?.alternates),
+    localizedPaths: subtopicLocalizedPaths(data?.alternates),
   });
 }
 
@@ -110,19 +95,17 @@ export default async function SubtopicPage({
 
   const typedLocale = locale as "it" | "en";
   const siteUrl = getSiteUrl();
-  const localizedPaths = buildLocalizedPaths(data.alternates);
   const path =
-    localizedPaths[typedLocale] ?? `/${pillarSlug}/${subtopicSlug}`;
+    subtopicLocalizedPaths(data.alternates)[typedLocale] ??
+    subtopicPath(typedLocale, pillarSlug, subtopicSlug);
   const pageUrl = `${siteUrl}${path}`;
-  const parentSlug =
-    currentParentSlug(data.alternates, locale) ?? pillarSlug;
-  const pillarPath =
-    typedLocale === "it" ? `/${parentSlug}` : `/en/${parentSlug}`;
+  const parentSlug = currentParentSlug(data.alternates, locale) ?? pillarSlug;
+  const parentPillarPath = buildPillarPath(typedLocale, parentSlug);
 
   const trail = await getSubtopicTrail(
     typedLocale,
     data.parentPillarTitle ?? "",
-    pillarPath,
+    parentPillarPath,
     data.title,
     path,
   );

@@ -13,15 +13,11 @@ import {
 } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
+import type { AlternateEntry } from "@/sanity/paths";
+import { pillarLocalizedPaths, pillarPath } from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { pillarPageQuery, pillarSlugsQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
-
-interface AlternateEntry {
-  language: string;
-  slug?: string;
-  parentSlug?: string | null;
-}
 
 interface PillarPageData {
   _id: string;
@@ -38,18 +34,6 @@ function getPillarPage(locale: string, slug: string) {
     { locale, slug },
     { next: { tags: ["pillarPage", `pillarPage:${slug}`] } },
   );
-}
-
-function buildLocalizedPaths(alternates: AlternateEntry[] | undefined) {
-  const paths: Partial<Record<"it" | "en", string>> = {};
-
-  for (const alt of alternates ?? []) {
-    if (!alt.slug || (alt.language !== "it" && alt.language !== "en")) continue;
-    paths[alt.language] =
-      alt.language === "it" ? `/${alt.slug}` : `/en/${alt.slug}`;
-  }
-
-  return paths;
 }
 
 export async function generateStaticParams({
@@ -81,7 +65,7 @@ export async function generateMetadata({
     seo: data?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
-    localizedPaths: buildLocalizedPaths(data?.alternates),
+    localizedPaths: pillarLocalizedPaths(data?.alternates),
   });
 }
 
@@ -98,7 +82,9 @@ export default async function PillarPage({
 
   const typedLocale = locale as "it" | "en";
   const siteUrl = getSiteUrl();
-  const path = buildLocalizedPaths(data.alternates)[typedLocale] ?? `/${pillarSlug}`;
+  const path =
+    pillarLocalizedPaths(data.alternates)[typedLocale] ??
+    pillarPath(typedLocale, pillarSlug);
   const pageUrl = `${siteUrl}${path}`;
 
   const trail = await getPillarTrail(typedLocale, data.title, path);
