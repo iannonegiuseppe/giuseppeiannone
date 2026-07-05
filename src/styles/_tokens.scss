@@ -1,0 +1,95 @@
+// Design tokens: the only place raw color/size values are allowed to live.
+// Everything else (globals, component .module.scss files) must reference
+// these via var(--token-name) or the breakpoint/z-index helpers in _mixins.scss.
+
+@use "sass:map";
+
+// --- Breakpoints (compile-time SCSS map, consumed by mixins) ---------------
+// Not CSS custom properties: media query conditions can't use custom props.
+$breakpoints: (
+  sm: 30rem,
+  // 480px
+  md: 48rem,
+  // 768px
+  lg: 64rem,
+  // 1024px
+  xl: 80rem, // 1280px
+);
+
+@function breakpoint($name) {
+  @return map.get($breakpoints, $name);
+}
+
+// --- Z-index scale (compile-time SCSS map, consumed via z() in _mixins.scss)
+$z-index: (
+  base: 0,
+  dropdown: 10,
+  sticky: 20,
+  overlay: 30,
+  modal: 40,
+  toast: 50,
+);
+
+@function z($name) {
+  @return map.get($z-index, $name);
+}
+
+:root {
+  // --- Color palette: ivory/warm-neutral + one deep accent -----------------
+  --color-bg: #faf7f2;
+  --color-bg-alt: #f1ece2;
+  --color-surface: #ffffff;
+  --color-border: #e4dcce;
+  --color-text: #2b2620;
+  --color-text-muted: #6b6255;
+  --color-accent: #2f4a43;
+  --color-accent-hover: #24382f;
+  --color-accent-contrast: #ffffff;
+
+  // --- Fonts (variables populated by next/font in layout.tsx) --------------
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-work-sans), "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+
+  // --- Type scale ------------------------------------------------------------
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 2.75rem;
+  --text-5xl: 3.5rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  // --- Spacing scale (4px base) ----------------------------------------------
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  // --- Radii -------------------------------------------------------------
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  // --- Layout ------------------------------------------------------------
+  --container-max-width: 75rem;
+}
