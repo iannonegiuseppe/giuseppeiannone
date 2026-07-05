@@ -42,8 +42,12 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} className={`${fraunces.variable} ${workSans.variable}`}>
-      <body>
+    <html
+      lang={locale}
+      className={`${fraunces.variable} ${workSans.variable}`}
+      suppressHydrationWarning
+    >
+      <body suppressHydrationWarning>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>
     </html>
