@@ -3,9 +3,9 @@
 Conventions for anyone (human or AI) working in this repo. See [SPEC.md](./SPEC.md)
 for the original project brief and fixed tech decisions this all derives from.
 
-## Working process (foundation stage)
+## Working process (interactive mode)
 
-While the foundation is being built, work happens in **interactive mode**:
+Work happens in **interactive mode**, stage by stage:
 
 - Big changes are proposed as a numbered plan first and approved before any code is written.
 - Work proceeds **one step at a time**. Before each step: explain what will be done
@@ -18,9 +18,22 @@ While the foundation is being built, work happens in **interactive mode**:
 - If a library's current API differs from what's documented here or in SPEC.md,
   say so and propose the current approach before coding — don't silently guess.
 
-This applies for the remainder of the foundation stage. Once the foundation is
-merged, day-to-day feature work can move to normal (non-gated) collaboration unless
+This has applied since the foundation stage and continues into later stages unless
 told otherwise.
+
+## Branching & deployment workflow
+
+Starting Stage 2 (SEO/AEO/GEO layer):
+
+- **`dev`** is where feature work lands — every push builds a Vercel preview
+  deployment automatically.
+- **`main`** tracks the production domain. It is only updated by a deliberate,
+  explicitly-requested merge — never pushed to as a side effect of regular work.
+  During an active stage, assume `main` is off-limits unless told otherwise for
+  that specific push.
+- Preview deployments (any `*.vercel.app` host) are **always** `noindex, nofollow`,
+  as a hard rule independent of any other environment signal — see the
+  environment-driven indexing rules added in Stage 2 Step 2.
 
 ## Package manager
 
@@ -79,8 +92,9 @@ These principles protect a non-technical editor from breaking the site and must 
 upheld in every schema added later:
 
 - Slugs auto-generate from `title` on create, then become **read-only after the
-  document has been published** (checked via the field's `readOnly` callback
-  against document publish state).
+  document has been published**. Schema-level `readOnly` callbacks are synchronous
+  with no dataset access, so this can't be a plain callback — it's a custom slug
+  input component using `useEditState` (see `src/sanity/components/SlugLockedAfterPublish.tsx`).
 - Singleton documents (site settings, one-off pages) and `locationPage` (exactly
   two: Milan, Monza) must have delete/duplicate document actions removed and be
   pinned in the desk structure.
