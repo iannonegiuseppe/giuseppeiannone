@@ -1,6 +1,10 @@
 {
   "HomePage": {
-    "title": "Fondamenta di stile pronte",
-    "description": "Questo segnaposto dimostra che la pipeline SCSS Modules + design token e l'i18n funzionano. Sarà sostituito da pagine reali una volta collegati contenuti e Sanity."
+    "title": "Dott. Giuseppe Iannone",
+    "description": "Psicologo psicoterapeuta a Milano, Monza e online. Il nuovo sito è quasi pronto: torna presto per scoprirlo."
+  },
+  "Metadata": {
+    "title": "Dott. Giuseppe Iannone | Psicologo Psicoterapeuta",
+    "description": "Psicologo psicoterapeuta a Milano, Monza e online. Il nuovo sito è quasi pronto."
   }
 }
