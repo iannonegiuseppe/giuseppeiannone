@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
 export const subtopicPage = defineType({
   name: "subtopicPage",
@@ -14,6 +15,8 @@ export const subtopicPage = defineType({
     defineField({
       name: "parentPillar",
       title: "Parent pillar",
+      description:
+        "Must be the pillar page in the same language as this subtopic (each language is a separate document).",
       type: "reference",
       to: [{ type: "pillarPage" }],
       validation: (Rule) => Rule.required(),
@@ -37,5 +40,6 @@ export const subtopicPage = defineType({
       title: "SEO",
       type: "seo",
     }),
+    languageField(),
   ],
 });

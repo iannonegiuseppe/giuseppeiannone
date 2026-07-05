@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
 export const faqItem = defineType({
   name: "faqItem",
@@ -17,6 +18,7 @@ export const faqItem = defineType({
       type: "faqAnswer",
       validation: (Rule) => Rule.required(),
     }),
+    languageField(),
   ],
   preview: {
     select: { title: "question" },

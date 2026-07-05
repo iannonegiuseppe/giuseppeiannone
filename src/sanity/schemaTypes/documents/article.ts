@@ -1,5 +1,8 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
+// No author reference: there's exactly one author (the singleton), so the
+// byline renders from it automatically at the frontend, not per-document.
 export const article = defineType({
   name: "article",
   title: "Article",
@@ -19,13 +22,6 @@ export const article = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "author",
-      title: "Author",
-      type: "reference",
-      to: [{ type: "author" }],
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: "publishedAt",
       title: "Published at",
       type: "datetime",
@@ -41,5 +37,6 @@ export const article = defineType({
       title: "SEO",
       type: "seo",
     }),
+    languageField(),
   ],
 });

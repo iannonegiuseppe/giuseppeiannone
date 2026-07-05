@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
 export const faqPage = defineType({
   name: "faqPage",
@@ -27,5 +28,6 @@ export const faqPage = defineType({
       title: "SEO",
       type: "seo",
     }),
+    languageField(),
   ],
 });

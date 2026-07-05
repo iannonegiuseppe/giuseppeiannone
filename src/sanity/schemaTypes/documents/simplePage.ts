@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
 // Shared shape for singleton pages that are just a title + body + SEO.
 export function defineSimplePageType(options: { name: string; title: string }) {
@@ -23,6 +24,7 @@ export function defineSimplePageType(options: { name: string; title: string }) {
         title: "SEO",
         type: "seo",
       }),
+      languageField(),
     ],
   });
 }

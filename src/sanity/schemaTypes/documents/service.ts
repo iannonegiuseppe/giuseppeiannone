@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { languageField } from "../lib/languageField";
 
 export const service = defineType({
   name: "service",
@@ -28,5 +29,6 @@ export const service = defineType({
       title: "SEO",
       type: "seo",
     }),
+    languageField(),
   ],
 });

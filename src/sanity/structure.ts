@@ -1,6 +1,9 @@
 import type { StructureBuilder, StructureResolver } from "sanity/structure";
 
-// Singletons: exactly one document, fixed _id equal to the type name.
+// Singletons: exactly one document PER LANGUAGE, linked as an it/en
+// translation pair by @sanity/document-internationalization. Fixed pane
+// _id convention: `${typeId}-${language}` (e.g. "homePage-it",
+// "homePage-en"), established here for Step 9's seed script to follow.
 export const SINGLETON_TYPES = new Set([
   "siteSettings",
   "homePage",
@@ -16,11 +19,24 @@ export const SINGLETON_TYPES = new Set([
 // fixed single-document pane) since there's more than one.
 export const PROTECTED_TYPES = new Set([...SINGLETON_TYPES, "locationPage"]);
 
+// Every schema type wired into @sanity/document-internationalization
+// (see sanity.config.ts).
+export const TRANSLATABLE_TYPES = new Set([
+  ...PROTECTED_TYPES,
+  "pillarPage",
+  "subtopicPage",
+  "article",
+  "service",
+  "faqItem",
+]);
+
+const DEFAULT_LOCALE = "it";
+
 function singletonListItem(S: StructureBuilder, typeId: string, title: string) {
   return S.listItem()
     .id(typeId)
     .title(title)
-    .child(S.document().schemaType(typeId).documentId(typeId));
+    .child(S.document().schemaType(typeId).documentId(`${typeId}-${DEFAULT_LOCALE}`));
 }
 
 export const structure: StructureResolver = (S) =>
@@ -57,10 +73,7 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.list()
             .title("Blog")
-            .items([
-              S.documentTypeListItem("article").title("Articles"),
-              S.documentTypeListItem("author").title("Authors"),
-            ]),
+            .items([S.documentTypeListItem("article").title("Articles")]),
         ),
       S.listItem()
         .title("FAQ")

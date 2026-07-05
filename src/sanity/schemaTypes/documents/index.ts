@@ -1,6 +1,5 @@
 import { aboutPage } from "./aboutPage";
 import { article } from "./article";
-import { author } from "./author";
 import { contactPage } from "./contactPage";
 import { faqItem } from "./faqItem";
 import { faqPage } from "./faqPage";
@@ -30,5 +29,4 @@ export const documentTypes = [
   article,
   service,
   faqItem,
-  author,
 ];
