@@ -4,6 +4,7 @@ import { Fraunces, Work_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { resolveRobots } from "@/sanity/metadata";
 import "./globals.scss";
 
 const fraunces = Fraunces({
@@ -17,17 +18,12 @@ const workSans = Work_Sans({
   subsets: ["latin"],
 });
 
-const indexingEnabled = process.env.NEXT_PUBLIC_ENABLE_INDEXING === "true";
-
 // Site-wide fallback + noindex default. Individual pages (e.g. the
 // homepage) override title/description via generateMetadata; robots is
 // inherited from here unless a page deliberately sets its own.
 export const metadata: Metadata = {
   title: "Giuseppe Iannone",
-  robots: {
-    index: indexingEnabled,
-    follow: indexingEnabled,
-  },
+  robots: resolveRobots(),
 };
 
 export function generateStaticParams() {

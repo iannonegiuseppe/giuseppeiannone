@@ -31,8 +31,31 @@ fill in real values there (`.env.local` is gitignored).
 | `NEXT_PUBLIC_SANITY_DATASET` | Everything | Defaults to `production`. Public, same reason as above. |
 | `SANITY_API_READ_TOKEN` | Server-side reads | Server-only. Used by `src/sanity/client.ts` for authenticated/draft reads. |
 | `SANITY_REVALIDATE_SECRET` | The revalidation webhook | Must match the secret configured on the Sanity webhook — see below. |
-| `NEXT_PUBLIC_ENABLE_INDEXING` | Controlling search visibility | Defaults to unset (= hidden). Set to `"true"` only when ready to let the site be indexed — see `src/app/robots.ts` and `src/sanity/metadata.ts`. |
+| `NEXT_PUBLIC_SITE_URL` | Search visibility, canonicals, hreflang, sitemap, JSON-LD | The real production domain, no trailing slash. Leave unset until launch — see [Environment-driven indexing](#environment-driven-indexing). |
 | `SANITY_API_WRITE_TOKEN` | `npm run seed` only | **Temporary** — see [Temporary tokens](#temporary-tokens) below. Not needed for normal dev/build. |
+
+## Environment-driven indexing
+
+Whether a page is indexable is resolved in `src/sanity/metadata.ts`
+(`resolveRobots`/`isProductionDeployment`) and enforced in two layers:
+
+1. **Per-page `<meta name="robots">` tag** (build-time signals only, so
+   pages stay statically rendered): indexable only when a document's own
+   `seo.noIndex` isn't set, **and** the deployment is a real Vercel
+   production build (`VERCEL_ENV === "production"`, set automatically by
+   Vercel) **and** `NEXT_PUBLIC_SITE_URL` is configured. Local dev and
+   preview deployments are both non-production, so both are noindex with
+   no separate toggle needed.
+2. **Hard `*.vercel.app` rule** (`src/proxy.ts`, `X-Robots-Tag` response
+   header): any request whose hostname ends in `.vercel.app` is always
+   `noindex, nofollow`, no exceptions — including the production
+   deployment's own auto-assigned vercel.app alias, which layer 1 can't
+   distinguish from the real custom domain without forcing every page to
+   render dynamically. This runs at the edge, per request, so it doesn't
+   affect static generation.
+
+`robots.txt` (`src/app/robots.ts`) follows the same production check as
+layer 1 (full bot-allow policy lands in Stage 2 Step 5).
 
 ## Available scripts
 
@@ -62,8 +85,9 @@ src/
     studio/                       Embedded Sanity Studio at /studio — its own
                                    root layout (outside next-intl entirely)
     api/revalidate/route.ts       Sanity webhook handler (tag-based ISR)
-    robots.ts                     robots.txt, gated by NEXT_PUBLIC_ENABLE_INDEXING
-  proxy.ts                        next-intl locale routing (Next.js 16 renamed
+    robots.ts                     robots.txt, gated by production-deployment check
+  proxy.ts                        next-intl locale routing + the hard
+                                   *.vercel.app noindex rule (Next.js 16 renamed
                                    the "middleware" file convention to "proxy")
   i18n/                           next-intl routing/navigation/request config
   styles/                         _tokens.scss, _mixins.scss (design-token layer)
@@ -238,7 +262,7 @@ brief. Re-run this after any change to the foundation layer.
 - [ ] `npm run dev` starts cleanly, no errors in the terminal.
 - [ ] `/` resolves (Italian, unprefixed) and `/en` resolves (English,
       prefixed); each shows its own title/body and a `noindex` robots tag
-      while `NEXT_PUBLIC_ENABLE_INDEXING` is unset.
+      while `NEXT_PUBLIC_SITE_URL` is unset / not a production deployment.
 - [ ] `/studio` opens, shows the five desk structure groups (Pages,
       Knowledge Base, Blog, FAQ, Settings), and the guardrails hold:
       singletons and Locations have no Delete/Duplicate and don't appear in
