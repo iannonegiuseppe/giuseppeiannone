@@ -54,4 +54,52 @@ come in later stages.
 
 Foundation-stage work is done interactively, one step at a time, with explicit
 approval before each step and a commit after each. See [CLAUDE.md](./CLAUDE.md) for
-the exact workflow rules.
+the exact workflow rules. This same interactive process continues into later stages.
+
+## Stage 2 — SEO/AEO/GEO layer + draft-mode editing
+
+Builds on the foundation to add real search/answer-engine visibility and editor
+preview tooling. Work happens on the `dev` branch (Vercel builds a preview per push);
+`main` (production) is only updated by a deliberate merge — see CLAUDE.md's
+branching section.
+
+1. Dev branch + Vercel preview deployment workflow
+2. Environment-driven indexing — retires the Stage 1 `NEXT_PUBLIC_ENABLE_INDEXING`
+   toggle in favor of `VERCEL_ENV`/`NEXT_PUBLIC_SITE_URL` detection, plus a hard
+   "any `*.vercel.app` host is always noindex" rule enforced in `src/proxy.ts`
+3. Metadata API layer (title template, canonical, hreflang, OpenGraph, Twitter card)
+4. JSON-LD structured data (Person, MedicalBusiness, BreadcrumbList, MedicalWebPage/
+   Condition/Therapy, FAQPage) — see `src/sanity/jsonLd.ts`
+5. `sitemap.xml` + `robots.txt` (bot-allow policy below)
+6. Breadcrumbs + Table of Contents components
+7. Draft mode + Presentation (visual editing)
+8. Localized 404 + error pages
+9. Stage verification
+
+### robots.txt bot-allow policy
+
+Applies once the production domain is live (see `src/app/robots.ts` and
+`isProductionDeployment()` in `src/sanity/metadata.ts`); preview/non-production
+deployments disallow everything regardless of this policy.
+
+- **Always allowed**: `OAI-SearchBot`, `ChatGPT-User`, `PerplexityBot`,
+  `Perplexity-User`, `Claude-SearchBot`, `Claude-User`.
+- **Allowed, pending client confirmation**: `GPTBot`, `Google-Extended`. Implemented
+  as allowed for now; flag to the client before launch that this is a provisional
+  default, not a confirmed decision, in case they'd rather exclude their content
+  from being used to train these companies' models while still allowing the
+  search-answer bots above.
+- **Disallowed**: `/studio`, `/api/`.
+- Sitemap reference built from `NEXT_PUBLIC_SITE_URL` — no hardcoded host.
+
+## Deferred verification items (for future stages)
+
+Things intentionally built as reusable infrastructure now, ahead of the pages that
+will exercise them — flagged here so the wiring-up doesn't get silently skipped when
+those pages are eventually built.
+
+- **Article, location, and service public routes** (Stage 3+): when these routes are
+  built, they must be wired to the existing helpers and then verified, not just
+  assumed to work — `Article` JSON-LD (author, dates) and `MedicalBusiness` JSON-LD
+  reuse from `src/sanity/jsonLd.ts`, sitemap entries from the sitemap generator
+  (Stage 2 Step 5), and the full Metadata API layer (`src/sanity/seo.ts`) per page.
