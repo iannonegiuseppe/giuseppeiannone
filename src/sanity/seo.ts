@@ -29,6 +29,14 @@ interface SiteSettingsData {
   seo?: SeoFields;
   author?: AuthorFields;
   socialLinks?: SocialLinks;
+  contactEmail?: string;
+  contactPhone?: string;
+  // Schema marks this required (deontology element, Stage 3 Step 4) — but
+  // that only guides future Studio saves, not documents published before
+  // the field existed. Treated as optional here so old data can't crash a
+  // render; the footer simply omits the line if it's genuinely missing.
+  crisisSupportText?: string;
+  googleProfileUrl?: string;
 }
 
 export function getSiteSettings(locale: string) {

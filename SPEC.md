@@ -166,3 +166,23 @@ rediscovered from scratch later.
   Revisit when Stage 3 builds out the full route set — likely fix: resolve the
   document once (shared between `generateMetadata` and the page component) and
   make that resolution `notFound()`-aware, rather than querying twice.
+- **`ctaBlock`/`conditionCard`/`treatmentCard`/`blockquote` are type-checked but
+  not yet rendered in a browser** (found building Stage 3 Step 3): no seed
+  content exercises them, so they're verified by type-check and code review
+  only. To be visually confirmed on the first real page that uses one —
+  `ctaBlock` surfaces on the homepage in Stage 3 Step 5. No temporary write
+  token is to be provisioned just for this.
+- **`siteSettings.crisisSupportText` isn't on the live published documents yet**
+  (found verifying Stage 3 Step 4): the schema field is required and
+  `scripts/seed.ts` has a sensible default (Italian 112 reference), but the
+  *already-published* `siteSettings-it`/`siteSettings-en` documents predate the
+  field and don't have it — the footer's own code correctly omits the
+  crisis-support line rather than rendering it empty, but that means the
+  deontology-required line is **not currently visible on the live site** until
+  someone re-runs the seed script (needs a write token) or fills the field in
+  directly in Studio. Flagging because this is a deontology element, not a
+  cosmetic one — don't let this stay silently unresolved.
+- **Footer's Locations column renders empty** (found in the same verification):
+  same root cause already logged in the Step 9 verification results above — zero
+  `locationPage` documents are published yet. Resolves itself once Stage 3 Step 9
+  (location pages) creates the two real documents; not a footer code defect.

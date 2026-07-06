@@ -146,6 +146,8 @@ async function seed() {
     description: "Sito in costruzione.",
     contactEmail: "info@example.com",
     contactPhone: "+39 000 0000000",
+    crisisSupportText:
+      "In caso di emergenza, contattare il 112 o recarsi al pronto soccorso più vicino. Questo sito non sostituisce un intervento di emergenza.",
     author: {
       name: "Giuseppe Iannone",
       credentials: "[credenziali segnaposto]",
@@ -168,6 +170,8 @@ async function seed() {
     description: "Site under construction.",
     contactEmail: "info@example.com",
     contactPhone: "+39 000 0000000",
+    crisisSupportText:
+      "In an emergency, call 112 or go to your nearest emergency room. This website is not a substitute for emergency support.",
     author: {
       name: "Giuseppe Iannone",
       credentials: "[credentials placeholder]",

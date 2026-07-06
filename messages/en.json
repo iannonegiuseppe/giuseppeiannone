@@ -8,6 +8,26 @@
   "KeyTakeaways": {
     "label": "Key points"
   },
+  "Header": {
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "method": "Method",
+      "price": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "menuToggle": "Menu",
+    "cta": "Book a first consultation"
+  },
+  "Footer": {
+    "contactHeading": "Contact",
+    "locationsHeading": "Locations",
+    "legalHeading": "Legal",
+    "privacy": "Privacy",
+    "cookiePolicy": "Cookie policy",
+    "googleProfile": "Find me on Google"
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has been moved.",

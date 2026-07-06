@@ -24,6 +24,54 @@ export function subtopicPath(
     : `/en/${parentSlug}/${slug}`;
 }
 
+// Fixed routes for the singleton pages (about/method/price/faq/contact,
+// plus the legal pages) — these document types have no slug field (see
+// simplePage.ts), so the path is decided in code, not content. None of
+// these routes exist yet (built in Steps 5/7); the paths are fixed here
+// now so the header/footer/locale switcher can reference the correct
+// eventual URL from the start.
+export function aboutPath(locale: Locale): string {
+  return locale === "it" ? "/chi-sono" : "/en/about";
+}
+
+export function methodPath(locale: Locale): string {
+  return locale === "it" ? "/metodo" : "/en/method";
+}
+
+export function pricePath(locale: Locale): string {
+  return locale === "it" ? "/prezzi" : "/en/pricing";
+}
+
+export function faqPath(locale: Locale): string {
+  return locale === "it" ? "/faq" : "/en/faq";
+}
+
+export function contactPath(locale: Locale): string {
+  return locale === "it" ? "/contatti" : "/en/contact";
+}
+
+export function privacyPath(locale: Locale): string {
+  return locale === "it" ? "/privacy" : "/en/privacy";
+}
+
+export function cookiePolicyPath(locale: Locale): string {
+  return locale === "it" ? "/cookie-policy" : "/en/cookie-policy";
+}
+
+// Every fixed (non-slug-driven) path function, in nav order — the single
+// source the locale switcher's static reverse-lookup iterates over. Add a
+// new singleton path function here when one is introduced.
+export const singletonPathFns: Array<(locale: Locale) => string> = [
+  homePath,
+  aboutPath,
+  methodPath,
+  pricePath,
+  faqPath,
+  contactPath,
+  privacyPath,
+  cookiePolicyPath,
+];
+
 function isLocale(value: string): value is Locale {
   return value === "it" || value === "en";
 }

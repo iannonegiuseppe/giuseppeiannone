@@ -4,6 +4,8 @@ import { VisualEditing } from "next-sanity/visual-editing";
 import { Lato, Marcellus } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { routing } from "@/i18n/routing";
 import { isDraftModeEnabled, sanityFetch } from "@/sanity/client";
 import {
@@ -12,6 +14,7 @@ import {
 } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
+import type { Locale } from "@/sanity/paths";
 import { locationsQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
 import "./globals.scss";
@@ -95,6 +98,8 @@ export default async function LocaleLayout({
         })
       : undefined;
 
+  const typedLocale = locale as Locale;
+
   return (
     <html
       lang={locale}
@@ -106,7 +111,21 @@ export default async function LocaleLayout({
         {medicalBusinessJsonLd ? (
           <JsonLdScript data={medicalBusinessJsonLd} />
         ) : null}
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <Header
+            locale={typedLocale}
+            authorName={siteSettings?.author?.name ?? ""}
+          />
+          {children}
+          <Footer
+            locale={typedLocale}
+            contactEmail={siteSettings?.contactEmail}
+            contactPhone={siteSettings?.contactPhone}
+            locations={locations}
+            crisisSupportText={siteSettings?.crisisSupportText}
+            googleProfileUrl={siteSettings?.googleProfileUrl}
+          />
+        </NextIntlClientProvider>
         {isDraft ? <VisualEditing /> : null}
       </body>
     </html>

@@ -82,6 +82,22 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: "crisisSupportText",
+      title: "Crisis support line",
+      description:
+        "Deontology-required footer text (Italian emergency reference, e.g. 112). Must never be empty — this is not optional editorial content.",
+      type: "text",
+      rows: 2,
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "googleProfileUrl",
+      title: "Google profile URL",
+      description:
+        "Optional outbound link only (no reviews widget, no API integration). Footer link is hidden entirely when this is empty.",
+      type: "url",
+    }),
+    defineField({
       name: "socialLinks",
       title: "Social profiles",
       description:

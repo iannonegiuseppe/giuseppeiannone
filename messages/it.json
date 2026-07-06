@@ -8,6 +8,26 @@
   "KeyTakeaways": {
     "label": "In breve"
   },
+  "Header": {
+    "nav": {
+      "home": "Home",
+      "about": "Chi sono",
+      "method": "Metodo",
+      "price": "Prezzi",
+      "faq": "FAQ",
+      "contact": "Contatti"
+    },
+    "menuToggle": "Menu",
+    "cta": "Prenota un primo colloquio"
+  },
+  "Footer": {
+    "contactHeading": "Contatti",
+    "locationsHeading": "Sedi",
+    "legalHeading": "Informazioni legali",
+    "privacy": "Privacy",
+    "cookiePolicy": "Cookie policy",
+    "googleProfile": "Trovami su Google"
+  },
   "NotFound": {
     "title": "Pagina non trovata",
     "description": "La pagina che stai cercando non esiste o è stata spostata.",

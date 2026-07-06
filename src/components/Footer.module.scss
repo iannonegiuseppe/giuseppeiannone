@@ -1,0 +1,58 @@
+@use "../styles/mixins";
+
+.footer {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.inner {
+  @include mixins.container;
+  @include mixins.section;
+
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: 1fr;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.link {
+  color: var(--color-accent-contrast);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  @include mixins.focus-ring;
+}
+
+// Deontology-required — must read as clearly as the rest of the footer,
+// not a muted afterthought, so this deliberately reuses body size and the
+// same full-contrast text color as everything else here.
+.crisis {
+  @include mixins.container;
+
+  padding-block: var(--space-5);
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-accent-contrast) 20%, transparent);
+  font-size: var(--fs-body);
+}
+
+.crisisText {
+  margin: 0;
+  max-width: 60ch;
+}

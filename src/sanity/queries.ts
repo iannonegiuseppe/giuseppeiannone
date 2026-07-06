@@ -46,7 +46,11 @@ export const siteSettingsQuery = defineQuery(`
     title,
     seo,
     author,
-    socialLinks
+    socialLinks,
+    contactEmail,
+    contactPhone,
+    crisisSupportText,
+    googleProfileUrl
   }
 `);
 
