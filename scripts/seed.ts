@@ -201,6 +201,10 @@ async function seed() {
     _type: "homePage",
     language: "it",
     title: "Dott. Giuseppe Iannone",
+    hero: {
+      positioningStatement:
+        "[Segnaposto IT — testo di posizionamento. Non definitivo, non clinico.]",
+    },
     body: [
       paragraph(
         "Psicologo psicoterapeuta a Milano, Monza e online. Il nuovo sito è quasi pronto: torna presto per scoprirlo.",
@@ -221,6 +225,10 @@ async function seed() {
     _type: "homePage",
     language: "en",
     title: "Dr. Giuseppe Iannone",
+    hero: {
+      positioningStatement:
+        "[EN placeholder — positioning statement. Non-final, non-clinical text.]",
+    },
     body: [
       paragraph(
         "Psychologist and psychotherapist in Milan, Monza, and online. The new website is coming soon — check back shortly.",

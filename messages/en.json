@@ -8,6 +8,10 @@
   "KeyTakeaways": {
     "label": "Key points"
   },
+  "Hero": {
+    "cta": "Book a first consultation",
+    "registrationPrefix": "Professional Register No."
+  },
   "Header": {
     "nav": {
       "home": "Home",

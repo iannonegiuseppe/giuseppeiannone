@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
+import { Hero, type HeroPhoto } from "@/components/Hero";
 import { sanityFetch } from "@/sanity/client";
-import { getPortableTextComponents } from "@/sanity/portableTextComponents";
+import type { Locale } from "@/sanity/paths";
 import { homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
-import styles from "./page.module.scss";
 
 interface HomePageData {
   title: string;
-  body: unknown;
+  hero?: {
+    positioningStatement?: string;
+    photo?: HeroPhoto;
+    videoUrl?: string;
+  };
   seo?: SeoFields;
 }
 
@@ -51,17 +54,23 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const data = await getHomePage(locale);
+  const [data, siteSettings] = await Promise.all([
+    getHomePage(locale),
+    getSiteSettings(locale),
+  ]);
   if (!data) notFound();
 
-  const components = await getPortableTextComponents(locale);
-
   return (
-    <main className={styles.main}>
-      <h1 className={styles.title}>{data.title}</h1>
-      <div className={styles.body}>
-        <PortableText value={data.body as never} components={components} />
-      </div>
+    <main>
+      <Hero
+        locale={locale as Locale}
+        authorName={siteSettings?.author?.name ?? ""}
+        credentials={siteSettings?.author?.credentials}
+        registrationNumber={siteSettings?.author?.registrationNumber}
+        positioningStatement={data.hero?.positioningStatement}
+        photo={data.hero?.photo}
+        videoUrl={data.hero?.videoUrl}
+      />
     </main>
   );
 }

@@ -55,3 +55,17 @@
   align-items: center;
   gap: var(--space-4);
 }
+
+// At narrow widths there isn't room for logo + toggle + switcher + a
+// full-width button without overflowing the viewport (found via a real
+// 360px screenshot, not assumed). The "Contatti" nav item behind the
+// toggle points at the same destination, so mobile visitors aren't left
+// without a path to it — the header's own CTA button is a persistent
+// affordance for wider screens only.
+.cta {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: inline-flex;
+  }
+}

@@ -57,7 +57,11 @@ export async function Header({
 
         <div className={styles.actions}>
           <LocaleSwitcher currentLocale={locale} />
-          <ButtonLink href={contactPath(locale)} variant="solid">
+          <ButtonLink
+            href={contactPath(locale)}
+            variant="solid"
+            className={styles.cta}
+          >
             {t("cta")}
           </ButtonLink>
         </div>

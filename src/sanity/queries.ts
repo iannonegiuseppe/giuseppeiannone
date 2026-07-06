@@ -68,6 +68,11 @@ export const locationsQuery = defineQuery(`
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,
+    hero{
+      positioningStatement,
+      photo,
+      "videoUrl": video.asset->url
+    },
     ${bodyProjection},
     seo
   }
