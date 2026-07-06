@@ -49,6 +49,7 @@ export const siteSettingsQuery = defineQuery(`
     socialLinks,
     contactEmail,
     contactPhone,
+    whatsappNumber,
     crisisSupportText,
     googleProfileUrl
   }

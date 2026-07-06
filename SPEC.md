@@ -172,17 +172,22 @@ rediscovered from scratch later.
   only. To be visually confirmed on the first real page that uses one —
   `ctaBlock` surfaces on the homepage in Stage 3 Step 5. No temporary write
   token is to be provisioned just for this.
-- **`siteSettings.crisisSupportText` isn't on the live published documents yet**
-  (found verifying Stage 3 Step 4): the schema field is required and
-  `scripts/seed.ts` has a sensible default (Italian 112 reference), but the
-  *already-published* `siteSettings-it`/`siteSettings-en` documents predate the
-  field and don't have it — the footer's own code correctly omits the
-  crisis-support line rather than rendering it empty, but that means the
-  deontology-required line is **not currently visible on the live site** until
-  someone re-runs the seed script (needs a write token) or fills the field in
-  directly in Studio. Flagging because this is a deontology element, not a
-  cosmetic one — don't let this stay silently unresolved.
+- **`siteSettings.crisisSupportText` is only published for `it`, not `en`**
+  (found verifying Stage 3 Step 4, re-checked after the client published the
+  Italian text): confirmed directly against the Content Lake — `siteSettings-it`
+  now has real crisis-support text (112 plus Telefono Amico Italia) and renders
+  correctly in the footer; `siteSettings-en` still has `crisisSupportText: null`.
+  The footer correctly omits the line rather than rendering it empty, but the
+  English site currently has **no visible crisis-support line at all**. This is
+  a deontology element — don't let the English gap sit unresolved silently.
 - **Footer's Locations column renders empty** (found in the same verification):
   same root cause already logged in the Step 9 verification results above — zero
   `locationPage` documents are published yet. Resolves itself once Stage 3 Step 9
   (location pages) creates the two real documents; not a footer code defect.
+- **Header/footer copy isn't Sanity-editable yet** (nav labels, CTA text, footer
+  headings, legal link labels — all currently in `messages/it.json` /
+  `messages/en.json`). The non-technical client can't change any of this without
+  a code change. Deliberately deferred until the header/footer markup itself is
+  finalized (no point building an editable-fields UI around a layout that's
+  still moving) — revisit once Stage 3's header/footer work is done, likely as
+  either new `siteSettings` fields or a dedicated navigation/footer document.

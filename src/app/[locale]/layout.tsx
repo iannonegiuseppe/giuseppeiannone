@@ -121,9 +121,11 @@ export default async function LocaleLayout({
             locale={typedLocale}
             contactEmail={siteSettings?.contactEmail}
             contactPhone={siteSettings?.contactPhone}
+            whatsappNumber={siteSettings?.whatsappNumber}
             locations={locations}
             crisisSupportText={siteSettings?.crisisSupportText}
             googleProfileUrl={siteSettings?.googleProfileUrl}
+            socialLinks={siteSettings?.socialLinks}
           />
         </NextIntlClientProvider>
         {isDraft ? <VisualEditing /> : null}

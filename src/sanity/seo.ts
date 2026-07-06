@@ -31,6 +31,7 @@ interface SiteSettingsData {
   socialLinks?: SocialLinks;
   contactEmail?: string;
   contactPhone?: string;
+  whatsappNumber?: string;
   // Schema marks this required (deontology element, Stage 3 Step 4) — but
   // that only guides future Studio saves, not documents published before
   // the field existed. Treated as optional here so old data can't crash a

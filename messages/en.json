@@ -26,7 +26,9 @@
     "legalHeading": "Legal",
     "privacy": "Privacy",
     "cookiePolicy": "Cookie policy",
-    "googleProfile": "Find me on Google"
+    "googleProfile": "Find me on Google",
+    "whatsapp": "Message me on WhatsApp",
+    "instagram": "Instagram"
   },
   "NotFound": {
     "title": "Page not found",

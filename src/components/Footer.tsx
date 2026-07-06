@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { whatsappUrl } from "@/sanity/contact";
 import { cookiePolicyPath, privacyPath, type Locale } from "@/sanity/paths";
+import type { SocialLinks } from "@/sanity/seo";
 import styles from "./Footer.module.scss";
 
 interface FooterLocation {
@@ -12,19 +14,23 @@ export async function Footer({
   locale,
   contactEmail,
   contactPhone,
+  whatsappNumber,
   locations,
   crisisSupportText,
   googleProfileUrl,
+  socialLinks,
 }: {
   locale: Locale;
   contactEmail?: string;
   contactPhone?: string;
+  whatsappNumber?: string;
   locations: FooterLocation[];
   // Optional here even though the schema requires it (Stage 3 Step 4) —
   // a document published before the field existed won't have it; the
   // footer omits the line rather than rendering an empty one.
   crisisSupportText?: string;
   googleProfileUrl?: string;
+  socialLinks?: SocialLinks;
 }) {
   const t = await getTranslations({ locale, namespace: "Footer" });
 
@@ -43,6 +49,16 @@ export async function Footer({
               {contactPhone}
             </a>
           ) : null}
+          {whatsappNumber ? (
+            <a
+              href={whatsappUrl(whatsappNumber)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.link}
+            >
+              {t("whatsapp")}
+            </a>
+          ) : null}
           {googleProfileUrl ? (
             <a
               href={googleProfileUrl}
@@ -51,6 +67,16 @@ export async function Footer({
               className={styles.link}
             >
               {t("googleProfile")}
+            </a>
+          ) : null}
+          {socialLinks?.instagram ? (
+            <a
+              href={socialLinks.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.link}
+            >
+              {t("instagram")}
             </a>
           ) : null}
         </div>

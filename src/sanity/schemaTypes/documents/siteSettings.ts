@@ -29,6 +29,16 @@ export const siteSettings = defineType({
       type: "string",
     }),
     defineField({
+      name: "whatsappNumber",
+      title: "WhatsApp number",
+      description:
+        'Full number with country code (e.g. "+39 000 0000000"). This is a ' +
+        "contact channel, not a social profile — deliberately not part of " +
+        "socialLinks below. Code derives the wa.me link from this so an " +
+        "editor never has to construct or paste a URL correctly.",
+      type: "string",
+    }),
+    defineField({
       name: "seo",
       title: "Default SEO",
       type: "seo",
