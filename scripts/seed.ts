@@ -56,6 +56,13 @@ function keyTakeaways(items: string[], key: string) {
   return { _type: "keyTakeaways", _key: key, items };
 }
 
+function ctaBlock(
+  fields: { heading: string; body?: string; buttonLabel: string; buttonHref: string },
+  key: string,
+) {
+  return { _type: "ctaBlock", _key: key, ...fields };
+}
+
 function faqBlockRef(faqItemIds: string[], key: string) {
   return {
     _type: "faqBlock",
@@ -210,10 +217,25 @@ async function seed() {
       "[Segnaposto IT — formazione. Non definitivo.]",
       "[Segnaposto IT — supervisione clinica. Non definitivo.]",
     ],
+    methods: [
+      {
+        title: "[Segnaposto IT — metodo 1]",
+        description: "[Segnaposto IT — descrizione metodo 1. Non definitivo, non clinico.]",
+      },
+      {
+        title: "[Segnaposto IT — metodo 2]",
+        description: "[Segnaposto IT — descrizione metodo 2. Non definitivo, non clinico.]",
+      },
+    ],
     body: [
-      paragraph(
-        "Psicologo psicoterapeuta a Milano, Monza e online. Il nuovo sito è quasi pronto: torna presto per scoprirlo.",
-        "hero-body",
+      ctaBlock(
+        {
+          heading: "[Segnaposto IT — non sai da dove iniziare?]",
+          body: "[Segnaposto IT — se ti riconosci in questi sintomi, parliamone. Non definitivo, non clinico.]",
+          buttonLabel: "Scrivimi",
+          buttonHref: "/contatti",
+        },
+        "home-not-sure-cta",
       ),
     ],
     seo: {
@@ -239,10 +261,25 @@ async function seed() {
       "[EN placeholder — training. Non-final.]",
       "[EN placeholder — clinical supervision. Non-final.]",
     ],
+    methods: [
+      {
+        title: "[EN placeholder — method 1]",
+        description: "[EN placeholder — method 1 description. Non-final, non-clinical.]",
+      },
+      {
+        title: "[EN placeholder — method 2]",
+        description: "[EN placeholder — method 2 description. Non-final, non-clinical.]",
+      },
+    ],
     body: [
-      paragraph(
-        "Psychologist and psychotherapist in Milan, Monza, and online. The new website is coming soon — check back shortly.",
-        "hero-body",
+      ctaBlock(
+        {
+          heading: "[EN placeholder — not sure where you fit?]",
+          body: "[EN placeholder — if you recognize these symptoms, let's talk. Non-final, non-clinical.]",
+          buttonLabel: "Get in touch",
+          buttonHref: "/en/contact",
+        },
+        "home-not-sure-cta",
       ),
     ],
     seo: {

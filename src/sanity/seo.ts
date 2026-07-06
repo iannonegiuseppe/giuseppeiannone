@@ -16,6 +16,7 @@ export interface AuthorFields {
   name: string;
   credentials?: string;
   registrationNumber?: string;
+  bio?: string;
 }
 
 export interface SocialLinks {

@@ -1,0 +1,17 @@
+@use "../styles/mixins";
+
+.section {
+  @include mixins.container;
+  @include mixins.section;
+}
+
+.heading {
+  margin: 0 0 var(--space-4);
+}
+
+.bio {
+  max-width: 68ch;
+  color: var(--color-text);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+}

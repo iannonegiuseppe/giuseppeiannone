@@ -74,8 +74,40 @@ export const homePageQuery = defineQuery(`
       "videoUrl": video.asset->url
     },
     credentialsStrip,
+    methods,
     ${bodyProjection},
     seo
+  }
+`);
+
+// Homepage "concerns grid" — every pillar page, auto-curated (no manual
+// reference list to keep in sync as new pillars are added). Excludes
+// noIndex ones, same rule as the sitemap.
+export const pillarsGridQuery = defineQuery(`
+  *[_type == "pillarPage" && language == $locale && seo.noIndex != true] | order(title asc) {
+    _id,
+    title,
+    "slug": slug.current,
+    "description": seo.metaDescription
+  }
+`);
+
+// Homepage "latest from the knowledge base" — most recently updated
+// pillar/subtopic pages. Deliberately excludes "article" and "service":
+// neither has a public route yet (Stage 3+, see SPEC.md), so linking to
+// one here would be a dead link, unlike the header nav's not-yet-built
+// singleton pages (those at least resolve to the site's own not-found
+// page — an article/service reference wouldn't resolve to anything
+// generateStaticParams knows about at all).
+export const latestContentQuery = defineQuery(`
+  *[_type in ["pillarPage", "subtopicPage"] && language == $locale && seo.noIndex != true]
+    | order(_updatedAt desc) [0...3] {
+    _id,
+    _type,
+    title,
+    "slug": slug.current,
+    "parentSlug": parentPillar->slug.current,
+    "description": seo.metaDescription
   }
 `);
 

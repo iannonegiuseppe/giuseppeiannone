@@ -69,8 +69,40 @@ export const homePage = defineType({
       validation: (Rule) => Rule.max(4),
     }),
     defineField({
+      name: "methods",
+      title: "Methods",
+      description:
+        "Therapeutic approaches, as short title + description pairs. Informational only — these don't link anywhere (a method isn't a page), unlike the concerns grid or knowledge-base cards below.",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "methodItem",
+          fields: [
+            defineField({
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "text",
+              rows: 2,
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          preview: { select: { title: "title", subtitle: "description" } },
+        },
+      ],
+      validation: (Rule) => Rule.max(4),
+    }),
+    defineField({
       name: "body",
-      title: "Body (legacy, being replaced section by section)",
+      title: "Body — currently the \"not sure where you fit\" prompt",
+      description:
+        "Legacy field, being replaced section by section — currently holds exactly one ctaBlock for the homepage's soft \"not sure where you fit\" moment. Don't add other Portable Text content here without reconsidering this description.",
       type: "portableText",
     }),
     defineField({

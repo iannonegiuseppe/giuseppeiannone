@@ -1,0 +1,10 @@
+@use "../../styles/mixins";
+
+// Wraps the homepage's one PortableText render (currently just the "not
+// sure where you fit" ctaBlock) — every other homepage section uses these
+// same two mixins directly; this was missing them entirely, leaving the
+// section flush against its neighbors instead of properly spaced.
+.bodySection {
+  @include mixins.container;
+  @include mixins.section;
+}

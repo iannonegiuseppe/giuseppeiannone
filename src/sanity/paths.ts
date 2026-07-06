@@ -105,3 +105,27 @@ export function subtopicLocalizedPaths(
 
   return paths;
 }
+
+export interface ReferencedDoc {
+  _id: string;
+  _type: string;
+  title?: string;
+  slug?: string;
+  parentSlug?: string | null;
+}
+
+// Shared by the Portable Text renderers (relatedTopics, condition/
+// treatmentCard) and the homepage's concerns grid / latest-content
+// sections — anywhere a document reference needs to become a URL.
+export function hrefFor(locale: Locale, doc: ReferencedDoc): string {
+  const prefix = locale === "it" ? "" : `/${locale}`;
+
+  if (doc._type === "pillarPage" && doc.slug) {
+    return `${prefix}/${doc.slug}`;
+  }
+  if (doc._type === "subtopicPage" && doc.slug && doc.parentSlug) {
+    return `${prefix}/${doc.parentSlug}/${doc.slug}`;
+  }
+
+  return prefix || "/";
+}

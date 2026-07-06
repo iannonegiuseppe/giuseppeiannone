@@ -12,6 +12,12 @@
     "cta": "Book a first consultation",
     "registrationPrefix": "Professional Register No."
   },
+  "Home": {
+    "whoIAmHeading": "About me",
+    "concernsGridHeading": "What I help with",
+    "methodsHeading": "Methods",
+    "latestContentHeading": "Latest resources"
+  },
   "Header": {
     "nav": {
       "home": "Home",

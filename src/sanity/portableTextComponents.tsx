@@ -4,28 +4,8 @@ import { PortableText, type PortableTextComponents } from "next-sanity";
 import { Card } from "@/components/Card";
 import { ButtonLink } from "@/components/Button";
 import { imageDimensions, urlFor } from "./image";
+import { hrefFor, type Locale, type ReferencedDoc } from "./paths";
 import styles from "./portableTextComponents.module.scss";
-
-interface ReferencedDoc {
-  _id: string;
-  _type: string;
-  title?: string;
-  slug?: string;
-  parentSlug?: string | null;
-}
-
-function hrefFor(locale: string, doc: ReferencedDoc): string {
-  const prefix = locale === "it" ? "" : `/${locale}`;
-
-  if (doc._type === "pillarPage" && doc.slug) {
-    return `${prefix}/${doc.slug}`;
-  }
-  if (doc._type === "subtopicPage" && doc.slug && doc.parentSlug) {
-    return `${prefix}/${doc.parentSlug}/${doc.slug}`;
-  }
-
-  return prefix || "/";
-}
 
 // True for a full external URL; false for an internal path (ctaBlock's
 // buttonHref and Portable Text's link mark can both be either).
@@ -41,8 +21,9 @@ export async function getPortableTextComponents(
   locale: string,
   headingIds?: Map<string, string>,
 ): Promise<PortableTextComponents> {
+  const typedLocale = locale as Locale;
   const t = await getTranslations({
-    locale: locale as "it" | "en",
+    locale: typedLocale,
     namespace: "KeyTakeaways",
   });
 
@@ -129,7 +110,7 @@ export async function getPortableTextComponents(
         <ul className={styles.cardGrid}>
           {(value.items as ReferencedDoc[]).map((doc) => (
             <li key={doc._id}>
-              <Card title={doc.title ?? ""} href={hrefFor(locale, doc)} />
+              <Card title={doc.title ?? ""} href={hrefFor(typedLocale, doc)} />
             </li>
           ))}
         </ul>
@@ -157,7 +138,7 @@ export async function getPortableTextComponents(
             <Card
               title={value.title as string}
               description={value.description as string}
-              href={link ? hrefFor(locale, link) : "#"}
+              href={link ? hrefFor(typedLocale, link) : "#"}
             />
           </div>
         );
@@ -169,7 +150,7 @@ export async function getPortableTextComponents(
             <Card
               title={value.title as string}
               description={value.description as string}
-              href={link ? hrefFor(locale, link) : "#"}
+              href={link ? hrefFor(typedLocale, link) : "#"}
             />
           </div>
         );

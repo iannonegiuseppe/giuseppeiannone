@@ -1,0 +1,40 @@
+@use "../styles/mixins";
+
+.section {
+  @include mixins.container;
+  @include mixins.section;
+}
+
+.heading {
+  margin: 0 0 var(--space-5);
+}
+
+.grid {
+  @include mixins.grid-auto(16rem);
+
+  list-style: none;
+  padding: 0;
+}
+
+// Deliberately not Card-styled — methods don't link anywhere, so no
+// hairline border/arrow affordance implying they're clickable.
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.itemTitle {
+  // Below Marcellus's legible floor — same reasoning as global h3.
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+}
+
+.itemDescription {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body);
+}
