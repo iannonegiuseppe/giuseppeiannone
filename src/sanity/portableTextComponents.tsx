@@ -20,6 +20,12 @@ function isExternalHref(href: string): boolean {
 export async function getPortableTextComponents(
   locale: string,
   headingIds?: Map<string, string>,
+  // "boxed" (contained, matches every other in-content block) is correct
+  // inside a reading column — a full-bleed band would break the article's
+  // flow. The homepage explicitly opts into "band" for its own standalone
+  // ctaBlock moment, where the full-bleed color gives the long page a
+  // rhythmic anchor point instead.
+  ctaBlockVariant: "boxed" | "band" = "boxed",
 ): Promise<PortableTextComponents> {
   const typedLocale = locale as Locale;
   const t = await getTranslations({
@@ -115,22 +121,38 @@ export async function getPortableTextComponents(
           ))}
         </ul>
       ),
-      ctaBlock: ({ value }) => (
-        <div className={styles.ctaBlock}>
-          <p className={styles.ctaHeading}>{value.heading as string}</p>
-          {value.body ? (
-            <p className={styles.ctaBody}>{value.body as string}</p>
-          ) : null}
-          <ButtonLink
-            href={value.buttonHref as string}
-            variant="solid"
-            target={isExternalHref(value.buttonHref as string) ? "_blank" : undefined}
-            rel={isExternalHref(value.buttonHref as string) ? "noopener" : undefined}
-          >
-            {value.buttonLabel as string}
-          </ButtonLink>
-        </div>
-      ),
+      ctaBlock: ({ value }) => {
+        const content = (
+          <>
+            <p className={styles.ctaHeading}>{value.heading as string}</p>
+            {value.body ? (
+              <p className={styles.ctaBody}>{value.body as string}</p>
+            ) : null}
+            <ButtonLink
+              href={value.buttonHref as string}
+              variant="solid"
+              target={
+                isExternalHref(value.buttonHref as string) ? "_blank" : undefined
+              }
+              rel={
+                isExternalHref(value.buttonHref as string) ? "noopener" : undefined
+              }
+            >
+              {value.buttonLabel as string}
+            </ButtonLink>
+          </>
+        );
+
+        if (ctaBlockVariant === "band") {
+          return (
+            <div className={styles.ctaBand}>
+              <div className={styles.ctaBandInner}>{content}</div>
+            </div>
+          );
+        }
+
+        return <div className={styles.ctaBlock}>{content}</div>;
+      },
       conditionCard: ({ value }) => {
         const link = value.link as ReferencedDoc | undefined;
         return (

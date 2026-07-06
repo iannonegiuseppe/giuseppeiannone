@@ -396,6 +396,15 @@ async function seed() {
         "pillar-it-image",
       ),
       faqBlockRef(faqIds.it, "pillar-it-faq"),
+      ctaBlock(
+        {
+          heading: "[IT segnaposto — non sai da dove iniziare?]",
+          body: "[IT segnaposto — se ti riconosci in questi sintomi, parliamone. Non definitivo, non clinico.]",
+          buttonLabel: "Scrivimi",
+          buttonHref: "/contatti",
+        },
+        "pillar-it-cta",
+      ),
     ],
     seo: {
       _type: "seo",
@@ -432,6 +441,15 @@ async function seed() {
         "pillar-en-image",
       ),
       faqBlockRef(faqIds.en, "pillar-en-faq"),
+      ctaBlock(
+        {
+          heading: "[EN placeholder — not sure where you fit?]",
+          body: "[EN placeholder — if you recognize these symptoms, let's talk. Non-final, non-clinical.]",
+          buttonLabel: "Get in touch",
+          buttonHref: "/en/contact",
+        },
+        "pillar-en-cta",
+      ),
     ],
     seo: {
       _type: "seo",

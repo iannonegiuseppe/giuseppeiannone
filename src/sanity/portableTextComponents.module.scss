@@ -137,6 +137,28 @@
   color: var(--color-text-muted);
 }
 
+// Full-bleed variant — the homepage's standalone ctaBlock moment only
+// (see ctaBlockVariant in portableTextComponents.tsx). Breaks out of its
+// centered container to full viewport width; relies on the project's
+// global overflow-x: hidden (globals.scss) as the guardrail against a
+// stray horizontal scrollbar — verified separately at 360px and
+// ~1440px+, both locales, no overflow, no edge artifacts.
+.ctaBand {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  background: var(--color-accent-soft);
+}
+
+.ctaBandInner {
+  @include mixins.container;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-block: var(--space-8);
+}
+
 // --- Cards -----------------------------------------------------------------
 .cardGrid {
   @include mixins.grid-auto(16rem);

@@ -104,7 +104,7 @@ export default async function Home({
       getConcernsGrid(locale),
       getLatestContent(locale),
       getTranslations({ locale: typedLocale, namespace: "Home" }),
-      getPortableTextComponents(locale),
+      getPortableTextComponents(locale, undefined, "band"),
     ]);
   if (!data) notFound();
 

@@ -166,12 +166,25 @@ rediscovered from scratch later.
   Revisit when Stage 3 builds out the full route set — likely fix: resolve the
   document once (shared between `generateMetadata` and the page component) and
   make that resolution `notFound()`-aware, rather than querying twice.
-- **`ctaBlock`/`conditionCard`/`treatmentCard`/`blockquote` are type-checked but
-  not yet rendered in a browser** (found building Stage 3 Step 3): no seed
-  content exercises them, so they're verified by type-check and code review
-  only. To be visually confirmed on the first real page that uses one —
-  `ctaBlock` surfaces on the homepage in Stage 3 Step 5. No temporary write
-  token is to be provisioned just for this.
+- **`ctaBlock` is now real, exercised in both contexts it can appear in**
+  (closed in Stage 3 Step 5's CTA-variant pass): the homepage's own "not sure
+  where you fit" moment uses a new full-bleed "band" variant
+  (`ctaBlockVariant: "band"` in `getPortableTextComponents`), while article
+  body content (pillar/subtopic pages) keeps the original contained "boxed"
+  variant (the default, unchanged). Both variants verified via temporary
+  overrides — including the band's full-bleed breakout at 360px and ~1440px+,
+  both locales, confirmed no horizontal overflow — then added permanently to
+  `scripts/seed.ts` (the pillar page's article body, and the homepage's
+  `body`) rather than left as throwaway test data. **Not yet live**: the
+  seed script isn't re-run against the published dataset (no write token), so
+  the real site still shows the old placeholder paragraph until someone
+  re-seeds or edits it directly in Studio.
+- **`conditionCard`/`treatmentCard`/`blockquote` are still type-checked but
+  not yet rendered in a browser** (found building Stage 3 Step 3, `ctaBlock`
+  split off into its own resolved item above): no seed content exercises
+  these three, so they're verified by type-check and code review only. No
+  temporary write token is to be provisioned just for this — revisit when a
+  real page naturally uses one.
 - **`siteSettings.crisisSupportText` is only published for `it`, not `en`**
   (found verifying Stage 3 Step 4, re-checked after the client published the
   Italian text): confirmed directly against the Content Lake — `siteSettings-it`
