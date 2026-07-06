@@ -1,5 +1,10 @@
+import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { PortableText, type PortableTextComponents } from "next-sanity";
-import { urlFor } from "./image";
+import { Card } from "@/components/Card";
+import { ButtonLink } from "@/components/Button";
+import { imageDimensions, urlFor } from "./image";
+import styles from "./portableTextComponents.module.scss";
 
 interface ReferencedDoc {
   _id: string;
@@ -22,18 +27,25 @@ function hrefFor(locale: string, doc: ReferencedDoc): string {
   return prefix || "/";
 }
 
-// Minimal, unstyled renderers proving every custom block type in the
-// restricted Portable Text schema renders server-side. Styling comes in
-// a later stage.
-//
+// True for a full external URL; false for an internal path (ctaBlock's
+// buttonHref and Portable Text's link mark can both be either).
+function isExternalHref(href: string): boolean {
+  return /^https?:\/\//.test(href);
+}
+
 // headingIds maps a block's _key to the anchor id computed by
 // extractHeadings (headings.ts) — the same map used to build the visible
 // TableOfContents, so a jump-link can never point at an id that doesn't
 // exist on the rendered h2/h3.
-export function getPortableTextComponents(
+export async function getPortableTextComponents(
   locale: string,
   headingIds?: Map<string, string>,
-): PortableTextComponents {
+): Promise<PortableTextComponents> {
+  const t = await getTranslations({
+    locale: locale as "it" | "en",
+    namespace: "KeyTakeaways",
+  });
+
   return {
     block: {
       h2: ({ children, value }) => (
@@ -46,11 +58,14 @@ export function getPortableTextComponents(
           {children}
         </h3>
       ),
+      blockquote: ({ children }) => (
+        <blockquote className={styles.blockquote}>{children}</blockquote>
+      ),
     },
     marks: {
       link: ({ value, children }) => {
         const href = (value?.href as string | undefined) ?? "#";
-        const isExternal = /^https?:\/\//.test(href);
+        const isExternal = isExternalHref(href);
         const rel = isExternal
           ? ["noopener", value?.nofollow ? "nofollow" : null]
               .filter(Boolean)
@@ -58,74 +73,104 @@ export function getPortableTextComponents(
           : undefined;
 
         return (
-          <a href={href} target={isExternal ? "_blank" : undefined} rel={rel}>
+          <a
+            href={href}
+            target={isExternal ? "_blank" : undefined}
+            rel={rel}
+            className={styles.link}
+          >
             {children}
           </a>
         );
       },
     },
     types: {
-      image: ({ value }) => (
-        // Plain <img>, not next/image: this stage is deliberately
-        // unstyled/unoptimized plumbing verification (Step 9); image
-        // optimization is a later-stage concern.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={urlFor(value).width(800).url()} alt={value.alt ?? ""} />
-      ),
+      image: ({ value }) => {
+        const dims = imageDimensions(value) ?? { width: 4, height: 3 };
+        return (
+          <Image
+            src={urlFor(value).width(2000).url()}
+            alt={value.alt ?? ""}
+            width={dims.width}
+            height={dims.height}
+            sizes="(min-width: 64rem) 40rem, 100vw"
+            className={styles.image}
+          />
+        );
+      },
       keyTakeaways: ({ value }) => (
-        <ul>
-          {(value.items as string[]).map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ul>
+        <div className={styles.keyTakeaways}>
+          <p className={styles.keyTakeawaysLabel}>{t("label")}</p>
+          <ul className={styles.keyTakeawaysList}>
+            {(value.items as string[]).map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
       ),
       faqBlock: ({ value }) => (
-        <dl>
-          {(value.items as { _id: string; question: string; answer: unknown }[]).map(
-            (item) => (
-              <div key={item._id}>
-                <dt>{item.question}</dt>
-                <dd>
-                  <PortableText value={item.answer as never} />
-                </dd>
+        <div className={styles.faqBlock}>
+          {(
+            value.items as { _id: string; question: string; answer: unknown }[]
+          ).map((item) => (
+            <details key={item._id} className={styles.faqItem}>
+              <summary className={styles.faqQuestion}>
+                <span>{item.question}</span>
+                <span className={styles.faqIcon} aria-hidden="true" />
+              </summary>
+              <div className={styles.faqAnswer}>
+                <PortableText value={item.answer as never} />
               </div>
-            ),
-          )}
-        </dl>
+            </details>
+          ))}
+        </div>
       ),
       relatedTopics: ({ value }) => (
-        <ul>
+        <ul className={styles.cardGrid}>
           {(value.items as ReferencedDoc[]).map((doc) => (
             <li key={doc._id}>
-              <a href={hrefFor(locale, doc)}>{doc.title}</a>
+              <Card title={doc.title ?? ""} href={hrefFor(locale, doc)} />
             </li>
           ))}
         </ul>
       ),
       ctaBlock: ({ value }) => (
-        <div>
-          <p>{value.heading as string}</p>
-          {value.body ? <p>{value.body as string}</p> : null}
-          <a href={value.buttonHref as string}>{value.buttonLabel as string}</a>
+        <div className={styles.ctaBlock}>
+          <p className={styles.ctaHeading}>{value.heading as string}</p>
+          {value.body ? (
+            <p className={styles.ctaBody}>{value.body as string}</p>
+          ) : null}
+          <ButtonLink
+            href={value.buttonHref as string}
+            variant="solid"
+            target={isExternalHref(value.buttonHref as string) ? "_blank" : undefined}
+            rel={isExternalHref(value.buttonHref as string) ? "noopener" : undefined}
+          >
+            {value.buttonLabel as string}
+          </ButtonLink>
         </div>
       ),
       conditionCard: ({ value }) => {
         const link = value.link as ReferencedDoc | undefined;
         return (
-          <div>
-            <p>{value.title as string}</p>
-            <p>{value.description as string}</p>
-            {link ? <a href={hrefFor(locale, link)}>{link.title}</a> : null}
+          <div className={styles.standaloneCard}>
+            <Card
+              title={value.title as string}
+              description={value.description as string}
+              href={link ? hrefFor(locale, link) : "#"}
+            />
           </div>
         );
       },
       treatmentCard: ({ value }) => {
         const link = value.link as ReferencedDoc | undefined;
         return (
-          <div>
-            <p>{value.title as string}</p>
-            <p>{value.description as string}</p>
-            {link ? <a href={hrefFor(locale, link)}>{link.title}</a> : null}
+          <div className={styles.standaloneCard}>
+            <Card
+              title={value.title as string}
+              description={value.description as string}
+              href={link ? hrefFor(locale, link) : "#"}
+            />
           </div>
         );
       },

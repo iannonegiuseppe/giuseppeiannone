@@ -26,11 +26,15 @@ const marcellus = Marcellus({
 
 // Lato's real (non-synthesized) weights are 100/300/400/700/900 — no 500 or
 // 600. 700 is kept for inline emphasis within body copy only; heading
-// hierarchy uses 400 at different sizes, not weight.
+// hierarchy uses 400 at different sizes, not weight. Italic is loaded
+// too — the restricted Portable Text schema allows an `em` mark, and
+// without it that would fall back to the browser's own faux-slanted
+// rendering instead of Lato's real italic cut.
 const lato = Lato({
   variable: "--font-lato",
   subsets: ["latin"],
   weight: ["400", "700"],
+  style: ["normal", "italic"],
 });
 
 // Site-wide fallback + noindex default. Individual pages (e.g. the

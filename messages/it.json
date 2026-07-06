@@ -5,6 +5,9 @@
   "TableOfContents": {
     "label": "Indice"
   },
+  "KeyTakeaways": {
+    "label": "In breve"
+  },
   "NotFound": {
     "title": "Pagina non trovata",
     "description": "La pagina che stai cercando non esiste o è stata spostata.",

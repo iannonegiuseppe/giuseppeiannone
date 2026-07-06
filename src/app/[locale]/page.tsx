@@ -54,14 +54,13 @@ export default async function Home({
   const data = await getHomePage(locale);
   if (!data) notFound();
 
+  const components = await getPortableTextComponents(locale);
+
   return (
     <main className={styles.main}>
       <h1 className={styles.title}>{data.title}</h1>
       <div className={styles.body}>
-        <PortableText
-          value={data.body as never}
-          components={getPortableTextComponents(locale)}
-        />
+        <PortableText value={data.body as never} components={components} />
       </div>
     </main>
   );

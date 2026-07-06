@@ -122,6 +122,7 @@ export default async function SubtopicPage({
 
   const headings = extractHeadings(data.body);
   const headingIds = headingIdsByKey(headings);
+  const components = await getPortableTextComponents(locale, headingIds);
 
   return (
     <main>
@@ -130,10 +131,7 @@ export default async function SubtopicPage({
       <Breadcrumbs trail={trail} />
       <h1>{data.title}</h1>
       <TableOfContents locale={locale} headings={headings} />
-      <PortableText
-        value={data.body as never}
-        components={getPortableTextComponents(locale, headingIds)}
-      />
+      <PortableText value={data.body as never} components={components} />
     </main>
   );
 }
