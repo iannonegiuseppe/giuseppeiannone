@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { VisualEditing } from "next-sanity/visual-editing";
 import { Fraunces, Work_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
-import { sanityFetch } from "@/sanity/client";
+import { isDraftModeEnabled, sanityFetch } from "@/sanity/client";
 import {
   buildMedicalBusinessJsonLd,
   buildPersonJsonLd,
@@ -61,9 +62,10 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  const [siteSettings, locations] = await Promise.all([
+  const [siteSettings, locations, isDraft] = await Promise.all([
     getSiteSettings(locale),
     getLocations(locale),
+    isDraftModeEnabled(),
   ]);
 
   const siteUrl = getSiteUrl();
@@ -95,6 +97,7 @@ export default async function LocaleLayout({
           <JsonLdScript data={medicalBusinessJsonLd} />
         ) : null}
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        {isDraft ? <VisualEditing /> : null}
       </body>
     </html>
   );
