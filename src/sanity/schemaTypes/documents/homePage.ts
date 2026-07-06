@@ -60,6 +60,15 @@ export const homePage = defineType({
       ],
     }),
     defineField({
+      name: "credentialsStrip",
+      title: "Credentials strip",
+      description:
+        "Factual credentials only (years in practice, training, supervision) as complete, plain phrases — never counters, never percentage or client-number claims.",
+      type: "array",
+      of: [{ type: "string" }],
+      validation: (Rule) => Rule.max(4),
+    }),
+    defineField({
       name: "body",
       title: "Body (legacy, being replaced section by section)",
       type: "portableText",

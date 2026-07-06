@@ -49,14 +49,18 @@
 }
 
 // Vertical rhythm between page sections per brief §4: "96–128px desktop,
-// 64px mobile." Uses 96px (--space-9) as the default desktop step; a
-// section that needs the fuller 128px can override with --space-10
-// directly rather than this mixin trying to guess which sections want more.
+// 64px mobile." padding-bottom only, deliberately — each section brings
+// the gap that follows it. Two adjacent sections both using this mixin
+// must NOT compound to double the gap (padding-top on both would sum,
+// not collapse, since sections here are flex containers, not simple
+// flow boxes margin-collapse could reliably apply to). Uses 96px
+// (--space-9) as the default desktop step; a section that needs the
+// fuller 128px can override with --space-10 directly.
 @mixin section {
-  padding-block: var(--space-8);
+  padding-bottom: var(--space-8);
 
   @include breakpoint-up(lg) {
-    padding-block: var(--space-9);
+    padding-bottom: var(--space-9);
   }
 }
 

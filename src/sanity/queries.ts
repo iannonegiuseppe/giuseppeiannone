@@ -73,6 +73,7 @@ export const homePageQuery = defineQuery(`
       photo,
       "videoUrl": video.asset->url
     },
+    credentialsStrip,
     ${bodyProjection},
     seo
   }

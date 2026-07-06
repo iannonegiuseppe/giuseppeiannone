@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { CredentialsStrip } from "@/components/CredentialsStrip";
 import { Hero, type HeroPhoto } from "@/components/Hero";
 import { sanityFetch } from "@/sanity/client";
 import type { Locale } from "@/sanity/paths";
@@ -14,6 +15,7 @@ interface HomePageData {
     photo?: HeroPhoto;
     videoUrl?: string;
   };
+  credentialsStrip?: string[];
   seo?: SeoFields;
 }
 
@@ -71,6 +73,7 @@ export default async function Home({
         photo={data.hero?.photo}
         videoUrl={data.hero?.videoUrl}
       />
+      <CredentialsStrip items={data.credentialsStrip} />
     </main>
   );
 }

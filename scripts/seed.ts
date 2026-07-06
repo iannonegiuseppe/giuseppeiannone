@@ -205,6 +205,11 @@ async function seed() {
       positioningStatement:
         "[Segnaposto IT — testo di posizionamento. Non definitivo, non clinico.]",
     },
+    credentialsStrip: [
+      "[Segnaposto IT — anni di esperienza. Non definitivo.]",
+      "[Segnaposto IT — formazione. Non definitivo.]",
+      "[Segnaposto IT — supervisione clinica. Non definitivo.]",
+    ],
     body: [
       paragraph(
         "Psicologo psicoterapeuta a Milano, Monza e online. Il nuovo sito è quasi pronto: torna presto per scoprirlo.",
@@ -229,6 +234,11 @@ async function seed() {
       positioningStatement:
         "[EN placeholder — positioning statement. Non-final, non-clinical text.]",
     },
+    credentialsStrip: [
+      "[EN placeholder — years in practice. Non-final.]",
+      "[EN placeholder — training. Non-final.]",
+      "[EN placeholder — clinical supervision. Non-final.]",
+    ],
     body: [
       paragraph(
         "Psychologist and psychotherapist in Milan, Monza, and online. The new website is coming soon — check back shortly.",
