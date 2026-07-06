@@ -55,3 +55,19 @@ export async function isDraftModeEnabled(): Promise<boolean> {
   const { isEnabled } = await draftMode();
   return isEnabled;
 }
+
+// For callers that must never branch on draft mode: generateStaticParams
+// (build time, no request exists yet, so draftMode() isn't meaningful) and
+// public routes like sitemap.ts (must always reflect published-only
+// content, regardless of the requester's own draft-mode cookie). Always
+// published, always tagged — tags are a required argument on purpose, so
+// an untagged (and therefore never-revalidated) fetch can't be written by
+// accident. This and sanityFetch above are the only two places allowed to
+// call client.fetch/previewClient.fetch — see CLAUDE.md.
+export function sanityFetchPublished<T>(
+  query: string,
+  params: Record<string, unknown>,
+  tags: string[],
+): Promise<T> {
+  return client.fetch<T>(query, params, { next: { tags } });
+}

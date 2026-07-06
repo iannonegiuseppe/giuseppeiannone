@@ -4,7 +4,7 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
-import { client, sanityFetch } from "@/sanity/client";
+import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -43,9 +43,11 @@ export async function generateStaticParams({
 }: {
   params: { locale: string };
 }) {
-  const pillars = await client.fetch<{ slug: string }[]>(pillarSlugsQuery, {
-    locale: params.locale,
-  });
+  const pillars = await sanityFetchPublished<{ slug: string }[]>(
+    pillarSlugsQuery,
+    { locale: params.locale },
+    ["pillarPage"],
+  );
 
   return pillars.map((pillar) => ({ pillarSlug: pillar.slug }));
 }

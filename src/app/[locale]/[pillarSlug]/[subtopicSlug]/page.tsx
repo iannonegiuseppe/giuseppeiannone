@@ -4,7 +4,7 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getSubtopicTrail } from "@/sanity/breadcrumbs";
-import { client, sanityFetch } from "@/sanity/client";
+import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -54,9 +54,9 @@ export async function generateStaticParams({
 }: {
   params: { locale: string };
 }) {
-  const subtopics = await client.fetch<
+  const subtopics = await sanityFetchPublished<
     { pillarSlug: string; subtopicSlug: string }[]
-  >(allSubtopicSlugsQuery, { locale: params.locale });
+  >(allSubtopicSlugsQuery, { locale: params.locale }, ["subtopicPage"]);
 
   return subtopics.map((subtopic) => ({
     pillarSlug: subtopic.pillarSlug,

@@ -107,6 +107,25 @@ upheld in every schema added later:
   an ad hoc parallel-field i18n scheme.
 - Studio UI language is English regardless of site locale.
 
+## Sanity data fetching
+
+- Every Sanity content fetch goes through `src/sanity/client.ts` — never call
+  `client.fetch(...)` or `previewClient.fetch(...)` directly from a page,
+  route, or component. Two wrappers, both with tags as a required argument
+  (not optional — an untagged fetch is a fetch the revalidation webhook can
+  never invalidate):
+  - `sanityFetch(query, params, tags)` — draft-mode aware, for request-time
+    page/metadata fetches (branches to preview content when draft mode is on).
+  - `sanityFetchPublished(query, params, tags)` — always published, no
+    draft-mode check. Use this for `generateStaticParams` (build time, no
+    request/cookies exist yet, so draft mode isn't meaningful) and for public
+    routes like `sitemap.ts`/`robots.ts` that must never reflect a visitor's
+    own draft-mode cookie.
+- `client` itself stays exported for the handful of legitimate non-fetch uses
+  (`next-sanity/draft-mode`'s `defineEnableDraftMode`, `@sanity/image-url`'s
+  `createImageUrlBuilder`) — the rule is about `.fetch()` calls, not the
+  export.
+
 ## Commit conventions
 
 Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`),

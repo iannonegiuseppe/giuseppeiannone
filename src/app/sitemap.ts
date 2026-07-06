@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { client } from "@/sanity/client";
+import { sanityFetchPublished } from "@/sanity/client";
 import { getSiteUrl } from "@/sanity/metadata";
 import type { AlternateEntry, Locale } from "@/sanity/paths";
 import {
@@ -33,18 +33,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
 
   const [homePages, pillars, subtopics] = await Promise.all([
-    client.fetch<{ language: string; _updatedAt: string }[]>(
+    sanityFetchPublished<{ language: string; _updatedAt: string }[]>(
       sitemapHomePagesQuery,
+      {},
+      ["homePage"],
     ),
-    client.fetch<
+    sanityFetchPublished<
       {
         language: string;
         slug?: string;
         _updatedAt: string;
         alternates?: AlternateEntry[];
       }[]
-    >(sitemapPillarsQuery),
-    client.fetch<
+    >(sitemapPillarsQuery, {}, ["pillarPage"]),
+    sanityFetchPublished<
       {
         language: string;
         slug?: string;
@@ -52,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         _updatedAt: string;
         alternates?: AlternateEntry[];
       }[]
-    >(sitemapSubtopicsQuery),
+    >(sitemapSubtopicsQuery, {}, ["subtopicPage"]),
   ]);
 
   const entries: MetadataRoute.Sitemap = [];
