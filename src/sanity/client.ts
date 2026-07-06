@@ -22,6 +22,13 @@ export const client = createClient({
 
 // Separate client, separate (Viewer-scoped) token, used only when draft
 // mode is active — never mixed with the published-only client above.
+// stega is deliberately only enabled here: it encodes invisible
+// steganographic characters into string values so Presentation's
+// "Documents on this page" panel and click-to-edit can trace rendered
+// text back to its source document/field. Enabling it on the published
+// client would leak those characters into real, indexed content.
+// studioUrl is a same-origin relative path since Studio is embedded in
+// this app at /studio, not a separate deployment.
 const previewClient = createClient({
   projectId,
   dataset,
@@ -29,6 +36,7 @@ const previewClient = createClient({
   useCdn: false,
   token: process.env.SANITY_API_PREVIEW_TOKEN,
   perspective: "drafts",
+  stega: { enabled: true, studioUrl: "/studio" },
 });
 
 // Single entry point for every page fetch: picks the published (tagged,
