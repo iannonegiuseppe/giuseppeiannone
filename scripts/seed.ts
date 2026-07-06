@@ -155,6 +155,32 @@ async function seed() {
     contactPhone: "+39 000 0000000",
     crisisSupportText:
       "In caso di emergenza, contattare il 112 o recarsi al pronto soccorso più vicino. Questo sito non sostituisce un intervento di emergenza.",
+    carePathway: [
+      {
+        _key: "pathway-it-1",
+        title: "Primo colloquio",
+        description:
+          "[Segnaposto IT — descrizione primo colloquio. Non definitivo, non clinico.]",
+      },
+      {
+        _key: "pathway-it-2",
+        title: "Valutazione",
+        description:
+          "[Segnaposto IT — descrizione valutazione. Non definitivo, non clinico.]",
+      },
+      {
+        _key: "pathway-it-3",
+        title: "Percorso",
+        description:
+          "[Segnaposto IT — descrizione percorso. Non definitivo, non clinico.]",
+      },
+      {
+        _key: "pathway-it-4",
+        title: "Verifica",
+        description:
+          "[Segnaposto IT — descrizione verifica. Non definitivo, non clinico.]",
+      },
+    ],
     author: {
       name: "Giuseppe Iannone",
       credentials: "[credenziali segnaposto]",
@@ -179,6 +205,32 @@ async function seed() {
     contactPhone: "+39 000 0000000",
     crisisSupportText:
       "In an emergency, call 112 or go to your nearest emergency room. This website is not a substitute for emergency support.",
+    carePathway: [
+      {
+        _key: "pathway-en-1",
+        title: "First consultation",
+        description:
+          "[EN placeholder — first consultation description. Non-final, non-clinical.]",
+      },
+      {
+        _key: "pathway-en-2",
+        title: "Assessment",
+        description:
+          "[EN placeholder — assessment description. Non-final, non-clinical.]",
+      },
+      {
+        _key: "pathway-en-3",
+        title: "Treatment",
+        description:
+          "[EN placeholder — treatment description. Non-final, non-clinical.]",
+      },
+      {
+        _key: "pathway-en-4",
+        title: "Review",
+        description:
+          "[EN placeholder — review description. Non-final, non-clinical.]",
+      },
+    ],
     author: {
       name: "Giuseppe Iannone",
       credentials: "[credentials placeholder]",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { CarePathway } from "@/components/CarePathway";
 import { ContentCardGrid } from "@/components/ContentCardGrid";
 import { CredentialsStrip } from "@/components/CredentialsStrip";
 import { Hero, type HeroPhoto } from "@/components/Hero";
@@ -150,6 +151,10 @@ export default async function Home({
       ) : null}
       <CredentialsStrip items={data.credentialsStrip} />
       <MethodsSection heading={t("methodsHeading")} items={data.methods} />
+      <CarePathway
+        heading={t("carePathwayHeading")}
+        steps={siteSettings?.carePathway}
+      />
       <ContentCardGrid
         heading={t("latestContentHeading")}
         items={latestItems}

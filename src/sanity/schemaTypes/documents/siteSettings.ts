@@ -108,6 +108,41 @@ export const siteSettings = defineType({
       type: "url",
     }),
     defineField({
+      name: "carePathway",
+      title: "Care pathway (\"Il percorso\")",
+      description:
+        'The site\'s signature element — appears on the homepage and, later, ' +
+        "the Method page. Kept in one place (not duplicated per page) since " +
+        "it's the same structural sequence both times, e.g. primo colloquio → " +
+        "valutazione → percorso → verifica. Calm structure, not a marketing " +
+        "timeline: each step is a short title + description, no numbers or " +
+        "claims beyond describing the step.",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "pathwayStep",
+          fields: [
+            defineField({
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "description",
+              title: "Description",
+              type: "text",
+              rows: 2,
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          preview: { select: { title: "title", subtitle: "description" } },
+        },
+      ],
+      validation: (Rule) => Rule.min(2).max(6),
+    }),
+    defineField({
       name: "socialLinks",
       title: "Social profiles",
       description:

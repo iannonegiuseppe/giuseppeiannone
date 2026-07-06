@@ -51,7 +51,8 @@ export const siteSettingsQuery = defineQuery(`
     contactPhone,
     whatsappNumber,
     crisisSupportText,
-    googleProfileUrl
+    googleProfileUrl,
+    carePathway
   }
 `);
 

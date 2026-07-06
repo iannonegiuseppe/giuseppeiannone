@@ -197,6 +197,20 @@ rediscovered from scratch later.
   same root cause already logged in the Step 9 verification results above — zero
   `locationPage` documents are published yet. Resolves itself once Stage 3 Step 9
   (location pages) creates the two real documents; not a footer code defect.
+- **Care pathway ("Il percorso") isn't live yet** (built in its own dedicated
+  pass, Stage 3 Step 5): `siteSettings.carePathway` is new, seeded with the
+  real four-step sequence (Primo colloquio → Valutazione → Percorso →
+  Verifica / First consultation → Assessment → Treatment → Review) in both
+  locales, but the seed script hasn't been re-run against the published
+  dataset — the section simply doesn't render on the live site until it is.
+  Thoroughly verified via temporary overrides before reverting: no-JS shows
+  all 4 steps as real text (no `pendingReveal` class in the raw HTML —
+  confirmed it's JS-only), `prefers-reduced-motion: reduce` keeps every step
+  at opacity 1 with no animation, and normal-motion mode genuinely triggers
+  the IntersectionObserver reveal on scroll (checked via computed opacity
+  before/after, not just visually). Will also render on the Method page once
+  that page exists (Stage 3 Step 7) — same `siteSettings.carePathway` data,
+  no duplication.
 - **Header/footer copy isn't Sanity-editable yet** (nav labels, CTA text, footer
   headings, legal link labels — all currently in `messages/it.json` /
   `messages/en.json`). The non-technical client can't change any of this without

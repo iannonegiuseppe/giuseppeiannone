@@ -25,6 +25,11 @@ export interface SocialLinks {
   facebook?: string;
 }
 
+export interface PathwayStep {
+  title: string;
+  description: string;
+}
+
 interface SiteSettingsData {
   title: string;
   seo?: SeoFields;
@@ -39,6 +44,7 @@ interface SiteSettingsData {
   // render; the footer simply omits the line if it's genuinely missing.
   crisisSupportText?: string;
   googleProfileUrl?: string;
+  carePathway?: PathwayStep[];
 }
 
 export function getSiteSettings(locale: string) {
