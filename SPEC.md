@@ -92,6 +92,53 @@ deployments disallow everything regardless of this policy.
 - **Disallowed**: `/studio`, `/api/`.
 - Sitemap reference built from `NEXT_PUBLIC_SITE_URL` — no hardcoded host.
 
+### Step 9 verification results
+
+Re-verified this session, not assumed from earlier steps' own testing:
+
+- **Build route table**: all public content routes (`/`, `/[pillarSlug]`,
+  `/[pillarSlug]/[subtopicSlug]` × it/en) are static (SSG). Only `/api/*` and
+  `/studio` are dynamic, as expected.
+- **View-source on 4 proof routes** (it-home, it-pillar, it-subtopic, en-pillar):
+  title, canonical (self-referencing), reciprocal hreflang (it/en/x-default), and
+  JSON-LD (Person/BreadcrumbList/MedicalWebPage/FAQPage) all present and valid.
+- **`sitemap.xml`**: found and fixed a real bug — its Sanity fetches had no cache
+  tags, so the revalidate webhook could update every page but leave the sitemap
+  stale until the next redeploy. Fixed by adding `sanityFetchPublished` (tags
+  mandatory) and migrating every direct `client.fetch` call onto it; rule
+  documented in CLAUDE.md. Re-verified live: publishing a change now updates
+  `sitemap.xml` on the real preview deployment with no redeploy.
+- **`robots.txt`**: correctly serves "disallow everything" right now, because
+  `isProductionDeployment()` is false pre-launch. **The documented bot-allow
+  policy itself is still unverified against a real production deployment** —
+  can't be tested until `main`/production is actually live. Not a gap in this
+  session's work, just not yet checkable.
+- **Preview noindex hard rule**: confirmed against the real `*.vercel.app`
+  deployment (not just localhost) — `X-Robots-Tag: noindex, nofollow` present,
+  matching `<meta name="robots">`, self-referencing canonical to the deployment's
+  own URL.
+- **Stage-1 gap (real webhook)**: webhook configured in Sanity's dashboard
+  against the preview URL (POST `/api/revalidate`, `x-vercel-protection-bypass`
+  header for the deployment-protection wall, Sanity's own signed secret in its
+  dedicated Secret field). Verified via a real Studio publish: webhook delivery
+  log showed 200/`revalidated:true`, and the public page updated with no
+  redeploy.
+- **Presentation (draft mode + visual editing)**: found and fixed two real gaps
+  neither caught by Step 7's original scripted test:
+  - `<VisualEditing/>` (from `next-sanity/visual-editing`) was never rendered
+    on the frontend, so Presentation couldn't establish its connection at all.
+    Fixed in `src/app/[locale]/layout.tsx`, conditional on `isDraftModeEnabled()`.
+  - The draft client had no `stega` config, so Presentation's "Documents on
+    this page" panel and click-to-edit had nothing to trace rendered content
+    back to a document. Fixed by enabling `stega` on `previewClient` only
+    (confirmed directly against the Content Lake that draft fetches now carry
+    the encoded characters and published fetches stay clean).
+  - Full loop re-verified with a real, editor-driven draft (made via Structure,
+    not scripted): confirmed via direct Content Lake read that a real draft
+    existed and diverged from published; confirmed the anonymous/public page
+    showed published-only content while the draft was live; confirmed
+    publishing updated the public page with no redeploy.
+
 ## Deferred verification items (for future stages)
 
 Things intentionally built as reusable infrastructure now, ahead of the pages that
