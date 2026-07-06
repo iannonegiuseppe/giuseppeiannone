@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { VisualEditing } from "next-sanity/visual-editing";
-import { Fraunces, Work_Sans } from "next/font/google";
+import { Lato, Marcellus } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -16,15 +16,21 @@ import { locationsQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
 import "./globals.scss";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Marcellus ships Regular (400) only — there is no bold cut, so no other
+// weight is requested here. Never apply a heavier font-weight to it in CSS.
+const marcellus = Marcellus({
+  variable: "--font-marcellus",
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["400"],
 });
 
-const workSans = Work_Sans({
-  variable: "--font-work-sans",
+// Lato's real (non-synthesized) weights are 100/300/400/700/900 — no 500 or
+// 600. 700 is kept for inline emphasis within body copy only; heading
+// hierarchy uses 400 at different sizes, not weight.
+const lato = Lato({
+  variable: "--font-lato",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 // Site-wide fallback + noindex default. Individual pages (e.g. the
@@ -88,7 +94,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${fraunces.variable} ${workSans.variable}`}
+      className={`${marcellus.variable} ${lato.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>

@@ -69,8 +69,8 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
 - Shared design tokens live in `src/styles/_tokens.scss` (CSS custom properties:
   palette, type scale, spacing scale, radii, breakpoints, z-index map) and
   `src/styles/_mixins.scss` (breakpoint mixins, focus-visible, visually-hidden,
-  container). `src/styles/globals.scss` holds the reset/base typography and
-  imports tokens.
+  container). `src/app/[locale]/globals.scss` holds the reset/base typography
+  and imports tokens.
 - **No raw hex colors and no raw px values** in component styles, except `1px`
   borders. Reference tokens/mixins only.
 - Media queries are mobile-first, expressed via the breakpoint mixins — not raw

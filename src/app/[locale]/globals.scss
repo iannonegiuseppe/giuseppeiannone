@@ -58,20 +58,39 @@ body {
   flex-direction: column;
   min-height: 100%;
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--fs-body);
   font-weight: var(--font-weight-regular);
-  line-height: var(--leading-normal);
+  line-height: var(--lh-body);
   color: var(--color-text);
   background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+// Marcellus has no bold cut — hierarchy between h1/h2 is by size only,
+// font-weight is never set above 400 (the default). h3 deliberately does
+// NOT use the display font: Marcellus loses legibility below ~24px, and
+// Lato has no 500/600 to lean on for emphasis at h3's size, so it stays on
+// the body font at its own size step instead of faking either.
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+h1 {
+  font-size: var(--fs-display);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   color: var(--color-text);
 }
