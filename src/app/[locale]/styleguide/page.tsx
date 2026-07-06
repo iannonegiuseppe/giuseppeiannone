@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Button, ButtonLink } from "@/components/Button";
 import { isProductionDeployment, resolveRobots } from "@/sanity/metadata";
 import styles from "./styleguide.module.scss";
 
@@ -132,6 +133,34 @@ export default function StyleguidePage() {
             </span>
           </li>
         ))}
+      </ul>
+
+      <h2>Buttons</h2>
+      <div className={styles.buttonRow}>
+        <Button variant="solid">Invia</Button>
+        <Button variant="outline">Annulla</Button>
+        <ButtonLink href="#" variant="solid">
+          Link stile pulsante
+        </ButtonLink>
+      </div>
+
+      <h2>Links</h2>
+      <p>
+        Un paragrafo di prova con un{" "}
+        <a className={styles.link} href="#">
+          link in linea
+        </a>{" "}
+        dentro il testo.
+      </p>
+
+      <h2>Divider</h2>
+      <hr className={styles.divider} />
+
+      <h2>Grid</h2>
+      <ul className={styles.gridDemo}>
+        <li className={styles.gridItem}>Elemento 1</li>
+        <li className={styles.gridItem}>Elemento 2</li>
+        <li className={styles.gridItem}>Elemento 3</li>
       </ul>
     </main>
   );

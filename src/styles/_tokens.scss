@@ -102,6 +102,7 @@ $z-index: (
 
   // --- Radii -------------------------------------------------------------
   --radius-s: 0.375rem; // 6px — inputs, tags
+  --radius-button: 0.5rem; // 8px — radius-s + 2px, per brief §6 buttons
   --radius-m: 0.75rem; // 12px — cards
   --radius-l: 1.25rem; // 20px — imagery
 
