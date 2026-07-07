@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import styles from "./Hero.module.scss";
 
 // Network Information API isn't in TS's DOM lib (non-standard, Chromium
@@ -24,11 +24,25 @@ function shouldShowVideo(): boolean {
   return !prefersReducedMotion && !isSmallViewport && !saveData;
 }
 
+// No live subscription on purpose — this is a one-time, post-hydration
+// decision, not a continuous one: a later resize or reduced-motion toggle
+// should not swap photo/video mid-visit. React still needs a store to
+// reconcile the client's true value against the server's, hence
+// useSyncExternalStore with a no-op subscribe, rather than a `useState` +
+// `useEffect` pair that would call setState synchronously in the effect.
+function subscribe() {
+  return () => {};
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 // The photo is the only thing ever server-rendered here — video is added
 // after mount, purely client-side, so it can never be an LCP candidate
-// and never delays first paint. `showVideo` starts false and can only
-// flip true in the effect below, so a no-JS visitor (or one who fails any
-// of the three conditions) simply keeps seeing the photo forever.
+// and never delays first paint. `showVideo` starts false (server snapshot)
+// and can only flip true once mounted, so a no-JS visitor (or one who
+// fails any of the three conditions) simply keeps seeing the photo forever.
 export function HeroMedia({
   photoSrc,
   photoAlt,
@@ -42,12 +56,11 @@ export function HeroMedia({
   photoHeight: number;
   videoSrc?: string;
 }) {
-  const [showVideo, setShowVideo] = useState(false);
-
-  useEffect(() => {
-    if (!videoSrc) return;
-    setShowVideo(shouldShowVideo());
-  }, [videoSrc]);
+  const showVideo = useSyncExternalStore(
+    subscribe,
+    () => !!videoSrc && shouldShowVideo(),
+    getServerSnapshot,
+  );
 
   if (showVideo && videoSrc) {
     return (
