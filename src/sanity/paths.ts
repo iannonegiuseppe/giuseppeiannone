@@ -24,6 +24,13 @@ export function subtopicPath(
     : `/en/${parentSlug}/${slug}`;
 }
 
+// Dedicated prefix (not a flat top-level slug like pillarPath) so a
+// location's slug can never collide with a pillar page's — location
+// pages themselves don't exist as a route yet (Stage 3 Step 9).
+export function locationPath(locale: Locale, slug: string): string {
+  return locale === "it" ? `/sedi/${slug}` : `/en/locations/${slug}`;
+}
+
 // Fixed routes for the singleton pages (about/method/price/faq/contact,
 // plus the legal pages) — these document types have no slug field (see
 // simplePage.ts), so the path is decided in code, not content. None of

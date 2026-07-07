@@ -53,7 +53,7 @@ export function generateStaticParams() {
 }
 
 function getLocations(locale: string) {
-  return sanityFetch<{ title: string; address?: string }[]>(
+  return sanityFetch<{ title: string; address?: string; slug?: string }[]>(
     locationsQuery,
     { locale },
     ["locationPage"],

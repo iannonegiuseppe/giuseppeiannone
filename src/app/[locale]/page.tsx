@@ -6,6 +6,7 @@ import { CarePathway } from "@/components/CarePathway";
 import { ContentCardGrid } from "@/components/ContentCardGrid";
 import { CredentialsStrip } from "@/components/CredentialsStrip";
 import { Hero, type HeroPhoto } from "@/components/Hero";
+import { LocationsStrip } from "@/components/LocationsStrip";
 import { MethodsSection } from "@/components/MethodsSection";
 import { WhoIAm } from "@/components/WhoIAm";
 import { sanityFetch } from "@/sanity/client";
@@ -14,6 +15,7 @@ import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import {
   homePageQuery,
   latestContentQuery,
+  locationsQuery,
   pillarsGridQuery,
 } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -68,6 +70,14 @@ function getLatestContent(locale: string) {
   );
 }
 
+function getLocations(locale: string) {
+  return sanityFetch<{ title: string; address?: string; slug?: string }[]>(
+    locationsQuery,
+    { locale },
+    ["locationPage"],
+  );
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -98,15 +108,23 @@ export default async function Home({
   setRequestLocale(locale);
   const typedLocale = locale as Locale;
 
-  const [data, siteSettings, concerns, latestContent, t, portableTextComponents] =
-    await Promise.all([
-      getHomePage(locale),
-      getSiteSettings(locale),
-      getConcernsGrid(locale),
-      getLatestContent(locale),
-      getTranslations({ locale: typedLocale, namespace: "Home" }),
-      getPortableTextComponents(locale, undefined, "band"),
-    ]);
+  const [
+    data,
+    siteSettings,
+    concerns,
+    latestContent,
+    locations,
+    t,
+    portableTextComponents,
+  ] = await Promise.all([
+    getHomePage(locale),
+    getSiteSettings(locale),
+    getConcernsGrid(locale),
+    getLatestContent(locale),
+    getLocations(locale),
+    getTranslations({ locale: typedLocale, namespace: "Home" }),
+    getPortableTextComponents(locale, undefined, "band"),
+  ]);
   if (!data) notFound();
 
   const concernsItems = concerns
@@ -154,6 +172,13 @@ export default async function Home({
       <CarePathway
         heading={t("carePathwayHeading")}
         steps={siteSettings?.carePathway}
+      />
+      <LocationsStrip
+        locale={typedLocale}
+        heading={t("locationsHeading")}
+        onlineTitle={t("onlineLocationTitle")}
+        onlineDescription={t("onlineLocationDescription")}
+        locations={locations}
       />
       <ContentCardGrid
         heading={t("latestContentHeading")}

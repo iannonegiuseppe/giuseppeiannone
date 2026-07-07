@@ -150,6 +150,15 @@ those pages are eventually built.
   assumed to work — `Article` JSON-LD (author, dates) and `MedicalBusiness` JSON-LD
   reuse from `src/sanity/jsonLd.ts`, sitemap entries from the sitemap generator
   (Stage 2 Step 5), and the full Metadata API layer (`src/sanity/seo.ts`) per page.
+- **Pillar/subtopic article body has no max-width container** (found verifying
+  the CTA band/boxed variant, Stage 3 Step 5): `[locale]/[pillarSlug]/page.tsx`
+  and the subtopic equivalent render `<main>` and its Portable Text body with no
+  `container` mixin at all — content (paragraphs, cards, the ctaBlock's boxed
+  variant) currently stretches full viewport width instead of a readable
+  measure. Needs a proper reading-column treatment (~65–75ch max-width) when
+  Stage 3 Step 7 (or whenever these pages next get layout attention) is
+  addressed — this is a real readability problem for long-form knowledge-base
+  content, not cosmetic.
 
 ## Known items
 
@@ -196,7 +205,11 @@ rediscovered from scratch later.
 - **Footer's Locations column renders empty** (found in the same verification):
   same root cause already logged in the Step 9 verification results above — zero
   `locationPage` documents are published yet. Resolves itself once Stage 3 Step 9
-  (location pages) creates the two real documents; not a footer code defect.
+  (location pages) creates the two real documents; not a footer code defect. The
+  homepage's `LocationsStrip` (Stage 3 Step 5) has the same underlying data gap —
+  confirmed it degrades gracefully (only the fixed "Online" card renders, no
+  empty `<li>` holes) rather than breaking, verified against the real page, not
+  assumed.
 - **Care pathway ("Il percorso") isn't live yet** (built in its own dedicated
   pass, Stage 3 Step 5): `siteSettings.carePathway` is new, seeded with the
   real four-step sequence (Primo colloquio → Valutazione → Percorso →

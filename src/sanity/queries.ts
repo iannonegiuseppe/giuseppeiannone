@@ -60,9 +60,10 @@ export const siteSettingsQuery = defineQuery(`
 // structure.ts), so this always returns at most 2 documents for the
 // requested locale.
 export const locationsQuery = defineQuery(`
-  *[_type == "locationPage" && language == $locale]{
+  *[_type == "locationPage" && language == $locale] | order(title asc) {
     title,
-    address
+    address,
+    "slug": slug.current
   }
 `);
 
