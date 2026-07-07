@@ -20,7 +20,9 @@
     "locationsHeading": "Sedi",
     "onlineLocationTitle": "Online",
     "onlineLocationDescription": "Sedute di psicoterapia online, per chi preferisce la flessibilità di un percorso a distanza.",
-    "latestContentHeading": "Risorse recenti"
+    "latestContentHeading": "Risorse recenti",
+    "privacyNoteBody": "I tuoi dati saranno trattati con la massima riservatezza.",
+    "privacyNoteLinkLabel": "Leggi l'informativa sulla privacy"
   },
   "Header": {
     "nav": {

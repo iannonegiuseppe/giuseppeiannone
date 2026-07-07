@@ -5,9 +5,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CarePathway } from "@/components/CarePathway";
 import { ContentCardGrid } from "@/components/ContentCardGrid";
 import { CredentialsStrip } from "@/components/CredentialsStrip";
+import { FinalContactBlock } from "@/components/FinalContactBlock";
 import { Hero, type HeroPhoto } from "@/components/Hero";
 import { LocationsStrip } from "@/components/LocationsStrip";
 import { MethodsSection } from "@/components/MethodsSection";
+import { PricingSummary } from "@/components/PricingSummary";
 import { WhoIAm } from "@/components/WhoIAm";
 import { sanityFetch } from "@/sanity/client";
 import { hrefFor, type Locale, type ReferencedDoc } from "@/sanity/paths";
@@ -36,6 +38,15 @@ interface HomePageData {
   credentialsStrip?: string[];
   methods?: MethodItem[];
   body?: unknown;
+  pricingSummary?: {
+    heading?: string;
+    body?: string;
+    buttonLabel?: string;
+  };
+  finalContact?: {
+    heading?: string;
+    body?: string;
+  };
   seo?: SeoFields;
 }
 
@@ -115,6 +126,7 @@ export default async function Home({
     latestContent,
     locations,
     t,
+    tHero,
     portableTextComponents,
   ] = await Promise.all([
     getHomePage(locale),
@@ -123,6 +135,7 @@ export default async function Home({
     getLatestContent(locale),
     getLocations(locale),
     getTranslations({ locale: typedLocale, namespace: "Home" }),
+    getTranslations({ locale: typedLocale, namespace: "Hero" }),
     getPortableTextComponents(locale, undefined, "band"),
   ]);
   if (!data) notFound();
@@ -180,9 +193,23 @@ export default async function Home({
         onlineDescription={t("onlineLocationDescription")}
         locations={locations}
       />
+      <PricingSummary
+        locale={typedLocale}
+        heading={data.pricingSummary?.heading}
+        body={data.pricingSummary?.body}
+        buttonLabel={data.pricingSummary?.buttonLabel}
+      />
       <ContentCardGrid
         heading={t("latestContentHeading")}
         items={latestItems}
+      />
+      <FinalContactBlock
+        locale={typedLocale}
+        heading={data.finalContact?.heading}
+        body={data.finalContact?.body}
+        ctaLabel={tHero("cta")}
+        privacyNoteBody={t("privacyNoteBody")}
+        privacyNoteLinkLabel={t("privacyNoteLinkLabel")}
       />
     </main>
   );

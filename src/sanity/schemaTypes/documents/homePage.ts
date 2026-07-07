@@ -106,6 +106,54 @@ export const homePage = defineType({
       type: "portableText",
     }),
     defineField({
+      name: "pricingSummary",
+      title: "Pricing summary",
+      description:
+        "Brief teaser linking to the full pricing page — no prices here, and never \"free session\"/discount framing. A factual, reassuring sentence and a button to the full price list. The button always links to the pricing page (not editable here) so it can't be pointed anywhere else by mistake.",
+      type: "object",
+      fields: [
+        defineField({
+          name: "heading",
+          title: "Heading",
+          type: "string",
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: "body",
+          title: "Body",
+          type: "text",
+          rows: 2,
+        }),
+        defineField({
+          name: "buttonLabel",
+          title: "Button label",
+          type: "string",
+          validation: (Rule) => Rule.required(),
+        }),
+      ],
+    }),
+    defineField({
+      name: "finalContact",
+      title: "Final contact block",
+      description:
+        "Closing reassurance message before the footer. The button reuses the hero's CTA text and always links to the contact page; the privacy-policy note next to it is fixed UI copy, not editable here.",
+      type: "object",
+      fields: [
+        defineField({
+          name: "heading",
+          title: "Heading",
+          type: "string",
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: "body",
+          title: "Body",
+          type: "text",
+          rows: 2,
+        }),
+      ],
+    }),
+    defineField({
       name: "seo",
       title: "SEO",
       type: "seo",

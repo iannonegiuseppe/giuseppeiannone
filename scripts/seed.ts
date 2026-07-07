@@ -290,6 +290,15 @@ async function seed() {
         "home-not-sure-cta",
       ),
     ],
+    pricingSummary: {
+      heading: "[Segnaposto IT — quanto costa un percorso]",
+      body: "[Segnaposto IT — testo introduttivo sui costi, nessun riferimento a sconti o sedute gratuite. Non definitivo.]",
+      buttonLabel: "Vedi i prezzi",
+    },
+    finalContact: {
+      heading: "[Segnaposto IT — non sai da dove iniziare, scrivimi]",
+      body: "[Segnaposto IT — messaggio di chiusura, invito a contattarmi. Non definitivo, non clinico.]",
+    },
     seo: {
       _type: "seo",
       metaTitle: "Dott. Giuseppe Iannone | Psicologo Psicoterapeuta",
@@ -334,6 +343,15 @@ async function seed() {
         "home-not-sure-cta",
       ),
     ],
+    pricingSummary: {
+      heading: "[EN placeholder — what a course of therapy costs]",
+      body: "[EN placeholder — introductory text about pricing, no reference to discounts or free sessions. Non-final.]",
+      buttonLabel: "See pricing",
+    },
+    finalContact: {
+      heading: "[EN placeholder — not sure where to start, get in touch]",
+      body: "[EN placeholder — closing message, invitation to get in touch. Non-final, non-clinical.]",
+    },
     seo: {
       _type: "seo",
       metaTitle: "Dr. Giuseppe Iannone | Psychologist Psychotherapist",

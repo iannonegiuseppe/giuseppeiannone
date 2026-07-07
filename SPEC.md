@@ -231,3 +231,20 @@ rediscovered from scratch later.
   finalized (no point building an editable-fields UI around a layout that's
   still moving) — revisit once Stage 3's header/footer work is done, likely as
   either new `siteSettings` fields or a dedicated navigation/footer document.
+- **Homepage pricing summary and final contact block aren't live yet** (Stage 3
+  Step 5, Batch B): `homePage.pricingSummary` (heading/body/button, button
+  hardcoded to the pricing page so an editor can't misconfigure it) and
+  `homePage.finalContact` (closing heading/body, CTA reusing the hero's exact
+  button text, plus a fixed privacy-policy reassurance note — deliberately
+  *not* a form or consent checkbox, since the real contact form with GDPR
+  consent is its own later step) are new optional fields, both `null` on the
+  currently published documents. The seed script's write token started
+  returning `401 Unauthorized — Session not found` this session (read token
+  still works fine, so it's just the write credential, not a general outage) —
+  confirmed via a direct read-only query that both fields are genuinely absent
+  from the Content Lake, not a bug. Verified via a temporary in-code override
+  (not a Sanity write) that both sections render correctly in both locales at
+  360px and 1280px, then reverted and rebuilt clean with zero `TEMP TEST`
+  markers left; confirmed the real (field-less) page correctly renders neither
+  section rather than an empty shell. Needs the write token rotated in
+  sanity.io/manage, then `npm run seed` re-run, for these to go live.

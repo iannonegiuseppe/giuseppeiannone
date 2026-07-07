@@ -78,6 +78,8 @@ export const homePageQuery = defineQuery(`
     credentialsStrip,
     methods,
     ${bodyProjection},
+    pricingSummary,
+    finalContact,
     seo
   }
 `);

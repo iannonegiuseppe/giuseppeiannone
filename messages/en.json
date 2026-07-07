@@ -20,7 +20,9 @@
     "locationsHeading": "Locations",
     "onlineLocationTitle": "Online",
     "onlineLocationDescription": "Online psychotherapy sessions, for anyone who prefers the flexibility of remote care.",
-    "latestContentHeading": "Latest resources"
+    "latestContentHeading": "Latest resources",
+    "privacyNoteBody": "Your details will be treated with complete confidentiality.",
+    "privacyNoteLinkLabel": "Read the privacy policy"
   },
   "Header": {
     "nav": {
