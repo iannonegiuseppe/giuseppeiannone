@@ -16,10 +16,25 @@ body {
   height: 100%;
 }
 
+// `clip`, not `hidden`: per the CSS Overflow spec, a non-`visible`
+// overflow-x paired with the default `visible` overflow-y forces overflow-y
+// to compute as `auto` on that SAME element — so `overflow-x: hidden` here
+// was silently turning BOTH html and body into their own independent
+// vertical scroll containers (two scrollbars: html's own + body's own),
+// since setting overflow-x explicitly on the root element also suppresses
+// the normal html<-body overflow-propagation rule that would otherwise
+// route all scrolling to just one of them. `clip` still fully suppresses
+// any stray horizontal overflow (same guardrail role for the 100vw-based
+// full-bleeds elsewhere — see design-lab.module.scss/portableTextComponents
+// .module.scss's own comments on that reliance) but, unlike `hidden`, does
+// NOT pair-trigger overflow-y:auto — confirmed empirically: with `clip`,
+// window.scrollY/document.documentElement.scrollTop track scroll position
+// correctly again, and only ever exactly one vertical scroll container
+// (the document/window) exists.
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 img,

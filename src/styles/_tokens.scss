@@ -42,11 +42,38 @@ $z-index: (
 :root {
   // --- Color palette: warm ivory + one deep pine-ink accent ----------------
   // Contrast floor (WCAG AA, verified): --color-text and --color-text-muted
-  // both pass on --color-bg and --color-surface-tint. Re-verify if any of
-  // these five are ever adjusted.
+  // both pass on --color-bg, --color-surface-tint, and --color-sand.
+  // Re-verify if any of these six are ever adjusted.
   --color-bg: #f7f4ee;
   --color-surface: #ffffff;
   --color-surface-tint: #efeae0;
+  // Group B refinement pass (design-lab): replaces the old
+  // --color-surface-warm (#f4e3ca, hue 36°/sat 66%) — it clashed against
+  // the approved hero photo's warm taupe backdrop (measured hue ~28°).
+  // Rule going forward: every warm neutral on the page sits at hue
+  // 26-30°, sat ≤35%, anchored to that hero backdrop hue. Contrast
+  // verified: 12.58:1 vs --color-text, 4.64:1 vs --color-text-muted.
+  --color-sand: #eee5dd;
+  // Optional deeper tint, for a second band depth if one is ever needed —
+  // NOT currently used anywhere. Flagged: 4.21:1 vs --color-text-muted
+  // FAILS AA (needs 4.5) — do not put muted text directly on this tone
+  // without re-checking; --color-text (11.42:1) is fine on it.
+  --color-sand-deep: #e7dad0;
+  // Come funziona media-band pass: a third neutral step, deliberately
+  // darker/grayer than --color-sand — hue ~30°/sat ~15% (measured),
+  // consistent with the same warm-neutral family rule (hue 26-30°, sat
+  // <=35%). Contrast verified: 12.37:1 vs --color-text, 4.56:1 vs
+  // --color-text-muted (both pass AA); only 1.15:1 against --color-bg,
+  // which is expected/fine — it's a background-vs-background distinction,
+  // not a text-contrast pairing.
+  --color-greige: #e8e4e0;
+  // Card borders/hairlines on the new neutral scale. Low contrast against
+  // white (1.52:1) and ivory (1.38:1) is intentional, matching the
+  // existing --color-hairline pattern below (1.35:1 vs white) — this
+  // design system treats dividers as soft/decorative, not WCAG-critical
+  // boundaries; the card's own white fill (not the border) provides the
+  // real visual separation from its background.
+  --color-line: #d9d0c9;
   --color-accent: #22423a;
   --color-accent-hover: #2e5348;
   --color-accent-soft: #e4eae6;
@@ -108,4 +135,53 @@ $z-index: (
 
   // --- Layout ------------------------------------------------------------
   --container-max-width: 75rem; // 1200px
+
+  // --- Semantic spacing (Group B refinement pass) -------------------------
+  // Named for role rather than raw size. Desktop values match the existing
+  // 4px-based scale exactly (128px=8rem, 96px=6rem, 48px=3rem, 32px=2rem —
+  // i.e. --space-10/-9/-7/-6 restated with role-based names); actual
+  // mobile-first values (with tablet/mobile scaling) are declared just
+  // below this :root block, not here, since they change per breakpoint.
+
+  // --- Buttons (Group B refinement pass) -----------------------------------
+  // Exactly two variants (Primary, Secondary) plus an inverted-on-pine
+  // state for each — see docs/design-direction.md and the styleguide.
+  // Spec calls for "Lato 16px/600" — Lato has no real 600 cut in this
+  // project (only 100/300/400/700/900 are real weights, per the type-
+  // scale comment above); using --font-weight-bold (700) instead of
+  // faking 600, consistent with the existing rule against synthesized
+  // weights.
+  --button-padding-block: 0.875rem; // 14px
+  --button-padding-inline: 1.75rem; // 28px
+  --button-font-size: 1rem; // 16px
+  --button-min-height: 3rem; // 48px
+  --button-border-width: 1.5px;
+}
+
+// --- Responsive scaling for the semantic spacing tokens ---------------------
+// Mobile-first: base (below md) is ×0.6 of the desktop value; md-to-lg is
+// ×0.75; lg and up is the full desktop value declared in :root above.
+:root {
+  --space-section: calc(8rem * 0.6); // 76.8px
+  --space-band-y: calc(6rem * 0.6); // 57.6px
+  --space-heading-gap: calc(3rem * 0.6); // 28.8px
+  --space-card-pad: calc(2rem * 0.6); // 19.2px
+}
+
+@media (min-width: #{breakpoint(md)}) {
+  :root {
+    --space-section: calc(8rem * 0.75); // 96px
+    --space-band-y: calc(6rem * 0.75); // 72px
+    --space-heading-gap: calc(3rem * 0.75); // 36px
+    --space-card-pad: calc(2rem * 0.75); // 24px
+  }
+}
+
+@media (min-width: #{breakpoint(lg)}) {
+  :root {
+    --space-section: 8rem; // 128px
+    --space-band-y: 6rem; // 96px
+    --space-heading-gap: 3rem; // 48px
+    --space-card-pad: 2rem; // 32px
+  }
 }
