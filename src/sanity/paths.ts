@@ -65,6 +65,30 @@ export function cookiePolicyPath(locale: Locale): string {
   return locale === "it" ? "/cookie-policy" : "/en/cookie-policy";
 }
 
+// Blog/resources index — same "decided in code, not content" reasoning
+// as the singletons above (no dedicated document type for this listing
+// page itself). Legalizes what design-lab's ResourcesSection.tsx/
+// DesignLabFooter.tsx were each inventing locally as a stopgap (see
+// their own now-outdated comments) — those callers are updated to use
+// this instead of maintaining a parallel convention. EN is translated
+// ("resources"), matching every other singleton's locale handling
+// (aboutPath, methodPath, etc.) rather than the stopgaps' own
+// deliberately-flagged "not translated" compromise.
+export function articlesPath(locale: Locale): string {
+  return locale === "it" ? "/risorse" : "/en/resources";
+}
+
+// Individual article path — same slug-preservation pattern as
+// pillarPath/subtopicPath (the prefix is translated, the slug itself
+// isn't). The route doesn't exist yet (built later, once the article
+// schema has real content behind it) — this legalizes the URL SHAPE
+// now so callers stop hand-rolling it, per this pass's own instruction;
+// it may 404 in the meantime, same as pillar/subtopic links already do
+// elsewhere in the lab.
+export function articlePath(locale: Locale, slug: string): string {
+  return locale === "it" ? `/risorse/${slug}` : `/en/resources/${slug}`;
+}
+
 // Every fixed (non-slug-driven) path function, in nav order — the single
 // source the locale switcher's static reverse-lookup iterates over. Add a
 // new singleton path function here when one is introduced.
@@ -73,6 +97,7 @@ export const singletonPathFns: Array<(locale: Locale) => string> = [
   aboutPath,
   methodPath,
   pricePath,
+  articlesPath,
   faqPath,
   contactPath,
   privacyPath,

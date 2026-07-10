@@ -115,6 +115,22 @@ export const latestContentQuery = defineQuery(`
   }
 `);
 
+// "Risorse" section (design-lab, Group B pass). The article schema
+// currently has no cover image or category/tag field (Stage 3+, own
+// schema review — not changed here) and no public route exists yet to
+// link to (same gap latestContentQuery's comment above already notes for
+// article/service) — see ResourcesSection.tsx's file-level comment for
+// how the design-lab page covers both gaps meanwhile with lab-only mock
+// data layered on top of whatever this query actually returns.
+export const latestArticlesQuery = defineQuery(`
+  *[_type == "article" && language == $locale] | order(publishedAt desc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt
+  }
+`);
+
 export const pillarPageQuery = defineQuery(`
   *[_type == "pillarPage" && language == $locale && slug.current == $slug][0]{
     _id,
