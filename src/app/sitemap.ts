@@ -59,17 +59,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [];
 
+  // TEMPORARY EN GATE (see src/app/[locale]/page.tsx's own comment): the
+  // EN homepage redirects to the IT root while its copy is still
+  // hardcoded Italian, so it's excluded from the sitemap entirely here —
+  // not just given a reciprocal hreflang, an actual redirecting URL has
+  // no business being submitted for indexing. The IT entry's own
+  // alternates omit `en` too, matching generateMetadata's identical
+  // suppression. Remove this special-case (fall back to the loop's
+  // normal per-locale behavior, same as pillars/subtopics below) once
+  // real EN copy exists and the gate itself is lifted.
   for (const doc of homePages) {
-    if (!isLocale(doc.language)) continue;
+    if (!isLocale(doc.language) || doc.language === "en") continue;
 
     entries.push({
       url: `${siteUrl}${homePath(doc.language)}`,
       lastModified: doc._updatedAt,
       alternates: {
-        languages: toAbsoluteLanguages(siteUrl, {
-          it: homePath("it"),
-          en: homePath("en"),
-        }),
+        languages: toAbsoluteLanguages(siteUrl, { it: homePath("it") }),
       },
     });
   }
