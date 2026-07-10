@@ -134,7 +134,16 @@ $z-index: (
   --radius-l: 1.25rem; // 20px — imagery
 
   // --- Layout ------------------------------------------------------------
-  --container-max-width: 75rem; // 1200px
+  // Widened 1200px -> 1320px as part of the design-lab promotion — this
+  // was deliberately kept as a local override in the lab (.labRoot/
+  // .labHeader) pending approval; that approval is this pass.
+  --container-max-width: 82.5rem; // 1320px
+
+  // --- Elevation -----------------------------------------------------------
+  // Promoted from design-lab's own --lab-shadow-soft (same reasoning as
+  // --container-max-width above) — used across several promoted sections
+  // for a consistent soft photo/panel shadow.
+  --shadow-soft: 0 8px 24px color-mix(in srgb, var(--color-text) 8%, transparent);
 
   // --- Semantic spacing (Group B refinement pass) -------------------------
   // Named for role rather than raw size. Desktop values match the existing
