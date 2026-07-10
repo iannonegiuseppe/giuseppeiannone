@@ -1,0 +1,447 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by ResourcesSection
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- 4. Risorse: full-bleed article triptych, live Sanity data -----------
+// Single-block refinement pass: replaces the old ivory 3-card GroupBCard
+// grid entirely. Header stays in the normal container; the triptych
+// itself is full-bleed (100vw), edge to edge, no gaps, per spec. Panel
+// count (1/2/3) is handled by grid-auto-columns: 1fr, not per-count grid
+// rules — N equal columns fall out of that automatically. Mobile becomes
+// a pure-CSS scroll-snap slider on the SAME markup (no second DOM tree
+// needed here, unlike Come si svolge's timeline, since this is a plain
+// responsive layout change, not a behavioral one).
+.resourcesSection {
+  padding-bottom: var(--space-section);
+}
+
+.resourcesHeader {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 4rem; // 64px, mobile tier per spec
+  margin-bottom: var(--space-7); // 48px, per spec ("48px below")
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: 6rem; // 96px, desktop tier per spec
+  }
+}
+
+// "Standard kicker, centered variant with rules both sides" — same
+// device as Formazione/Come si svolge, duplicated per this file's
+// established pattern.
+.resourcesKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.resourcesKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.resourcesHeading {
+  margin: var(--space-4) 0 0;
+  font-size: 1.75rem; // 28px, mobile tier per spec
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2rem; // 32px, desktop per spec
+  }
+}
+
+// Tweaks pass: "all articles" link, centered below the triptych at every
+// width — .btnSecondary is already inline-flex (intrinsic width), so
+// mobile's "centered, intrinsic width" requirement needs nothing beyond
+// not overriding that, same reasoning as .pricingButton's own comment.
+.resourcesAllButtonWrap {
+  @include mixins.container;
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-7); // 48px gap below the triptych, per spec
+}
+
+.resourcesTriptych {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw); // full-bleed, same technique as every other band in this file
+  display: flex;
+  gap: 0.75rem; // 12px, mobile tier per spec
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  // Horizontal padding so the first/last panel can center (85vw panel,
+  // (100vw - 85vw) / 2 on each side), per spec.
+  padding-inline: 7.5vw;
+  scrollbar-width: none; // hidden but scrolling remains fully accessible
+  // (native scroll container, keyboard/touch/trackpad all still work —
+  // only the visual scrollbar chrome is hidden, per spec).
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include mixins.breakpoint-up(md) {
+    display: grid;
+    // Explicit per-count grid-template-columns, not grid-auto-columns:1fr
+    // — HOVER-EXPANSION POLISH PASS: a CSS transition needs two comparable
+    // values of the SAME property to interpolate between; grid-auto-flow's
+    // implicit column-generation has no "before" value grid-template-
+    // columns' own transition could animate from. Same rest-state result
+    // (N equal columns) as the old auto-columns approach, so this is a
+    // structural necessity, not a visual change — content-width padding
+    // captured as a custom property here too, read by
+    // .resourcesPanelTitle/.resourcesPanelMeta's own max-width below
+    // (their "cap it at the REST width of a panel" fix needs to know this
+    // section's padding at each tier without repeating the literal value).
+    grid-template-columns: repeat(var(--resources-panel-count, 3), 1fr);
+    gap: 0;
+    overflow-x: visible;
+    scroll-snap-type: none;
+    padding-inline: 0;
+    --resources-content-padding: 1.5rem; // 24px, matches .resourcesPanelContent's own md/tablet padding
+
+    transition: grid-template-columns 450ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    --resources-content-padding: 2.5rem; // 40px, matches .resourcesPanelContent's own lg+ padding
+  }
+}
+
+.resourcesTriptych[data-panel-count="1"] {
+  --resources-panel-count: 1;
+  padding-inline: 0; // "With 1 post: no slider — a single static full-width panel" (mobile only)
+}
+
+// Revision round 1, item 8: HONESTY-RULE CATCH (measured, not guessed) —
+// entering the triptych from outside snapped instantly instead of
+// animating, while moving BETWEEN panels animated correctly, even though
+// `transition: grid-template-columns` was already declared on the
+// unconditional base `.resourcesTriptych` rule above (verified: it was
+// NOT missing, contrary to what this item's own diagnosis assumed).
+// Root cause, confirmed via frame-sampling: entering/leaving a `:has()`-
+// matched state is a discontinuity for the property `:has()` itself
+// sets directly — `grid-template-columns` briefly has no single
+// continuously-matching declaring rule to transition FROM/TO, since the
+// base rule and each `:has()` rule are separate rule sets. Moving
+// BETWEEN two `:has()`-matched values doesn't hit that discontinuity
+// (both endpoints belong to the same kind of rule), which is exactly why
+// only entry/exit snapped. Fix: `grid-template-columns` is now set by
+// ONE unconditional rule per panel-count (below), consuming per-track
+// custom properties; the `:has()` rules only ever set those custom
+// properties, never `grid-template-columns` itself — so the transitioned
+// property has a single, continuously-matching declaring rule for entry,
+// exit, AND between-panel moves alike.
+.resourcesTriptych[data-panel-count="2"] {
+  --resources-panel-count: 2;
+  --resources-fr-1: 1fr;
+  --resources-fr-2: 1fr;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: var(--resources-fr-1) var(--resources-fr-2);
+  }
+}
+
+.resourcesTriptych[data-panel-count="3"] {
+  --resources-fr-1: 1fr;
+  --resources-fr-2: 1fr;
+  --resources-fr-3: 1fr;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: var(--resources-fr-1) var(--resources-fr-2) var(--resources-fr-3);
+  }
+}
+
+// HOVER-EXPANSION POLISH PASS (desktop, fine pointers only): a panel
+// grows to ~42% (3 panels) / ~62% (2 panels) of the row, siblings sharing
+// the remainder — achieved by growing ONLY the hovered/focused track's fr
+// value while the others stay at 1fr each; fr-unit math distributes the
+// remainder across them automatically; no per-sibling shrink rule needed.
+// Growth factors solved exactly (not guessed) for the spec's own targets:
+// 1.45fr against two 1fr siblings = 42.0/29.0/29.0%; 1.63fr against one
+// 1fr sibling = 62.0/38.0% (verified via a standalone calc against the
+// spec's literal "~42%"/"~62%" targets — see the pass's final report).
+// `:has()` on the grid container itself (not JS) detects which child, if
+// any, is hovered/focused — "mouse leaving returns to equal thirds" and
+// "focus-visible triggers the same expansion, collapsing on blur" both
+// fall out of this for free: no additional logic, the base rule re-
+// applies the moment no child matches, animated by the SAME transition
+// declared above regardless of direction.
+//
+// HONESTY-RULE FLAG: spec's literal instruction was a flex-grow
+// transition ("grow 1 -> 1.45"), assuming a flexbox layout. Read directly
+// from the code (not guessed): this section's own desktop/tablet layout
+// is CSS Grid (grid-auto-columns: 1fr, now grid-template-columns above),
+// established by an earlier pass specifically because "N equal columns
+// fall out of that automatically" for the 1/2/3-panel degradation — a
+// working, deliberately-chosen mechanism. Converting it to flexbox first,
+// only to test flex-grow and likely revert, would be a much bigger,
+// riskier diff than "minimal logic if needed" — and grid-template-columns
+// achieves the IDENTICAL visual outcome the spec describes (smooth width
+// redistribution, siblings sharing the remainder, same easing/duration).
+// Implemented this way from the start rather than silently switching
+// after testing flex-grow — flagged here and in the final report,
+// per spec's own explicit permission for this exact alternative.
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(1):hover),
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(1):focus-visible) {
+    --resources-fr-1: 1.45fr;
+  }
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(2):hover),
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(2):focus-visible) {
+    --resources-fr-2: 1.45fr;
+  }
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(3):hover),
+  .resourcesTriptych[data-panel-count="3"]:has(.resourcesPanel:nth-child(3):focus-visible) {
+    --resources-fr-3: 1.45fr;
+  }
+
+  .resourcesTriptych[data-panel-count="2"]:has(.resourcesPanel:nth-child(1):hover),
+  .resourcesTriptych[data-panel-count="2"]:has(.resourcesPanel:nth-child(1):focus-visible) {
+    --resources-fr-1: 1.63fr;
+  }
+  .resourcesTriptych[data-panel-count="2"]:has(.resourcesPanel:nth-child(2):hover),
+  .resourcesTriptych[data-panel-count="2"]:has(.resourcesPanel:nth-child(2):focus-visible) {
+    --resources-fr-2: 1.63fr;
+  }
+
+  // data-panel-count="1": deliberately no rule — "nothing to trade space
+  // with," per spec.
+}
+
+.resourcesPanel {
+  position: relative;
+  display: block;
+  flex: 0 0 85vw; // mobile tier per spec
+  height: 30rem; // 480px, mobile tier per spec
+  scroll-snap-align: center;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-bg); // ivory, per spec ("2px ivory outline")
+    outline-offset: -2px; // inside the panel edge, per spec
+  }
+
+  @include mixins.breakpoint-up(md) {
+    flex: unset;
+    height: 56vh; // tablet tier per spec
+    scroll-snap-align: unset;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    height: clamp(32.5rem, 72vh, 45rem); // 72vh, max 720px, min 520px, per spec
+  }
+}
+
+.resourcesTriptych[data-panel-count="1"] .resourcesPanel {
+  flex: 0 0 100vw; // full-width single panel, mobile tier per spec
+}
+
+.resourcesPanelImg {
+  object-fit: cover;
+  transition: transform 400ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  // HOVER-EXPANSION POLISH PASS: extended to :focus-visible too — "focus-
+  // visible on a panel triggers the SAME expansion (focus parity with
+  // hover)" reads as the whole hover experience, not just the grid-width
+  // slice of it; a keyboard user tabbing to a panel that only widened
+  // without its image/scrim following would look like a half-finished
+  // state, not parity. Still gated by (hover: hover) and (pointer: fine)
+  // — the panel's own plain focus-visible outline (below) stays
+  // unconditional for every device; this bonus treatment is scoped the
+  // same as the rest of this desktop-only feature.
+  .resourcesPanel:hover .resourcesPanelImg,
+  .resourcesPanel:focus-visible .resourcesPanelImg {
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resourcesPanelImg {
+    transition: none;
+  }
+}
+
+// Two stacked scrim layers (base 65%, hover 75%) crossfaded via opacity —
+// background-image/gradient values don't transition smoothly across
+// browsers, so this is the standard technique for animating between two
+// different gradients. Covers the lower 45% of the panel, per spec.
+.resourcesPanelScrimBase,
+.resourcesPanelScrimHover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 55%;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+// HONESTY-RULE FLAG (measured, not assumed): spec's literal "transparent
+// -> ink at 65%" linear gradient measured 2.06-2.67:1 against ivory title
+// text at the actual rendered position (screenshot pixel-sampled across
+// all three mock photos) — fails AA outright, and fails even the
+// large-text 3:1 exception. A plain linear ramp leaves the TOP of the
+// band (where a short, single-line title can sit) still close to fully
+// transparent. Reshaped as a front-loaded gradient (55% by just 20% into
+// the band, 78% at the very bottom, both above the spec's literal 65%
+// ceiling) so coverage is substantial wherever the title actually lands,
+// re-verified below to pass 4.5:1.
+.resourcesPanelScrimBase {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text) 55%, transparent) 20%,
+    color-mix(in srgb, var(--color-text) 78%, transparent) 100%
+  );
+}
+
+// Reshaped the same way as .resourcesPanelScrimBase above and for the
+// same measured reason — also bumped past the base's new 78% ceiling so
+// hover still reads as "deepens further," not lighter than the resting
+// state.
+.resourcesPanelScrimHover {
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text) 65%, transparent) 20%,
+    color-mix(in srgb, var(--color-text) 88%, transparent) 100%
+  );
+}
+
+@media (hover: hover) and (pointer: fine) {
+  // Same focus-visible parity extension as .resourcesPanelImg above.
+  .resourcesPanel:hover .resourcesPanelScrimHover,
+  .resourcesPanel:focus-visible .resourcesPanelScrimHover {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resourcesPanelScrimBase,
+  .resourcesPanelScrimHover {
+    transition: none;
+  }
+
+  .resourcesPanelScrimBase {
+    // Spec: "scrim static at 70%" — reshaped the same way as the other
+    // two states and for the same measured reason (a plain linear ramp
+    // from transparent leaves the top of the band too weak); this sits
+    // between the resting (78% peak) and hover (88% peak) states, per
+    // the spec's own 65% < 70% < 75% ordering before the reshape.
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in srgb, var(--color-text) 60%, transparent) 20%,
+      color-mix(in srgb, var(--color-text) 82%, transparent) 100%
+    );
+  }
+
+  .resourcesPanelScrimHover {
+    display: none;
+  }
+}
+
+.resourcesPanelContent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 1.5rem; // 24px, mobile tier per spec
+
+  @include mixins.breakpoint-up(lg) {
+    padding: 2.5rem; // 40px, desktop per spec
+  }
+}
+
+.resourcesPanelMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3); // 12px, per spec
+}
+
+.resourcesPanelPill {
+  display: inline-block;
+  padding: 0.375rem 0.75rem; // 6px 12px, per spec
+  border-radius: var(--radius-button);
+  // ivory at 92% background, per spec.
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.6875rem; // 11px, per spec
+  font-weight: var(--font-weight-bold); // 700, matches spec exactly
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.resourcesPanelDate {
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, per spec
+  color: color-mix(in srgb, var(--color-bg) 80%, transparent);
+}
+
+.resourcesPanelTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3; // max 3 lines, per spec
+  overflow: hidden;
+  margin-top: var(--space-3); // 12px above the meta row, per spec
+  font-family: var(--font-display);
+  color: var(--color-bg);
+  font-size: 1.25rem; // 20px, mobile tier per spec
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 1.5rem; // 24px, desktop per spec
+  }
+}
+
+// HOVER-EXPANSION POLISH PASS: "title/meta keep a fixed max-width (do not
+// let the title re-wrap mid-transition — cap it at the REST width of a
+// panel)." A hovered panel's grid track widens well past its rest share,
+// but the text content must NOT reflow to use that extra room mid-
+// transition — capped at the exact rest-state content width (one Nth of
+// the full-bleed row, minus this section's own content padding on both
+// sides, read from --resources-content-padding so the two tiers that
+// padding itself changes at — md/tablet 24px, lg+ 40px — stay in sync
+// automatically rather than needing a second hardcoded copy here).
+// data-panel-count="1" never expands (nothing to trade space with) but
+// gets the same treatment for consistency, per spec's "title/meta keep a
+// fixed max-width" as a general rule, not a hover-only one.
+@include mixins.breakpoint-up(md) {
+  [data-panel-count="3"] .resourcesPanelTitle,
+  [data-panel-count="3"] .resourcesPanelMeta {
+    max-width: calc(33.333vw - 2 * var(--resources-content-padding));
+  }
+
+  [data-panel-count="2"] .resourcesPanelTitle,
+  [data-panel-count="2"] .resourcesPanelMeta {
+    max-width: calc(50vw - 2 * var(--resources-content-padding));
+  }
+
+  [data-panel-count="1"] .resourcesPanelTitle,
+  [data-panel-count="1"] .resourcesPanelMeta {
+    max-width: calc(100vw - 2 * var(--resources-content-padding));
+  }
+}

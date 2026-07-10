@@ -1,0 +1,115 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by MiniContactBand
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- Mini-contact band (NEW, block 10): quiet low-threshold contact -----
+// Single-block ADD. Deliberately slimmer than a full section (72px/56px
+// padding, not --space-band-y) — "a bridge, like Formazione," per spec.
+// Two-zone split only activates at lg — spec gives explicit column values
+// for "desktop" and a single-column mobile rule but no distinct tablet
+// variant (unlike Ti riconosci's three explicit tiers), so tablet reuses
+// the single-column mobile layout up through lg, matching the narrowest
+// reading of the spec rather than inventing an unspec'd tablet split.
+.miniContactBand {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw); // full-bleed, same technique as .formazioneBand/.ctaBand
+  background: var(--color-sand);
+  padding-block: 3.5rem; // 56px, mobile tier per spec ("mobile: band padding 56px")
+
+  @include mixins.breakpoint-up(md) {
+    padding-block: 4.5rem; // 72px, per spec — same literal value/precedent as .formazioneBand's own md+ tier
+  }
+}
+
+.miniContactGrid {
+  @include shared.grid-12;
+}
+
+.miniContactLeft {
+  grid-column: 1 / -1; // single column, mobile/tablet
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(1, 7); // cols 1-7, per spec
+  }
+}
+
+.miniContactRight {
+  grid-column: 1 / -1; // single column, mobile/tablet
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; // left-aligned, per spec's mobile rule
+  gap: var(--space-4); // 16px gaps, per spec
+  margin-top: var(--space-6); // 32px above the channel stack on mobile — not specced explicitly, matches this file's other text-block-to-CTA gaps
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(9, 4); // cols 9-12, per spec
+    align-self: center; // vertically centered, per spec
+    margin-top: 0;
+  }
+}
+
+.miniContactKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.miniContactKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.miniContactHeading {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text);
+  font-size: 1.75rem; // 28px, per spec
+}
+
+.miniContactBody {
+  margin: var(--space-4) 0 0;
+  max-width: 46ch; // per spec
+  font-family: var(--font-body);
+  font-size: 1rem; // 16px, per spec
+  line-height: 1.7;
+  // ink@85% on sand — 8.25:1 (verified: sand #eee5dd, ink #26231f), passes
+  // AA comfortably, no substitution needed.
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+.miniContactWhatsapp {
+  width: fit-content;
+}
+
+.miniContactLink {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, matching the established text-link component (.concernsArrowLink)
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}

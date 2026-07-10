@@ -1,0 +1,115 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by StatementBand
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- "Statement": Giuseppe's signed credo (NOT a testimonial) ------------
+// Single-block ADD. This occupies the reference's testimonial-carousel
+// slot — deliberately not built as one, per docs/design-direction.md §9:
+// no carousel, no arrows/dots, no rotation, no quote marks (a signed
+// statement WITH quote marks reads as a review), signature is Giuseppe's
+// own name only. Sand band — a warm pause between the ivory Di cosa
+// section and Sedi, same rhythm role as the Formazione band two sections
+// up but on the sand tone instead of pine.
+.statementSection {
+  background: var(--color-sand);
+  padding-block: var(--space-8); // 64px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    padding-block: var(--space-band-y); // per spec's general (desktop/tablet) instruction
+  }
+}
+
+.statementInner {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statementTextWrap {
+  position: relative;
+  max-width: 56ch;
+}
+
+// Horizontally centered, anchored to the statement paragraph's own top
+// edge (not vertically centered within it) — its bottom portion overlaps
+// the statement's upper half as the text continues below, matching the
+// reference's "numeral peeking from above" composition.
+.statementNumeral {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 6rem; // 96px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 10rem; // 160px, tablet/desktop per spec (spec gives no
+    // separate tablet value — "desktop layout" applies to everything
+    // except the statement's own font-size)
+  }
+}
+
+.statementText {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  // No max-width here — .statementTextWrap (the parent) already caps at
+  // 56ch, so this block can never exceed it anyway.
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  // UPRIGHT — Marcellus has no italic cut loaded (layout.tsx requests
+  // weight:["400"] only, no style array), so font-style must never be set
+  // to italic here; the browser would synthesize a fake oblique instead of
+  // using a real cut, which is exactly what the spec forbids.
+  font-size: 1.5rem; // 24px, mobile tier per spec
+  line-height: 1.55; // mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 1.6875rem; // 27px, tablet per spec
+    line-height: 1.5; // desktop/tablet per spec
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 1.875rem; // 30px, desktop per spec
+  }
+}
+
+.statementSignature {
+  margin: var(--space-5) 0 0; // 24px below the statement, per spec
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic; // real Lato italic cut (layout.tsx loads style:
+  // ["normal","italic"] for Lato) — not a synthesized oblique.
+  font-size: 0.9375rem; // 15px, per spec
+  // ink@70% on sand measures 5.22:1 — passes AA, no substitution needed.
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+.statementRole {
+  margin: var(--space-2) 0 0; // 8px below the signature, per spec
+  text-align: center;
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem; // 12px, per spec
+  // HONESTY-RULE FLAG: spec's literal "ink at 55%" measures 3.40:1 against
+  // sand, failing AA (needs 4.5:1; 12px text doesn't clear the large-text
+  // 3:1 exception either, which needs >=18.66px bold or >=24px regular).
+  // Using the minimum opacity that actually passes — 65% (4.51:1) — same
+  // substitution pattern as every other opacity flag in this file.
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+}

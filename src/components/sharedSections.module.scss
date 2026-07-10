@@ -1,0 +1,101 @@
+@use "../styles/mixins";
+
+
+
+// Shared across multiple promoted sections — genuinely cross-component,
+
+// not co-located with any single one. Split out of the former
+
+// sectionsShared.module.scss monolith (Stage 3 of the homepage
+
+// promotion pass) into per-component modules; this is what's left over
+
+// after that split: two layout mixins (grid-12, col), the button-base
+
+// mixin all button variants build on, and two classes actually reused
+
+// across section boundaries (btnSecondary directly; heroOverlapPhotoTreated
+
+// by ArticlePanel.tsx's own photo treatment).
+
+
+
+// Promotion pass: --container-max-width and --shadow-soft used to be local
+// overrides here (.labRoot/.labHeader), kept off the real _tokens.scss
+// pending approval of the wider 1320px container — that approval is this
+// pass, so both are now real tokens instead (src/styles/_tokens.scss) and
+// the local .labRoot override is gone.
+// --- Shared 12-column grid (Group B refinement pass) ------------------------
+// Local to design-lab, deliberately NOT added to the shared _mixins.scss —
+// that file's `container` mixin is used by every real production
+// component (Header, Footer, every page section), so changing it would
+// affect the live site, not just this lab. Every content edge in Group B
+// (hero text column, photo/panel compositions, card rows, band headings)
+// snaps to this grid: 1200px max-width (same value as the shared
+// --container-max-width — no change there, just made explicitly gridded),
+// 12 columns, 32px gutter (--space-6).
+@mixin grid-12 {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: var(--space-6);
+}
+
+// grid-column shorthand: @include col(7, 6) => start at column-line 7,
+// span 6 tracks (i.e. columns 7 through 12).
+@mixin col($start, $span) {
+  grid-column: #{$start} / span #{$span};
+}
+
+// --- Buttons: exactly two variants, each with an inverted-on-pine state ---
+// Local to design-lab (the real Button.tsx/Button.module.scss component is
+// out of scope for this pass — it keeps its current solid/outline
+// variants untouched; this is the refined system the styleguide now
+// demonstrates, pending a later port). Font-weight uses --font-weight-bold
+// (700) — the spec's "Lato 16px/600" calls for a weight that doesn't
+// exist as a real cut in this typeface (see the --button-* token comment
+// in _tokens.scss); 700 is the nearest real weight, not a synthesized one.
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-min-height);
+  padding-block: var(--button-padding-block);
+  padding-inline: var(--button-padding-inline);
+  border-radius: var(--radius-button);
+  font-family: var(--font-body);
+  font-size: var(--button-font-size);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+
+  @include mixins.focus-ring;
+}
+
+// Secondary: transparent, pine border/text.
+.btnSecondary {
+  @include button-base;
+  background: transparent;
+  color: var(--color-accent);
+  border: var(--button-border-width) solid var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-soft);
+  }
+}
+
+// Gentle warm desaturation toward the ivory/pine-green palette — unifies
+// this photo set's mixed backgrounds/tones (brief's own framing). Filter
+// only now — the earlier paired soft-light color-wash layer (sand token,
+// blend-mode) amplified the photo's own natural bright patch in the
+// overlap zone into a visible "fades to ivory" column, which is exactly
+// the artifact being removed here. A filter alone doesn't locally
+// brighten one area more than another the way a blend-mode layer does.
+.heroOverlapPhotoTreated {
+  filter: saturate(0.7) sepia(0.25) hue-rotate(-12deg) brightness(1.06)
+    contrast(0.95);
+}

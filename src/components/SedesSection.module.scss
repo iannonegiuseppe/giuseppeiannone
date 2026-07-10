@@ -1,0 +1,412 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by SedesSection
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- 2. Sedi: sticky scroll scenes (desktop) + styled Leaflet map --------
+// Single-block pass: rebuilds the old 3-card GroupBCard grid (GroupBCard
+// itself and its CSS classes below are now unused — left in place per
+// this file's established convention, see page.tsx's own comment on
+// PhilosophyBand.tsx/LabCard.tsx). Structure/behavior live in
+// SedesStage.tsx (client component: mobile slider + desktop static/sticky
+// variants, Leaflet lazy-loaded via IntersectionObserver) and
+// SedesSection.tsx (server: sr-only canonical list). This block is CSS
+// only — see those files for the scroll-driving and map logic.
+.sedesSection {
+  padding-bottom: var(--space-section);
+}
+
+.sedesSrOnly {
+  @include mixins.visually-hidden;
+}
+
+// --- Shared: left column text (kicker/heading/paragraph), address line
+// typography, and the mobile slider — all reused as-is across the mobile
+// slider header, the desktop static fallback, and the desktop sticky
+// scenario, per spec's own repeated "address lines as on desktop"
+// instruction.
+.sedesKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.sedesKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.sedesHeading {
+  margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
+  color: var(--color-text);
+  font-size: 1.75rem; // 28px, mobile/tablet tier per spec
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2rem; // 32px, desktop tier per spec
+  }
+}
+
+.sedesParagraph {
+  margin: var(--space-3) 0 0;
+  max-width: 36ch;
+  font-family: var(--font-body);
+  font-size: 1rem; // 16px, per spec
+  line-height: 1.7;
+  // ink@85% — verified AA-passing (see the pass's final report).
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+.sedesAddressCenterName {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem; // 15px, per spec
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  color: var(--color-text);
+}
+
+.sedesAddressLine {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.9375rem; // 15px, per spec
+  // ink@80%, per spec.
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+// ============================================================
+// Mobile/tablet (<1024px): scroll-snap slider, no Leaflet
+// ============================================================
+.sedesMobile {
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+.sedesMobileHeader {
+  @include mixins.container;
+  // Spec doesn't give an explicit mobile section top padding for Sedi
+  // (unlike Risorse/FAQ/CTA, which do) — reused as the same 64px default
+  // those sections established, for visual consistency between mobile
+  // section headers across the page.
+  padding-top: 4rem;
+}
+
+.sedesSlider {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw); // full-bleed, same technique as every other band in this file
+  margin-top: 2rem;
+  display: flex;
+  gap: 0.75rem; // 12px, per spec
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-inline: 7.5vw; // (100vw - 85vw)/2 peek, per spec's "85vw cards"
+  list-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sedesSliderCard {
+  flex: 0 0 85vw; // per spec
+  scroll-snap-align: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  padding: var(--space-5); // 24px, per spec
+}
+
+.sedesSliderCity {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+  font-size: 1.375rem; // 22px, per spec
+}
+
+// ============================================================
+// Desktop (>=1024px): static fallback OR sticky scroll scenario
+// ============================================================
+.sedesDesktopStage {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.sedesLeftColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; // pushes the indicator to the bottom
+  // edge in the sticky scenario; harmless in the static fallback, which
+  // has no second child to separate from the first.
+}
+
+// --- Reduced-motion / no-JS-mapless-until-hydrated static fallback -------
+// Complete, respectable layout on its own — per spec, this is the
+// version reduced-motion users see permanently, not a degraded stopgap.
+// Sequential per spec's own "then...then...then" ordering: left column,
+// scenes, map — a single column flow, not the sticky scenario's 12-col
+// split.
+.sedesStaticLayout {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  padding-block: var(--space-section);
+}
+
+.sedesStaticScenes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+}
+
+.sedesStaticScene {
+  // Plain block — no card chrome, per spec ("stacked as plain blocks").
+}
+
+.sedesStaticMap {
+  height: 28rem;
+  border-radius: var(--radius-l); // "imagery" token, matches the sticky scenario's map
+  overflow: hidden;
+  background: var(--color-greige); // fallback backdrop if tiles fail, per spec
+}
+
+// --- Sticky scroll scenario -----------------------------------------------
+.sedesTrack {
+  position: relative;
+  // Revision round 1, item 7a: shortened from 100vh/scene + 50vh tail to
+  // 55vh/scene + 30vh tail (roughly halves the scroll distance per
+  // scene) — still driven by the scene count so this never drifts out of
+  // sync with the data array. The scroll-driving JS in SedesStage.tsx
+  // reads this track's rendered height via getBoundingClientRect() at
+  // runtime, so no JS change is needed for the shorter path to take
+  // effect; the existing map.stop() in-flight guard (flyToScene) is
+  // untouched.
+  height: calc(var(--sedes-scene-count) * 55vh + 30vh);
+}
+
+.sedesStageInner {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding-block: 6rem; // 96px vertical padding, per spec
+  display: flex;
+  align-items: stretch;
+}
+
+.sedesGridWrap {
+  @include shared.grid-12;
+  width: 100%;
+}
+
+.sedesTrack .sedesLeftColumn {
+  grid-column: 1 / span 4; // per spec
+}
+
+.sedesMapZone {
+  grid-column: 5 / span 8; // per spec
+  position: relative;
+}
+
+// Sizing/positioning wrapper, kept SEPARATE from the element Leaflet
+// initializes into — Leaflet's own CSS sets `.leaflet-container` to
+// `position: relative`, which would otherwise race this element's own
+// `position: absolute` (both single-class selectors, cascade order
+// between this stylesheet and the dynamically-imported leaflet.css isn't
+// guaranteed). This wrapper owns the "fill the zone" positioning instead;
+// .sedesMap itself only needs to be 100%/100%.
+.sedesMapOuter {
+  position: absolute;
+  inset: 0;
+  // Establishes its own stacking context (position + explicit z-index) so
+  // Leaflet's internal pane z-indexes (tile 200, marker 600, popup 700,
+  // etc. — all far above .sedesPanel's z-index: 1) stay contained inside
+  // it instead of leaking out and painting over the panel — caught via
+  // screenshot review, not by inspection alone (see the pass's final
+  // report).
+  z-index: 0;
+  border-radius: var(--radius-l); // "imagery" token
+  overflow: hidden;
+  background: var(--color-greige); // fallback backdrop if tiles fail, per spec
+}
+
+.sedesMap {
+  width: 100%;
+  height: 100%;
+}
+
+// Custom CARTO tile tint — revision round 1, item 7b: retuned starting
+// values (sepia(0.10) saturate(0.85) contrast(1.04)) for the voyager
+// basemap, which already carries more of its own texture/color than
+// light_all did, so a lighter tint plus a contrast lift (rather than
+// hue-rotate/brightness) keeps streets legible without re-flattening the
+// new texture back toward white. Tuned and confirmed via the pass's
+// light_all-vs-voyager screenshot comparison (see final report). Leaflet's
+// own classes are global (not CSS-module-scoped), hence :global().
+.sedesMap[data-map-style="voyager"] :global(.leaflet-tile-pane),
+.sedesStaticMap[data-map-style="voyager"] :global(.leaflet-tile-pane) {
+  filter: sepia(0.1) saturate(0.85) contrast(1.04);
+}
+
+// Revision round 2, item 5: dark_matter + pine tint prototype, behind
+// SedesStage.tsx's MAP_STYLE constant. hue-rotate pushes dark_matter's
+// native navy/blue-grey toward pine green; brightness 0.9 (per spec's
+// own starting point) keeps streets legible without going muddy;
+// saturate lifted slightly so the greening doesn't read as a grey wash.
+// Tuned and confirmed via the pass's voyager-vs-dark side-by-side
+// screenshot comparison at zoom 14 (see final report).
+.sedesMap[data-map-style="dark"] :global(.leaflet-tile-pane),
+.sedesStaticMap[data-map-style="dark"] :global(.leaflet-tile-pane) {
+  // HONESTY-RULE CATCH (caught visually, not assumed): a plain
+  // hue-rotate() on dark_matter did nothing visible — that basemap is
+  // already near-desaturated grey/black, and hue-rotate only turns
+  // existing hue, it can't introduce color into pixels that have ~0
+  // saturation to begin with. sepia() first gives the tile pane an
+  // actual (warm, colored) cast to rotate; hue-rotate then turns that
+  // cast from sepia's brown (~35-40deg) to pine green (~140-150deg);
+  // saturate lifts the now-rotated green enough to read as an
+  // intentional tint rather than a wash; brightness 0.9 is the spec's
+  // own starting point.
+  filter: sepia(0.5) hue-rotate(110deg) saturate(1.8) brightness(0.9);
+}
+
+.sedesMap :global(.leaflet-control-attribution),
+.sedesStaticMap :global(.leaflet-control-attribution) {
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.6875rem; // small/muted, per spec — attribution stays visible, just restyled
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+
+  :global(a) {
+    color: inherit;
+  }
+}
+
+// Revision round 2, item 5: the ivory attribution chip above is already
+// self-contained contrast (its own translucent ivory background + dark
+// ink text), legible over ANY basemap by construction — but a 70%-ivory
+// chip read as a stark, disconnected light patch floating on the dark
+// basemap specifically (caught visually, not assumed). Raised to 88% and
+// given a soft shadow so it reads as an intentional UI chip rather than
+// a rendering artifact, dark-style only.
+.sedesMap[data-map-style="dark"] :global(.leaflet-control-attribution),
+.sedesStaticMap[data-map-style="dark"] :global(.leaflet-control-attribution) {
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+// Belt-and-braces — zoomControl:false already prevents Leaflet from ever
+// creating this element, per spec's "hide zoom controls."
+.sedesMap :global(.leaflet-control-zoom),
+.sedesStaticMap :global(.leaflet-control-zoom) {
+  display: none;
+}
+
+// Custom marker (divIcon) — 14px pine circle, 2px ivory ring, subtle
+// shadow, per spec. Border-width expressed in rem (0.125rem = 2px) to
+// stay within this file's "no raw px" rule while matching the spec's
+// literal pixel value exactly.
+.sedesMarkerDot {
+  display: block;
+  width: 0.875rem; // 14px, per spec
+  height: 0.875rem; // 14px, per spec
+  border-radius: 50%;
+  background: var(--color-accent); // pine, per spec
+  border: 0.125rem solid var(--color-bg); // 2px ivory ring, per spec
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 25%, transparent);
+  transition: transform 200ms ease;
+}
+
+.sedesMarkerActive .sedesMarkerDot {
+  transform: scale(1.25); // per spec
+}
+
+.sedesPanel {
+  position: absolute;
+  left: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 1;
+  width: calc(100% - #{var(--space-6)} * 2);
+  max-width: 23.75rem; // 380px, per spec
+  // Reserves enough height for the tallest scene (Milano, two addresses)
+  // so the crossfade never jumps the panel's own box between scenes —
+  // tuned via screenshot review, see the pass's final report.
+  min-height: 14rem;
+  background: color-mix(in srgb, var(--color-bg) 96%, transparent); // ivory@96%, per spec
+  border-radius: var(--radius-m); // "cards" token
+  padding: var(--space-6); // 32px, per spec
+  box-shadow: var(--shadow-soft);
+}
+
+.sedesPanelScene {
+  position: absolute;
+  inset: 0; // aligns with .sedesPanel's own padding box — see .sedesPanel's padding above
+  opacity: 0;
+  transform: translateY(0.75rem); // 12px, per spec
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms ease-out;
+
+  &[data-active="true"] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sedesPanelCity {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+  font-size: 1.75rem; // 28px, per spec
+}
+
+.sedesIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.sedesIndicatorCurrent {
+  font-family: var(--font-display);
+  font-size: 1.25rem; // 20px, per spec
+  line-height: 1;
+  color: var(--color-accent); // pine, per spec
+}
+
+.sedesIndicatorTotal {
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, per spec
+  // ink@50%, per spec.
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.sedesIndicatorTicks {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: var(--space-3);
+}
+
+.sedesIndicatorTick {
+  width: 1.5rem; // 24px, per spec
+  height: 2px;
+  background: var(--color-line);
+  transition: background-color 300ms ease-out; // same easing family as the Percorso reveals
+
+  &[data-filled="true"] {
+    background: var(--color-accent); // fills pine as scenes pass, per spec
+  }
+}

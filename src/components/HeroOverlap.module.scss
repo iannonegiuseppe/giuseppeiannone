@@ -1,0 +1,255 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by HeroOverlap
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// Revision round 1, item 3: staggered entrance, pure CSS (no JS — a plain
+// `animation` with a fixed, non-repeating duration runs exactly once on
+// load with nothing to wire up). `animation-fill-mode: both` (via the
+// `both` keyword below) applies the 0% keyframe's opacity: 0 for the
+// entire animation-delay window, so elements are invisible until their
+// turn WITHOUT a separate static opacity: 0 base rule that would leave
+// them invisible if animations are ever disabled outside the
+// reduced-motion gate below — the default (un-animated) state of every
+// one of these elements is simply opacity: 1, in normal flow, which is
+// exactly the reduced-motion fallback the spec asks for. Only
+// opacity/transform are animated — both are compositor-only properties,
+// so nothing here affects layout: elements occupy their final box from
+// first paint (zero CLS), they just render transparent/offset until the
+// animation reaches them.
+@keyframes heroStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem); // 12px
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Primary: pine fill, ivory text.
+.btnPrimary {
+  @include shared.button-base;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: var(--button-border-width) solid var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+}
+
+// --- Williamson-adaptation hero: overlap composition ---------------------
+// (docs/adaptation/adaptation-brief.md). Mobile-first: photo and content
+// are plain stacked flow siblings (no overlap — there's no safe empty
+// space to lay text over at narrow widths). At `lg` and up, the photo
+// becomes a full-bleed absolute layer and the content column overlaps it,
+// landing on the photo's own empty background space (not the subject).
+.heroOverlapSection {
+  padding-block: var(--space-6) 0;
+}
+
+.heroOverlapLabel {
+  @include mixins.container;
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.heroOverlap {
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+
+  @include mixins.breakpoint-up(lg) {
+    display: flex;
+    align-items: center;
+    // Tall enough that the photo genuinely dominates the first viewport,
+    // not a horizontal band with ivory visible above/below it (the earlier
+    // version's "tidy rectangle" problem).
+    min-height: 46rem;
+  }
+}
+
+.heroOverlapPhotoWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+
+  @include mixins.breakpoint-up(lg) {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+  }
+}
+
+.heroOverlapPhotoImg {
+  object-fit: cover;
+  object-position: center top;
+
+  @include mixins.breakpoint-up(lg) {
+    object-position: right center;
+    // Mirrored so the subject reads as emerging from the LEFT edge (photo
+    // 01's subject is originally framed to the right) — the crop/position
+    // above is computed pre-mirror, then the whole result is flipped, so
+    // the subject ends up left, empty background right, matching the
+    // reference composition (photo left, headline right).
+    transform: scaleX(-1);
+  }
+}
+
+// NO SCRIM — the two previous passes (a wide translucent wall, then a
+// "tighter" gradient) both amounted to painting a solid ivory panel over
+// the photo and setting text on that, which isn't overlap. Text now sits
+// directly on the photograph. Contrast is handled per the two rules below
+// instead of by covering the image:
+// 1. --color-text on the photo's calm background measures 9-11:1 (verified
+//    against every sampled tone in the overlap zone) — passes AA on its
+//    own, no treatment needed (see .heroOverlapName/.heroOverlapPositioning
+//    below, unchanged from --color-text).
+// 2. --color-text-muted measures 3.3-4.2:1 on the same tones — fails AA.
+//    Per instruction, the fix is a locally darkened color (used directly
+//    in .heroOverlapCredentials/.heroOverlapTrustLine below), not a
+//    lightened photo or a background fill.
+// Grid-12 wrapper — governs where the TEXT snaps to; the photo stays a
+// separate, full-bleed absolute layer untouched by this grid.
+.heroOverlapContent {
+  @include shared.grid-12;
+  position: relative;
+  padding-block: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    z-index: 1;
+    padding-block: 0;
+  }
+}
+
+// No flex `gap` here — the spec calls for a DIFFERENT gap between each
+// pair (24px name-to-subtitle, 32px subtitle-to-CTA, 24px CTA-to-
+// registration), so each is set as an explicit margin-top on the element
+// below it instead of one uniform gap value.
+.heroOverlapTextInner {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / -1;
+
+  @include mixins.breakpoint-up(lg) {
+    // Snaps to columns 7-12, vertically centered against the photo (the
+    // grid item's own align-self, since .heroOverlapContent's grid rows
+    // are a single implicit row spanning the full min-height).
+    @include shared.col(7, 6);
+    align-self: center;
+  }
+}
+
+// Moved ABOVE the name per spec (previously "credentials", below the
+// name) — same field, reordered and restyled as an eyebrow label.
+// Spec asks for "pine at 80% opacity" — verified against the photo's
+// actual tonal range (the same range .heroOverlapRegistration was
+// checked against below) and it FAILS AA at several realistic points
+// (as low as 2.74:1 in the darker end); full-strength pine holds
+// 6.37-8.04:1 at this text's actual rendered position, so that's what's
+// used here instead. Flagged in the review notes, not silently changed.
+.heroOverlapEyebrow {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px
+  font-weight: var(--font-weight-bold); // 700 — nearest real weight to spec's 600
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heroOverlapName {
+  // Gap above the name isn't specced explicitly; a modest step (12px) —
+  // eyebrow labels typically sit close to their heading.
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-display);
+  // Mobile keeps the normal site scale — the overlap/oversized treatment
+  // is a desktop-only composition (mobile stacks plainly, see the other
+  // breakpoint-up(lg) rules throughout this file).
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  // Pine ink, per spec — verified at this text's actual rendered position
+  // (6.37-8.04:1 against the sampled background range), same check as
+  // the eyebrow above.
+  color: var(--color-accent);
+
+  @include mixins.breakpoint-up(lg) {
+    // Reference measured directly (docs/adaptation/reference-hero.jpg):
+    // the two-line headline block spans ~16% of the viewport height.
+    // Roughly double the site's normal --fs-display — local to this
+    // hero, not a change to the shared token, since no other heading on
+    // the site is meant to run this large. clamp's own min bound (5rem)
+    // would overflow below lg if applied there, hence gating it here.
+    font-size: clamp(5rem, 10vw, 7.5rem);
+    line-height: 1.05;
+  }
+}
+
+.heroOverlapSubtitle {
+  margin: var(--space-5) 0 0; // 24px below the name, per spec
+  max-width: 38ch;
+  font-family: var(--font-body);
+  font-size: 1.1875rem; // 19px — not an existing type-scale step; rem per
+  // the project's no-raw-px rule, exact value per spec.
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.heroOverlapCta {
+  align-self: flex-start;
+  margin-top: var(--space-6); // 32px below the subtitle, per spec
+}
+
+// Spec asks for "pine at 65% opacity" — verified against the same photo
+// background range and it fails AA everywhere tested (2.24-3.44:1, well
+// under 4.5). Using the same locally-darkened on-photo color already
+// established and verified elsewhere in this file (5.4-9.8:1 across the
+// range) instead of the literal opacity value.
+.heroOverlapRegistration {
+  margin: var(--space-5) 0 0; // 24px below the button, per spec
+  max-width: 32ch;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px
+  color: #3a3630;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heroOverlapEyebrow,
+  .heroOverlapName,
+  .heroOverlapSubtitle,
+  .heroOverlapCta,
+  .heroOverlapRegistration {
+    animation: heroStaggerIn 450ms ease-out both;
+  }
+
+  .heroOverlapEyebrow {
+    animation-delay: 0ms;
+  }
+
+  .heroOverlapName {
+    animation-delay: 120ms;
+  }
+
+  .heroOverlapSubtitle {
+    animation-delay: 240ms;
+  }
+
+  .heroOverlapCta {
+    animation-delay: 360ms;
+  }
+
+  .heroOverlapRegistration {
+    animation-delay: 480ms;
+  }
+}
