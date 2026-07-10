@@ -35,8 +35,13 @@ export function useLenisRef(): RefObject<Lenis | null> | null {
   return useContext(LenisContext);
 }
 
-// Lab-scoped only (design-lab route), mounted from page.tsx — NOT the
-// shared app layout, so production routes never see this. Lenis is
+// Promotion pass: hoisted from a design-lab-page-scoped provider to
+// src/app/[locale]/layout.tsx, wrapping Header/{children}/Footer together
+// — Header's dialogs (channel picker, mobile menu) need the same Lenis
+// instance Header renders under, and Header is a layout-level sibling of
+// {children}, not a descendant of any per-page provider. Smooth scrolling
+// is therefore site-wide now, not homepage-only; a direct, disclosed
+// consequence of promoting Header, not a silent expansion. Lenis is
 // deliberately left on its all-default wrapper/content (window /
 // document.documentElement) rather than a custom scroll container of our
 // own: introducing one would itself create the "second scroll container"
@@ -53,11 +58,11 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
     // scroll — layering JS smoothing on top of that causes motion
     // discomfort rather than improving it, per spec. prefers-reduced-
     // motion is a full opt-out for the same reason every other
-    // scroll-driven effect in this lab treats it as one (see
-    // DesignLabHeader.tsx's own round-4 comment on why that decision was
-    // reversed there but is correct here: THIS effect's entire purpose is
-    // motion, not state-tracking — there is nothing to preserve under
-    // reduced motion).
+    // scroll-driven effect in this codebase treats it as one — unlike
+    // HeaderInteractive.tsx's own scroll-collapse listener (which must
+    // keep tracking state under reduced motion, just without an animated
+    // transition), THIS effect's entire purpose is motion itself, so
+    // there's nothing worth preserving when motion is off.
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (coarsePointer || reducedMotion) return;

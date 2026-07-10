@@ -7,9 +7,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { contactChannels } from "./contactChannels";
-import styles from "./design-lab.module.scss";
-import { useLenisRef } from "./LenisProvider";
+import { contactChannels } from "@/components/contactChannels";
+import { useLenisRef } from "@/components/LenisProvider";
+import styles from "./HeaderInteractive.module.scss";
+import sharedStyles from "./sharedSections.module.scss";
 
 export type ChannelPickerDialogHandle = {
   open: () => void;
@@ -160,7 +161,7 @@ export const ChannelPickerDialog = forwardRef<ChannelPickerDialogHandle>(
                 <a
                   key={channel.id}
                   href={channel.href}
-                  className={`${styles.btnSecondary} ${styles.channelDialogWhatsapp}`}
+                  className={`${sharedStyles.btnSecondary} ${styles.channelDialogWhatsapp}`}
                 >
                   {channel.label}
                 </a>

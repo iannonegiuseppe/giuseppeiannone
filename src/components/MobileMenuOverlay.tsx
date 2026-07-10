@@ -2,19 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import type { Locale } from "@/sanity/paths";
 import type { HeaderNavItem } from "./headerNavItems";
-import styles from "./design-lab.module.scss";
-import { useLenisRef } from "./LenisProvider";
+import { useLenisRef } from "@/components/LenisProvider";
+import styles from "./HeaderInteractive.module.scss";
 
 // Full-screen pine overlay for the burger menu (<=1023px). Focus trap +
-// Esc-closes technique reused verbatim from the real, shared
-// src/components/MobileNav.tsx (read for reference, not imported — this
-// is a design-lab-only component per this pass's scope) — same
+// Esc-closes technique originally modeled on the pre-promotion
+// src/components/MobileNav.tsx (since removed — this component replaced
+// it entirely as part of the homepage promotion) — same
 // querySelector('a[href], button:not([disabled])') trap, same
 // Esc-returns-focus-to-toggle behavior. Accordion rows reuse the FAQ
-// pass's grid-template-rows 0fr<->1fr technique (design-lab.module.scss's
-// .faqRowPanelWrap/.faqRowAnswer) rather than inventing a max-height
-// variant, per spec's explicit instruction.
+// pass's grid-template-rows 0fr<->1fr technique
+// (sectionsShared.module.scss's .faqRowPanelWrap/.faqRowAnswer) rather
+// than inventing a max-height variant.
 //
 // Revision round 2, item 6b: the overlay no longer covers the full
 // viewport — it starts BELOW the header bar (wordmark + CTA + the
@@ -29,14 +31,14 @@ export function MobileMenuOverlay({
   open,
   onClose,
   navItems,
-  localePair,
+  locale,
   toggleRef,
   headerRef,
 }: {
   open: boolean;
   onClose: () => void;
   navItems: HeaderNavItem[];
-  localePair: { it: { active: boolean; href: string }; en: { active: boolean; href: string } };
+  locale: Locale;
   toggleRef: React.RefObject<HTMLButtonElement | null>;
   headerRef: React.RefObject<HTMLElement | null>;
 }) {
@@ -177,21 +179,7 @@ export function MobileMenuOverlay({
       </nav>
 
       <div className={styles.mobileMenuLocalePair}>
-        {localePair.it.active ? (
-          <span className={styles.mobileMenuLocaleCurrent}>IT</span>
-        ) : (
-          <Link href={localePair.it.href} lang="it" className={styles.mobileMenuLocaleLink}>
-            IT
-          </Link>
-        )}
-        {" / "}
-        {localePair.en.active ? (
-          <span className={styles.mobileMenuLocaleCurrent}>EN</span>
-        ) : (
-          <Link href={localePair.en.href} lang="en" className={styles.mobileMenuLocaleLink}>
-            EN
-          </Link>
-        )}
+        <LocaleSwitcher currentLocale={locale} />
       </div>
     </div>
   );

@@ -1,0 +1,914 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by HeaderInteractive
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// Scroll-lock support for the channel-picker popup and mobile menu
+// overlay: NOT a permanent `scrollbar-gutter: stable` here — an earlier
+// draft applied it unconditionally on :global(html) and a regression
+// screenshot diff caught it shrinking every section's available width by
+// ~15px, all the time, on every visit to this route (the gutter is
+// reserved regardless of whether anything is actually locked). Applied
+// dynamically instead — ChannelPickerDialog.tsx and MobileMenuOverlay.tsx
+// each toggle `document.documentElement.style.scrollbarGutter = "stable"`
+// on their own open/close, so the reservation exists only for the brief
+// window body's own scrollbar is actually hidden, not permanently.
+// --- Lab header: continuous glass + shrink interpolation ------------------
+// Single custom property (--header-progress, 0..1) written once per rAF
+// frame by DesignLabHeader.tsx; every continuously-interpolated visual
+// below reads it via calc()/color-mix() rather than each getting its own
+// JS write or CSS transition — a transition here would fight the already-
+// continuous JS updates (see that file's own comment). --color-pine and
+// --color-ivory (spec's own vocabulary) map to this project's real tokens
+// --color-accent/--color-bg, same substitution as every other pass.
+.labHeader {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: mixins.z(sticky);
+  // Promotion pass: the local --container-max-width override this rule
+  // needed used to live here — --container-max-width is now the real
+  // 1320px site-wide token (src/styles/_tokens.scss).
+
+  // Revision round 4: retired the continuous --header-progress
+  // interpolation entirely — a genuine two-state switch now, gated on
+  // the data-collapsed attribute DesignLabHeader.tsx's hysteresis logic
+  // writes (collapse past 150px, expand below 90px). Rest state is
+  // fully transparent, no blur, matching the old progress=0 defaults.
+  // Blur raised to 28px in the collapsed state (up from round 3's 20px,
+  // "the owner wants the glass unmistakable"); hairline stays removed
+  // entirely, per round 3's own still-standing "default to none."
+  background: transparent;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition:
+    background-color 250ms ease,
+    backdrop-filter 250ms ease;
+
+  &[data-collapsed="true"] {
+    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+  }
+
+  // Fallback for browsers without backdrop-filter support: solid ivory at
+  // 97%, per spec — a blur-less glass isn't legible over the hero photo,
+  // so this can't just degrade to "no background."
+  @supports not (backdrop-filter: blur(1px)) {
+    &[data-collapsed="true"] {
+      background: color-mix(in srgb, var(--color-bg) 97%, transparent);
+    }
+  }
+
+  // Legibility fix (required, not optional) — see the round-3 report for
+  // the full measurement. At rest (scrollY=0, header fully transparent)
+  // the worst point across the header's width — nav links sitting
+  // directly over Giuseppe's dark hair in the hero photo — measured
+  // 1.20:1, catastrophically below AA's 4.5:1; 55% ivory was needed to
+  // clear it with real margin (5.72:1). Present at rest, faded out via
+  // opacity once collapsed (the glass background itself provides
+  // contrast by then) — a ::before rather than folded into the main
+  // background above, since the two need independent, opposite curves.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+    transition: opacity 250ms ease;
+  }
+
+  &[data-collapsed="true"]::before {
+    opacity: 0;
+  }
+
+  // "Reduced-motion: instant state switch, transitions 0ms" — per this
+  // round's own spec. The state still toggles (DesignLabHeader.tsx's
+  // scroll listener runs unconditionally now), just without an animated
+  // transition.
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &::before {
+      transition: none;
+    }
+  }
+}
+
+.labHeaderInner {
+  @include mixins.container;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  // Mobile-tier tightened gap — caught empirically (measured widths:
+  // wordmark 178px + full-size CTA 159px + burger 44px + 2×32px gap =
+  // 445px, against a 375px available row at 390px viewport — nowhere
+  // close to fitting). A gap reduction ALONE doesn't close a 70px gap,
+  // see .labHeaderWordmark/.labHeaderCta's own mobile-tier reductions
+  // below for the rest of the fix.
+  gap: var(--space-3); // 12px, mobile tier
+  padding-block: 1.75rem; // 28px, REST state — mobile tier, unscoped
+  transition: padding-block 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    gap: var(--space-6); // 32px, desktop tier — the burger is gone and the row has room
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Revision round 4: discrete collapsed padding, replacing the old
+// continuous calc(). Mobile keeps its round-2 numeric target (10px) —
+// "its own heights were fixed earlier," per this round's own spec, so
+// only re-expressed via the new mechanism, not re-tuned. Desktop moves
+// to this round's new 6px target (was round 3's 8px) — "the bar is
+// still tall" is what this whole diagnostic pass is about.
+.labHeader[data-collapsed="true"] .labHeaderInner {
+  padding-block: 0.625rem; // 10px, mobile tier
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: 0.375rem; // 6px, desktop tier
+  }
+}
+
+.labHeaderWordmark {
+  flex-shrink: 0;
+  min-width: 0;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+  // Mobile tier (16px, not interpolated — the wordmark shrink range
+  // below is a desktop-only refinement over a plain, unmoving mobile
+  // size): part of the same empirical mobile-overflow fix as
+  // .labHeaderInner's gap and .labHeaderCta's sizing above/below —
+  // "Giuseppe Iannone" at the desktop 22px rest-size alone measured
+  // 178px, already most of a 375px mobile row before the button or
+  // burger are even accounted for.
+  font-size: 1rem; // 16px, mobile tier
+  transition: font-size 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    // Revision round 3, item 1: 24px rest — resolved the earlier flagged
+    // 22-vs-24px rest-size inconsistency by making this the authoritative
+    // rest value.
+    font-size: 1.5rem; // 24px, REST state
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.labHeader[data-collapsed="true"] .labHeaderWordmark {
+  @include mixins.breakpoint-up(lg) {
+    font-size: 1.0625rem; // 17px, per round 4 (was round 3's 18px)
+  }
+}
+
+.labHeaderNav {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.labHeaderNavList {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.labHeaderNavLink {
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px, per spec — REST state
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600 (Lato has no 600 cut)
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color 200ms ease, font-size 250ms ease;
+
+  // Revision round 1, item 2b: hover underline removed, color-only
+  // transition to --color-pine (this project's --color-accent, per the
+  // established substitution convention — see the identical note on
+  // .indexedItemNumeral). Keyboard focus stays on focus-ring below
+  // (an outline, not color alone) precisely SO a color-only hover state
+  // remains distinguishable from focus for keyboard users, per spec's
+  // explicit "focus style may not be reduced to color alone."
+  &:hover {
+    color: var(--color-accent);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Round 4, new target: nav links only ever render at lg+ (see
+// .labHeaderNav's own display:none/breakpoint-up(lg) gate above), so no
+// explicit breakpoint-up wrapper is needed here — this rule is inert
+// below lg regardless.
+.labHeader[data-collapsed="true"] .labHeaderNavLink {
+  font-size: 0.8125rem; // 13px
+}
+
+.labHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2); // 8px, mobile tier — part of the same empirical mobile-overflow fix
+  flex-shrink: 0;
+
+  @include mixins.breakpoint-up(lg) {
+    gap: var(--space-5); // 20px, desktop tier
+  }
+}
+
+.labHeaderLocalePair {
+  display: none;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--color-text);
+
+  @include mixins.breakpoint-up(lg) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+}
+
+// Structural base shared by both variants (padding/radius/font stay
+// identical across the Secondary<->Primary swap — only background/color/
+// border-color are meant to visibly move) plus the 200ms transition on
+// exactly those properties. Scoped here rather than added to the shared
+// .btnPrimary/.btnSecondary base classes, which are used all over this
+// file for contexts that never asked for a color transition.
+// Visible at EVERY width, per spec's own mobile structure ("wordmark +
+// conversion button + burger") — this is NOT desktop-only. Caught before
+// QA screenshots by re-reading the spec against the CSS, not empirically
+// (an earlier draft mistakenly hid it below `lg`, matching the real
+// site's Header.tsx pattern of "CTA only shows once nav collapses to a
+// burger" instead of this spec's own, different, explicit instruction).
+.labHeaderCta {
+  display: inline-flex;
+  // Round 4: durations unified to 250ms, matching every other collapse-
+  // driven transition in this header (background/blur/padding/wordmark/
+  // nav links above) — was 200ms since round 3, a leftover mismatch this
+  // round's own "250ms transitions" target catches.
+  transition:
+    background-color 250ms ease,
+    color 250ms ease,
+    border-color 250ms ease,
+    // Revision round 3, item 1: the compact collapsed variant's size
+    // properties transition too, so the button doesn't hard-snap smaller
+    // while everything else in the header (blur, alpha, padding,
+    // wordmark) interpolates smoothly.
+    padding-block 250ms ease,
+    padding-inline 250ms ease,
+    font-size 250ms ease,
+    min-height 250ms ease;
+  // Mobile-tier compact override — caught EMPIRICALLY (a QA screenshot at
+  // 390px showed the burger pushed clean off the right edge of the
+  // viewport): button-base's default sizing (28px inline padding, 16px
+  // font, 48px min-height) is a roomy desktop size that doesn't leave
+  // room for "Prenota un primo colloquio" alongside the wordmark AND the
+  // burger on a narrow viewport. Shrunk specifically for this button
+  // (not the shared button-base mixin, which other buttons on the page
+  // still use at their normal size on mobile) — restored to the full
+  // desktop size at lg+, where the burger disappears and there's room.
+  padding-inline: var(--space-3); // 12px, mobile tier
+  padding-block: var(--space-2); // 8px, mobile tier
+  min-height: auto;
+  font-size: 0.6875rem; // 11px, mobile tier
+  white-space: nowrap;
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--button-padding-inline);
+    padding-block: var(--button-padding-block);
+    min-height: var(--button-min-height);
+    font-size: var(--button-font-size);
+  }
+}
+
+.labHeaderBurger {
+  position: relative; // positioning context for the 3 absolutely-stacked bars below
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px touch target, per spec
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+}
+
+// Revision round 1, item 9: three bars, the SAME elements morph into an X
+// (no icon swap) — each bar is absolutely centered on the button via
+// top: 50%/left: 50%, positioned by `transform: translate()` alone (never
+// top/left math), so only compositor-only properties (transform, opacity)
+// animate — closed state offsets bars 1/3 up/down from center by
+// translateY, open state removes that offset and rotates them ±45deg into
+// an X while the middle bar fades out.
+.labHeaderBurgerBar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 1.25rem; // 20px
+  height: 0.125rem; // 2px
+  background: var(--color-text);
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
+
+  &:nth-child(1) {
+    transform: translate(-50%, calc(-50% - 0.4375rem)); // 7px above center
+  }
+
+  &:nth-child(2) {
+    transform: translate(-50%, -50%);
+  }
+
+  &:nth-child(3) {
+    transform: translate(-50%, calc(-50% + 0.4375rem)); // 7px below center
+  }
+
+  [aria-expanded="true"] > & {
+    &:nth-child(1) {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    &:nth-child(2) {
+      opacity: 0;
+    }
+
+    &:nth-child(3) {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+  }
+
+  // Instant state change, no animated rotation — the bars still land on
+  // the correct open/closed shape, they just jump there rather than
+  // tweening, matching this file's other reduced-motion overrides.
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Collapsed-phase Primary override (progress >= 0.6) — mirrors
+// .btnPrimary's exact values so the 200ms transition on
+// background-color/color/border-color (declared on .labHeaderCta itself)
+// animates smoothly between the two states on the SAME element, rather
+// than swapping React className (which wouldn't transition across a
+// class boundary the way a same-element property change does).
+.labHeaderCta[data-collapsed="true"] {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  // Revision round 3, item 1 / round 4 retune: true compact collapsed
+  // variant, desktop only — reuses the SAME data-collapsed hard-threshold
+  // switch already driving the color swap above ("interpolated/switched
+  // with the same progress logic as before"), rather than inventing a
+  // second mechanism. Scoped to lg+ deliberately: mobile's own CTA sizing
+  // is a separate, already-compact, unrelated mobile-overflow fix (11px
+  // font, 8px/12px padding) that this round's spec says to leave
+  // untouched — applying this unscoped would have made mobile's button
+  // slightly LARGER (13px > 11px), a regression the spec never asked for.
+  // Round 4 shrinks inline padding 14px->12px and min-height 36px->32px
+  // (block padding and font-size are unchanged from round 3).
+  @include mixins.breakpoint-up(lg) {
+    padding-block: 0.375rem; // 6px
+    padding-inline: 0.75rem; // 12px
+    font-size: 0.8125rem; // 13px
+    min-height: 2rem; // 32px
+  }
+}
+
+// Round 4 correction: this used to force the Primary/collapsed color
+// scheme unconditionally under reduced motion, back when
+// DesignLabHeader.tsx's scroll effect had an early return and never wrote
+// data-collapsed at all under that media query. That early return is
+// gone now — the listener runs unconditionally (see that file's own
+// comment) and genuinely tracks scroll position under reduced motion
+// too, so the unconditional override above would now fight it, pinning
+// the button to the collapsed look even at scrollY=0. The only thing
+// reduced motion still needs here is an instant (0ms) switch instead of
+// an animated one — data-collapsed itself continues to drive which
+// state is shown, same as with motion enabled.
+@media (prefers-reduced-motion: reduce) {
+  .labHeaderCta {
+    transition: none;
+  }
+}
+
+// --- Desktop "Aree" submenu (HeaderNavItemWithSubmenu.tsx) -----------------
+.headerNavItemWrap {
+  position: relative;
+}
+
+.headerNavButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem; // 6px
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px, matching .labHeaderNavLink
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.headerNavChevron {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 200ms ease;
+
+  &[data-open="true"] {
+    transform: rotate(180deg);
+  }
+}
+
+// Always solid ivory@97% regardless of --header-progress (it must be
+// readable over the hero photo too, per spec) — deliberately NOT reading
+// the header's own glass recipe.
+.headerSubmenuPanel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--space-3); // 12px
+  min-width: 15rem; // 240px, per spec
+  padding: var(--space-2) 0;
+  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-soft);
+  z-index: mixins.z(dropdown);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    visibility 0s linear 200ms;
+
+  &[data-open="true"] {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease,
+      visibility 0s linear 0s;
+  }
+}
+
+.headerSubmenuList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.headerSubmenuLink {
+  display: block;
+  padding: 0.75rem 1rem; // 12px 16px, per spec
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px, per spec
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--color-sand);
+  }
+
+  @include mixins.focus-ring;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headerNavChevron,
+  .headerSubmenuPanel {
+    transition: none;
+  }
+}
+
+// --- Mobile burger overlay (MobileMenuOverlay.tsx) ------------------------
+// Always mounted (see that file's own comment on why) — visibility is a
+// CSS data-open switch, not a mount/unmount toggle, so the close
+// transition (150ms, no stagger) has something to animate. The base
+// (closed) ruleset's own transition governs the CLOSING direction; the
+// [data-open="true"] ruleset's transition governs OPENING — same
+// direction-dependent-ruleset technique already used for the recognition
+// section's v2 crossfade and the FAQ accordion's grid-rows.
+.mobileMenuOverlay {
+  position: fixed;
+  // Revision round 2, item 6b: starts BELOW the header bar instead of
+  // covering it — --mobile-menu-top is written once, on open, by
+  // MobileMenuOverlay.tsx's own effect (measuring the header's actual
+  // rendered height at that moment; the page's scroll is locked for as
+  // long as this is open, so that height cannot change underneath it).
+  // The header (wordmark + CTA + the burger, now an X) stays visible and
+  // interactive in the untouched strip above.
+  top: var(--mobile-menu-top, 0px);
+  inset-inline: 0;
+  bottom: 0;
+  z-index: mixins.z(overlay);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-accent); // pine
+  padding: var(--space-6);
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 150ms ease,
+    visibility 0s linear 150ms;
+
+  &[data-open="true"] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 250ms ease,
+      visibility 0s linear 0s;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    display: none; // desktop has its own nav — this overlay is mobile-only DOM-wise irrelevant, but CSS-hidden defensively
+  }
+}
+
+.mobileMenuNav {
+  margin-top: var(--space-6);
+}
+
+.mobileMenuList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+// Stagger: opacity + 12px rise, 50ms per item, ONLY on the way in — the
+// base (closed-direction) rule below carries no delay and a flat 150ms,
+// so closing is fast and uniform, per spec ("close reverses quickly,
+// 150ms, no stagger").
+.mobileMenuItem {
+  opacity: 0;
+  transform: translateY(0.75rem); // 12px
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.mobileMenuOverlay[data-open="true"] .mobileMenuItem {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 250ms ease calc(var(--mobile-menu-item-index) * 50ms),
+    transform 250ms ease calc(var(--mobile-menu-item-index) * 50ms);
+}
+
+.mobileMenuLink {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem; // 24px, per spec
+  color: var(--color-bg);
+  text-decoration: none;
+
+  @include mixins.focus-ring;
+}
+
+.mobileMenuAccordionButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.5rem; // 24px, matching .mobileMenuLink
+  color: var(--color-bg);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.mobileMenuChevron {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  transition: transform 250ms ease;
+
+  &[data-open="true"] {
+    transform: rotate(180deg);
+  }
+}
+
+// Reuses the FAQ pass's grid-template-rows 0fr<->1fr technique verbatim
+// (design-lab.module.scss's own .faqRowPanelWrap/.faqRowAnswer above) per
+// spec's explicit "do not invent a max-height variant" instruction.
+.mobileMenuAccordionPanelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+}
+
+.mobileMenuAccordionPanelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mobileMenuChildList {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-left: var(--space-5); // indented, per spec
+}
+
+.mobileMenuChildLink {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 1rem; // 16px, per spec
+  // ivory@85% on pine — verified AA-passing (see the pass's final report).
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  text-decoration: none;
+
+  @include mixins.focus-ring;
+}
+
+.mobileMenuLocalePair {
+  margin: var(--space-7) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--color-bg);
+}
+
+// "reduced-motion: overlay and accordions open/close instantly, no
+// stagger, chevron swaps without rotation."
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenuOverlay,
+  .mobileMenuOverlay[data-open="true"],
+  .mobileMenuItem,
+  .mobileMenuOverlay[data-open="true"] .mobileMenuItem,
+  .mobileMenuAccordionPanelWrap,
+  .mobileMenuChevron {
+    transition: none;
+  }
+}
+
+// --- Channel-picker popup (ChannelPickerDialog.tsx, Part B) ---------------
+// Native <dialog> — top layer, so no z-index needs to compete with the
+// fixed header (mixins.z(sticky)) or anything else on the page. UA
+// default dialog styles (border/padding/background/centering box model)
+// are reset here in favor of a flex-centered (desktop) / flex-bottom
+// (mobile) layout wrapping the actual card.
+.channelDialog {
+  border: none;
+  padding: 0;
+  margin: auto;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100%;
+  height: 100%;
+
+  &::backdrop {
+    background: color-mix(in srgb, var(--color-accent) 65%, transparent);
+  }
+
+  &[open] {
+    display: flex;
+    align-items: flex-end; // mobile: bottom sheet
+    justify-content: center;
+
+    @include mixins.breakpoint-up(md) {
+      align-items: center; // desktop: centered card
+    }
+  }
+}
+
+.channelDialogCard {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  background: var(--color-bg);
+  border-radius: var(--radius-m) var(--radius-m) 0 0; // mobile: rounded top corners only
+  padding: 2rem 1.5rem 2.5rem; // mobile tier — room for the drag handle above the kicker
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+
+  // Entrance animation for BOTH breakpoints — @starting-style is the
+  // standard, JS-free way to animate an element's transition from
+  // not-yet-rendered (a freshly-opened <dialog>) to its settled state; a
+  // plain CSS transition alone cannot animate that first frame, since
+  // there is no "previous frame" to interpolate from otherwise. Mobile:
+  // slide up only (no fade, per spec's literal "slides up" wording).
+  @starting-style {
+    transform: translateY(100%);
+  }
+
+  @include mixins.breakpoint-up(md) {
+    max-width: 30rem; // 480px, per spec
+    margin-inline: var(--space-5);
+    margin-block: var(--space-6);
+    border-radius: var(--radius-m); // all corners
+    padding: 2.5rem; // 40px, per spec (not an existing token)
+    transform: scale(1);
+    transition:
+      opacity 250ms ease,
+      transform 250ms ease;
+
+    @starting-style {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+}
+
+// Exit animation: JS sets data-closing on the <dialog> (not the card)
+// before calling the real .close(), giving the card's own transition a
+// target state to animate TO — see ChannelPickerDialog.tsx's own comment
+// on why native <dialog> needs this workaround for exit transitions.
+.channelDialog[data-closing="true"] .channelDialogCard {
+  transform: translateY(100%);
+
+  @include mixins.breakpoint-up(md) {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.channelDialogCloseButton {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px target, per spec
+  height: 2.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.channelDialogDragHandle {
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0 auto var(--space-5);
+  border-radius: var(--radius-s);
+  background: var(--color-line);
+
+  @include mixins.breakpoint-up(md) {
+    display: none;
+  }
+}
+
+.channelDialogKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.channelDialogKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.channelDialogHeading {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text);
+  font-size: 1.625rem; // 26px, per spec
+}
+
+.channelDialogChannels {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4); // 16px, matching the mini-contact band's own channel-stack gap
+}
+
+.channelDialogWhatsapp {
+  width: fit-content;
+}
+
+.channelDialogLink {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, matching the established text-link component
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.channelDialogQuietLines {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.channelDialogQuietLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, per spec
+  // ink@70% on ivory — verified AA-passing (see the pass's final report).
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+// "reduced-motion: instant open/close, no transforms."
+@media (prefers-reduced-motion: reduce) {
+  .channelDialogCard {
+    transition: none;
+
+    @starting-style {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .channelDialog[data-closing="true"] .channelDialogCard {
+    opacity: 1;
+    transform: none;
+  }
+}

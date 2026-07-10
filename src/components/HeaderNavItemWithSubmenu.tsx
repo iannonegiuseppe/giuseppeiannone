@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef } from "react";
 import type { HeaderNavItem } from "./headerNavItems";
-import styles from "./design-lab.module.scss";
+import styles from "./HeaderInteractive.module.scss";
 
 const CLOSE_INTENT_DELAY_MS = 150;
 

@@ -29,14 +29,23 @@
       "home": "Home",
       "about": "Chi sono",
       "method": "Metodo",
+      "areas": "Aree",
       "price": "Prezzi",
       "faq": "FAQ",
       "contact": "Contatti"
+    },
+    "areasSubmenu": {
+      "anxiety": "Ansia",
+      "depression": "Depressione",
+      "stress": "Stress",
+      "lifeChanges": "Cambiamenti di vita"
     },
     "menuToggle": "Menu",
     "cta": "Prenota un primo colloquio"
   },
   "Footer": {
+    "exploreHeading": "Esplora",
+    "resourcesLabel": "Risorse",
     "contactHeading": "Contatti",
     "locationsHeading": "Sedi",
     "legalHeading": "Informazioni legali",
@@ -44,7 +53,9 @@
     "cookiePolicy": "Cookie policy",
     "googleProfile": "Trovami su Google",
     "whatsapp": "Scrivimi su WhatsApp",
-    "instagram": "Instagram"
+    "instagram": "Instagram",
+    "copyright": "© {year} {name} — Tutti i diritti riservati.",
+    "devCredit": "Sito: [segnaposto — nome/link sviluppatore]"
   },
   "NotFound": {
     "title": "Pagina non trovata",

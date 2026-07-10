@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { LenisProvider } from "@/components/LenisProvider";
 import { routing } from "@/i18n/routing";
 import { isDraftModeEnabled, sanityFetch } from "@/sanity/client";
 import {
@@ -112,21 +113,33 @@ export default async function LocaleLayout({
           <JsonLdScript data={medicalBusinessJsonLd} />
         ) : null}
         <NextIntlClientProvider>
-          <Header
-            locale={typedLocale}
-            authorName={siteSettings?.author?.name ?? ""}
-          />
-          {children}
-          <Footer
-            locale={typedLocale}
-            contactEmail={siteSettings?.contactEmail}
-            contactPhone={siteSettings?.contactPhone}
-            whatsappNumber={siteSettings?.whatsappNumber}
-            locations={locations}
-            crisisSupportText={siteSettings?.crisisSupportText}
-            googleProfileUrl={siteSettings?.googleProfileUrl}
-            socialLinks={siteSettings?.socialLinks}
-          />
+          {/* Promoted from design-lab's own page-scoped LenisProvider —
+              Header's dialogs (channel picker, mobile menu) now need the
+              same Lenis instance Header itself renders under, and Header
+              is a layout-level sibling of {children}, not a descendant
+              of any per-page provider. Hoisting here makes smooth
+              scrolling site-wide rather than homepage-only, a direct,
+              unavoidable consequence of promoting Header — flagged in
+              the promotion pass's own report, not a silent scope
+              expansion. */}
+          <LenisProvider>
+            <Header
+              locale={typedLocale}
+              authorName={siteSettings?.author?.name ?? ""}
+            />
+            {children}
+            <Footer
+              locale={typedLocale}
+              authorName={siteSettings?.author?.name ?? ""}
+              contactEmail={siteSettings?.contactEmail}
+              contactPhone={siteSettings?.contactPhone}
+              whatsappNumber={siteSettings?.whatsappNumber}
+              locations={locations}
+              crisisSupportText={siteSettings?.crisisSupportText}
+              googleProfileUrl={siteSettings?.googleProfileUrl}
+              socialLinks={siteSettings?.socialLinks}
+            />
+          </LenisProvider>
         </NextIntlClientProvider>
         {isDraft ? <VisualEditing /> : null}
       </body>
