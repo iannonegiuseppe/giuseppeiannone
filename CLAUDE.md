@@ -126,6 +126,8 @@ upheld in every schema added later:
   `createImageUrlBuilder`) — the rule is about `.fetch()` calls, not the
   export.
 
+The working tree is authoritative. Never revert or overwrite existing code that appears intentional without asking — manual edits by the owner are expected.
+
 ## Commit conventions
 
 Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`),

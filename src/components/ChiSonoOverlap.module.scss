@@ -128,7 +128,11 @@
   // Part 1's own 72px bottom padding above, so this half has no top
   // padding of its own (stacking two padding values would double it).
   padding-bottom: var(--space-section); // bottom padding of the whole
-  // section before Come funziona, per spec.
+  // section before Come funziona, per spec. Correction pass: restored —
+  // removing this (previous pass) pulled Methods flush against the card,
+  // a regression, not the intended result. The card's own bottom (which
+  // now extends past the photo thanks to the overlap) is what this
+  // padding measures from.
 
   @include mixins.breakpoint-up(md) {
     // Without this, the grid's default align-items: stretch would force
@@ -148,36 +152,77 @@
     @include shared.col(1, 6);
     grid-row: 1;
   }
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(1, 7);
+  }
 }
 
-// Hard offset plate, not a blur shadow — exactly the photo's size (inset:
-// 0 on a sibling the same size as .chiSonoPhotoWrap), shifted via
-// transform rather than top/left so it never fights the sizing rules
-// above.
+// Correction pass: the corner-bracket experiment (single element, two
+// borders meeting at a right angle) is reverted — it was never the
+// reference. Restored instead: the original solid offset shadow-plate
+// (the same brand device as FinalContactSection/SedesSection's own
+// panels) as the foundation, PLUS the reference's two thick accent bars
+// framing the composition diagonally on top of it — the bars are an
+// addition to this established language, not a replacement for it.
+//
+// Stacking order: shadow-plate (z-index 0) sits behind the photo
+// (z-index 1); the bars (z-index 2) sit above the photo so they read as
+// a frame over the whole composition, not tucked behind it.
 .chiSonoPhotoShadow {
   position: absolute;
   inset: 0;
   z-index: 0;
   background: var(--color-accent);
-  transform: translate(1rem, 1rem); // 16px — mobile tier, per spec's responsive note
+  transform: translate(1rem, 1rem);
+}
+
+// Two thick bars bracketing the photo diagonally (owner reference: the
+// red-accent law template's intro block, reproduced here in pine).
+// Bottom-left bar shows at every breakpoint; top-right is a desktop/
+// tablet-only flourish (mobile stacks with no overlap, so only one bar
+// reads as intentional rather than decorative clutter). The "~1 column"
+// extension past the photo's edge is expressed as a fraction of the
+// photo's OWN width — a decorative flourish, not a value pixel-critical
+// enough to warrant deriving the real grid column width in SCSS.
+.chiSonoAccentTop {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: -15%;
+  z-index: 2;
+  width: 35%; // "short" bar
+  height: 0.5rem; // 8px, per spec
+  background: var(--color-accent);
 
   @include mixins.breakpoint-up(md) {
-    transform: translate(var(--space-5), var(--space-5)); // 24px, per spec
+    display: block;
   }
+}
+
+.chiSonoAccentBottom {
+  position: absolute;
+  bottom: 0;
+  left: -15%;
+  z-index: 2;
+  width: 65%; // "wide" bar
+  height: 0.5rem; // 8px, per spec
+  background: var(--color-accent);
 }
 
 .chiSonoPhotoWrap {
   position: relative;
   z-index: 1;
-  aspect-ratio: 4 / 5; // not specced explicitly; matches the portrait
-  // ratio already established sitewide (overlap-photo mixin above) rather
-  // than inventing a new one.
+  aspect-ratio: 3 / 2; // landscape — replaces the old 4:5 portrait crop,
+  // per spec, at every breakpoint (mobile wants the same 3:2 photo, just
+  // stacked rather than overlapped).
   overflow: hidden;
 }
 
 .chiSonoPhotoImg {
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center 30%; // centered on the face — re-measured for
+  // the shorter landscape crop (was 20%, tuned for the taller 4:5 photo).
 }
 
 // Same stopgap as before, unchanged (see the file-level comment above).
@@ -186,21 +231,52 @@
     contrast(0.9);
 }
 
-.chiSonoTextColumn {
+// Cosmetic pass: an opaque ivory card that overlaps the photo's bottom-
+// right at md+ (own background/padding/shadow so text stays legible over
+// the image), and drops back to plain in-flow content at mobile (no
+// overlap there, so a visually distinct card would just be an invisible
+// same-color box against the section's own ivory background — see the
+// mobile QA note below).
+.chiSonoTextCard {
   position: relative;
+  z-index: 1;
   grid-column: 1 / -1;
 
   @include mixins.breakpoint-up(md) {
-    @include shared.col(7, 6);
+    @include shared.col(5, 8);
     grid-row: 1;
-    align-self: center; // vertically centered against the photo, per spec
+    // Reduced overlap depth vs. desktop's 44.44% (see .breakpoint-up(lg)
+    // below) — spec's own instruction: tablet's photo/card column spans
+    // differ (6 and 8 tracks, not equal), so this is a directly-chosen
+    // value, not a scaled version of the desktop formula.
+    margin-top: 22%;
+    // "ivory" per spec — this codebase's real token is --color-bg (see
+    // _tokens.scss's own comment: "the brief specifically calls for
+    // 'ivory text'... reuses --color-bg rather than a separate hardcoded
+    // value"); no --color-ivory token exists to reference instead.
+    background: var(--color-bg);
+    padding: var(--space-6); // 32px, per spec
+    box-shadow: var(--shadow-soft);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(6, 7);
+    // Card and photo both span 7 grid tracks at this breakpoint, so they
+    // render the same width — which means a margin-top PERCENTAGE (always
+    // relative to the margin-having element's own content-box width, per
+    // the CSS spec, even for vertical margins) can express "card's top
+    // lands 2/3 down the photo's height" with no fixed px/JS measurement:
+    // photoHeight = photoWidth * (2/3) [3:2 aspect-ratio], desired offset
+    // = (2/3) * photoHeight = photoWidth * 4/9 ≈ 44.4% of the (equal)
+    // card width.
+    margin-top: 44.4%;
   }
 }
 
-// Sits behind the text column's content (z-index 0 vs. .chiSonoTextContent's
-// 1). On mobile the column is full-width, so this same top:0/right:0 rule
-// naturally lands it "behind the heading" (the first content in the
-// column) without needing separate mobile positioning, per spec.
+// Sits behind the card's content (z-index 0 vs. .chiSonoTextContent's 1),
+// positioned at the card's own top-right corner (top:0/right:0) so it
+// reads "behind the card's right/top" the same way it always has — the
+// card overlapping the photo doesn't change the numeral's own anchor.
 .chiSonoTextNumeral {
   position: absolute;
   top: 0;
@@ -209,7 +285,12 @@
   margin: 0;
   font-family: var(--font-display);
   line-height: 1;
-  color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  // Cosmetic pass: was 8%, an outlier — every other section's equivalent
+  // numeral (StatementBand's "04", RecognitionSection's, the latter's own
+  // comment reading "ink@6%, same faint value as Chi sono's watermark")
+  // already uses 6%, matching this same file's own "Benvenuto" watermark
+  // three rules up. Normalized to match.
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
   user-select: none;
   pointer-events: none;
   font-size: 6rem; // 96px — mobile tier, per spec's responsive note
