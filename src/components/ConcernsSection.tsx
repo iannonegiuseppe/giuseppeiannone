@@ -34,7 +34,11 @@ export function ConcernsSection({
   areas?: ConcernArea[];
   photo?: SanityImage;
 }) {
-  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/03.webp";
+  // Image-quality diagnostic pass: dropped the urlFor(1200) cap — capped
+  // just below next/image's own retina candidate (1200 vs ~1260 needed
+  // at 2x DPR). Source (1800px) covers it once next/image resizes from
+  // the raw asset directly.
+  const photoSrc = photo ? urlFor(photo).url() : "/design-lab/03.webp";
 
   return (
     <section
@@ -52,7 +56,16 @@ export function ConcernsSection({
             src={photoSrc}
             alt=""
             fill
-            sizes="(min-width: 48rem) 40vw, 100vw"
+            // Image-quality diagnostic pass: was 40vw, under-claiming the
+            // photo zone's true rendered width (measured 631px at a
+            // 1440px viewport, ~44vw — the zone's real width comes from
+            // a CSS custom property, not a clean vw fraction). Since the
+            // browser picks its srcset candidate from this HINT rather
+            // than the true layout size, the under-claim meant even a
+            // fully uncapped source served a smaller-than-needed
+            // candidate at retina. 45vw covers the measured width with a
+            // small safety margin.
+            sizes="(min-width: 48rem) 45vw, 100vw"
             className={`${styles.concernsPhotoImg} ${sharedStyles.heroOverlapPhotoTreated}`}
           />
         </div>

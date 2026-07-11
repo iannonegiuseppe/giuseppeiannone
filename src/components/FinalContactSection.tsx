@@ -43,7 +43,11 @@ export function FinalContactSection({
   googleProfileUrl?: string;
   photo?: SanityImage;
 }) {
-  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/11.webp";
+  // Image-quality diagnostic pass: dropped the urlFor(1200) cap — capped
+  // just below next/image's own retina candidate (1200 vs ~1260 needed
+  // at 2x DPR). Source (1920px) covers it once next/image resizes from
+  // the raw asset directly.
+  const photoSrc = photo ? urlFor(photo).url() : "/design-lab/11.webp";
 
   return (
     <div className={styles.finalContactBand} data-lab-section="final-contact">
@@ -52,7 +56,12 @@ export function FinalContactSection({
           src={photoSrc}
           alt=""
           fill
-          sizes="(min-width: 48rem) 40vw, 100vw"
+          // Image-quality diagnostic pass: was 40vw, under-claiming the
+          // photo zone's true rendered width (measured 631px at a
+          // 1440px viewport, ~44vw — same root cause as
+          // ConcernsSection's identical fix). 45vw covers the measured
+          // width with a small safety margin.
+          sizes="(min-width: 48rem) 45vw, 100vw"
           className={`${styles.finalContactPhotoImg} ${sharedStyles.heroOverlapPhotoTreated}`}
         />
         <div className={styles.finalContactPhotoOverlay} aria-hidden="true" />

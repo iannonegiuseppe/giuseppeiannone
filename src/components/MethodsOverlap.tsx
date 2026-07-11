@@ -29,9 +29,13 @@ export function MethodsOverlap({
   body: string;
   media?: SanityImage;
 }) {
+  // Image-quality diagnostic pass: dropped the urlFor(1200) cap — capped
+  // below next/image's own retina candidate (1200 vs ~1620 needed at 2x
+  // DPR for this band's ~810px display width). Source (1920px) covers it
+  // once next/image resizes from the raw asset directly.
   const media: MediaBandMedia = {
     type: "image",
-    src: mediaImage ? urlFor(mediaImage).width(1200).url() : "/design-lab/12.webp",
+    src: mediaImage ? urlFor(mediaImage).url() : "/design-lab/12.webp",
   };
 
   return (
