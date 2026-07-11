@@ -48,9 +48,12 @@ export function ChiSonoOverlap({
   watermarkText?: string;
   photo?: SanityImage;
 }) {
-  const photoSrc = photo
-    ? urlFor(photo).width(1200).url()
-    : "/design-lab/04.webp";
+  // Image-quality diagnostic pass: dropped the urlFor(1200) cap — it was
+  // capping below next/image's own retina candidate (1200 vs ~1400
+  // needed at 2x DPR for this card's ~700px display width). Source
+  // (1800px) comfortably covers it once next/image resizes from the raw
+  // asset directly.
+  const photoSrc = photo ? urlFor(photo).url() : "/design-lab/04.webp";
 
   return (
     <section className={styles.chiSonoSection} data-lab-section="chi-sono">

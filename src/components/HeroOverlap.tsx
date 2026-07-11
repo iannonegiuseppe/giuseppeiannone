@@ -48,7 +48,16 @@ export function HeroOverlap({
     treatment === "treated"
       ? `${styles.heroOverlapPhotoImg} ${sharedStyles.heroOverlapPhotoTreated}`
       : styles.heroOverlapPhotoImg;
-  const photoSrc = photo ? urlFor(photo).width(1600).url() : "/design-lab/01.webp";
+  // Image-quality diagnostic pass: no .width() here — urlFor's own resize
+  // was capping BELOW next/image's own responsive candidates (e.g. this
+  // hero's srcset asks for up to 1920w at retina, but a urlFor(1600) cap
+  // silently capped every candidate at 1600, serving a same-density image
+  // into a slot that wanted more). next/image resizes from the raw asset
+  // itself now, so it can serve up to the source's own true resolution
+  // (1800px here — still short of the ~2880px a full-bleed 100vw hero
+  // wants at 2x DPR; the source itself needs a larger owner re-upload,
+  // no pipeline fix closes that gap, see this pass's own report).
+  const photoSrc = photo ? urlFor(photo).url() : "/design-lab/01.webp";
 
   return (
     <section className={styles.heroOverlapSection} data-lab-section={`hero-${treatment}`}>
