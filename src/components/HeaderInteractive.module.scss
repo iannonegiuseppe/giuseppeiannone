@@ -266,7 +266,29 @@
 // (an earlier draft mistakenly hid it below `lg`, matching the real
 // site's Header.tsx pattern of "CTA only shows once nav collapses to a
 // burger" instead of this spec's own, different, explicit instruction).
-.labHeaderCta {
+// Mobile-header burger-regression fix: this rule's own mobile-tier
+// compact override below was ALREADY correct (see its comment — an
+// earlier round already diagnosed and fixed the exact "burger pushed off
+// the right edge" symptom) but was being silently cancelled out. The
+// button carries both sharedStyles.btnSecondary (button-base's
+// unconditional, unresponsive padding-inline/padding-block/font-size/
+// min-height) and this class; two same-specificity single-class
+// selectors on one element resolve by COMPILED SOURCE ORDER, not by
+// which one "looks more specific to this component," and
+// sharedSections.module.scss's rules were winning that order — silently
+// reverting this button back to button-base's full desktop size (28px
+// padding) on mobile regardless of what this rule declared.
+// First attempt used a cross-module compound selector
+// (.btnSecondary.labHeaderCta) — wrong, because CSS Modules scopes every
+// bare class written in THIS file to THIS file's own hash. The element's
+// actual `btnSecondary` class is hashed under sharedSections.module.scss;
+// writing `.btnSecondary` here creates an unrelated, never-matched local
+// identifier, so that selector silently matched nothing at all. The
+// self-contained fix is to double this file's own class
+// (.labHeaderCta.labHeaderCta) — same specificity boost (0,2,0), but
+// stays within this module's own scoping so it actually matches the
+// element, independent of module bundling order.
+.labHeaderCta.labHeaderCta {
   display: inline-flex;
   // Round 4: durations unified to 250ms, matching every other collapse-
   // driven transition in this header (background/blur/padding/wordmark/

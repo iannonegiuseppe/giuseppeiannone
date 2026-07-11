@@ -47,7 +47,8 @@
   padding-block: var(--space-8);
 
   @include mixins.breakpoint-up(md) {
-    padding-block: var(--space-band-y);
+    padding-block: unset;
+    padding-top: var(--space-band-y);
   }
 }
 
@@ -81,8 +82,8 @@
 }
 
 .concernsPhotoImg {
-  object-fit: cover;
-  object-position: center 25%;
+  object-fit: contain;
+  // object-position: center 25%;
 }
 
 .concernsGridWrap {
