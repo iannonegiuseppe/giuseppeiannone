@@ -30,14 +30,22 @@ export interface PathwayStep {
   description: string;
 }
 
+// CMS-wiring pass: replaces the flat contactEmail/contactPhone/
+// whatsappNumber scalars — see siteSettings.ts schema's own comment.
+export interface ContactChannel {
+  type: "whatsapp" | "phone" | "email";
+  label: string;
+  value: string;
+  order: number;
+}
+
 interface SiteSettingsData {
   title: string;
   seo?: SeoFields;
   author?: AuthorFields;
   socialLinks?: SocialLinks;
-  contactEmail?: string;
-  contactPhone?: string;
-  whatsappNumber?: string;
+  contactChannels?: ContactChannel[];
+  piva?: string;
   // Schema marks this required (deontology element, Stage 3 Step 4) — but
   // that only guides future Studio saves, not documents published before
   // the field existed. Treated as optional here so old data can't crash a

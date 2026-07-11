@@ -47,9 +47,8 @@ export const siteSettingsQuery = defineQuery(`
     seo,
     author,
     socialLinks,
-    contactEmail,
-    contactPhone,
-    whatsappNumber,
+    contactChannels,
+    piva,
     crisisSupportText,
     googleProfileUrl,
     carePathway
@@ -67,20 +66,76 @@ export const locationsQuery = defineQuery(`
   }
 `);
 
+// CMS-wiring pass: one projection per <main> section
+// (src/app/[locale]/page.tsx), in page order. Images stay as the raw
+// Sanity image object (components resolve them via urlFor, same as
+// siteSettings.author.photo already does) except video, resolved straight
+// to a URL like before — nothing else needs the asset document.
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,
     hero{
       positioningStatement,
+      ctaLabel,
       photo,
       "videoUrl": video.asset->url
     },
-    credentialsStrip,
-    methods,
-    ${bodyProjection},
-    pricingSummary,
-    finalContact,
+    chiSono,
+    comeFunziona,
+    formazione,
+    diCosa,
+    statement,
+    diplomi,
+    percorso,
+    recognition{
+      kicker,
+      heading,
+      bridgeLine,
+      vignettes[]{
+        id,
+        vignette,
+        area,
+        slug,
+        visualImage
+      }
+    },
+    miniContact,
+    sedi,
+    prezzi,
+    risorse,
+    finalCta,
+    faq{
+      kicker,
+      heading,
+      linkLabel,
+      items[]->{ _id, question, answer }
+    },
     seo
+  }
+`);
+
+// Sedi section's scene list — replaces sediData.ts. Not locale-scoped by
+// the section itself (sede documents are still it/en pairs like everything
+// else, filtered the normal way).
+export const sedesQuery = defineQuery(`
+  *[_type == "sede" && language == $locale] | order(order asc) {
+    _id,
+    city,
+    isOnline,
+    onlineLine,
+    addresses,
+    order
+  }
+`);
+
+// Diplomi section's list — replaces diplomiData.ts.
+export const diplomasQuery = defineQuery(`
+  *[_type == "diploma" && language == $locale] | order(order asc) {
+    _id,
+    image,
+    title,
+    institution,
+    year
   }
 `);
 

@@ -1,6 +1,13 @@
-import { SedesStage } from "./SedesStage";
-import { sedeScenes } from "./sediData";
+import { SedesStage, type SedeScene } from "./SedesStage";
 import styles from "./SedesSection.module.scss";
+
+interface SedeDoc {
+  _id: string;
+  city: string;
+  isOnline?: boolean;
+  onlineLine?: string;
+  addresses?: SedeScene["addresses"];
+}
 
 // Single-block pass: rebuilds the old 3-card "Sedi" grid into sticky
 // scroll scenes (desktop) / a scroll-snap slider (mobile-tablet) with a
@@ -9,15 +16,27 @@ import styles from "./SedesSection.module.scss";
 // the canonical, scroll-independent version for screen readers, reading
 // from the exact same sedeScenes array the stage uses for its markers
 // and panels, so the two can never drift.
+//
+// CMS-wiring pass: scenes come from the new `sede` document type
+// (replaces sediData.ts) — _id becomes the scene's id.
 export function SedesSection({
   kicker,
   heading,
   paragraph,
+  sedes,
 }: {
   kicker: string;
   heading: string;
   paragraph: string;
+  sedes?: SedeDoc[];
 }) {
+  const sedeScenes: SedeScene[] = (sedes ?? []).map((sede) => ({
+    id: sede._id,
+    city: sede.city,
+    addresses: sede.isOnline ? [] : (sede.addresses ?? []),
+    onlineLine: sede.isOnline ? sede.onlineLine : undefined,
+  }));
+
   return (
     <section className={styles.sedesSection} data-lab-section="locations">
       <div className={styles.sedesSrOnly}>

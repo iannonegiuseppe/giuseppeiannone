@@ -1,3 +1,5 @@
+import type { Image as SanityImage } from "sanity";
+import { urlFor } from "@/sanity/image";
 import { MediaBand, type MediaBandMedia } from "./MediaBand";
 import styles from "./MethodsOverlap.module.scss";
 
@@ -16,17 +18,22 @@ import styles from "./MethodsOverlap.module.scss";
 // prefers-reduced-motion guard, preload="none") but not demoed here, per
 // the honesty rule's explicit instruction not to substitute a mismatched
 // asset.
-const media: MediaBandMedia = { type: "image", src: "/design-lab/12.webp" };
-
 export function MethodsOverlap({
   kicker,
   heading,
   body,
+  media: mediaImage,
 }: {
   kicker: string;
   heading: string;
   body: string;
+  media?: SanityImage;
 }) {
+  const media: MediaBandMedia = {
+    type: "image",
+    src: mediaImage ? urlFor(mediaImage).width(1200).url() : "/design-lab/12.webp",
+  };
+
   return (
     <section className={styles.methodsBandSection} data-lab-section="methods">
       <div className={styles.methodsBand}>

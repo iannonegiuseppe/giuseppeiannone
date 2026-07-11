@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homePath, type Locale } from "@/sanity/paths";
+import type { ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
 import type { HeaderNavItem } from "./headerNavItems";
 import { HeaderNavItemWithSubmenu } from "./HeaderNavItemWithSubmenu";
@@ -50,11 +51,13 @@ export function HeaderInteractive({
   locale,
   authorName,
   ctaLabel,
+  contactChannels,
 }: {
   navItems: HeaderNavItem[];
   locale: Locale;
   authorName: string;
   ctaLabel: string;
+  contactChannels?: ContactChannel[];
 }) {
   const headerRef = useRef<HTMLElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -178,7 +181,7 @@ export function HeaderInteractive({
 
       {/* Colocated with the button that triggers it — nothing else on
           the page needs to open it. */}
-      <ChannelPickerDialog ref={dialogRef} />
+      <ChannelPickerDialog ref={dialogRef} contactChannels={contactChannels} />
     </>
   );
 }

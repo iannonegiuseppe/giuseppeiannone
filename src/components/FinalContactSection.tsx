@@ -1,4 +1,6 @@
+import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
+import { urlFor } from "@/sanity/image";
 import { RevealOnScroll } from "./RevealOnScroll";
 import styles from "./FinalContactSection.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
@@ -28,6 +30,8 @@ export function FinalContactSection({
   privacyNote,
   responseNote,
   googleProfileLabel,
+  googleProfileUrl,
+  photo,
 }: {
   kicker: string;
   heading: string;
@@ -36,12 +40,16 @@ export function FinalContactSection({
   privacyNote: string;
   responseNote: string;
   googleProfileLabel: string;
+  googleProfileUrl?: string;
+  photo?: SanityImage;
 }) {
+  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/11.webp";
+
   return (
     <div className={styles.finalContactBand} data-lab-section="final-contact">
       <div className={styles.finalContactPhotoZone}>
         <Image
-          src="/design-lab/11.webp"
+          src={photoSrc}
           alt=""
           fill
           sizes="(min-width: 48rem) 40vw, 100vw"
@@ -67,10 +75,16 @@ export function FinalContactSection({
                 <p className={styles.finalContactQuietLine}>{privacyNote}</p>
                 <p className={styles.finalContactQuietLine}>{responseNote}</p>
               </div>
-              {/* Renders only when siteSettings.googleProfileUrl is set on
-                  the real site — shown here to demonstrate the treatment. */}
+              {/* CMS-wiring pass: kept unconditionally rendered (href falls
+                  back to "#" when siteSettings.googleProfileUrl is empty)
+                  rather than hiding like Footer.tsx's own copy of this same
+                  link does — the pass's pixel-diff acceptance rule needs
+                  this element's visibility unchanged before Stage C's seed
+                  populates the real URL. Revisit to match Footer's hide-
+                  when-empty behavior once real content exists, if wanted. */}
               <a
-                href="#"
+                href={googleProfileUrl ?? "#"}
+                target={googleProfileUrl ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 className={styles.finalContactGoogle}
               >

@@ -2,8 +2,25 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type * as Leaflet from "leaflet";
-import type { SedeAddress, SedeScene } from "./sediData";
 import styles from "./SedesSection.module.scss";
+
+// CMS-wiring pass: replaces the types formerly in the now-retired
+// sediData.ts — id is the Sanity document's own _id (SedesSection.tsx maps
+// the raw sede[] query result onto this shape), used only as a React key
+// here, not looked up anywhere by value.
+export type SedeAddress = {
+  centerName?: string;
+  address: string;
+  lat: number;
+  lng: number;
+};
+
+export type SedeScene = {
+  id: string;
+  city: string;
+  addresses: SedeAddress[];
+  onlineLine?: string;
+};
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));

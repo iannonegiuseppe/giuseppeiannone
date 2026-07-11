@@ -1,4 +1,6 @@
+import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
+import { urlFor } from "@/sanity/image";
 import { ChiSonoWatermark } from "./ChiSonoWatermark";
 import styles from "./ChiSonoOverlap.module.scss";
 
@@ -34,6 +36,8 @@ export function ChiSonoOverlap({
   heading,
   bio,
   storyLinkLabel,
+  watermarkText,
+  photo,
 }: {
   introHeading: string;
   introLinkLabel: string;
@@ -41,12 +45,16 @@ export function ChiSonoOverlap({
   heading: string;
   bio: string;
   storyLinkLabel: string;
+  watermarkText?: string;
+  photo?: SanityImage;
 }) {
+  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/04.webp";
+
   return (
     <section className={styles.chiSonoSection} data-lab-section="chi-sono">
       <div className={styles.chiSonoIntro}>
         <div className={styles.chiSonoIntroHeadingWrap}>
-          <ChiSonoWatermark text="Benvenuto" />
+          <ChiSonoWatermark text={watermarkText ?? "Benvenuto"} />
           <h2 className={styles.chiSonoIntroHeading}>{introHeading}</h2>
         </div>
         <ArrowLink href="#" label={introLinkLabel} className={styles.chiSonoIntroLink} />
@@ -57,7 +65,7 @@ export function ChiSonoOverlap({
           <div className={styles.chiSonoPhotoShadow} aria-hidden="true" />
           <div className={styles.chiSonoPhotoWrap}>
             <Image
-              src="/design-lab/04.webp"
+              src={photoSrc}
               alt=""
               fill
               sizes="(min-width: 48rem) 50vw, 100vw"

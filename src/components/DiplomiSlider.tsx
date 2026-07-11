@@ -2,9 +2,20 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import type { Diploma } from "./diplomiData";
 import { DiplomiViewer, type DiplomiViewerHandle } from "./DiplomiViewerModal";
 import styles from "./DiplomiSection.module.scss";
+
+// CMS-wiring pass: replaces the old Diploma type (from the now-retired
+// diplomiData.ts) — image is a resolved URL string (DiplomiSection.tsx
+// does the urlFor() call server-side) rather than a raw Sanity image
+// object, id is the real Sanity document _id.
+export type ResolvedDiploma = {
+  id: string;
+  image: string;
+  title: string;
+  institution: string;
+  year: number;
+};
 
 // Revision round 2, item 3a: a drag shorter than this still opens the
 // viewer on release (a click, not a scroll gesture) — longer than this
@@ -18,7 +29,7 @@ export function DiplomiSlider({
 }: {
   kicker: string;
   heading: string;
-  diplomas: Diploma[];
+  diplomas: ResolvedDiploma[];
 }) {
   const viewerRef = useRef<DiplomiViewerHandle>(null);
   const trackRef = useRef<HTMLUListElement>(null);
@@ -181,7 +192,7 @@ export function DiplomiSlider({
           onPointerCancel={handlePointerUp}
         >
           {diplomas.map((diploma, i) => (
-            <li key={diploma.image} className={styles.diplomiSlideItem}>
+            <li key={diploma.id} className={styles.diplomiSlideItem}>
               <button
                 type="button"
                 className={styles.diplomiCard}

@@ -14,7 +14,7 @@ import {
   privacyPath,
   type Locale,
 } from "@/sanity/paths";
-import type { SocialLinks } from "@/sanity/seo";
+import type { ContactChannel, SocialLinks } from "@/sanity/seo";
 import styles from "./Footer.module.scss";
 
 interface FooterLocation {
@@ -38,9 +38,10 @@ interface FooterLocation {
 export async function Footer({
   locale,
   authorName,
-  contactEmail,
-  contactPhone,
-  whatsappNumber,
+  authorCredentials,
+  authorRegistrationNumber,
+  contactChannels,
+  piva,
   locations,
   crisisSupportText,
   googleProfileUrl,
@@ -48,9 +49,10 @@ export async function Footer({
 }: {
   locale: Locale;
   authorName: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  whatsappNumber?: string;
+  authorCredentials?: string;
+  authorRegistrationNumber?: string;
+  contactChannels?: ContactChannel[];
+  piva?: string;
   locations: FooterLocation[];
   // Optional here even though the schema requires it (Stage 3 Step 4) —
   // a document published before the field existed won't have it; the
@@ -84,7 +86,7 @@ export async function Footer({
         <div className={styles.labFooterBrand}>
           <p className={styles.labFooterWordmark}>{authorName}</p>
           <p className={styles.labFooterAlboLine}>
-            Psicologo Psicoterapeuta — Iscrizione all&apos;Albo degli Psicologi della Lombardia n. [segnaposto]
+            {authorCredentials ?? "Psicologo Psicoterapeuta"} — Iscrizione all&apos;Albo degli Psicologi della Lombardia n. {authorRegistrationNumber ?? "[segnaposto]"}
           </p>
         </div>
 
@@ -126,26 +128,29 @@ export async function Footer({
               {t("contactHeading")}
             </p>
             <div className={styles.labFooterContactList}>
-              {contactEmail ? (
-                <a href={`mailto:${contactEmail}`} className={styles.labFooterContactLine}>
-                  {contactEmail}
-                </a>
-              ) : null}
-              {contactPhone ? (
-                <a href={`tel:${contactPhone}`} className={styles.labFooterContactLine}>
-                  {contactPhone}
-                </a>
-              ) : null}
-              {whatsappNumber ? (
-                <a
-                  href={whatsappUrl(whatsappNumber)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.labFooterContactLine}
-                >
-                  {t("whatsapp")}
-                </a>
-              ) : null}
+              {contactChannels
+                ?.slice()
+                .sort((a, b) => a.order - b.order)
+                .map((channel) => {
+                  const href =
+                    channel.type === "whatsapp"
+                      ? whatsappUrl(channel.value)
+                      : channel.type === "phone"
+                        ? `tel:${channel.value}`
+                        : `mailto:${channel.value}`;
+                  return (
+                    <a
+                      key={channel.type}
+                      href={href}
+                      {...(channel.type === "whatsapp"
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                      className={styles.labFooterContactLine}
+                    >
+                      {channel.label}
+                    </a>
+                  );
+                })}
               {socialLinks?.instagram ? (
                 <a
                   href={socialLinks.instagram}
@@ -186,7 +191,7 @@ export async function Footer({
                 </Link>
               </li>
             </ul>
-            <p className={styles.labFooterPivaLine}>P.IVA [segnaposto]</p>
+            <p className={styles.labFooterPivaLine}>P.IVA {piva ?? "[segnaposto]"}</p>
           </div>
         </div>
       </div>

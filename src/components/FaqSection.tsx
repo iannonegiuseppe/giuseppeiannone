@@ -1,8 +1,14 @@
 import { FaqAccordion } from "./FaqAccordion";
-import { buildFaqPageJsonLd } from "@/sanity/jsonLd";
+import { buildFaqPageJsonLd, plainTextFromPortableText } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { faqPath } from "@/sanity/paths";
 import styles from "./FaqSection.module.scss";
+
+interface FaqItemDoc {
+  _id: string;
+  question: string;
+  answer: unknown;
+}
 
 // Single-block pass (v2): rebuilds v1's always-open 2x2 grid into a
 // sticky header column + hairline-row accordion — light ivory interlude
@@ -11,50 +17,25 @@ import styles from "./FaqSection.module.scss";
 // for the reader and for AEO: answer engines read rendered text, not
 // content hidden behind a toggle) — see FaqAccordion.tsx for the
 // exclusive-open behavior and the CSS grid-rows animation technique.
-// Placeholder copy, client finalizes.
 //
-// Facts/process only, per docs/design-direction.md §9 — no "superare",
-// "guarire", "risolvere", "risultati", "garantito", "gratuito", "%", or
-// urgency wording anywhere in this array.
-const faqPairs = [
-  {
-    question: "Come funziona il primo colloquio?",
-    answer:
-      "È un incontro per conoscersi e capire la richiesta, senza impegno di proseguire. [segnaposto]",
-  },
-  {
-    question: "Quanto dura una seduta?",
-    answer: "Una seduta dura in genere 50 minuti. [segnaposto]",
-  },
-  {
-    question: "Ricevi anche online?",
-    answer:
-      "Sì: le sedute possono svolgersi in studio, a Milano o Monza, oppure online. [segnaposto]",
-  },
-  {
-    question: "Quanto può durare un percorso?",
-    answer:
-      "Dipende dalla persona e dalla richiesta: se ne parla apertamente, e la direzione si verifica insieme lungo il percorso. [segnaposto]",
-  },
-] as const;
-
-// Single source for both the visible copy above and the JSON-LD below —
-// the two can never drift, since the JSON-LD is generated FROM this same
-// array, not maintained as a separate parallel list.
-const faqPageJsonLd = buildFaqPageJsonLd(
-  faqPairs.map((pair) => ({ question: pair.question, answerText: pair.answer })),
-);
-
+// CMS-wiring pass: items come from homePage.faq.items (4 references to
+// the existing faqItem document type — see queries.ts's homePageQuery).
+// JSON-LD is built from the SAME items, flattened to plain text via
+// plainTextFromPortableText (the same helper pillar/subtopic pages'
+// faqBlock JSON-LD already uses), so the visible copy and the structured
+// data can never drift.
 export function FaqSection({
   kicker,
   heading,
   linkLabel,
   locale,
+  items,
 }: {
   kicker: string;
   heading: string;
   linkLabel: string;
   locale: string;
+  items?: FaqItemDoc[];
 }) {
   // Same locale-narrowing convention as [pillarSlug]/page.tsx (typedLocale)
   // — paths.ts's Locale union is "it" | "en", params.locale is a plain
@@ -62,6 +43,13 @@ export function FaqSection({
   const typedLocale = locale as "it" | "en";
 
   const href = faqPath(typedLocale);
+  const faqPairs = items ?? [];
+  const faqPageJsonLd = buildFaqPageJsonLd(
+    faqPairs.map((item) => ({
+      question: item.question,
+      answerText: plainTextFromPortableText(item.answer),
+    })),
+  );
 
   return (
     <section className={styles.faqSection} data-lab-section="faq">

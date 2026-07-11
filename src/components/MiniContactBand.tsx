@@ -1,4 +1,5 @@
-import { contactChannels } from "./contactChannels";
+import type { ContactChannel } from "@/sanity/seo";
+import { whatsappUrl } from "@/sanity/contact";
 import styles from "./MiniContactBand.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -8,22 +9,26 @@ import sharedStyles from "./sharedSections.module.scss";
 // quiet and practical: one button (WhatsApp), everything else is a plain
 // text link, per spec's "exactly ONE button in the band" rule.
 //
-// Header pass refactor: the channel list (label/href for whatsapp/phone/
-// email) now comes from contactChannels.ts — the SAME array the header's
-// ChannelPickerDialog.tsx popup consumes — rather than three separate
-// whatsappLabel/phoneLabel/emailLabel props. kicker/heading/body stay
-// band-specific props (the popup has its own, different heading). Visual
-// output is unchanged: same labels, same hrefs, same markup shape per
-// channel, verified pixel-identical against the pre-refactor screenshot
-// in this pass's QA.
+// CMS-wiring pass: contactChannels is now a prop (siteSettings-driven,
+// the SAME array the header's ChannelPickerDialog.tsx popup consumes) —
+// replaces the static src/components/contactChannels.ts import both this
+// component and the popup used to read directly.
+function channelHref(channel: ContactChannel): string {
+  if (channel.type === "whatsapp") return whatsappUrl(channel.value);
+  if (channel.type === "phone") return `tel:${channel.value}`;
+  return `mailto:${channel.value}`;
+}
+
 export function MiniContactBand({
   kicker,
   heading,
   body,
+  contactChannels,
 }: {
   kicker: string;
   heading: string;
   body: string;
+  contactChannels?: ContactChannel[];
 }) {
   return (
     <section className={styles.miniContactBand} data-lab-section="mini-contact">
@@ -37,21 +42,24 @@ export function MiniContactBand({
           <p className={styles.miniContactBody}>{body}</p>
         </div>
         <div className={styles.miniContactRight}>
-          {contactChannels.map((channel) =>
-            channel.id === "whatsapp" ? (
-              <a
-                key={channel.id}
-                href={channel.href}
-                className={`${sharedStyles.btnSecondary} ${styles.miniContactWhatsapp}`}
-              >
-                {channel.label}
-              </a>
-            ) : (
-              <a key={channel.id} href={channel.href} className={styles.miniContactLink}>
-                {channel.label}
-              </a>
-            ),
-          )}
+          {contactChannels
+            ?.slice()
+            .sort((a, b) => a.order - b.order)
+            .map((channel) =>
+              channel.type === "whatsapp" ? (
+                <a
+                  key={channel.type}
+                  href={channelHref(channel)}
+                  className={`${sharedStyles.btnSecondary} ${styles.miniContactWhatsapp}`}
+                >
+                  {channel.label}
+                </a>
+              ) : (
+                <a key={channel.type} href={channelHref(channel)} className={styles.miniContactLink}>
+                  {channel.label}
+                </a>
+              ),
+            )}
         </div>
       </div>
     </section>

@@ -2,15 +2,11 @@ import { PriceLine } from "./PriceLine";
 import styles from "./PricingSection.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
-// Facts, not an offer, per docs/design-direction.md §9 — no plan columns,
-// "most popular" badges, crossed-out prices, feature checklists,
-// packages/bundles, discount/promo wording, urgency wording, or "%".
-// Placeholder amounts are [segnaposto] pending the client's written
-// confirmation of real figures.
-const priceLines = [
-  { label: "Colloquio individuale", price: "€ [segnaposto]", unit: "/ 50 min" },
-  { label: "Seduta online", price: "€ [segnaposto]", unit: "/ 50 min" },
-];
+interface PriceLineData {
+  label: string;
+  price: string;
+  unit: string;
+}
 
 // Single-block refinement pass: replaces the old single-column band with
 // a two-zone layout (left: kicker/heading/paragraph/button; right: price
@@ -19,18 +15,29 @@ const priceLines = [
 // settles). See sectionsShared.module.scss's .pricingBand comment for how the
 // button's desktop-vs-mobile position is handled without two DOM
 // structures.
+//
+// CMS-wiring pass: priceLines/footnote/noPricesSentence come from
+// homePage.prezzi — the deontology validator on those schema fields
+// enforces the "facts, not an offer" rule this file's own comment used to
+// carry alone.
 export function PricingSection({
   kicker,
   heading,
   body,
   buttonLabel,
   showPrices,
+  priceLines,
+  footnote,
+  noPricesSentence,
 }: {
   kicker: string;
   heading: string;
   body: string;
   buttonLabel: string;
   showPrices: boolean;
+  priceLines?: PriceLineData[];
+  footnote?: string;
+  noPricesSentence?: string;
 }) {
   return (
     <section className={styles.pricingBand} data-lab-section="pricing">
@@ -48,18 +55,14 @@ export function PricingSection({
           {showPrices ? (
             <>
               <ul className={styles.priceList}>
-                {priceLines.map((line) => (
+                {(priceLines ?? []).map((line) => (
                   <PriceLine key={line.label} label={line.label} price={line.price} unit={line.unit} />
                 ))}
               </ul>
-              <p className={styles.pricingFootnote}>
-                Ricevuta sanitaria per ogni seduta. [segnaposto — dettagli sulla pagina prezzi]
-              </p>
+              <p className={styles.pricingFootnote}>{footnote}</p>
             </>
           ) : (
-            <p className={styles.pricingNoPricesSentence}>
-              Il costo viene comunicato con chiarezza al primo contatto, prima di qualsiasi impegno.
-            </p>
+            <p className={styles.pricingNoPricesSentence}>{noPricesSentence}</p>
           )}
         </div>
 

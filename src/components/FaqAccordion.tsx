@@ -1,11 +1,29 @@
 "use client";
 
 import { useId, useState } from "react";
+import { PortableText, type PortableTextComponents } from "next-sanity";
 import styles from "./FaqSection.module.scss";
 
 export type FaqAccordionPair = {
   question: string;
-  answer: string;
+  // Portable Text (faqAnswer schema type) — CMS-wiring pass, was a plain
+  // string before.
+  answer: unknown;
+};
+
+// Renders each "normal" block's children directly (marks intact) instead
+// of next-sanity's default <p> wrapper — the existing <p className=
+// {faqRowAnswer}> below already provides the paragraph element and its
+// styling, so double-wrapping would both be invalid-ish nesting and pull
+// in an unstyled inner <p>'s default browser margin. Answers with more
+// than one paragraph block will run the text together with no visual
+// break — an accepted limitation given the schema's own single-paragraph
+// convention (the pre-CMS hardcoded copy and the seed script both use
+// exactly one paragraph per answer).
+const answerComponents: PortableTextComponents = {
+  block: {
+    normal: ({ children }) => <>{children}</>,
+  },
 };
 
 // Exclusive-select accordion (radio-like, not independent toggles):
@@ -57,7 +75,9 @@ export function FaqAccordion({ pairs }: { pairs: readonly FaqAccordionPair[] }) 
               data-open={isOpen}
             >
               <div className={styles.faqRowPanelInner}>
-                <p className={styles.faqRowAnswer}>{pair.answer}</p>
+                <p className={styles.faqRowAnswer}>
+                  <PortableText value={pair.answer as never} components={answerComponents} />
+                </p>
               </div>
             </div>
           </div>

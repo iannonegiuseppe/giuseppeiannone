@@ -1,4 +1,6 @@
+import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
+import { urlFor } from "@/sanity/image";
 import styles from "./HeroOverlap.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -14,19 +16,39 @@ import sharedStyles from "./sharedSections.module.scss";
 // spec 2.1: eyebrow -> name -> subtitle -> CTA -> registration line
 // (previously credentials sat BELOW the name; the "credentials" line IS
 // the eyebrow, just reordered and restyled, not a new field).
+//
+// CMS-wiring pass: eyebrow/name/registration line come from
+// siteSettings.author (already the single source of truth for that
+// identity, per homePage.hero's own schema description) rather than being
+// re-entered as homepage-local fields; positioningStatement/ctaLabel/photo
+// come from homePage.hero. Falls back to the original placeholder photo
+// path when no CMS photo is set yet.
 export function HeroOverlap({
   treatment,
   label,
+  authorName,
+  authorCredentials,
+  positioningStatement,
+  ctaLabel,
+  registrationNumber,
+  photo,
 }: {
   treatment: "raw" | "treated";
   // Internal review annotation only (e.g. "Hero — approved") — omitted
   // entirely once the route reads as a clean client-facing preview.
   label?: string;
+  authorName: string;
+  authorCredentials?: string;
+  positioningStatement: string;
+  ctaLabel: string;
+  registrationNumber?: string;
+  photo?: SanityImage;
 }) {
   const photoClassName =
     treatment === "treated"
       ? `${styles.heroOverlapPhotoImg} ${sharedStyles.heroOverlapPhotoTreated}`
       : styles.heroOverlapPhotoImg;
+  const photoSrc = photo ? urlFor(photo).width(1600).url() : "/design-lab/01.webp";
 
   return (
     <section className={styles.heroOverlapSection} data-lab-section={`hero-${treatment}`}>
@@ -34,7 +56,7 @@ export function HeroOverlap({
       <div className={styles.heroOverlap}>
         <div className={styles.heroOverlapPhotoWrap}>
           <Image
-            src="/design-lab/01.webp"
+            src={photoSrc}
             alt=""
             fill
             priority
@@ -44,17 +66,14 @@ export function HeroOverlap({
         </div>
         <div className={styles.heroOverlapContent}>
           <div className={styles.heroOverlapTextInner}>
-            <p className={styles.heroOverlapEyebrow}>Psicologo Psicoterapeuta</p>
-            <h1 className={styles.heroOverlapName}>Giuseppe Iannone</h1>
-            <p className={styles.heroOverlapSubtitle}>
-              Uno spazio calmo per affrontare ciò che pesa, con metodo e senza
-              fretta.
-            </p>
+            <p className={styles.heroOverlapEyebrow}>{authorCredentials ?? "Psicologo Psicoterapeuta"}</p>
+            <h1 className={styles.heroOverlapName}>{authorName}</h1>
+            <p className={styles.heroOverlapSubtitle}>{positioningStatement}</p>
             <a href="#" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
-              Prenota un primo colloquio
+              {ctaLabel}
             </a>
             <p className={styles.heroOverlapRegistration}>
-              Iscrizione all&apos;Albo degli Psicologi n. [segnaposto]
+              Iscrizione all&apos;Albo degli Psicologi n. {registrationNumber ?? "[segnaposto]"}
             </p>
           </div>
         </div>

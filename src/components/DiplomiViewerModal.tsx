@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Diploma } from "./diplomiData";
+import type { ResolvedDiploma } from "./DiplomiSlider";
 import styles from "./DiplomiSection.module.scss";
 
 const ZOOM_SCALE = 2;
@@ -43,7 +43,7 @@ export type DiplomiViewerHandle = {
 // behavior: "auto" })` — the object form's explicit `behavior` always
 // wins over the CSS default, so this can never animate, regardless of
 // that global rule.
-export const DiplomiViewer = forwardRef<DiplomiViewerHandle, { diplomas: Diploma[] }>(
+export const DiplomiViewer = forwardRef<DiplomiViewerHandle, { diplomas: ResolvedDiploma[] }>(
   function DiplomiViewer({ diplomas }, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const cardRef = useRef<HTMLDivElement | null>(null);
@@ -316,7 +316,7 @@ export const DiplomiViewer = forwardRef<DiplomiViewerHandle, { diplomas: Diploma
               if (!isCurrent && !isPreload) return null;
               return (
                 <div
-                  key={d.image}
+                  key={d.id}
                   className={styles.diplomiViewerSlide}
                   data-active={isCurrent}
                   aria-hidden={!isCurrent}

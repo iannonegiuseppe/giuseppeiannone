@@ -126,14 +126,16 @@ export default async function LocaleLayout({
             <Header
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
+              contactChannels={siteSettings?.contactChannels}
             />
             {children}
             <Footer
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
-              contactEmail={siteSettings?.contactEmail}
-              contactPhone={siteSettings?.contactPhone}
-              whatsappNumber={siteSettings?.whatsappNumber}
+              authorCredentials={siteSettings?.author?.credentials}
+              authorRegistrationNumber={siteSettings?.author?.registrationNumber}
+              contactChannels={siteSettings?.contactChannels}
+              piva={siteSettings?.piva}
               locations={locations}
               crisisSupportText={siteSettings?.crisisSupportText}
               googleProfileUrl={siteSettings?.googleProfileUrl}

@@ -1,34 +1,14 @@
+import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
+import { urlFor } from "@/sanity/image";
 import { IndexedListItem } from "./IndexedListItem";
 import styles from "./ConcernsSection.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
-// Facts/states, never outcomes, per docs/design-direction.md §9 — no
-// "superare"/"guarire"/"risolvere"/"eliminare"/"sconfiggere"/"liberarti"/
-// "garantito"/"%" anywhere in this section. Sub-items name states and
-// situations a person may be experiencing, not what will be achieved.
-const areas = [
-  {
-    numeral: "01",
-    title: "Ansia",
-    subItems: ["Attacchi di panico", "Preoccupazione costante", "Ansia sociale"],
-  },
-  {
-    numeral: "02",
-    title: "Depressione",
-    subItems: ["Stanchezza e demotivazione", "Calo dell'umore", "Isolamento"],
-  },
-  {
-    numeral: "03",
-    title: "Stress",
-    subItems: ["Carico lavorativo", "Tensione fisica", "Difficoltà a staccare"],
-  },
-  {
-    numeral: "04",
-    title: "Cambiamenti di vita",
-    subItems: ["Separazioni", "Transizioni lavorative", "Nuove fasi di vita"],
-  },
-];
+interface ConcernArea {
+  title: string;
+  subItems?: string[];
+}
 
 // Single-block refinement pass: replaces the old sand-band 2x2 GroupBCard
 // grid entirely (that markup is gone, not hidden — see the file-level
@@ -37,15 +17,25 @@ const areas = [
 // watermark is this section's slot in the site-wide numbered-section
 // sequence (Chi sono=01, Come funziona=02, this=03) — unrelated to the
 // areas' own 01-04 indexing below it, which is a separate, local list.
+//
+// CMS-wiring pass: areas come from homePage.diCosa.areas — each item's own
+// numeral (01-04) is computed from its array position (1-indexed, padded),
+// not stored data, since it's purely positional.
 export function ConcernsSection({
   kicker,
   heading,
   linkLabel,
+  areas,
+  photo,
 }: {
   kicker: string;
   heading: string;
   linkLabel: string;
+  areas?: ConcernArea[];
+  photo?: SanityImage;
 }) {
+  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/03.webp";
+
   return (
     <section
       id="di-cosa"
@@ -59,7 +49,7 @@ export function ConcernsSection({
       <div className={styles.concernsLayout}>
         <div className={styles.concernsPhotoZone}>
           <Image
-            src="/design-lab/03.webp"
+            src={photoSrc}
             alt=""
             fill
             sizes="(min-width: 48rem) 40vw, 100vw"
@@ -84,12 +74,12 @@ export function ConcernsSection({
                 </span>
               </a>
               <ul className={styles.concernsList}>
-                {areas.map((area) => (
+                {(areas ?? []).map((area, index) => (
                   <li key={area.title}>
                     <IndexedListItem
-                      numeral={area.numeral}
+                      numeral={String(index + 1).padStart(2, "0")}
                       title={area.title}
-                      subItems={area.subItems}
+                      subItems={area.subItems ?? []}
                     />
                   </li>
                 ))}

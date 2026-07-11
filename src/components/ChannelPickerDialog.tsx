@@ -7,14 +7,21 @@ import {
   useRef,
   useState,
 } from "react";
-import { contactChannels } from "@/components/contactChannels";
 import { useLenisRef } from "@/components/LenisProvider";
+import { whatsappUrl } from "@/sanity/contact";
+import type { ContactChannel } from "@/sanity/seo";
 import styles from "./HeaderInteractive.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
 export type ChannelPickerDialogHandle = {
   open: () => void;
 };
+
+function channelHref(channel: ContactChannel): string {
+  if (channel.type === "whatsapp") return whatsappUrl(channel.value);
+  if (channel.type === "phone") return `tel:${channel.value}`;
+  return `mailto:${channel.value}`;
+}
 
 // Part B: the header's "Prenota un primo colloquio" button opens this —
 // not a form, nothing is collected (no GDPR data processing), just a
@@ -35,8 +42,10 @@ export type ChannelPickerDialogHandle = {
 // data-closing state instead of closing immediately, and call the REAL
 // .close() only once that transition finishes (via onTransitionEnd) —
 // or immediately, with no transition at all, under reduced motion.
-export const ChannelPickerDialog = forwardRef<ChannelPickerDialogHandle>(
-  function ChannelPickerDialog(_props, ref) {
+export const ChannelPickerDialog = forwardRef<
+  ChannelPickerDialogHandle,
+  { contactChannels?: ContactChannel[] }
+>(function ChannelPickerDialog({ contactChannels }, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const cardRef = useRef<HTMLDivElement | null>(null);
     const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -156,21 +165,24 @@ export const ChannelPickerDialog = forwardRef<ChannelPickerDialogHandle>(
           </h2>
 
           <div className={styles.channelDialogChannels}>
-            {contactChannels.map((channel) =>
-              channel.id === "whatsapp" ? (
-                <a
-                  key={channel.id}
-                  href={channel.href}
-                  className={`${sharedStyles.btnSecondary} ${styles.channelDialogWhatsapp}`}
-                >
-                  {channel.label}
-                </a>
-              ) : (
-                <a key={channel.id} href={channel.href} className={styles.channelDialogLink}>
-                  {channel.label}
-                </a>
-              ),
-            )}
+            {contactChannels
+              ?.slice()
+              .sort((a, b) => a.order - b.order)
+              .map((channel) =>
+                channel.type === "whatsapp" ? (
+                  <a
+                    key={channel.type}
+                    href={channelHref(channel)}
+                    className={`${sharedStyles.btnSecondary} ${styles.channelDialogWhatsapp}`}
+                  >
+                    {channel.label}
+                  </a>
+                ) : (
+                  <a key={channel.type} href={channelHref(channel)} className={styles.channelDialogLink}>
+                    {channel.label}
+                  </a>
+                ),
+              )}
           </div>
 
           <div className={styles.channelDialogQuietLines}>

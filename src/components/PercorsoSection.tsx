@@ -1,32 +1,10 @@
 import { TimelineDesktop, TimelineMobileStack, type TimelineStep } from "./Timeline";
 import styles from "./PercorsoSection.module.scss";
 
-// Facts/process only, per docs/design-direction.md §9 — no
-// "superare"/"guarire"/"risolvere"/"risultati garantiti"/"%"/urgency
-// wording ("subito", "non aspettare") anywhere in this section. Steps
-// describe the PROCESS, never outcomes.
-const steps: TimelineStep[] = [
-  {
-    numeral: "01",
-    title: "Primo colloquio",
-    text: "Un incontro per conoscersi e capire la richiesta. 50 minuti, senza impegno di proseguire.",
-  },
-  {
-    numeral: "02",
-    title: "Capire insieme",
-    text: "Qualche incontro per mettere a fuoco cosa succede e definire una direzione condivisa.",
-  },
-  {
-    numeral: "03",
-    title: "Il percorso",
-    text: "Incontri regolari, con strumenti cognitivo-comportamentali adattati alla persona.",
-  },
-  {
-    numeral: "04",
-    title: "Verifiche lungo la strada",
-    text: "Momenti per fare il punto: cosa sta funzionando, cosa adattare.",
-  },
-];
+interface PercorsoStep {
+  title: string;
+  text: string;
+}
 
 // Single-block ADD. Desktop/tablet: zigzag timeline with a scroll-driven
 // progress fill (Timeline.tsx). Mobile: a completely different DOM — a
@@ -35,15 +13,26 @@ const steps: TimelineStep[] = [
 // per breakpoint (see sectionsShared.module.scss's file-level comment on
 // .percorsoSection for why both stay mounted rather than conditionally
 // rendered).
+//
+// CMS-wiring pass: steps come from homePage.percorso.steps — each step's
+// numeral (01-04) is computed from its array position, not stored data.
 export function PercorsoSection({
   kicker,
   heading,
   paragraph,
+  steps: rawSteps,
 }: {
   kicker: string;
   heading: string;
   paragraph: string;
+  steps?: PercorsoStep[];
 }) {
+  const steps: TimelineStep[] = (rawSteps ?? []).map((step, index) => ({
+    numeral: String(index + 1).padStart(2, "0"),
+    title: step.title,
+    text: step.text,
+  }));
+
   return (
     <section className={styles.percorsoSection} data-lab-section="percorso">
       <div className={styles.percorsoHeader}>

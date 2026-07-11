@@ -1,3 +1,4 @@
+import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
@@ -18,37 +19,99 @@ import { SedesSection } from "@/components/SedesSection";
 import { StatementBand } from "@/components/StatementBand";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
-import { latestArticlesQuery } from "@/sanity/queries";
+import {
+  diplomasQuery,
+  homePageQuery,
+  latestArticlesQuery,
+  sedesQuery,
+} from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
-const recognitionBridgeLine =
-  "Non serve conoscere il nome di quello che senti. A volte si parte da qui. [segnaposto]";
+interface HomePageData {
+  title?: string;
+  hero?: {
+    positioningStatement?: string;
+    ctaLabel?: string;
+    photo?: SanityImage;
+  };
+  chiSono?: {
+    introHeading?: string;
+    introLinkLabel?: string;
+    kicker?: string;
+    heading?: string;
+    bio?: string;
+    storyLinkLabel?: string;
+    watermarkText?: string;
+    photo?: SanityImage;
+  };
+  comeFunziona?: { kicker?: string; heading?: string; body?: string; media?: SanityImage };
+  formazione?: {
+    kicker?: string;
+    credentials?: string[];
+    counters?: { value: number; label: string }[];
+  };
+  diCosa?: {
+    kicker?: string;
+    heading?: string;
+    linkLabel?: string;
+    areas?: { title: string; subItems?: string[] }[];
+    photo?: SanityImage;
+  };
+  statement?: { statement?: string };
+  diplomi?: { kicker?: string; heading?: string };
+  percorso?: { kicker?: string; heading?: string; paragraph?: string; steps?: { title: string; text: string }[] };
+  recognition?: {
+    kicker?: string;
+    heading?: string;
+    bridgeLine?: string;
+    vignettes?: { id: string; vignette: string; area: string; slug: string; visualImage?: SanityImage }[];
+  };
+  miniContact?: { kicker?: string; heading?: string; body?: string };
+  sedi?: { kicker?: string; heading?: string; paragraph?: string };
+  prezzi?: {
+    kicker?: string;
+    heading?: string;
+    body?: string;
+    buttonLabel?: string;
+    showPrices?: boolean;
+    priceLines?: { label: string; price: string; unit: string }[];
+    footnote?: string;
+    noPricesSentence?: string;
+  };
+  risorse?: { kicker?: string; heading?: string; allArticlesLabel?: string };
+  finalCta?: {
+    kicker?: string;
+    heading?: string;
+    body?: string;
+    ctaLabel?: string;
+    privacyNote?: string;
+    responseNote?: string;
+    googleProfileLabel?: string;
+    photo?: SanityImage;
+  };
+  faq?: {
+    kicker?: string;
+    heading?: string;
+    linkLabel?: string;
+    items?: { _id: string; question: string; answer: unknown }[];
+  };
+}
 
-const bio =
-  "Da anni accompagno persone che attraversano ansia, cambiamenti di vita e momenti di difficoltà, con un approccio integrato e concreto.";
+interface SedeData {
+  _id: string;
+  city: string;
+  isOnline?: boolean;
+  onlineLine?: string;
+  addresses?: { centerName?: string; address: string; lat: number; lng: number }[];
+}
 
-const methodsBody =
-  "Ogni percorso nasce da un ascolto attento: strumenti cognitivo-comportamentali, adattati alla persona che ho davanti, non a uno schema fisso.";
-
-const pricingBody =
-  "Un percorso ha un costo chiaro, comunicato prima di iniziare. Nessuna sorpresa, nessuna promozione.";
-
-const finalContactBody =
-  "Se ti riconosci in questi temi, scrivimi: possiamo capire insieme da dove partire.";
-
-const finalContactResponseNote =
-  "Rispondo di persona, in genere entro [segnaposto] giorni.";
-
-const sediParagraph =
-  "Ricevo in studio a Milano, Monza e Cernusco sul Naviglio, oppure online. [segnaposto]";
-
-const miniContactBody =
-  "Se vuoi, scrivimi due righe così come viene: ti rispondo personalmente e capiamo insieme se posso esserti utile. [segnaposto]";
-
-// Giuseppe's own signed statement, not a testimonial — see
-// StatementBand.tsx's file-level comment and docs/design-direction.md §9.
-const statementText =
-  "Il mio lavoro non è dare risposte pronte, ma costruire insieme un modo di stare nelle cose — più chiaro, più sostenibile.";
+interface DiplomaData {
+  _id: string;
+  image: SanityImage;
+  title: string;
+  institution: string;
+  year: number;
+}
 
 // TEMPORARY EN GATE: this composition's copy is hardcoded Italian —
 // translations arrive with the content phase, not this promotion pass.
@@ -99,102 +162,134 @@ export default async function Home({
     redirect(homePath("it"));
   }
 
-  // Tagged "article" per the project's type-driven revalidation convention
-  // (src/app/api/revalidate/route.ts revalidates the raw _type string on
-  // every write) — same tag family the webhook already produces for this
-  // document type, no changes needed there.
-  const realArticles = await sanityFetch<RealArticle[]>(
-    latestArticlesQuery,
-    { locale },
-    ["article"],
-  );
+  const [homePage, siteSettings, sedes, diplomas, realArticles] = await Promise.all([
+    sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+    getSiteSettings(locale),
+    sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
+    sanityFetch<DiplomaData[]>(diplomasQuery, { locale }, ["diploma"]),
+    // Tagged "article" per the project's type-driven revalidation convention
+    // (src/app/api/revalidate/route.ts revalidates the raw _type string on
+    // every write) — same tag family the webhook already produces for this
+    // document type, no changes needed there.
+    sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
+  ]);
+
+  const authorName = siteSettings?.author?.name ?? "";
 
   return (
     <main>
-      <HeroOverlap treatment="treated" />
+      <HeroOverlap
+        treatment="treated"
+        authorName={authorName}
+        authorCredentials={siteSettings?.author?.credentials}
+        registrationNumber={siteSettings?.author?.registrationNumber}
+        positioningStatement={homePage?.hero?.positioningStatement ?? ""}
+        ctaLabel={homePage?.hero?.ctaLabel ?? ""}
+        photo={homePage?.hero?.photo}
+      />
 
       <ChiSonoOverlap
-        introHeading="Uno spazio per capire cosa succede, e come stare meglio."
-        introLinkLabel="Scrivimi"
-        kicker="Il percorso"
-        heading="Chi sono"
-        bio={bio}
-        storyLinkLabel="La mia storia"
+        introHeading={homePage?.chiSono?.introHeading ?? ""}
+        introLinkLabel={homePage?.chiSono?.introLinkLabel ?? ""}
+        kicker={homePage?.chiSono?.kicker ?? ""}
+        heading={homePage?.chiSono?.heading ?? ""}
+        bio={homePage?.chiSono?.bio ?? ""}
+        storyLinkLabel={homePage?.chiSono?.storyLinkLabel ?? ""}
+        watermarkText={homePage?.chiSono?.watermarkText}
+        photo={homePage?.chiSono?.photo}
       />
       <MethodsOverlap
-        kicker="Il metodo"
-        heading="Come funziona"
-        body={methodsBody}
+        kicker={homePage?.comeFunziona?.kicker ?? ""}
+        heading={homePage?.comeFunziona?.heading ?? ""}
+        body={homePage?.comeFunziona?.body ?? ""}
+        media={homePage?.comeFunziona?.media}
       />
 
-      <FormazioneBand kicker="Formazione e iscrizioni" />
+      <FormazioneBand
+        kicker={homePage?.formazione?.kicker ?? ""}
+        credentials={homePage?.formazione?.credentials}
+        counters={homePage?.formazione?.counters}
+      />
 
       <ConcernsSection
-        kicker="Aree di lavoro"
-        heading="Di cosa mi occupo"
-        linkLabel="Tutte le aree"
+        kicker={homePage?.diCosa?.kicker ?? ""}
+        heading={homePage?.diCosa?.heading ?? ""}
+        linkLabel={homePage?.diCosa?.linkLabel ?? ""}
+        areas={homePage?.diCosa?.areas}
+        photo={homePage?.diCosa?.photo}
       />
       <StatementBand
-        statement={statementText}
-        signature="Giuseppe Iannone"
-        role="Psicologo Psicoterapeuta"
+        statement={homePage?.statement?.statement ?? ""}
+        signature={authorName}
+        role={siteSettings?.author?.credentials ?? "Psicologo Psicoterapeuta"}
       />
       <DiplomiSection
-        kicker="Percorso formativo"
-        heading="Diplomi e formazione"
+        kicker={homePage?.diplomi?.kicker ?? ""}
+        heading={homePage?.diplomi?.heading ?? ""}
+        diplomas={diplomas}
       />
       <PercorsoSection
-        kicker="Come si svolge"
-        heading="Come si svolge un percorso"
-        paragraph="Ogni percorso è diverso, ma la struttura è chiara fin dall'inizio: ecco cosa aspettarsi."
+        kicker={homePage?.percorso?.kicker ?? ""}
+        heading={homePage?.percorso?.heading ?? ""}
+        paragraph={homePage?.percorso?.paragraph ?? ""}
+        steps={homePage?.percorso?.steps}
       />
       <RecognitionSection
-        kicker="Situazioni comuni"
-        heading="Ti riconosci?"
-        bridgeLine={recognitionBridgeLine}
+        kicker={homePage?.recognition?.kicker ?? ""}
+        heading={homePage?.recognition?.heading ?? ""}
+        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
+        vignettes={homePage?.recognition?.vignettes}
       />
       <MiniContactBand
-        kicker="Primo contatto"
-        heading="Non serve arrivare con una richiesta chiara."
-        body={miniContactBody}
+        kicker={homePage?.miniContact?.kicker ?? ""}
+        heading={homePage?.miniContact?.heading ?? ""}
+        body={homePage?.miniContact?.body ?? ""}
+        contactChannels={siteSettings?.contactChannels}
       />
       <SedesSection
-        kicker="Dove ricevo"
-        heading="Sedi"
-        paragraph={sediParagraph}
+        kicker={homePage?.sedi?.kicker ?? ""}
+        heading={homePage?.sedi?.heading ?? ""}
+        paragraph={homePage?.sedi?.paragraph ?? ""}
+        sedes={sedes}
       />
 
       <PricingSection
-        kicker="Trasparenza"
-        heading="Quanto costa un percorso"
-        body={pricingBody}
-        buttonLabel="Vedi i prezzi"
-        showPrices
+        kicker={homePage?.prezzi?.kicker ?? ""}
+        heading={homePage?.prezzi?.heading ?? ""}
+        body={homePage?.prezzi?.body ?? ""}
+        buttonLabel={homePage?.prezzi?.buttonLabel ?? ""}
+        showPrices={homePage?.prezzi?.showPrices ?? true}
+        priceLines={homePage?.prezzi?.priceLines}
+        footnote={homePage?.prezzi?.footnote}
+        noPricesSentence={homePage?.prezzi?.noPricesSentence}
       />
 
       <ResourcesSection
-        kicker="Per iniziare"
-        heading="Risorse"
+        kicker={homePage?.risorse?.kicker ?? ""}
+        heading={homePage?.risorse?.heading ?? ""}
         locale={locale}
         realArticles={realArticles}
-        allArticlesLabel="Tutte le risorse"
+        allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
       />
 
       <FinalContactSection
-        kicker="Primo passo"
-        heading="Non sai da dove iniziare?"
-        body={finalContactBody}
-        ctaLabel="Prenota un primo colloquio"
-        privacyNote="I tuoi dati saranno trattati con la massima riservatezza."
-        responseNote={finalContactResponseNote}
-        googleProfileLabel="Trovami su Google"
+        kicker={homePage?.finalCta?.kicker ?? ""}
+        heading={homePage?.finalCta?.heading ?? ""}
+        body={homePage?.finalCta?.body ?? ""}
+        ctaLabel={homePage?.finalCta?.ctaLabel ?? ""}
+        privacyNote={homePage?.finalCta?.privacyNote ?? ""}
+        responseNote={homePage?.finalCta?.responseNote ?? ""}
+        googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
+        googleProfileUrl={siteSettings?.googleProfileUrl}
+        photo={homePage?.finalCta?.photo}
       />
 
       <FaqSection
-        kicker="Domande frequenti"
-        heading="Domande frequenti"
-        linkLabel="Tutte le domande"
+        kicker={homePage?.faq?.kicker ?? ""}
+        heading={homePage?.faq?.heading ?? ""}
+        linkLabel={homePage?.faq?.linkLabel ?? ""}
         locale={locale}
+        items={homePage?.faq?.items}
       />
     </main>
   );
