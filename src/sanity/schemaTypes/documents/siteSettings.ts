@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { deontologyCheck } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
 
 export const siteSettings = defineType({
@@ -19,23 +20,64 @@ export const siteSettings = defineType({
       rows: 2,
     }),
     defineField({
-      name: "contactEmail",
-      title: "Contact email",
-      type: "string",
-    }),
-    defineField({
-      name: "contactPhone",
-      title: "Contact phone",
-      type: "string",
-    }),
-    defineField({
-      name: "whatsappNumber",
-      title: "WhatsApp number",
+      name: "contactChannels",
+      title: "Contact channels",
       description:
-        'Full number with country code (e.g. "+39 000 0000000"). This is a ' +
-        "contact channel, not a social profile — deliberately not part of " +
-        "socialLinks below. Code derives the wa.me link from this so an " +
-        "editor never has to construct or paste a URL correctly.",
+        "CMS-wiring pass: replaces the old flat contactEmail/contactPhone/" +
+        "whatsappNumber scalars (and src/components/contactChannels.ts's " +
+        "hardcoded array) — every channel the doctor actually answers on, " +
+        "in the order they should render. Only channels published here show " +
+        'up anywhere (header CTA popup, mini-contact band, footer) — "only ' +
+        'channels he actually answers on get published."',
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "contactChannel",
+          fields: [
+            defineField({
+              name: "type",
+              title: "Type",
+              type: "string",
+              options: {
+                list: [
+                  { title: "WhatsApp", value: "whatsapp" },
+                  { title: "Phone", value: "phone" },
+                  { title: "Email", value: "email" },
+                ],
+              },
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "label",
+              title: "Label",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "value",
+              title: "Value",
+              description:
+                'The raw value, not a pre-built URL — e.g. "+39 000 0000000" for ' +
+                'WhatsApp/phone, "info@example.com" for email. Code builds the ' +
+                "wa.me/tel:/mailto: link from this.",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "order",
+              title: "Display order",
+              type: "number",
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          preview: { select: { title: "label", subtitle: "type" } },
+        },
+      ],
+    }),
+    defineField({
+      name: "piva",
+      title: "P.IVA",
       type: "string",
     }),
     defineField({
@@ -98,7 +140,7 @@ export const siteSettings = defineType({
         "Deontology-required footer text (Italian emergency reference, e.g. 112). Must never be empty — this is not optional editorial content.",
       type: "text",
       rows: 2,
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().custom(deontologyCheck),
     }),
     defineField({
       name: "googleProfileUrl",
@@ -134,7 +176,7 @@ export const siteSettings = defineType({
               title: "Description",
               type: "text",
               rows: 2,
-              validation: (Rule) => Rule.required(),
+              validation: (Rule) => Rule.required().custom(deontologyCheck),
             }),
           ],
           preview: { select: { title: "title", subtitle: "description" } },

@@ -28,6 +28,11 @@ export const TRANSLATABLE_TYPES = new Set([
   "article",
   "service",
   "faqItem",
+  // CMS-wiring pass: homepage's shared content types (sede/diploma) — plain
+  // list types, not singleton/protected (no "exactly N" constraint), but
+  // still it/en pairs via the same mechanism as article/service.
+  "sede",
+  "diploma",
 ]);
 
 const DEFAULT_LOCALE = "it";
@@ -56,6 +61,8 @@ export const structure: StructureResolver = (S) =>
               singletonListItem(S, "contactPage", "Contact page"),
               S.documentTypeListItem("service").title("Services"),
               S.documentTypeListItem("locationPage").title("Locations"),
+              S.documentTypeListItem("sede").title("Sedi (homepage)"),
+              S.documentTypeListItem("diploma").title("Diplomas"),
             ]),
         ),
       S.listItem()

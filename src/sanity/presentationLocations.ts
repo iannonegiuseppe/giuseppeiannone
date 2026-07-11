@@ -56,4 +56,27 @@ export const presentationLocations: DocumentLocationResolvers = {
           }
         : null,
   }),
+  // sede/diploma/faqItem have no page route of their own — they only ever
+  // render embedded in the homepage, so editing one jumps Presentation to
+  // "/" (IT). Unconditionally IT for now since the homepage's own EN
+  // variant redirects to IT while the temporary EN gate stands (see
+  // src/app/[locale]/page.tsx) — revisit once that gate lifts.
+  sede: defineLocations({
+    select: { title: "city" },
+    resolve: (doc) => ({
+      locations: [{ title: doc?.title ?? "Sede", href: homePath("it") }],
+    }),
+  }),
+  diploma: defineLocations({
+    select: { title: "title" },
+    resolve: (doc) => ({
+      locations: [{ title: doc?.title ?? "Diploma", href: homePath("it") }],
+    }),
+  }),
+  faqItem: defineLocations({
+    select: { title: "question" },
+    resolve: (doc) => ({
+      locations: [{ title: doc?.title ?? "FAQ item", href: homePath("it") }],
+    }),
+  }),
 };
