@@ -1,0 +1,270 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by FinalContactSection
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- 5. Final CTA band: media-anchored, photo bleeds left ------------------
+// Single-block refinement pass: replaces the old centered-text-only green
+// band. Same calc()-derived bleed technique as Come funziona/Di cosa
+// (own custom-property namespace, "fc-" — duplicated, not shared, since
+// this pass doesn't touch those sections' own CSS). Photo "sinks into"
+// the pine via a tonal filter + a multiply-blend pine overlay + an edge
+// melt gradient (right edge desktop/tablet, bottom edge mobile).
+@mixin finalcontact-grid-vars($media-end-col, $padding-inline) {
+  $n: $media-end-col - 1;
+  --fc-content-width: calc(var(--container-max-width) - 2 * #{$padding-inline});
+  --fc-col-width: calc((var(--fc-content-width) - 11 * var(--space-6)) / 12);
+  --fc-photo-end: calc(
+    (100vw - var(--container-max-width)) / 2 + #{$padding-inline} + #{$n} *
+      var(--fc-col-width) + #{$n} * var(--space-6)
+  );
+}
+
+// Primary, on a pine background: ivory fill, pine text.
+.btnPrimaryInverted {
+  @include shared.button-base;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  border: var(--button-border-width) solid var(--color-bg);
+
+  &:hover {
+    background: var(--color-surface-tint);
+  }
+}
+
+// Same mechanism as CarePathway.module.scss's .pendingReveal/.revealed —
+// only ever applied via JS, and only when prefers-reduced-motion allows it.
+.pendingReveal {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pendingReveal,
+  .revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.finalContactBand {
+  position: relative;
+  overflow: hidden; // belt-and-braces against the calc() ever producing an
+  // unexpected value, same reasoning as every other bleed band in this file.
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  background: var(--color-accent);
+
+  @include mixins.breakpoint-up(md) {
+    // "Everything else unchanged" at tablet per spec — min-height and
+    // vertical centering apply from md up, not just desktop.
+    min-height: 35rem; // 560px, per spec
+    display: flex;
+    align-items: center;
+    @include finalcontact-grid-vars(5, var(--space-5)); // tablet: photo cols 1-4
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    @include finalcontact-grid-vars(6, var(--space-7)); // desktop: photo cols 1-5
+  }
+}
+
+.finalContactPhotoZone {
+  position: relative;
+  overflow: hidden;
+  height: 20rem; // 320px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto;
+    width: var(--fc-photo-end);
+  }
+}
+
+// Giuseppe attentively listening (chin resting on hand, pen in hand),
+// looking at the client across the desk, not at the camera — a genuine
+// consultation-room moment, closest match among the existing asset set to
+// "a presence, not a salesman." ART-DIRECTION FLAG for the real shot: a
+// purpose-shot photo of Giuseppe in his own studio, still not looking at
+// the camera, is the eventual target — this is the closest existing
+// stand-in, not a final choice.
+.finalContactPhotoImg {
+  object-fit: cover;
+  object-position: 65% 35%; // favors Giuseppe's figure over the client's
+  // silhouette in this specific (reused, not purpose-shot) landscape crop.
+}
+
+// Multiply-blend for a true "sinks into the pine" darkening rather than a
+// flat translucent wash — mix-blend-mode has near-universal support, no
+// fallback code path needed.
+.finalContactPhotoOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+// Melt gradient: bottom edge on mobile (120px), right edge from md up
+// (160px) — per spec.
+.finalContactPhotoMelt {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent calc(100% - 7.5rem),
+    var(--color-accent) 100%
+  );
+
+  @include mixins.breakpoint-up(md) {
+    background: linear-gradient(
+      to right,
+      transparent calc(100% - 10rem),
+      var(--color-accent) 100%
+    );
+  }
+}
+
+.finalContactGridWrap {
+  @include mixins.container;
+  position: relative;
+  z-index: 1;
+  padding-top: 3rem; // 48px, mobile tier per spec
+  padding-bottom: 4rem; // 64px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    @include shared.grid-12;
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.finalContactContent {
+  // Wraps a single block-level RevealOnScroll child; the text stack inside
+  // it (kicker/heading/paragraph/button/etc.) uses normal block flow with
+  // per-element margin-top, same rhythm technique as the hero's own stack.
+  text-align: left;
+
+  @include mixins.breakpoint-up(md) {
+    @include shared.col(5, 8); // tablet: content cols 5-12
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(7, 6); // desktop: content cols 7-12
+  }
+}
+
+// "Standard kicker, inverted" — ivory-on-pine colorway (matching
+// Formazione's inverted treatment) but the single-rule-before-text
+// structure (matching Chi Sono/Methods/Concerns/Percorso/Pricing), since
+// this content is left-aligned, not centered like Formazione's band.
+.finalContactKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  // ivory@70% on solid pine measures 5.83:1 — passes AA, no substitution needed.
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.finalContactKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+.finalContactHeading {
+  margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
+  color: var(--color-bg);
+  font-size: 1.75rem; // 28px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 2rem; // 32px, tablet per spec
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2.25rem; // 36px, desktop per spec
+  }
+}
+
+.finalContactBody {
+  margin: var(--space-5) 0 0; // 24px below the heading, per spec
+  max-width: 44ch;
+  font-family: var(--font-body);
+  font-size: 1.0625rem; // 17px, per spec
+  line-height: 1.7;
+  // ivory@85% on solid pine measures 7.75:1 — passes AA, no substitution needed.
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+}
+
+// On-pine button variant of the shared .btnPrimaryInverted — this class
+// only adds the spacing this specific placement needs.
+.finalContactCta {
+  margin-top: var(--space-6); // 32px below the paragraph, per spec
+}
+
+.finalContactQuietLines {
+  margin-top: var(--space-5); // 24px below the button, per spec
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1); // 4px between the two lines, per spec — exact token match
+}
+
+.finalContactQuietLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, per spec
+  // Spec's own flagged risk point — measured: ivory@65% on solid pine is
+  // 5.27:1, passing AA (needs 4.5:1). No substitution needed; reported as
+  // measured, per spec's explicit instruction either way.
+  color: color-mix(in srgb, var(--color-bg) 65%, transparent);
+}
+
+// Deliberately demoted — plain text, underline on hover only, no arrow,
+// no caps, must not compete with the button. HONESTY-RULE NOTE (not a
+// substitution, since spec explicitly excludes this link from its
+// "measure and report" list and explicitly wants it faint): ivory@50% on
+// solid pine measures 3.79:1, below standard AA body-text contrast (4.5:1)
+// — flagged for the record since it's real, if secondary, content, but
+// left at the spec's literal value since low visibility here is stated
+// design intent, not an oversight.
+.finalContactGoogle {
+  margin-top: 1.25rem; // 20px below the quiet lines, per spec — not an
+  // existing spacing token, exact spec value in rem.
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, per spec
+  color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}

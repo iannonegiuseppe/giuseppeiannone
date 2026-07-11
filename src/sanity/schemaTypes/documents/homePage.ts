@@ -1,6 +1,412 @@
-import { defineSimplePageType } from "./simplePage";
+import { defineField, defineType } from "sanity";
+import { deontologyCheck } from "../lib/deontologyValidator";
+import { languageField } from "../lib/languageField";
 
-export const homePage = defineSimplePageType({
+// One field group per rendered <main> section on the promoted homepage
+// (src/app/[locale]/page.tsx) — 15 groups for 15 sections, in page order.
+// Groups hold ONLY section-level copy; shared lists (diplomas, sedi) are
+// separate document types fetched directly, not referenced from here, and
+// the FAQ group holds references to a subset of the existing faqItem type
+// rather than duplicating question/answer fields. Name/credentials/
+// registration number and the repeated CTA/signature strings deliberately
+// come from siteSettings.author instead of being re-entered per section —
+// see each group's own description for what it reuses.
+//
+// CMS-wiring pass, Stage A — replaces the pre-promotion placeholder
+// homepage's own field set (hero/credentialsStrip/methods/body/
+// pricingSummary/finalContact) entirely; credentialsStrip, methods, and the
+// legacy body/ctaBlock field are removed outright (owner-confirmed: no
+// dormant fields) since none of them correspond to anything in the current
+// 15-section composition.
+function textField(name: string, title: string, options?: { rows?: number; required?: boolean }) {
+  return defineField({
+    name,
+    title,
+    type: "text",
+    rows: options?.rows ?? 2,
+    validation: (Rule) => {
+      const withCustom = Rule.custom(deontologyCheck);
+      return options?.required === false ? withCustom : withCustom.required();
+    },
+  });
+}
+
+function stringField(name: string, title: string, options?: { required?: boolean }) {
+  return defineField({
+    name,
+    title,
+    type: "string",
+    validation: (Rule) => {
+      const withCustom = Rule.custom(deontologyCheck);
+      return options?.required === false ? withCustom : withCustom.required();
+    },
+  });
+}
+
+export const homePage = defineType({
   name: "homePage",
   title: "Home page",
+  type: "document",
+  fields: [
+    defineField({
+      name: "title",
+      title: "Title",
+      description:
+        "Used for the browser tab / SEO fallback title, not shown on the page itself — the hero displays the author's name from Site settings instead.",
+      type: "string",
+      validation: (Rule) => Rule.required(),
+    }),
+
+    // 1. HeroOverlap
+    defineField({
+      name: "hero",
+      title: "1. Hero",
+      description:
+        "Name, credentials, and registration number come from Site settings' Author fields, not from here — kept in one place.",
+      type: "object",
+      fields: [
+        textField("positioningStatement", "Positioning statement (subtitle)"),
+        stringField("ctaLabel", "CTA button label"),
+        defineField({
+          name: "photo",
+          title: "Photo",
+          description:
+            "Full-bleed portrait behind the section. Leave empty until a real photo is ready; a placeholder renders in its place. Always the fallback and video poster frame, even when a video is set below.",
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({ name: "alt", title: "Alternative text", type: "string", validation: (Rule) => Rule.required() }),
+          ],
+        }),
+        defineField({
+          name: "video",
+          title: "Background video (optional)",
+          description:
+            "Short, silent, looping clip layered over the photo — never the default. Small screens, reduced-motion preference, and data-saver connections all get the photo instead, no matter what's set here.",
+          type: "file",
+          options: { accept: "video/mp4,video/webm" },
+        }),
+      ],
+    }),
+
+    // 2. ChiSonoOverlap
+    defineField({
+      name: "chiSono",
+      title: "2. Chi sono",
+      type: "object",
+      fields: [
+        textField("introHeading", "Intro heading", { rows: 2 }),
+        stringField("introLinkLabel", "Intro link label"),
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("bio", "Bio", { rows: 4 }),
+        stringField("storyLinkLabel", "Story link label"),
+        stringField("watermarkText", "Background watermark word", {
+          required: false,
+        }),
+        defineField({
+          name: "photo",
+          title: "Photo",
+          type: "image",
+          options: { hotspot: true },
+          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+        }),
+      ],
+    }),
+
+    // 3. MethodsOverlap
+    defineField({
+      name: "comeFunziona",
+      title: "3. Come funziona (metodo)",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("body", "Body"),
+        defineField({
+          name: "media",
+          title: "Media image",
+          type: "image",
+          options: { hotspot: true },
+          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+        }),
+      ],
+    }),
+
+    // 4. FormazioneBand
+    defineField({
+      name: "formazione",
+      title: "4. Formazione e iscrizioni",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        defineField({
+          name: "credentials",
+          title: "Credentials list",
+          description: "Factual credentials only — never counters, percentages, or client-number claims.",
+          type: "array",
+          of: [{ type: "string" }],
+          validation: (Rule) => Rule.max(8),
+        }),
+        defineField({
+          name: "counters",
+          title: "Counters",
+          description:
+            'Plain factual figures (years of practice, training hours). Not client counts or outcome claims — those are forbidden by §9 regardless of phrasing.',
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "formazioneCounter",
+              fields: [
+                defineField({ name: "value", title: "Value", type: "number", validation: (Rule) => Rule.required() }),
+                stringField("label", "Label"),
+              ],
+              preview: { select: { title: "label", subtitle: "value" } },
+            },
+          ],
+          validation: (Rule) => Rule.max(3),
+        }),
+      ],
+    }),
+
+    // 5. ConcernsSection
+    defineField({
+      name: "diCosa",
+      title: "5. Di cosa mi occupo (aree)",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField("linkLabel", "Link label"),
+        defineField({
+          name: "areas",
+          title: "Areas",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "concernArea",
+              fields: [
+                stringField("title", "Title"),
+                defineField({
+                  name: "subItems",
+                  title: "Sub-items",
+                  type: "array",
+                  of: [{ type: "string" }],
+                  validation: (Rule) => Rule.max(3),
+                }),
+              ],
+              preview: { select: { title: "title" } },
+            },
+          ],
+          validation: (Rule) => Rule.max(4),
+        }),
+        defineField({
+          name: "photo",
+          title: "Photo",
+          type: "image",
+          options: { hotspot: true },
+          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+        }),
+      ],
+    }),
+
+    // 6. StatementBand
+    defineField({
+      name: "statement",
+      title: "6. Statement",
+      description:
+        "The doctor's own signed statement, not a testimonial (docs/design-direction.md §9/§11) — signature and role come from Site settings' Author fields, not re-entered here.",
+      type: "object",
+      fields: [textField("statement", "Statement", { rows: 3 })],
+    }),
+
+    // 7. DiplomiSection (list itself is the separate `diploma` document type)
+    defineField({
+      name: "diplomi",
+      title: "7. Diplomi e formazione",
+      type: "object",
+      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading")],
+    }),
+
+    // 8. PercorsoSection
+    defineField({
+      name: "percorso",
+      title: "8. Come si svolge un percorso",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("paragraph", "Paragraph"),
+        defineField({
+          name: "steps",
+          title: "Steps",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "percorsoStep",
+              fields: [stringField("title", "Title"), textField("text", "Text")],
+              preview: { select: { title: "title", subtitle: "text" } },
+            },
+          ],
+          validation: (Rule) => Rule.max(4),
+        }),
+      ],
+    }),
+
+    // 9. RecognitionSection
+    defineField({
+      name: "recognition",
+      title: "9. Ti riconosci? (vignette)",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("bridgeLine", "Bridge line"),
+        defineField({
+          name: "vignettes",
+          title: "Vignettes",
+          description:
+            "Background visuals stay as the built-in line-art placeholders (matched by Id below) until real photos are supplied — the optional image here overrides the placeholder for that vignette only.",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "recognitionVignette",
+              fields: [
+                defineField({
+                  name: "id",
+                  title: "Id",
+                  description: "Matches the built-in placeholder visual (e.g. \"stress\", \"ansia-1\") — leave as-is unless a developer confirms the code-side mapping changed.",
+                  type: "string",
+                  validation: (Rule) => Rule.required(),
+                }),
+                textField("vignette", "Vignette text"),
+                stringField("area", "Area"),
+                stringField("slug", "Concern slug"),
+                defineField({
+                  name: "visualImage",
+                  title: "Background visual (optional — overrides the placeholder)",
+                  type: "image",
+                }),
+              ],
+              preview: { select: { title: "area", subtitle: "vignette" } },
+            },
+          ],
+          validation: (Rule) => Rule.max(6),
+        }),
+      ],
+    }),
+
+    // 10. MiniContactBand (channel list itself comes from siteSettings.contactChannels)
+    defineField({
+      name: "miniContact",
+      title: "10. Primo contatto (mini)",
+      type: "object",
+      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("body", "Body")],
+    }),
+
+    // 11. SedesSection (scene list is the separate `sede` document type)
+    defineField({
+      name: "sedi",
+      title: "11. Sedi",
+      type: "object",
+      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("paragraph", "Paragraph")],
+    }),
+
+    // 12. PricingSection
+    defineField({
+      name: "prezzi",
+      title: "12. Quanto costa un percorso",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("body", "Body"),
+        stringField("buttonLabel", "Button label"),
+        defineField({
+          name: "showPrices",
+          title: "Show price list",
+          description: "When off, the section shows the noPricesSentence below instead of the price lines.",
+          type: "boolean",
+          initialValue: true,
+        }),
+        defineField({
+          name: "priceLines",
+          title: "Price lines",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "priceLine",
+              fields: [stringField("label", "Label"), stringField("price", "Price"), stringField("unit", "Unit")],
+              preview: { select: { title: "label", subtitle: "price" } },
+            },
+          ],
+        }),
+        textField("footnote", "Footnote (shown when price list is on)"),
+        textField("noPricesSentence", "Sentence (shown when price list is off)"),
+      ],
+    }),
+
+    // 13. ResourcesSection — kicker/heading/link label only; realArticles
+    // keeps coming from the existing, untouched article query per spec.
+    defineField({
+      name: "risorse",
+      title: "13. Risorse",
+      type: "object",
+      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), stringField("allArticlesLabel", "\"All articles\" link label")],
+    }),
+
+    // 14. FinalContactSection
+    defineField({
+      name: "finalCta",
+      title: "14. Non sai da dove iniziare? (final CTA)",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("body", "Body"),
+        stringField("ctaLabel", "CTA button label"),
+        textField("privacyNote", "Privacy note", { rows: 1 }),
+        textField("responseNote", "Response-time note", { rows: 1 }),
+        stringField("googleProfileLabel", "Google profile link label"),
+        defineField({
+          name: "photo",
+          title: "Photo",
+          type: "image",
+          options: { hotspot: true },
+          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+        }),
+      ],
+    }),
+
+    // 15. FaqSection — references a subset of the existing faqItem type.
+    defineField({
+      name: "faq",
+      title: "15. Domande frequenti",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField("linkLabel", "\"All questions\" link label"),
+        defineField({
+          name: "items",
+          title: "Questions shown on the homepage",
+          type: "array",
+          of: [{ type: "reference", to: [{ type: "faqItem" }] }],
+          validation: (Rule) => Rule.length(4),
+        }),
+      ],
+    }),
+
+    defineField({
+      name: "seo",
+      title: "SEO",
+      type: "seo",
+    }),
+    languageField(),
+  ],
 });

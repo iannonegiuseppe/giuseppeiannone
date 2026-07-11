@@ -1,0 +1,212 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by MethodsOverlap
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+// --- "Come funziona": full-bleed greige media band -----------------------
+// Single-block refinement pass: replaces the old pine-panel overlap
+// composition with a full-viewport-width greige band. Text zone stays
+// governed by the normal 12-col container; the media zone deliberately
+// is NOT — it has to bleed past the container's own 1200px cap to the
+// real viewport edge. Negative margins were explicitly ruled out (they
+// break at very wide viewports), so the media zone is positioned via
+// calc() derived from the same tokens the grid mixins use (container
+// max-width, column gutter, container padding), not hand-picked pixels:
+// "column N starts" = (N-1) columns + (N-1) gutters past the container's
+// own left padding edge. Desktop text=cols 1-5/media=cols 6-12; tablet
+// (768-1023px) text=cols 1-6/media=cols 7-12, per spec. Mobile drops the
+// split entirely — media becomes the block's full-bleed background with
+// an ink overlay and ivory text on top (see .methodsBandOverlay's
+// measured-contrast comment below — this is the one point in this pass
+// that doesn't reach AA within the spec's stated range).
+// Column-math shared by .methodsBand's three positioned children (media
+// zone, numeral, and — indirectly, via mixins.container inside .grid-12 —
+// the text column). Defined once, on the common ancestor (.methodsBand),
+// rather than duplicated per consumer. $media-start-col is 1-indexed (6 or
+// 7, where the media zone begins); $padding-inline must match whatever
+// mixins.container is actually using at that breakpoint (--space-5 below
+// lg, --space-7 at lg+) or the bleed edge won't line up with the text
+// column's own edge. "Column N starts" = (N-1) columns + (N-1) gutters
+// past the container's own left padding.
+@mixin methods-grid-vars($media-start-col, $padding-inline) {
+  $n: $media-start-col - 1;
+  --methods-content-width: calc(var(--container-max-width) - 2 * #{$padding-inline});
+  --methods-col-width: calc(
+    (var(--methods-content-width) - 11 * var(--space-6)) / 12
+  );
+  --methods-media-start: calc(
+    (100vw - var(--container-max-width)) / 2 + #{$padding-inline} + #{$n} *
+      var(--methods-col-width) + #{$n} * var(--space-6)
+  );
+}
+
+.methodsBand {
+  position: relative;
+  overflow: hidden; // belt-and-braces: nothing here should ever be able to
+  // cause a horizontal scrollbar, even if the calc() below is ever fed an
+  // unexpected value.
+  width: 100vw;
+  margin-inline: calc(50% - 50vw); // full-bleed, same technique as .sandBand/.finalContactBand
+  background: var(--color-greige);
+  min-height: 30rem; // 480px, mobile floor per spec
+
+  @include mixins.breakpoint-up(md) {
+    @include methods-grid-vars(7, var(--space-5)); // tablet: media starts at col 7
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    min-height: 35rem; // 560px desktop floor per spec
+    display: flex;
+    align-items: center; // vertically centers .methodsBandInner (the only in-flow child)
+    @include methods-grid-vars(6, var(--space-7)); // desktop: media starts at col 6
+  }
+}
+
+.methodsBandInner {
+  @include shared.grid-12;
+  position: relative;
+  z-index: 2; // above both the media zone and the mobile overlay
+  width: 100%;
+  padding-block: var(--space-band-y);
+}
+
+.methodsBandMediaZone {
+  position: absolute;
+  inset: 0; // mobile: full-bleed background fill (top/right/bottom/left all 0)
+  z-index: 0;
+
+  @include mixins.breakpoint-up(md) {
+    z-index: 1;
+    left: var(--methods-media-start);
+  }
+}
+
+// Mobile-only scrim. HONESTY-RULE FLAG: spec asks for "ink/pine at 45-55%,
+// pick the value where ivory text passes AA against the brightest area of
+// the placeholder media." Measured empirically (screenshot pixel-sampled,
+// then reverse-solved for the underlying photo tone): this session photo's
+// brightest area — a sunlit window/desk highlight — is ~rgb(250,248,249).
+// Neither color reaches AA anywhere in the allowed range: pine tops out at
+// 2.90:1 at 55%, ink at 3.44:1 at 55% (needs 4.5:1). Passing requires ~65%
+// ink or ~75% pine — both outside the stated ceiling. Per the honesty
+// rule, NOT silently exceeding the range to force a pass: using ink
+// (better of the two within range) at the range's own top, 55%, and
+// reporting the shortfall rather than improvising past the stated bound.
+// Gone entirely at md+, where text sits on the plain greige band instead.
+.methodsBandOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--color-text) 55%, transparent);
+
+  @include mixins.breakpoint-up(md) {
+    display: none;
+  }
+}
+
+// Sits behind the media zone (z-index 0 vs. the media zone's 1+ at md+),
+// so its right portion is covered once the media zone starts — per spec,
+// "slips UNDER the media zone's left edge." Its left edge is pinned 2
+// columns + 2 gutters before the media zone's own start (same shared
+// --methods-col-width/--methods-media-start custom properties), so a
+// ~160px-wide "02" straddles that boundary rather than sitting entirely
+// on one side of it. Mobile gets its own color/position (ivory corner
+// mark over the photo) since there's no greige to read against there.
+.methodsBandNumeral {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2; // mobile: above the overlay/media so it's actually visible
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  font-size: 6rem; // 96px, mobile tier per spec
+  // Ivory at 12% — mobile sits over the photo/overlay, not the greige.
+  color: color-mix(in srgb, var(--color-bg) 12%, transparent);
+
+  @include mixins.breakpoint-up(md) {
+    top: 50%;
+    right: auto;
+    left: calc(
+      var(--methods-media-start) - 2 * var(--methods-col-width) - 2 * var(--space-6)
+    );
+    transform: translateY(-50%);
+    z-index: 0; // behind the media zone, per spec
+    font-size: 10rem; // 160px, per spec
+    // White at 55% — reads as a pale gray ghost on greige, per spec
+    // (distinct from mobile's ivory-on-photo treatment; --color-surface
+    // is this project's literal white token).
+    color: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  }
+}
+
+.methodsBandTextColumn {
+  position: relative;
+  z-index: 2;
+  grid-column: 1 / -1;
+  color: var(--color-bg); // mobile: ivory, over the photo/overlay
+
+  @include mixins.breakpoint-up(md) {
+    @include shared.col(1, 6); // tablet: text cols 1-6
+    color: var(--color-text); // md+: plain ink on greige, no overlay
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    @include shared.col(1, 5); // desktop: text cols 1-5
+  }
+}
+
+.methodsBandKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: inherit; // follows .methodsBandTextColumn's ivory/ink switch above
+
+  // "Standard kicker component from the styleguide" per spec — same
+  // values as Chi Sono's own kicker (design-lab.module.scss's
+  // .chiSonoKicker, introduced in the previous pass), duplicated rather
+  // than shared: Chi Sono's block must stay byte-identical this pass, so
+  // its existing declaration is left untouched rather than refactored
+  // into a shared mixin.
+}
+
+.methodsBandKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem; // 40px
+  // Mobile: sits over the photo/overlay — ivory at 40%, per spec.
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 40%, transparent);
+
+  @include mixins.breakpoint-up(md) {
+    // md+: plain ink/greige context, same value as Chi Sono's kicker rule.
+    background: var(--color-line);
+  }
+}
+
+.methodsBandHeading {
+  margin: var(--space-4) 0 0; // 16px below the kicker, matching Chi Sono's rhythm
+  color: inherit;
+  font-size: 2rem; // 32px, per spec
+}
+
+.methodsBandBody {
+  margin: var(--space-5) 0 0; // 24px below the heading
+  max-width: 40ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body); // 16px
+  line-height: var(--lh-body); // 1.7
+  color: inherit;
+}

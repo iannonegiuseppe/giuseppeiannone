@@ -16,10 +16,25 @@ body {
   height: 100%;
 }
 
+// `clip`, not `hidden`: per the CSS Overflow spec, a non-`visible`
+// overflow-x paired with the default `visible` overflow-y forces overflow-y
+// to compute as `auto` on that SAME element — so `overflow-x: hidden` here
+// was silently turning BOTH html and body into their own independent
+// vertical scroll containers (two scrollbars: html's own + body's own),
+// since setting overflow-x explicitly on the root element also suppresses
+// the normal html<-body overflow-propagation rule that would otherwise
+// route all scrolling to just one of them. `clip` still fully suppresses
+// any stray horizontal overflow (same guardrail role for the 100vw-based
+// full-bleeds elsewhere — see design-lab.module.scss/portableTextComponents
+// .module.scss's own comments on that reliance) but, unlike `hidden`, does
+// NOT pair-trigger overflow-y:auto — confirmed empirically: with `clip`,
+// window.scrollY/document.documentElement.scrollTop track scroll position
+// correctly again, and only ever exactly one vertical scroll container
+// (the document/window) exists.
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 img,
@@ -43,26 +58,54 @@ a {
   text-decoration: none;
 }
 
+// Table of Contents jump-links (Stage 2 Step 6): smooth scrolling is a
+// pure-CSS enhancement, no client JS — and only applied when the visitor
+// hasn't requested reduced motion.
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 // --- Base typography ---------------------------------------------------
 body {
   display: flex;
   flex-direction: column;
   min-height: 100%;
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--fs-body);
   font-weight: var(--font-weight-regular);
-  line-height: var(--leading-normal);
+  line-height: var(--lh-body);
   color: var(--color-text);
   background-color: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+// Marcellus has no bold cut — hierarchy between h1/h2 is by size only,
+// font-weight is never set above 400 (the default). h3 deliberately does
+// NOT use the display font: Marcellus loses legibility below ~24px, and
+// Lato has no 500/600 to lean on for emphasis at h3's size, so it stays on
+// the body font at its own size step instead of faking either.
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+h1 {
+  font-size: var(--fs-display);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   color: var(--color-text);
 }

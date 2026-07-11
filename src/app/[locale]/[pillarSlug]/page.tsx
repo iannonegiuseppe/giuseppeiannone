@@ -2,23 +2,40 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
-import { client } from "@/sanity/client";
-import { resolveRobots } from "@/sanity/metadata";
+import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
+import { getPillarTrail } from "@/sanity/breadcrumbs";
+import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
+import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
+import {
+  buildBreadcrumbListJsonLd,
+  buildFaqPageJsonLd,
+  buildMedicalWebPageJsonLd,
+  extractFaqEntries,
+  type MedicalEntityType,
+} from "@/sanity/jsonLd";
+import { JsonLdScript } from "@/sanity/JsonLdScript";
+import { getSiteUrl } from "@/sanity/metadata";
+import type { AlternateEntry } from "@/sanity/paths";
+import { pillarLocalizedPaths, pillarPath } from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
 import { pillarPageQuery, pillarSlugsQuery } from "@/sanity/queries";
+import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+import { TableOfContents } from "@/sanity/TableOfContents";
 
 interface PillarPageData {
+  _id: string;
   title: string;
   body: unknown;
-  seo?: { metaTitle?: string; metaDescription?: string; noIndex?: boolean };
+  seo?: SeoFields;
+  medicalEntityType?: MedicalEntityType;
+  alternates?: AlternateEntry[];
 }
 
 function getPillarPage(locale: string, slug: string) {
-  return client.fetch<PillarPageData | null>(
-    pillarPageQuery,
-    { locale, slug },
-    { next: { tags: ["pillarPage", `pillarPage:${slug}`] } },
-  );
+  return sanityFetch<PillarPageData | null>(pillarPageQuery, { locale, slug }, [
+    "pillarPage",
+    `pillarPage:${slug}`,
+  ]);
 }
 
 export async function generateStaticParams({
@@ -26,9 +43,11 @@ export async function generateStaticParams({
 }: {
   params: { locale: string };
 }) {
-  const pillars = await client.fetch<{ slug: string }[]>(pillarSlugsQuery, {
-    locale: params.locale,
-  });
+  const pillars = await sanityFetchPublished<{ slug: string }[]>(
+    pillarSlugsQuery,
+    { locale: params.locale },
+    ["pillarPage"],
+  );
 
   return pillars.map((pillar) => ({ pillarSlug: pillar.slug }));
 }
@@ -39,13 +58,19 @@ export async function generateMetadata({
   params: Promise<{ locale: string; pillarSlug: string }>;
 }): Promise<Metadata> {
   const { locale, pillarSlug } = await params;
-  const data = await getPillarPage(locale, pillarSlug);
+  const [data, siteSettings] = await Promise.all([
+    getPillarPage(locale, pillarSlug),
+    getSiteSettings(locale),
+  ]);
 
-  return {
-    title: data?.seo?.metaTitle ?? data?.title,
-    description: data?.seo?.metaDescription,
-    robots: resolveRobots(data?.seo?.noIndex),
-  };
+  return await buildMetadata({
+    locale: locale as "it" | "en",
+    title: data?.title ?? "",
+    seo: data?.seo,
+    siteName: siteSettings?.title ?? "",
+    siteSeo: siteSettings?.seo,
+    localizedPaths: pillarLocalizedPaths(data?.alternates),
+  });
 }
 
 export default async function PillarPage({
@@ -59,13 +84,38 @@ export default async function PillarPage({
   const data = await getPillarPage(locale, pillarSlug);
   if (!data) notFound();
 
+  const typedLocale = locale as "it" | "en";
+  const siteUrl = getSiteUrl();
+  const path =
+    pillarLocalizedPaths(data.alternates)[typedLocale] ??
+    pillarPath(typedLocale, pillarSlug);
+  const pageUrl = `${siteUrl}${path}`;
+
+  const trail = await getPillarTrail(typedLocale, data.title, path);
+  const breadcrumbJsonLd = buildBreadcrumbListJsonLd(trail, siteUrl);
+  const medicalWebPageJsonLd = buildMedicalWebPageJsonLd({
+    url: pageUrl,
+    name: data.title,
+    description: data.seo?.metaDescription,
+    medicalEntityType: data.medicalEntityType,
+  });
+  const faqEntries = extractFaqEntries(data.body);
+  const faqPageJsonLd =
+    faqEntries.length > 0 ? buildFaqPageJsonLd(faqEntries) : undefined;
+
+  const headings = extractHeadings(data.body);
+  const headingIds = headingIdsByKey(headings);
+  const components = await getPortableTextComponents(locale, headingIds);
+
   return (
     <main>
+      <JsonLdScript data={breadcrumbJsonLd} />
+      <JsonLdScript data={medicalWebPageJsonLd} />
+      {faqPageJsonLd ? <JsonLdScript data={faqPageJsonLd} /> : null}
+      <Breadcrumbs trail={trail} />
       <h1>{data.title}</h1>
-      <PortableText
-        value={data.body as never}
-        components={getPortableTextComponents(locale)}
-      />
+      <TableOfContents locale={locale} headings={headings} />
+      <PortableText value={data.body as never} components={components} />
     </main>
   );
 }

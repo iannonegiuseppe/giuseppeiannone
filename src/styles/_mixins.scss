@@ -13,9 +13,12 @@
 }
 
 // --- Accessibility -------------------------------------------------------
+// --color-focus is a dedicated token (distinct from --color-accent) per the
+// Stage 3 brief: "focus rings — visible, not decorative." Same value today,
+// but kept as its own token so the two can diverge without a rename.
 @mixin focus-ring {
   &:focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
 }
@@ -33,9 +36,57 @@
 }
 
 // --- Layout --------------------------------------------------------------
+// Gutters per brief §4: 24px mobile, 48px desktop.
 @mixin container {
   width: 100%;
   max-width: var(--container-max-width);
   margin-inline: auto;
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-5);
+
+  @include breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}
+
+// Vertical rhythm between page sections per brief §4: "96–128px desktop,
+// 64px mobile." padding-bottom only, deliberately — each section brings
+// the gap that follows it. Two adjacent sections both using this mixin
+// must NOT compound to double the gap (padding-top on both would sum,
+// not collapse, since sections here are flex containers, not simple
+// flow boxes margin-collapse could reliably apply to). Uses 96px
+// (--space-9) as the default desktop step; a section that needs the
+// fuller 128px can override with --space-10 directly.
+@mixin section {
+  padding-bottom: var(--space-8);
+
+  @include breakpoint-up(lg) {
+    padding-bottom: var(--space-9);
+  }
+}
+
+// Plain-text inline links (nav, footer, in-content prose). Not for
+// Button-styled CTAs — see the Button component for those.
+@mixin link {
+  color: var(--color-accent);
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+
+  @include focus-ring;
+}
+
+@mixin hairline-divider {
+  border: none;
+  border-top: 1px solid var(--color-hairline);
+}
+
+// Responsive card/content grid: as many columns as fit at $min-item-width,
+// never fewer than one. Used wherever the brief calls for a "grid" (cards,
+// locations strip) without a fixed column count that would differ per use.
+@mixin grid-auto($min-item-width: 16rem, $gap: var(--space-6)) {
+  display: grid;
+  gap: $gap;
+  grid-template-columns: repeat(auto-fit, minmax($min-item-width, 1fr));
 }

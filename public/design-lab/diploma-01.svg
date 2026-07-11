@@ -1,0 +1,15 @@
+<svg width="600" height="800" viewBox="0 0 600 800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="800" fill="#f7f4ee"/>
+  <rect x="28" y="28" width="544" height="744" fill="none" stroke="#d9d0c9" stroke-width="2"/>
+  <rect x="44" y="44" width="512" height="712" fill="none" stroke="#d9d0c9" stroke-width="1"/>
+  <circle cx="300" cy="160" r="46" fill="none" stroke="#22423a" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="300" cy="160" r="34" fill="none" stroke="#22423a" stroke-width="1" opacity="0.25"/>
+  <line x1="220" y1="260" x2="380" y2="260" stroke="#26231f" stroke-width="1.5" opacity="0.2"/>
+  <line x1="140" y1="330" x2="460" y2="330" stroke="#26231f" stroke-width="1" opacity="0.12"/>
+  <line x1="160" y1="360" x2="440" y2="360" stroke="#26231f" stroke-width="1" opacity="0.12"/>
+  <line x1="180" y1="390" x2="420" y2="390" stroke="#26231f" stroke-width="1" opacity="0.12"/>
+  <line x1="200" y1="470" x2="400" y2="470" stroke="#26231f" stroke-width="1" opacity="0.12"/>
+  <line x1="220" y1="500" x2="380" y2="500" stroke="#26231f" stroke-width="1" opacity="0.12"/>
+  <line x1="230" y1="620" x2="370" y2="620" stroke="#6b655c" stroke-width="1" opacity="0.3"/>
+  <text x="300" y="700" font-family="Georgia, serif" font-size="15" fill="#6b655c" text-anchor="middle" opacity="0.55">[segnaposto]</text>
+</svg>

@@ -1,0 +1,8 @@
+@use "../styles/mixins";
+
+.switcher {
+  @include mixins.link;
+  @include mixins.focus-ring;
+
+  font-size: var(--fs-small);
+}

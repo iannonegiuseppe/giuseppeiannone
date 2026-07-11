@@ -1,1 +1,71 @@
-{}
+{
+  "Breadcrumbs": {
+    "home": "Home"
+  },
+  "TableOfContents": {
+    "label": "Contents"
+  },
+  "KeyTakeaways": {
+    "label": "Key points"
+  },
+  "Hero": {
+    "cta": "Book a first consultation",
+    "registrationPrefix": "Professional Register No."
+  },
+  "Home": {
+    "whoIAmHeading": "About me",
+    "concernsGridHeading": "What I help with",
+    "methodsHeading": "Methods",
+    "carePathwayHeading": "How therapy works",
+    "locationsHeading": "Locations",
+    "onlineLocationTitle": "Online",
+    "onlineLocationDescription": "Online psychotherapy sessions, for anyone who prefers the flexibility of remote care.",
+    "latestContentHeading": "Latest resources",
+    "privacyNoteBody": "Your details will be treated with complete confidentiality.",
+    "privacyNoteLinkLabel": "Read the privacy policy"
+  },
+  "Header": {
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "method": "Method",
+      "areas": "Areas",
+      "price": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "areasSubmenu": {
+      "anxiety": "Anxiety",
+      "depression": "Depression",
+      "stress": "Stress",
+      "lifeChanges": "Life changes"
+    },
+    "menuToggle": "Menu",
+    "cta": "Book a first consultation"
+  },
+  "Footer": {
+    "exploreHeading": "Explore",
+    "resourcesLabel": "Resources",
+    "contactHeading": "Contact",
+    "locationsHeading": "Locations",
+    "legalHeading": "Legal",
+    "privacy": "Privacy",
+    "cookiePolicy": "Cookie policy",
+    "googleProfile": "Find me on Google",
+    "whatsapp": "Message me on WhatsApp",
+    "instagram": "Instagram",
+    "copyright": "© {year} {name} — All rights reserved.",
+    "devCredit": "Site: [placeholder — developer name/link]"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "backHome": "Back to home"
+  },
+  "ErrorPage": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Try again or go back to the home page.",
+    "retry": "Try again",
+    "backHome": "Back to home"
+  }
+}

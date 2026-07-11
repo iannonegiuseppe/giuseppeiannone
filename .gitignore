@@ -40,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local review screenshots (visual QA during a stage, never committed)
+/.review/
+
+# reference/inspiration images (third-party template screenshots) — kept
+# locally for design reference only, never committed
+docs/**/*.webp
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.png

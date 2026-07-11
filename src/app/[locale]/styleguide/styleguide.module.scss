@@ -1,0 +1,1627 @@
+@use "../../../styles/mixins";
+
+.page {
+  @include mixins.container;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-block: var(--space-8);
+}
+
+// --- Colors ----------------------------------------------------------------
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+  list-style: none;
+  padding: 0;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.swatchItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.swatch {
+  display: block;
+  height: var(--space-8);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
+}
+
+.swatchLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+
+  code {
+    font-size: var(--fs-small);
+  }
+}
+
+// --- Type scale --------------------------------------------------------
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  list-style: none;
+  padding: 0;
+}
+
+.typeItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.typeLabel {
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.typeSpecimenDisplay {
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+
+.typeSpecimenBody {
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+// --- Spacing scale -----------------------------------------------------
+.spaceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+}
+
+.spaceItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+
+  code {
+    flex: 0 0 auto;
+    min-width: 6rem;
+    font-size: var(--fs-small);
+    color: var(--color-text-muted);
+  }
+}
+
+.spaceBar {
+  display: block;
+  height: var(--space-4);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-s);
+}
+
+// --- Radii ---------------------------------------------------------------
+.radiusGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  list-style: none;
+  padding: 0;
+}
+
+.radiusItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.radiusSwatch {
+  display: block;
+  width: var(--space-9);
+  height: var(--space-9);
+  background: var(--color-surface-tint);
+  border: 1px solid var(--color-hairline);
+}
+
+// --- Buttons / links / divider / grid -----------------------------------
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+// Second row (inverted variants) needs a pine background to demonstrate
+// against — the whole row gets the accent background, not just the
+// buttons, so the "on pine" context is visible.
+.buttonRowInverted {
+  padding: var(--space-5);
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
+}
+
+// --- Buttons (Group B refinement pass): exactly two variants + an ------
+// inverted-on-pine state for each. Duplicated here from design-lab's own
+// copy (design-lab.module.scss) rather than shared via an import, since
+// each .module.scss is scoped to its own route and this project has no
+// existing pattern for cross-route SCSS partials for component classes —
+// introducing one would be a bigger structural change than this pass
+// calls for. Both copies read the same --button-* tokens in _tokens.scss,
+// so they can't drift in VALUES even though the CSS text is duplicated.
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-min-height);
+  padding-block: var(--button-padding-block);
+  padding-inline: var(--button-padding-inline);
+  border-radius: var(--radius-button);
+  font-family: var(--font-body);
+  font-size: var(--button-font-size);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+
+  @include mixins.focus-ring;
+}
+
+.btnPrimary {
+  @include button-base;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: var(--button-border-width) solid var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+}
+
+.btnPrimaryInverted {
+  @include button-base;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  border: var(--button-border-width) solid var(--color-bg);
+
+  &:hover {
+    background: var(--color-surface-tint);
+  }
+}
+
+.btnSecondary {
+  @include button-base;
+  background: transparent;
+  color: var(--color-accent);
+  border: var(--button-border-width) solid var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-soft);
+  }
+}
+
+.btnSecondaryInverted {
+  @include button-base;
+  background: transparent;
+  color: var(--color-bg);
+  border: var(--button-border-width) solid var(--color-bg);
+
+  &:hover {
+    // color-mix, not a hardcoded rgba() triplet — no raw color values
+    // outside the token file.
+    background: color-mix(in srgb, var(--color-bg) 12%, transparent);
+  }
+}
+
+// --- Header devices (single-block pass): transparent + collapsed states, --
+// the "Aree" submenu panel, and the channel-picker popup card. Duplicated
+// from design-lab's own copy (design-lab.module.scss's .labHeader family
+// and .channelDialog family) rather than shared via import — same
+// rationale as every other device on this page. Static swatches only: no
+// scroll-driven interpolation, each state forced via its own fixed values.
+.headerDemoBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: 1.75rem var(--space-6);
+  border-radius: var(--radius-m);
+  position: relative;
+  overflow: hidden;
+  // Transparent state: a stand-in dark-to-light backdrop (this swatch has
+  // no real hero photo behind it, so it approximates one from existing
+  // tokens — greige to ink — rather than a raw hex photo-tone, which
+  // this file's own "no raw hex" rule forbids) plus the SAME legibility
+  // wash the live header uses at progress=0 (ivory@55%), so the demo
+  // honestly shows why the wash is there rather than looking like plain
+  // transparency.
+  background:
+    color-mix(in srgb, var(--color-bg) 55%, transparent),
+    linear-gradient(135deg, var(--color-greige) 0%, var(--color-text) 100%);
+}
+
+.headerDemoBarCollapsed {
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  border: 1px solid var(--color-line);
+}
+
+.headerDemoWordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  color: var(--color-text);
+}
+
+.headerDemoNav {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.headerDemoNavLink {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.headerDemoSubmenuWrap {
+  position: relative;
+  height: 8rem;
+}
+
+.headerDemoSubmenuPanel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 15rem;
+  padding: var(--space-2) 0;
+  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.headerDemoSubmenuLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.channelDialogDemoCard {
+  position: relative;
+  max-width: 30rem;
+  padding: 2.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+}
+
+.channelDialogDemoClose {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.channelDialogDemoKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.channelDialogDemoHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  color: var(--color-text);
+}
+
+.channelDialogDemoChannels {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.channelDialogDemoLink {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+// --- Ti riconosci? devices (single-block pass, v3): the scroll-highlight --
+// list item (dimmed + lit states). Duplicated from design-lab's own copy
+// (design-lab.module.scss's .recognitionItem/ItemVignette/ItemLabel)
+// rather than shared via import — same rationale as every other device on
+// this page. Static swatches only: no scroll-driving JS, data-lit is set
+// directly on each demo item.
+.recognitionListDemo {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.recognitionItemDemo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.recognitionItemDemoVignette {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.5;
+  max-width: 34ch;
+  // Dimmed default (ink@30%, per spec).
+  color: color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+
+.recognitionItemDemo[data-lit="true"] .recognitionItemDemoVignette {
+  color: var(--color-text); // full ink, per spec
+}
+
+.recognitionItemDemoLabel {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  // Dimmed default (ink@20%, per spec).
+  color: color-mix(in srgb, var(--color-text) 20%, transparent);
+}
+
+.recognitionItemDemo[data-lit="true"] .recognitionItemDemoLabel {
+  // "Full" for the label is the AA-corrected 65% value, not 100% ink —
+  // same as the live section (ink@55% literal spec value measures 3.53:1
+  // on ivory, below AA; 65% measures 4.75:1, passes).
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+}
+
+// --- Mini-contact band devices (single-block pass): kicker/heading left, --
+// one WhatsApp button + two text links right. Duplicated from design-lab's
+// own copy (design-lab.module.scss's .miniContactBand family) rather than
+// shared via import — same rationale as every other device on this page.
+.miniContactBandDemo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-sand);
+  border-radius: var(--radius-m);
+}
+
+.miniContactBandDemoLeft {
+  flex: 1 1 20rem;
+}
+
+.miniContactBandDemoKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.miniContactBandDemoHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  font-size: 1.75rem;
+}
+
+.miniContactBandDemoRight {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.miniContactBandDemoLink {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+// --- Chi sono devices (single-block pass): watermark word/numeral, -------
+// brand-shadow photo, kicker, drop cap, text link. Duplicated from
+// design-lab's own copy (design-lab.module.scss) rather than shared via
+// import — same rationale as the button system above: each .module.scss is
+// scoped to its own route, and both copies read the same tokens, so they
+// can't drift in VALUES even though the CSS text is duplicated. Demo type
+// sizes here are a reduced scale for a compact swatch, not the real
+// desktop sizes — see the page copy and design-lab.module.scss.
+.watermarkDemo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--space-9);
+  overflow: hidden;
+  background: var(--color-surface-tint);
+  border-radius: var(--radius-m);
+}
+
+.watermarkWord {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  font-size: 3.5rem;
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
+  user-select: none;
+  pointer-events: none;
+}
+
+.watermarkLabel {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+.watermarkNumeral {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  font-size: 5rem;
+  color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  user-select: none;
+  pointer-events: none;
+}
+
+.brandShadowDemo {
+  position: relative;
+  width: var(--space-9);
+  height: calc(var(--space-9) * 1.25);
+}
+
+.brandShadowPlate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--color-accent);
+  transform: translate(var(--space-5), var(--space-5));
+}
+
+.brandShadowPhoto {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-tint);
+  border: 1px solid var(--color-line);
+}
+
+.kickerDemo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  // Flagged the same as design-lab's copy: spec's literal "pine 70%"
+  // measures 4.36:1 on ivory, failing AA — full-strength pine (10.02:1)
+  // used instead.
+  color: var(--color-accent);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.dropCapDemo {
+  max-width: 32ch;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+
+  &::first-letter {
+    float: left;
+    margin-right: var(--space-2);
+    font-family: var(--font-display);
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--color-accent);
+  }
+}
+
+.arrowLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.arrowLinkGlyph {
+  display: inline-block;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.arrowLink:hover .arrowLinkGlyph {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrowLinkGlyph {
+    transition: none;
+  }
+}
+
+// --- Come funziona devices (single-block pass): MediaBand -----------------
+// Compact demo box for the image-mode MediaBand. Filter duplicated from
+// design-lab's .heroOverlapPhotoTreated (same rationale as every other
+// duplication on this page — route-scoped modules, shared token values).
+.mediaBandDemo {
+  position: relative;
+  width: 20rem;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+}
+
+.mediaBandDemoImg {
+  object-fit: cover;
+  filter: saturate(0.7) sepia(0.25) hue-rotate(-12deg) brightness(1.06)
+    contrast(0.95);
+}
+
+// --- Formazione devices (single-block pass): credentials marquee ---------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Contrast verified
+// there (ivory@70%/75% against solid pine both pass AA comfortably, no
+// photo-background variance to worry about).
+.marqueeDemo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding-block: var(--space-7);
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
+}
+
+.marqueeKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.marqueeKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+.marqueeTrackWrap {
+  width: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 3rem,
+    black calc(100% - 3rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 3rem,
+    black calc(100% - 3rem),
+    transparent 100%
+  );
+}
+
+// Live variant — genuinely respects the visitor's OS reduced-motion
+// setting via the same @media query as design-lab's real component, so
+// this demo reflects actual production behavior, not a fixed mock.
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  animation: marquee-demo-scroll 45s linear infinite;
+
+  &:hover,
+  &:focus-within {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes marquee-demo-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marqueeList {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    width: 100%;
+    animation: none;
+  }
+
+  .marqueeList {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: var(--space-4);
+  }
+
+  .marqueeListDuplicate {
+    display: none;
+  }
+}
+
+.marqueeItem {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  font-size: 0.9375rem;
+  letter-spacing: 0.1em;
+}
+
+.marqueeSeparator {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-inline: 3rem;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+  transform: rotate(45deg);
+}
+
+// Forced-static reference variant (no animation, no media query) — for
+// reviewers who don't have reduced-motion on but still need to see that
+// state without changing their OS setting.
+.marqueeTrackWrapStatic {
+  width: 100%;
+}
+
+.marqueeListStatic {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// --- Counter stat (v2 addition): static, final-value demo -----------------
+// Duplicated from design-lab's own copy (design-lab.module.scss/
+// FormazioneCounters.tsx) — same rationale as every other duplication on
+// this page. No animation here (static styleguide convention); the width-
+// locking sizing technique only matters for the live, animating version.
+.counterStatDemoRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 4rem;
+  row-gap: var(--space-6);
+  padding: var(--space-7);
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
+}
+
+.counterStatDemo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.counterStatDemoNumber {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--color-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.counterStatDemoLabel {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+// --- Di cosa mi occupo devices (single-block pass): indexed list item ----
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Contrast verified
+// there (ink@80% on plain ivory measures 7.68:1, passes AA comfortably).
+.indexedItemDemo {
+  display: flex;
+  align-items: baseline;
+  column-gap: var(--space-4);
+  max-width: 20rem;
+}
+
+.indexedItemDemoNumeral {
+  flex: 0 0 3rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.indexedItemDemoBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.indexedItemDemoTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.indexedItemDemoSubList {
+  margin: var(--space-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+}
+
+.indexedItemDemoSubItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.indexedItemDemoDash {
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--space-3);
+  height: 1px;
+  background: var(--color-accent);
+}
+
+// --- Statement devices (single-block pass) --------------------------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Contrast verified
+// there: signature ink@70% on sand = 5.22:1 (passes); role line's literal
+// spec value (ink@55%) measured 3.40:1 (fails AA) so 65% is used instead
+// (4.51:1) — same substitution as the live section.
+.statementDemo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-7);
+  background: var(--color-sand);
+  border-radius: var(--radius-m);
+}
+
+.statementDemoTextWrap {
+  position: relative;
+  max-width: 56ch;
+}
+
+.statementDemoNumeral {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 6rem;
+}
+
+.statementDemoText {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1.5;
+}
+
+.statementDemoSignature {
+  margin: var(--space-5) 0 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+.statementDemoRole {
+  margin: var(--space-2) 0 0;
+  text-align: center;
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+}
+
+// --- Diplomi devices (single-block pass): passe-partout card -------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Contrast verified
+// there: meta text ink@70% on white measures 5.81:1, passes AA
+// comfortably. Static only — the lightbox library itself must never load
+// on this page (see the note above), so only the card is demoed.
+.diplomaCardDemo {
+  display: flex;
+  flex-direction: column;
+  width: 20rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  padding: var(--space-4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.diplomaCardDemoImageWrap {
+  position: relative;
+  width: 100%;
+  height: 17.5rem;
+}
+
+.diplomaCardDemoImage {
+  object-fit: contain;
+}
+
+.diplomaCardDemoCaption {
+  margin-top: 0.75rem;
+}
+
+.diplomaCardDemoTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.diplomaCardDemoMeta {
+  margin: 0.125rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+// --- Come si svolge un percorso devices (single-block pass) ---------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Static only — no
+// scroll/IntersectionObserver logic here, just the three visual devices.
+.timelineCardDemo {
+  max-width: 22rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  padding: var(--space-6);
+}
+
+.timelineCardDemoTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.timelineCardDemoText {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.timelineNodeDemoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.timelineNodeDemo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-line);
+}
+
+.timelineNodeDemoNumeral {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.timelineNodeDemoActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+
+  .timelineNodeDemoNumeral {
+    color: var(--color-bg);
+  }
+}
+
+.timelineLineDemo {
+  position: relative;
+  width: 2px;
+  height: 8rem;
+  background: var(--color-line);
+}
+
+.timelineLineDemoFill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  transform: scaleY(0.5);
+  background: var(--color-accent);
+}
+
+// --- Quanto costa un percorso devices (single-block pass) -----------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Contrast verified
+// there: unit/footnote's literal "ink at 60%" fails AA on sand (3.90:1),
+// 65% is used instead (4.51:1). This demo sits on --color-surface-tint
+// (this page's own neutral demo background), not sand, purely to keep the
+// swatch visually distinct from the page background — the color VALUES
+// still match the live sand-band component exactly.
+.priceListDemo {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1.25rem;
+  max-width: 26rem;
+  padding: var(--space-6);
+  background: var(--color-surface-tint);
+  border-radius: var(--radius-m);
+  list-style: none;
+  margin: 0;
+}
+
+.priceLineDemo {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.priceLineDemoLabel {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.priceLineDemoLeader {
+  flex: 1 1 auto;
+  min-width: 1rem;
+  height: 1px;
+  margin-bottom: 0.3em;
+  border-bottom: 1px dotted var(--color-line);
+}
+
+.priceLineDemoValue {
+  flex: 0 1 auto;
+  font-size: 1.375rem;
+}
+
+.priceLineDemoPrice {
+  font-family: var(--font-display);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.priceLineDemoUnit {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+}
+
+.priceNoPricesDemo {
+  max-width: 40ch;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+// --- Risorse devices (single-block pass): article panel -------------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Scrim gradient
+// values match the pass's measured, AA-passing fix (not the spec's
+// literal 65%/75% figures, which failed contrast against these photos —
+// see the pass's final report).
+.articlePanelDemo {
+  position: relative;
+  display: block;
+  width: 20rem;
+  height: 26rem;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-bg);
+    outline-offset: -2px;
+  }
+}
+
+.articlePanelDemoImg {
+  object-fit: cover;
+}
+
+.articlePanelDemoScrim {
+  position: absolute;
+  inset: 0;
+  top: 55%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text) 55%, transparent) 20%,
+    color-mix(in srgb, var(--color-text) 78%, transparent) 100%
+  );
+}
+
+.articlePanelDemoContent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.5rem;
+}
+
+.articlePanelDemoMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.articlePanelDemoPill {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-button);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.articlePanelDemoDate {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-bg) 80%, transparent);
+}
+
+.articlePanelDemoTitle {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  color: var(--color-bg);
+  font-size: 1.25rem;
+}
+
+// --- Final CTA band devices (single-block pass): media-anchored ----------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Static demo only, at
+// a compact fixed size (no viewport-bleed calc() math here — that's a
+// full-width band technique, not something a swatch box can show).
+// Contrast verified there: heading 10.02:1, paragraph@85% 7.75:1, quiet
+// lines@65% 5.27:1 — all pass AA against solid pine (the spec's own
+// flagged "risk point," the quiet lines, actually passes here since the
+// background is flat, not a photo). Google link is deliberately demoted
+// per spec (ivory@50%, measured 3.79:1 — below standard AA text contrast,
+// left at the spec's literal value since low visibility is stated intent,
+// not an oversight; flagged in the pass's final report).
+.ctaBandDemo {
+  position: relative;
+  display: flex;
+  width: 30rem;
+  max-width: 100%;
+  min-height: 18rem;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+  background: var(--color-accent);
+}
+
+.ctaBandDemoPhotoZone {
+  position: relative;
+  flex: 0 0 10rem;
+  overflow: hidden;
+}
+
+.ctaBandDemoPhotoImg {
+  object-fit: cover;
+  object-position: 65% 35%;
+  filter: saturate(0.7) sepia(0.25) hue-rotate(-12deg) brightness(1.06)
+    contrast(0.95);
+}
+
+.ctaBandDemoPhotoOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+.ctaBandDemoPhotoMelt {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    transparent calc(100% - 4rem),
+    var(--color-accent) 100%
+  );
+}
+
+.ctaBandDemoContent {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.ctaBandDemoKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.ctaBandDemoKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+.ctaBandDemoHeading {
+  margin: var(--space-4) 0 0;
+  color: var(--color-bg);
+  font-size: 1.5rem;
+}
+
+.ctaBandDemoBody {
+  margin: var(--space-3) 0 0;
+  max-width: 30ch;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+}
+
+.ctaBandDemoCta {
+  margin-top: var(--space-4);
+}
+
+.ctaBandDemoQuietLines {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ctaBandDemoQuietLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-bg) 65%, transparent);
+}
+
+.ctaBandDemoGoogle {
+  margin-top: var(--space-3);
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// --- FAQ mini v2 devices (single-block pass): accordion row ---------------
+// Duplicated from design-lab's own copy (design-lab.module.scss) — same
+// rationale as every other duplication on this page. Static demo (two
+// fixed states, closed and open — no button/JS here, matching this
+// page's static-device convention elsewhere e.g. the timeline node
+// inactive/active pair). Contrast verified there: answer ink@85% on
+// ivory passes AA comfortably (see the pass's final report).
+.faqAccordionDemo {
+  max-width: 32rem;
+}
+
+.faqRowDemo {
+  border-top: 1px solid var(--color-line);
+
+  &:last-child {
+    border-bottom: 1px solid var(--color-line);
+  }
+}
+
+.faqRowDemoHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-block: 1.75rem;
+}
+
+.faqRowDemoIndex {
+  flex: 0 0 3.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.faqRowDemoQuestion {
+  flex: 1 1 auto;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.faqRowDemoIcon {
+  position: relative;
+  flex: 0 0 0.875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.faqRowDemoIconOpen {
+  transform: rotate(45deg);
+}
+
+.faqRowDemoIconBarH,
+.faqRowDemoIconBarV {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--color-text);
+}
+
+.faqRowDemoIconBarH {
+  width: 0.875rem;
+  height: 0.09375rem;
+  transform: translate(-50%, -50%);
+}
+
+.faqRowDemoIconBarV {
+  width: 0.09375rem;
+  height: 0.875rem;
+  transform: translate(-50%, -50%);
+}
+
+.faqRowDemoAnswer {
+  margin: 0;
+  padding: var(--space-1) 0 1.75rem 3.5rem;
+  max-width: 56ch;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+// --- Sedi devices (single-block pass): scene panel + styled map ----------
+// Duplicated from design-lab's own copy (design-lab.module.scss/
+// SedesStage.tsx) — same rationale as every other duplication on this
+// page. Static demo only: fixed size, no scroll-driving/flyTo, real
+// Leaflet instance (via SedesMapDemo.tsx) so the tile filter and custom
+// marker device render exactly as they do live.
+.sedesDemoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.sedesPanelDemo {
+  width: 20rem;
+  background: color-mix(in srgb, var(--color-bg) 96%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  padding: var(--space-6);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.sedesPanelDemoCity {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.sedesPanelDemoCenterName {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.sedesPanelDemoAddress {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.sedesMapDemo {
+  position: relative;
+  width: 20rem;
+  height: 16rem;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background: var(--color-greige);
+
+  :global(.leaflet-tile-pane) {
+    filter: sepia(0.22) saturate(0.65) hue-rotate(-8deg) brightness(1.04);
+  }
+
+  :global(.leaflet-control-attribution) {
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.6875rem;
+    color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  }
+
+  :global(.leaflet-control-zoom) {
+    display: none;
+  }
+}
+
+.sedesMapDemoMarkerDot {
+  display: block;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 0.125rem solid var(--color-bg);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 25%, transparent);
+}
+
+.sedesMapDemoMarkerActive {
+  transform: scale(1.25);
+}
+
+// --- Footer devices (single-block pass): column + bottom bar -------------
+// Duplicated from design-lab's own copy (design-lab.module.scss/
+// DesignLabFooter.tsx) — same rationale as every other duplication on
+// this page. Contrast verified there: kicker/nav-link ivory@70%/85% both
+// pass AA comfortably; the bottom bar's literal 55% failed (4.25:1) and
+// is shown here already fixed at 60% (4.74:1).
+.footerColumnDemo {
+  display: inline-block;
+  padding: var(--space-6);
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
+}
+
+.footerColumnDemoKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.footerColumnDemoKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+.footerColumnDemoList {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footerColumnDemoLink {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.footerBottomBarDemo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
+}
+
+.footerBottomBarDemoText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-bg) 60%, transparent);
+}
+
+.footerBottomBarDemoCurrent {
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+}
+
+.footerBottomBarDemoLink {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-bg) 60%, transparent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.link {
+  @include mixins.link;
+}
+
+.divider {
+  @include mixins.hairline-divider;
+  margin-block: var(--space-4);
+}
+
+.gridDemo {
+  @include mixins.grid-auto(10rem);
+  list-style: none;
+  padding: 0;
+}
+
+.gridItem {
+  padding: var(--space-4);
+  background: var(--color-surface-tint);
+  border-radius: var(--radius-m);
+  text-align: center;
+}

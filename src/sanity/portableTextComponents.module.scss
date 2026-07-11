@@ -1,0 +1,174 @@
+@use "../styles/mixins";
+
+// --- Inline link mark ------------------------------------------------------
+.link {
+  @include mixins.link;
+}
+
+// --- Blockquote --------------------------------------------------------
+.blockquote {
+  margin: 0;
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-accent);
+  font-style: italic; // Lato's real italic cut is loaded — not faux-slanted
+  color: var(--color-text);
+}
+
+// --- Image ---------------------------------------------------------------
+.image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-l);
+}
+
+// --- Key takeaways ---------------------------------------------------------
+.keyTakeaways {
+  padding: var(--space-5);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-m);
+}
+
+.keyTakeawaysLabel {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.keyTakeawaysList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+// --- FAQ accordion -------------------------------------------------------
+.faqBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.faqItem {
+  @include mixins.hairline-divider;
+  padding-block: var(--space-5);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.faqQuestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--fs-body-lg); // larger than the answer — size-based
+  // emphasis, since Lato has no 500/600 to lean on (see layout.tsx).
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.faqIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    background: var(--color-accent);
+  }
+
+  &::before {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  &::after {
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+}
+
+.faqItem[open] .faqIcon::after {
+  content: none;
+}
+
+.faqAnswer {
+  padding-top: var(--space-3);
+  color: var(--color-text);
+}
+
+// --- CTA block -----------------------------------------------------------
+.ctaBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-m);
+}
+
+.ctaHeading {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--color-text);
+}
+
+.ctaBody {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+// Full-bleed variant — the homepage's standalone ctaBlock moment only
+// (see ctaBlockVariant in portableTextComponents.tsx). Breaks out of its
+// centered container to full viewport width; relies on the project's
+// global overflow-x: hidden (globals.scss) as the guardrail against a
+// stray horizontal scrollbar — verified separately at 360px and
+// ~1440px+, both locales, no overflow, no edge artifacts.
+.ctaBand {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  background: var(--color-accent-soft);
+}
+
+.ctaBandInner {
+  @include mixins.container;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-block: var(--space-8);
+}
+
+// --- Cards -----------------------------------------------------------------
+.cardGrid {
+  @include mixins.grid-auto(16rem);
+  list-style: none;
+  padding: 0;
+}
+
+// A standalone conditionCard/treatmentCard isn't part of a list like
+// relatedTopics — cap its width so a single card doesn't stretch the full
+// content measure.
+.standaloneCard {
+  max-width: 24rem;
+}

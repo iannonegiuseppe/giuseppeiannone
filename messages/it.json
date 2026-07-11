@@ -1,1 +1,71 @@
-{}
+{
+  "Breadcrumbs": {
+    "home": "Home"
+  },
+  "TableOfContents": {
+    "label": "Indice"
+  },
+  "KeyTakeaways": {
+    "label": "In breve"
+  },
+  "Hero": {
+    "cta": "Prenota un primo colloquio",
+    "registrationPrefix": "Iscrizione all'Albo degli Psicologi n."
+  },
+  "Home": {
+    "whoIAmHeading": "Chi sono",
+    "concernsGridHeading": "Di cosa mi occupo",
+    "methodsHeading": "Metodi",
+    "carePathwayHeading": "Come funziona la terapia",
+    "locationsHeading": "Sedi",
+    "onlineLocationTitle": "Online",
+    "onlineLocationDescription": "Sedute di psicoterapia online, per chi preferisce la flessibilità di un percorso a distanza.",
+    "latestContentHeading": "Risorse recenti",
+    "privacyNoteBody": "I tuoi dati saranno trattati con la massima riservatezza.",
+    "privacyNoteLinkLabel": "Leggi l'informativa sulla privacy"
+  },
+  "Header": {
+    "nav": {
+      "home": "Home",
+      "about": "Chi sono",
+      "method": "Metodo",
+      "areas": "Aree",
+      "price": "Prezzi",
+      "faq": "FAQ",
+      "contact": "Contatti"
+    },
+    "areasSubmenu": {
+      "anxiety": "Ansia",
+      "depression": "Depressione",
+      "stress": "Stress",
+      "lifeChanges": "Cambiamenti di vita"
+    },
+    "menuToggle": "Menu",
+    "cta": "Prenota un primo colloquio"
+  },
+  "Footer": {
+    "exploreHeading": "Esplora",
+    "resourcesLabel": "Risorse",
+    "contactHeading": "Contatti",
+    "locationsHeading": "Sedi",
+    "legalHeading": "Informazioni legali",
+    "privacy": "Privacy",
+    "cookiePolicy": "Cookie policy",
+    "googleProfile": "Trovami su Google",
+    "whatsapp": "Scrivimi su WhatsApp",
+    "instagram": "Instagram",
+    "copyright": "© {year} {name} — Tutti i diritti riservati.",
+    "devCredit": "Sito: [segnaposto — nome/link sviluppatore]"
+  },
+  "NotFound": {
+    "title": "Pagina non trovata",
+    "description": "La pagina che stai cercando non esiste o è stata spostata.",
+    "backHome": "Torna alla home"
+  },
+  "ErrorPage": {
+    "title": "Qualcosa è andato storto",
+    "description": "Si è verificato un errore imprevisto. Riprova o torna alla home.",
+    "retry": "Riprova",
+    "backHome": "Torna alla home"
+  }
+}

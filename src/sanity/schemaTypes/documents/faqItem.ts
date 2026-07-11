@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { deontologyCheck } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
 
 export const faqItem = defineType({
@@ -16,7 +17,7 @@ export const faqItem = defineType({
       name: "answer",
       title: "Answer",
       type: "faqAnswer",
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) => Rule.required().custom(deontologyCheck),
     }),
     languageField(),
   ],

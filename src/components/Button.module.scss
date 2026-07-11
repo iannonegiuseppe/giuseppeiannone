@@ -1,0 +1,46 @@
+@use "../styles/mixins";
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem; // 44px — WCAG touch-target minimum
+  padding-inline: var(--space-5);
+  padding-block: var(--space-3);
+  border-radius: var(--radius-button);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--font-weight-regular);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+
+  @include mixins.focus-ring;
+}
+
+.solid {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: 1px solid var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+}
+
+.outline {
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+
+  &:hover {
+    color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+}

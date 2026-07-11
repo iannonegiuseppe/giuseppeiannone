@@ -1,0 +1,299 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Split from the former sectionsShared.module.scss monolith as part of
+// the homepage promotion pass (Stage 3) — classes used by FormazioneBand
+// and its own private sub-components, co-located here per that pass's
+// own convention. grid-12/col/button-base are shared mixins (see
+// sharedSections.module.scss); everything else below is local.
+
+@keyframes formazione-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+// --- "Formazione": pine full-bleed strip with credentials marquee -------
+// Single-block ADD (new section, nothing else on the page moves). Facts
+// only, per docs/design-direction.md §9 — no evaluative/promotional
+// wording, no award names/logos/badges/stars, no client counts or
+// percentages. Deliberately slimmer than a full band: --space-7/8
+// (48/64px) padding, not --space-band-y — "a pause, not a full section."
+.formazioneBand {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw); // full-bleed, same technique as .sandBand/.finalContactBand
+  background: var(--color-accent);
+  padding-block: var(--space-7); // 48px, mobile tier — unchanged, v2 spec only authorizes growing the md+ tier
+
+  @include mixins.breakpoint-up(md) {
+    // v2: grown from 64px (--space-8) to 72px to let the new counters row
+    // breathe, per spec ("may grow from 64px to 72px") — not an existing
+    // spacing token.
+    padding-block: 4.5rem;
+  }
+}
+
+.formazioneHeader {
+  @include mixins.container;
+  display: flex;
+  justify-content: center;
+}
+
+// Centered, inverted variant of the standard kicker (Chi Sono/Methods):
+// same 12px/700/0.16em typography, but a rule on EACH side instead of one,
+// and ivory-on-pine instead of pine-on-ivory/greige. Spec's literal
+// opacities verified against the solid pine background (not a photo, so
+// no per-pixel variance to worry about): ivory@70% measures 5.83:1,
+// comfortably passing AA — no substitution needed here, unlike the
+// photo-background cases elsewhere in this file.
+.formazioneKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4); // 16px gaps on both sides of the text, per spec
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, matches the established kicker size
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.formazioneKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem; // 40px, per spec
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+// --- v2: counters row (new) -------------------------------------------------
+// FormazioneCounters.tsx owns the count-up logic; this is layout/type only.
+.formazioneCountersRow {
+  margin-top: 2.5rem; // 40px below the kicker, per spec
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 1.75rem; // 28px, mobile tier per spec
+
+  @include mixins.breakpoint-up(md) {
+    flex-direction: row;
+    justify-content: center;
+    column-gap: 4rem; // 64px, per spec
+    row-gap: 0;
+  }
+}
+
+.formazioneCounterStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+// Sizer (visibility:hidden, renders the FINAL value) and the animated
+// number share identical typography so the sizer's box exactly matches
+// what the number needs — the animated number is absolutely positioned
+// over it, so its changing text content during the count never affects
+// layout (verified zero-CLS in the pass's final report).
+.formazioneCounterNumberWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.formazioneCounterNumberSizer,
+.formazioneCounterNumber {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.75rem; // 44px, mobile tier per spec
+  line-height: 1;
+  color: var(--color-bg);
+  font-variant-numeric: tabular-nums; // best-effort, per spec — Marcellus has no true tabular cut
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 3.5rem; // 56px, desktop tier per spec
+  }
+}
+
+.formazioneCounterNumberSizer {
+  visibility: hidden;
+}
+
+.formazioneCounterNumber {
+  position: absolute;
+  inset: 0;
+}
+
+.formazioneCounterLabel {
+  margin: var(--space-3) 0 0; // 12px below the number, per spec
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, per spec
+  font-weight: var(--font-weight-bold); // 700, per spec
+  text-transform: uppercase;
+  letter-spacing: 0.14em; // per spec
+  // ivory@70% on pine — 5.83:1, passes AA. Same voice/value as the kicker, per spec.
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.formazioneCounterSrText {
+  @include mixins.visually-hidden;
+}
+
+// --- Marquee row -----------------------------------------------------------
+// Full-bleed edge to edge (own 100vw wrapper, independent of the header's
+// container above), with a mask-image fade at both edges. The mask is
+// removed under reduced motion below — it only makes sense for a moving
+// strip; on the static reduced-motion list, every word should stay fully
+// legible, not permanently faded at the edges.
+.formazioneMarquee {
+  position: relative;
+  // v2: this gap is now measured from the counters row, not the kicker
+  // (which the counters row now sits between) — grown from 40px to 48px,
+  // per spec ("Marquee — 48px below the counters"). Everything else about
+  // the marquee itself (markup, animation, mask, reduced-motion fallback)
+  // is untouched.
+  margin-top: 3rem; // 48px, per spec
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 5rem,
+    black calc(100% - 5rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 5rem,
+    black calc(100% - 5rem),
+    transparent 100%
+  );
+
+  &:hover .formazioneTrack,
+  &:focus-within .formazioneTrack {
+    animation-play-state: paused;
+  }
+}
+
+// width: max-content lets the track size to its own (doubled) content
+// rather than the viewport, so translateX(-50%) always lands exactly on
+// the seam between the two copies regardless of viewport width.
+.formazioneTrack {
+  display: flex;
+  width: max-content;
+  // v2 retune: 8 items (up from 4) measure one .formazioneList copy's
+  // actual rendered width at 1440px = 4803.4px (was 2704.6px). At the
+  // spec's ~40px/s target that's a 120s duration — this pass's own spec
+  // only asks to "keep the established ~40px/s drift" and report the
+  // result; unlike the original Formazione pass, it does not restate a
+  // 30-45s ceiling, so that older cap isn't reapplied here. RETUNE again
+  // when real content lands: measure one .formazioneList copy's
+  // offsetWidth in px, set duration to (width / 40)s.
+  animation: formazione-scroll 120s linear infinite;
+}
+
+.formazioneList {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.formazioneItem {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  text-transform: uppercase;
+  // ivory@75% measures 6.43:1 against pine — passes AA, no substitution needed.
+  color: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  font-size: 0.8125rem; // 13px, mobile tier per spec
+  letter-spacing: 0.1em;
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 0.9375rem; // 15px, desktop/tablet per spec
+  }
+}
+
+// Diamond = a rotated square. Decorative divider, not text — same low-
+// contrast-is-intentional treatment as --color-line elsewhere (dividers
+// are soft/decorative, not a WCAG-critical boundary).
+.formazioneSeparator {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.375rem; // 6px
+  height: 0.375rem; // 6px
+  margin-inline: 2rem; // 32px each side, mobile tier per spec
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+  transform: rotate(45deg);
+
+  @include mixins.breakpoint-up(md) {
+    margin-inline: 3rem; // 48px each side, desktop/tablet per spec
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // The full-bleed 100vw treatment only exists to let the animated marquee
+  // fade at the true viewport edges — the static fallback has nothing to
+  // fade, so it reverts to a normal contained/padded width, same as the
+  // header above it, rather than stretching text edge-to-edge.
+  .formazioneMarquee {
+    width: auto;
+    margin-inline: 0;
+    @include mixins.container;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .formazioneTrack {
+    width: 100%;
+    animation: none;
+  }
+
+  // .formazioneTrack's only DIRECT children are the two <ul>s (each one
+  // flex item, ~2700px wide) — wrapping/stacking needs to happen to the
+  // <li> items INSIDE the list, so this rule targets .formazioneList
+  // itself, not its parent .formazioneTrack (an earlier version of this
+  // rule wrapped the wrong element: flex-wrap on the track just left each
+  // whole <ul> overflowing, since a single flex item can't wrap on its
+  // own account).
+  .formazioneList {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0.75rem; // 12px, mobile tier per spec ("static VERTICAL list")
+
+    @include mixins.breakpoint-up(md) {
+      // Spec only specifies the mobile reduced-motion layout explicitly
+      // ("static VERTICAL list... 12px row gaps"); desktop/tablet reduced
+      // motion is a static WRAPPED horizontal row per the general rule
+      // ("wrapping to two lines if needed") — gap value isn't specced at
+      // this tier, using --space-4 as a reasonable default.
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: var(--space-4);
+    }
+  }
+
+  .formazioneListDuplicate {
+    display: none;
+  }
+
+  // The animated marquee needs nowrap (a mid-scroll line-break would look
+  // broken); the static fallback needs the opposite — long items must be
+  // able to wrap within their own line instead of overflowing the now-
+  // contained (not full-bleed) width above.
+  .formazioneItem {
+    flex-wrap: wrap;
+    white-space: normal;
+    text-align: center;
+  }
+}

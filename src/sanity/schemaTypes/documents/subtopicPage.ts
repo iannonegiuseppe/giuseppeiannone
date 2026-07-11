@@ -1,6 +1,7 @@
 import { defineField, defineType } from "sanity";
 import { SlugLockedAfterPublish } from "../../components/SlugLockedAfterPublish";
 import { languageField } from "../lib/languageField";
+import { medicalEntityTypeField } from "../lib/medicalEntityTypeField";
 
 export const subtopicPage = defineType({
   name: "subtopicPage",
@@ -42,6 +43,7 @@ export const subtopicPage = defineType({
       title: "SEO",
       type: "seo",
     }),
+    medicalEntityTypeField(),
     languageField(),
   ],
 });
