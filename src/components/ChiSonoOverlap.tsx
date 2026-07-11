@@ -48,7 +48,9 @@ export function ChiSonoOverlap({
   watermarkText?: string;
   photo?: SanityImage;
 }) {
-  const photoSrc = photo ? urlFor(photo).width(1200).url() : "/design-lab/04.webp";
+  const photoSrc = photo
+    ? urlFor(photo).width(1200).url()
+    : "/design-lab/04.webp";
 
   return (
     <section className={styles.chiSonoSection} data-lab-section="chi-sono">
@@ -57,12 +59,23 @@ export function ChiSonoOverlap({
           <ChiSonoWatermark text={watermarkText ?? "Benvenuto"} />
           <h2 className={styles.chiSonoIntroHeading}>{introHeading}</h2>
         </div>
-        <ArrowLink href="#" label={introLinkLabel} className={styles.chiSonoIntroLink} />
+        <ArrowLink
+          href="#"
+          label={introLinkLabel}
+          className={styles.chiSonoIntroLink}
+        />
       </div>
 
       <div className={styles.chiSonoBody}>
         <div className={styles.chiSonoPhotoStack}>
+          {/* Correction pass: the corner-bracket experiment is gone —
+              back to the established solid offset shadow-plate (same
+              brand device as the final-CTA/Sedi panels) as the
+              foundation, with the two thick accent bars framing the
+              composition diagonally on top of it. */}
           <div className={styles.chiSonoPhotoShadow} aria-hidden="true" />
+          {/* <div className={styles.chiSonoAccentTop} aria-hidden="true" /> */}
+          {/* <div className={styles.chiSonoAccentBottom} aria-hidden="true" /> */}
           <div className={styles.chiSonoPhotoWrap}>
             <Image
               src={photoSrc}
@@ -73,7 +86,7 @@ export function ChiSonoOverlap({
             />
           </div>
         </div>
-        <div className={styles.chiSonoTextColumn}>
+        <div className={styles.chiSonoTextCard}>
           <span className={styles.chiSonoTextNumeral} aria-hidden="true">
             01
           </span>
@@ -84,7 +97,11 @@ export function ChiSonoOverlap({
             </p>
             <h2 className={styles.chiSonoHeading}>{heading}</h2>
             <p className={styles.chiSonoBio}>{bio}</p>
-            <ArrowLink href="#" label={storyLinkLabel} className={styles.chiSonoStoryLink} />
+            <ArrowLink
+              href="#"
+              label={storyLinkLabel}
+              className={styles.chiSonoStoryLink}
+            />
           </div>
         </div>
       </div>

@@ -51,9 +51,9 @@
 // space to lay text over at narrow widths). At `lg` and up, the photo
 // becomes a full-bleed absolute layer and the content column overlaps it,
 // landing on the photo's own empty background space (not the subject).
-.heroOverlapSection {
-  padding-block: var(--space-6) 0;
-}
+// .heroOverlapSection {
+//   padding-block: var(--space-6) 0;
+// }
 
 .heroOverlapLabel {
   @include mixins.container;
