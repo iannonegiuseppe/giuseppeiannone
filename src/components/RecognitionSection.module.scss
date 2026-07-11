@@ -366,7 +366,7 @@
   font-size: 1.125rem; // was 1.4375rem (md)
 
   @include mixins.breakpoint-up(lg) {
-    font-size: 1.3125rem; // was 1.625rem (lg)
+    font-size: 2rem; // was 1.625rem (lg)
   }
 }
 

@@ -51,9 +51,12 @@
 // space to lay text over at narrow widths). At `lg` and up, the photo
 // becomes a full-bleed absolute layer and the content column overlaps it,
 // landing on the photo's own empty background space (not the subject).
-// .heroOverlapSection {
-//   padding-block: var(--space-6) 0;
-// }
+.heroOverlapSection {
+  
+  @include mixins.breakpoint-up(lg) {
+    height: 100vh; // the photo is full-bleed, so the section must be tall enough to fill the viewport
+  }
+}
 
 .heroOverlapLabel {
   @include mixins.container;
@@ -76,7 +79,8 @@
     // Tall enough that the photo genuinely dominates the first viewport,
     // not a horizontal band with ivory visible above/below it (the earlier
     // version's "tidy rectangle" problem).
-    min-height: 46rem;
+    // min-height: 46rem;
+    height: 100%;
   }
 }
 
@@ -88,7 +92,8 @@
   @include mixins.breakpoint-up(lg) {
     position: absolute;
     inset: 0;
-    aspect-ratio: auto;
+    aspect-ratio: unset;
+    height: 100%;
   }
 }
 
@@ -103,7 +108,7 @@
     // above is computed pre-mirror, then the whole result is flipped, so
     // the subject ends up left, empty background right, matching the
     // reference composition (photo left, headline right).
-    transform: scaleX(-1);
+    // transform: scaleX(-1);
   }
 }
 
