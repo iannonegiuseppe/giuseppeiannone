@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homePath, type Locale } from "@/sanity/paths";
-import type { ContactChannel } from "@/sanity/seo";
+import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
 import type { HeaderNavItem } from "./headerNavItems";
 import { HeaderNavItemWithSubmenu } from "./HeaderNavItemWithSubmenu";
@@ -52,12 +52,16 @@ export function HeaderInteractive({
   authorName,
   ctaLabel,
   contactChannels,
+  availabilityStatus,
+  availabilityText,
 }: {
   navItems: HeaderNavItem[];
   locale: Locale;
   authorName: string;
   ctaLabel: string;
   contactChannels?: ContactChannel[];
+  availabilityStatus?: AvailabilityStatus;
+  availabilityText?: string;
 }) {
   const headerRef = useRef<HTMLElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -181,7 +185,12 @@ export function HeaderInteractive({
 
       {/* Colocated with the button that triggers it — nothing else on
           the page needs to open it. */}
-      <ChannelPickerDialog ref={dialogRef} contactChannels={contactChannels} />
+      <ChannelPickerDialog
+        ref={dialogRef}
+        contactChannels={contactChannels}
+        availabilityStatus={availabilityStatus}
+        availabilityText={availabilityText}
+      />
     </>
   );
 }

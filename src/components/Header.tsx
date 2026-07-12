@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { buildNavItems } from "./headerNavItems";
 import { HeaderInteractive } from "./HeaderInteractive";
 import type { Locale } from "@/sanity/paths";
-import type { ContactChannel } from "@/sanity/seo";
+import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
 
 // Promoted from design-lab's own DesignLabHeader.tsx (glass-on-scroll,
 // two-state collapse, data-driven nav with the "Aree" submenu, channel
@@ -18,10 +18,14 @@ export async function Header({
   locale,
   authorName,
   contactChannels,
+  availabilityStatus,
+  availabilityText,
 }: {
   locale: Locale;
   authorName: string;
   contactChannels?: ContactChannel[];
+  availabilityStatus?: AvailabilityStatus;
+  availabilityText?: string;
 }) {
   const t = await getTranslations({ locale, namespace: "Header" });
   const navItems = buildNavItems(locale, t);
@@ -33,6 +37,8 @@ export async function Header({
       authorName={authorName}
       ctaLabel={t("cta")}
       contactChannels={contactChannels}
+      availabilityStatus={availabilityStatus}
+      availabilityText={availabilityText}
     />
   );
 }

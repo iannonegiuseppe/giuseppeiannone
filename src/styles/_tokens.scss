@@ -86,6 +86,21 @@ $z-index: (
   // white, so this reuses --color-bg rather than a separate hardcoded value.
   --color-accent-contrast: var(--color-bg);
 
+  // Availability-badge pass: no warm/amber accent existed anywhere in this
+  // palette before this (checked fresh — every other color here is either
+  // the cool pine family or a warm-NEUTRAL, hue 26-30°). This is the
+  // waitlist-status dot only, used nowhere else. Tuned darker than the
+  // spec's own "#C08A3E-ish" starting point specifically to clear the
+  // WCAG 1.4.11 non-text 3:1 floor as a small graphical dot against
+  // --color-bg (measured ~3.29:1 via manual sRGB relative-luminance calc,
+  // same method used elsewhere in this codebase's own contrast checks) —
+  // the lighter starting value measured ~2.76:1, under the floor. Against
+  // --color-accent (pine, the onDark badge variant's background) this
+  // same value only measures ~2.7:1 — AvailabilityBadge.module.scss gives
+  // every dot color a thin ivory ring on that variant specifically to
+  // cover the gap, rather than needing a second amber value.
+  --color-amber: #b07d2a;
+
   // --- Fonts (variables populated by next/font in layout.tsx) --------------
   // Marcellus: display only, Regular (400) is the only weight that exists —
   // never apply font-weight above 400 to it. Lato: 500/600 don't exist in

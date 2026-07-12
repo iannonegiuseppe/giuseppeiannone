@@ -1,0 +1,188 @@
+@use "../styles/mixins";
+
+// Video-section pass: dependency-free custom player (native <video>, no
+// library) — see VideoPlayer.tsx for the state machine. This file only
+// owns the visual chrome; playback/seek/fullscreen logic lives there.
+.videoPlayer {
+  position: relative;
+  width: 100%;
+  max-width: 60rem; // 960px, per spec
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+  border-radius: var(--radius-l); // "imagery" token
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  background: var(--color-greige); // fallback backdrop before the poster paints
+}
+
+.videoPlayerVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.videoPlayerPoster {
+  object-fit: cover;
+}
+
+// Full-cover button: the large click target IS the "play" affordance
+// (per spec, no separate invisible hit area vs visible circle) — a
+// subtle scrim so the ivory triangle/pine circle stay legible over any
+// poster brightness.
+.videoPlayerPlayOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--color-text) 15%, transparent);
+
+  @include mixins.focus-ring;
+}
+
+.videoPlayerPlayCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem; // 72px, per spec
+  height: 4.5rem;
+  border-radius: 50%;
+  background: var(--color-accent); // pine, per spec
+  box-shadow: var(--shadow-soft);
+  transition: transform 200ms ease;
+}
+
+.videoPlayerPlayOverlay:hover .videoPlayerPlayCircle {
+  transform: scale(1.05); // per spec
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoPlayerPlayCircle {
+    transition: none;
+  }
+
+  .videoPlayerPlayOverlay:hover .videoPlayerPlayCircle {
+    transform: none; // no hover scale under reduced motion, per spec
+  }
+}
+
+// CSS-triangle play glyph (no icon library, no SVG needed for this one
+// shape) — ivory on pine, per spec. margin-left nudges it for OPTICAL
+// centering: a triangle's own visual weight sits left of its bounding
+// box's true center, a well-known play-icon centering correction.
+.videoPlayerPlayTriangle {
+  width: 0;
+  height: 0;
+  border-top: 0.625rem solid transparent;
+  border-bottom: 0.625rem solid transparent;
+  border-left: 1rem solid var(--color-accent-contrast); // ivory, per spec
+  margin-left: 0.25rem;
+}
+
+.videoPlayerControls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--space-4);
+  // Legibility gradient behind the control row/progress bar, not a
+  // solid band — keeps as much of the video frame visible as possible.
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-text) 65%, transparent),
+    transparent
+  );
+  opacity: 1;
+  transition: opacity 200ms ease;
+
+  &[data-visible="false"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  // Reduced motion: instant show/hide, per spec — playback itself stays
+  // user-driven either way, only the fade animation is stripped.
+  &[data-reduced-motion] {
+    transition: none;
+  }
+}
+
+.videoPlayerProgressTrack {
+  position: relative;
+  width: 100%;
+  height: 0.1875rem; // 3px, per spec — "same visual family as the Sedi mobile progress bar"
+  background: var(--color-line);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  margin-bottom: var(--space-3);
+  // Prevents the browser's own touch-scroll gesture from competing with
+  // a drag that starts on this element — pointer capture (in
+  // VideoPlayer.tsx) handles the Lenis/desktop-drag side of the same
+  // "don't fight page scroll" requirement.
+  touch-action: none;
+
+  @include mixins.focus-ring;
+
+  // Enlarges the draggable/clickable hit area well past the visible 3px
+  // line (a 3px target alone is too thin to reliably grab) without
+  // changing the track's own rendered height.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -0.75rem 0;
+  }
+}
+
+.videoPlayerProgressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  background: var(--color-accent); // pine fill, per spec
+  border-radius: inherit;
+}
+
+.videoPlayerControlsRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.videoPlayerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem; // 44px target, per spec
+  height: 2.75rem;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--color-accent-contrast); // ivory icons over the dark scrim
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.videoPlayerCcLabel {
+  font-family: var(--font-body);
+  font-size: 0.6875rem; // 11px
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+}
+
+.videoPlayerTime {
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, per spec
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-contrast);
+  white-space: nowrap;
+}
+
+.videoPlayerSpacer {
+  flex: 1;
+}

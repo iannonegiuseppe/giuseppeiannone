@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { isProductionDeployment, resolveRobots } from "@/sanity/metadata";
 import { SedesMapDemo } from "./SedesMapDemo";
 import styles from "./styleguide.module.scss";
@@ -681,6 +682,32 @@ export default function StyleguidePage() {
           <span className={styles.articlePanelDemoTitle}>Riconoscere i primi segnali dell&apos;ansia</span>
         </span>
       </a>
+
+      <h2>La prima seduta — video player (video-section pass)</h2>
+      <p>
+        No real video asset exists in the repo yet (checked: only the
+        numbered .webp stills, same situation MediaBand&apos;s own video
+        mode was in) — the section itself is built to render nothing at
+        all on the live homepage until an editor publishes one (see
+        VideoSection.tsx&apos;s own early return). Per this pass&apos;s own
+        spec, the player is demoed here instead with a synthetically
+        generated clip (canvas + MediaRecorder, ~4s, recorded via
+        Playwright — no ffmpeg available in this environment and no
+        repo asset to reuse) purely to exercise the custom controls
+        below: idle poster + play button, the progress bar
+        (click/drag/arrow-key seek), play/pause, mute, captions (a
+        matching sample .vtt), and fullscreen. None of this — the clip,
+        the poster, the captions text — is real content.
+      </p>
+      <p className={styles.typeLabel}>Video player</p>
+      <div className={styles.videoPlayerDemo}>
+        <VideoPlayer
+          src="/design-lab/prima-seduta-demo.webm"
+          poster="/design-lab/09.webp"
+          posterAlt=""
+          captionsSrc="/design-lab/prima-seduta-demo.vtt"
+        />
+      </div>
 
       <h2>Final CTA band devices (single-block pass)</h2>
       <p>

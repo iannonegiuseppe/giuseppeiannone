@@ -17,6 +17,7 @@ import { RecognitionSection } from "@/components/RecognitionSection";
 import { type RealArticle, ResourcesSection } from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
 import { StatementBand } from "@/components/StatementBand";
+import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
 import {
@@ -25,7 +26,7 @@ import {
   latestArticlesQuery,
   sedesQuery,
 } from "@/sanity/queries";
-import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+import { buildMetadata, getSiteSettings, resolveAvailabilityText } from "@/sanity/seo";
 
 interface HomePageData {
   title?: string;
@@ -79,6 +80,14 @@ interface HomePageData {
     noPricesSentence?: string;
   };
   risorse?: { kicker?: string; heading?: string; allArticlesLabel?: string };
+  video?: {
+    kicker?: string;
+    heading?: string;
+    lead?: string;
+    videoUrl?: string;
+    poster?: SanityImage;
+    captionsUrl?: string;
+  };
   finalCta?: {
     kicker?: string;
     heading?: string;
@@ -175,6 +184,7 @@ export default async function Home({
   ]);
 
   const authorName = siteSettings?.author?.name ?? "";
+  const availability = resolveAvailabilityText(siteSettings);
 
   return (
     <main>
@@ -186,6 +196,8 @@ export default async function Home({
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
+        availabilityStatus={availability?.status}
+        availabilityText={availability?.text}
       />
 
       <ChiSonoOverlap
@@ -272,6 +284,15 @@ export default async function Home({
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
       />
 
+      <VideoSection
+        kicker={homePage?.video?.kicker}
+        heading={homePage?.video?.heading}
+        lead={homePage?.video?.lead}
+        videoUrl={homePage?.video?.videoUrl}
+        poster={homePage?.video?.poster}
+        captionsUrl={homePage?.video?.captionsUrl}
+      />
+
       <FinalContactSection
         kicker={homePage?.finalCta?.kicker ?? ""}
         heading={homePage?.finalCta?.heading ?? ""}
@@ -282,6 +303,8 @@ export default async function Home({
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
         photo={homePage?.finalCta?.photo}
+        availabilityStatus={availability?.status}
+        availabilityText={availability?.text}
       />
 
       <FaqSection

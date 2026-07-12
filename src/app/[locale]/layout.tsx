@@ -17,7 +17,7 @@ import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
 import { locationsQuery } from "@/sanity/queries";
-import { getSiteSettings } from "@/sanity/seo";
+import { getSiteSettings, resolveAvailabilityText } from "@/sanity/seo";
 import "./globals.scss";
 
 // Marcellus ships Regular (400) only — there is no bold cut, so no other
@@ -100,6 +100,7 @@ export default async function LocaleLayout({
       : undefined;
 
   const typedLocale = locale as Locale;
+  const availability = resolveAvailabilityText(siteSettings);
 
   return (
     <html
@@ -127,6 +128,8 @@ export default async function LocaleLayout({
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
               contactChannels={siteSettings?.contactChannels}
+              availabilityStatus={availability?.status}
+              availabilityText={availability?.text}
             />
             {children}
             <Footer

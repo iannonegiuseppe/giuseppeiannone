@@ -20,6 +20,23 @@ const FORBIDDEN_WORDS = [
   "offerta limitata",
 ];
 
+function checkAgainstWords(value: unknown, words: string[]): true | string {
+  const text = typeof value === "string" ? value : plainTextFromPortableText(value);
+  if (!text) return true;
+
+  const lowerText = text.toLowerCase();
+  const match = words.find((word) => lowerText.includes(word));
+  if (!match) return true;
+
+  return (
+    `Contains "${match}", which docs/design-direction.md §9 (Hard exclusions ` +
+    "— deontology + strategy) forbids: no percentage/counter/outcome claims, " +
+    "no discount or urgency/scarcity framing, no \"free session\" wording, no " +
+    "testimonials/reviews language. Rephrase to describe the practice " +
+    "factually instead."
+  );
+}
+
 // Shared Rule.custom validator — attach as
 // `validation: (Rule) => Rule.required().custom(deontologyCheck)` on any
 // free-text field (plain string/text) or Portable Text array that renders
@@ -27,18 +44,19 @@ const FORBIDDEN_WORDS = [
 // the source section so an editor understands WHY Studio is blocking the
 // word, not just that it is.
 export function deontologyCheck(value: unknown): true | string {
-  const text = typeof value === "string" ? value : plainTextFromPortableText(value);
-  if (!text) return true;
+  return checkAgainstWords(value, FORBIDDEN_WORDS);
+}
 
-  const lowerText = text.toLowerCase();
-  const match = FORBIDDEN_WORDS.find((word) => lowerText.includes(word));
-  if (!match) return true;
-
-  return (
-    `Contains "${match}", which docs/design-direction.md §9 (Hard exclusions ` +
-    "— deontology + strategy) forbids: no percentage/counter/outcome claims, " +
-    "no discount or urgency framing, no \"free session\" wording, no " +
-    "testimonials/reviews language. Rephrase to describe the practice " +
-    "factually instead."
-  );
+// Availability-badge pass: some fields need the §9 baseline PLUS extra
+// forbidden terms specific to that field's own risk (e.g. availability
+// status text forbidding scarcity wording like "ultimi posti" on top of
+// the shared list). Returns a bound validator function with the combined
+// list closed over it — same Rule.custom(...) call shape as the plain
+// deontologyCheck above, just parameterized. Doesn't mutate or replace
+// FORBIDDEN_WORDS, so every other field's baseline check is unaffected.
+export function deontologyCheckWithExtraWords(extraWords: string[]) {
+  const words = [...FORBIDDEN_WORDS, ...extraWords];
+  return function deontologyCheckExtended(value: unknown): true | string {
+    return checkAgainstWords(value, words);
+  };
 }

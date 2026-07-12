@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { ResolvedDiploma } from "./DiplomiSlider";
+import { PAUSE_VIDEO_EVENT } from "./VideoPlayer";
 import styles from "./DiplomiSection.module.scss";
 
 const ZOOM_SCALE = 2;
@@ -78,6 +79,9 @@ export const DiplomiViewer = forwardRef<DiplomiViewerHandle, { diplomas: Resolve
         setIndex(i);
         setZoomed(false);
         setEverOpened(true);
+        // Video-section pass: pauses "La prima seduta" if it's playing —
+        // see VideoPlayer.tsx's own comment on this event.
+        window.dispatchEvent(new Event(PAUSE_VIDEO_EVENT));
         setPreloadNeighbors(false);
         currentPanRef.current = { x: 0, y: 0 };
 

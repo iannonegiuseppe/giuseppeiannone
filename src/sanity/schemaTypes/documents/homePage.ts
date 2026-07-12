@@ -18,12 +18,17 @@ import { languageField } from "../lib/languageField";
 // legacy body/ctaBlock field are removed outright (owner-confirmed: no
 // dormant fields) since none of them correspond to anything in the current
 // 15-section composition.
-function textField(name: string, title: string, options?: { rows?: number; required?: boolean }) {
+function textField(
+  name: string,
+  title: string,
+  options?: { rows?: number; required?: boolean; initialValue?: string },
+) {
   return defineField({
     name,
     title,
     type: "text",
     rows: options?.rows ?? 2,
+    initialValue: options?.initialValue,
     validation: (Rule) => {
       const withCustom = Rule.custom(deontologyCheck);
       return options?.required === false ? withCustom : withCustom.required();
@@ -31,11 +36,16 @@ function textField(name: string, title: string, options?: { rows?: number; requi
   });
 }
 
-function stringField(name: string, title: string, options?: { required?: boolean }) {
+function stringField(
+  name: string,
+  title: string,
+  options?: { required?: boolean; initialValue?: string },
+) {
   return defineField({
     name,
     title,
     type: "string",
+    initialValue: options?.initialValue,
     validation: (Rule) => {
       const withCustom = Rule.custom(deontologyCheck);
       return options?.required === false ? withCustom : withCustom.required();
@@ -360,10 +370,72 @@ export const homePage = defineType({
       fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), stringField("allArticlesLabel", "\"All articles\" link label")],
     }),
 
-    // 14. FinalContactSection
+    // 14. VideoSection ("La prima seduta") — between Risorse and the final
+    // CTA band, per spec: the last anxiety-reducer before the invitation
+    // to act. Renders ONLY when `file` is set (VideoSection.tsx's own
+    // early-return) — same "zero content -> zero DOM" philosophy as
+    // ResourcesSection's zero-articles case, not a placeholder block.
+    //
+    // Field names follow this file's own established convention (plain
+    // kicker/heading/lead inside a named object, matching all 14 other
+    // sections) rather than the flat, videoKicker/videoTitle-prefixed
+    // names an earlier draft of this spec used — that prefixing pattern
+    // belongs to siteSettings' flat top-level fields (a different
+    // document, different shape), not this file's per-section objects.
+    defineField({
+      name: "video",
+      title: "14. La prima seduta (video)",
+      description:
+        "Optional. The section is entirely absent from the live page until a video file is uploaded below — no placeholder block, matching Risorse's zero-articles behavior.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker", { initialValue: "LA PRIMA SEDUTA" }),
+        stringField("heading", "Heading", { initialValue: "Come si svolge il primo incontro" }),
+        textField("lead", "Lead line", {
+          rows: 2,
+          initialValue:
+            "Un breve video per conoscermi: guarda come lavoro e senti se potresti trovarti a tuo agio con me.",
+        }),
+        defineField({
+          name: "file",
+          title: "Video file",
+          description: "Leave empty to keep this section off the live page entirely.",
+          type: "file",
+          options: { accept: "video/mp4,video/webm" },
+        }),
+        defineField({
+          name: "poster",
+          title: "Poster image",
+          description: "Required whenever a video file is set above — shown before playback and after the video ends.",
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({ name: "alt", title: "Alternative text", type: "string" }),
+          ],
+          validation: (Rule) =>
+            Rule.custom((value, context) => {
+              const parent = context.parent as { file?: { asset?: unknown } } | undefined;
+              if (parent?.file?.asset && !value) {
+                return "Required whenever a video file is set above.";
+              }
+              return true;
+            }),
+        }),
+        defineField({
+          name: "captions",
+          title: "Captions (VTT, optional)",
+          description:
+            "Italian captions are strongly recommended — most viewers watch with sound off.",
+          type: "file",
+          options: { accept: ".vtt" },
+        }),
+      ],
+    }),
+
+    // 15. FinalContactSection
     defineField({
       name: "finalCta",
-      title: "14. Non sai da dove iniziare? (final CTA)",
+      title: "15. Non sai da dove iniziare? (final CTA)",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
@@ -383,10 +455,10 @@ export const homePage = defineType({
       ],
     }),
 
-    // 15. FaqSection — references a subset of the existing faqItem type.
+    // 16. FaqSection — references a subset of the existing faqItem type.
     defineField({
       name: "faq",
-      title: "15. Domande frequenti",
+      title: "16. Domande frequenti",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
