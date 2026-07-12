@@ -52,7 +52,7 @@
   &[data-collapsed="true"] {
     background: color-mix(in srgb, var(--color-bg) 55%, transparent);
     backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
+    // -webkit-backdrop-filter: blur(28px);
   }
 
   // Fallback for browsers without backdrop-filter support: solid ivory at
@@ -73,16 +73,16 @@
   // opacity once collapsed (the glass background itself provides
   // contrast by then) — a ::before rather than folded into the main
   // background above, since the two need independent, opposite curves.
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 1;
-    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
-    transition: opacity 250ms ease;
-  }
+  // &::before {
+  //   content: "";
+  //   position: absolute;
+  //   inset: 0;
+  //   z-index: -1;
+  //   pointer-events: none;
+  //   opacity: 1;
+  //   background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  //   transition: opacity 250ms ease;
+  // }
 
   &[data-collapsed="true"]::before {
     opacity: 0;
