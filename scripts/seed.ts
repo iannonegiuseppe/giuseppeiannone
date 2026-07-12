@@ -230,6 +230,21 @@ async function seed() {
       { _key: "channel-phone", type: "phone", label: "[segnaposto — telefono]", value: "+390000000000", order: 2 },
       { _key: "channel-email", type: "email", label: "[segnaposto — email]", value: "info@example.com", order: 3 },
     ],
+    // Footer social icons pass: socialLinks wasn't seeded at all before
+    // this pass (siteSettings.socialLinks existed in schema but had no
+    // seed data). Well-formed placeholder URLs, not "[segnaposto]" bracket
+    // text — same convention as contactChannels' own "+390000000000"/
+    // "info@example.com" above: these are url-typed fields the footer
+    // actually renders as clickable hrefs, not free-text copy, so a
+    // functional-looking placeholder is more correct than bracket text
+    // (and lets the footer social row's QA screenshot show all 5 icons).
+    socialLinks: {
+      instagram: "https://instagram.com/giuseppeiannone",
+      whatsapp: "https://wa.me/390000000000",
+      facebook: "https://facebook.com/giuseppeiannone",
+      youtube: "https://youtube.com/@giuseppeiannone",
+      linkedin: "https://linkedin.com/in/giuseppeiannone",
+    },
     piva: "[segnaposto]",
     crisisSupportText:
       "In caso di emergenza o pericolo immediato, non utilizzare questo sito: chiama il 112 (numero unico di emergenza) o recati al pronto soccorso più vicino. Per un sostegno emotivo immediato puoi contattare Telefono Amico Italia al 02 2327 2327. Questo sito non fornisce assistenza in situazioni di emergenza.",
@@ -287,6 +302,15 @@ async function seed() {
       { _key: "channel-phone", type: "phone", label: "[placeholder — phone]", value: "+390000000000", order: 2 },
       { _key: "channel-email", type: "email", label: "[placeholder — email]", value: "info@example.com", order: 3 },
     ],
+    // Same profiles as siteSettings-it — a social account isn't
+    // per-locale content, unlike the copy fields below.
+    socialLinks: {
+      instagram: "https://instagram.com/giuseppeiannone",
+      whatsapp: "https://wa.me/390000000000",
+      facebook: "https://facebook.com/giuseppeiannone",
+      youtube: "https://youtube.com/@giuseppeiannone",
+      linkedin: "https://linkedin.com/in/giuseppeiannone",
+    },
     piva: "[placeholder]",
     crisisSupportText:
       "If this is an emergency or you are in immediate danger, do not use this website: call 112 (the single European emergency number) or go to your nearest emergency room. For immediate emotional support you can contact Telefono Amico Italia at 02 2327 2327. This website does not provide emergency assistance.",
@@ -507,8 +531,14 @@ async function seed() {
       heading: "Non sai da dove iniziare?",
       body: "Se ti riconosci in questi temi, scrivimi: possiamo capire insieme da dove partire.",
       ctaLabel: "Prenota un primo colloquio",
+      // Declutter pass: privacyNote is no longer rendered in
+      // FinalContactSection (see that component's own HONESTY-RULE
+      // flag) — kept seeded since the schema field itself still exists,
+      // just unused at this specific render site now. responseNote
+      // wording shortened ("in genere" -> "di solito") to match the new
+      // single quiet-line copy this pass moved under the consent row.
       privacyNote: "I tuoi dati saranno trattati con la massima riservatezza.",
-      responseNote: "Rispondo di persona, in genere entro [segnaposto] giorni.",
+      responseNote: "Rispondo di persona, di solito entro [segnaposto] giorni.",
       googleProfileLabel: "Trovami su Google",
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: finalCtaPhotoId } },
     },
