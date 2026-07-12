@@ -98,6 +98,27 @@ function imageBlock(assetId: string, alt: string, key: string) {
   };
 }
 
+// CMS-driven header/footer pass (post-facto hardening): same lesson as the
+// createIfNotExists fix already applied to pillarPage/subtopicPage/faqItem
+// below (see that block's own "HARDENING" comment) — createOrReplace on a
+// singleton document silently WIPES any field this script doesn't set,
+// including fields added by later schema passes and populated by hand in
+// Studio between seed runs (e.g. homePage.video, siteSettings.logo/
+// availabilityStatus — confirmed live risk, not hypothetical, per the
+// owner's own report before this fix). createIfNotExists (first run) +
+// patch().set() (every run, including re-runs) only ever write the keys
+// this script actually passes in `fields` — any other existing field on
+// the document is left exactly as-is, unlike createOrReplace which
+// discards everything not present in the payload.
+async function upsertManagedSingleton(
+  id: string,
+  type: string,
+  fields: Record<string, unknown>,
+) {
+  await client.createIfNotExists({ _id: id, _type: type, ...fields });
+  await client.patch(id).set(fields).commit();
+}
+
 function translationMetadata(
   id: string,
   schemaType: string,
@@ -189,15 +210,18 @@ async function seed() {
 
   // --- siteSettings ------------------------------------------------------
   // CMS-wiring pass: contactChannels replaces the flat contactEmail/
-  // contactPhone/whatsappNumber scalars (createOrReplace below drops them
-  // outright, since they're simply not in this payload — see this pass's
-  // report for why that's the intended behavior, not an oversight).
-  // crisisSupportText corrected to match the text actually live on the
-  // site today (a Studio edit had drifted from what this script produced
-  // on a fresh run — the "known seed drift" this pass was asked to fix).
-  await client.createOrReplace({
-    _id: "siteSettings-it",
-    _type: "siteSettings",
+  // contactPhone/whatsappNumber scalars — that one-time drop already
+  // happened when this pass's seed first ran against createOrReplace; see
+  // this pass's report for why that was the intended behavior. Now uses
+  // upsertManagedSingleton (see that helper's own comment) so a re-run
+  // never touches fields this script doesn't manage, e.g. `logo`
+  // (CMS-driven header/footer pass) or availabilityStatus/acceptingText/
+  // waitlistText/pausedText (availability-badge pass) if set by hand in
+  // Studio. crisisSupportText corrected to match the text actually live on
+  // the site today (a Studio edit had drifted from what this script
+  // produced on a fresh run — the "known seed drift" this pass was asked
+  // to fix).
+  await upsertManagedSingleton("siteSettings-it", "siteSettings", {
     language: "it",
     title: "Giuseppe Iannone – Psicologo Psicoterapeuta",
     description: "Sito in costruzione.",
@@ -254,9 +278,7 @@ async function seed() {
     },
   });
 
-  await client.createOrReplace({
-    _id: "siteSettings-en",
-    _type: "siteSettings",
+  await upsertManagedSingleton("siteSettings-en", "siteSettings", {
     language: "en",
     title: "Giuseppe Iannone – Psychologist Psychotherapist",
     description: "Site under construction.",
@@ -346,16 +368,24 @@ async function seed() {
   // schemaTypes/documents/homePage.ts) — every string below is the exact
   // copy the hardcoded components used to carry, preserved as-is
   // including every [segnaposto] marker, per this pass's own instruction
-  // not to invent new placeholder wording. createOrReplace here means the
-  // OLD shape's fields (credentialsStrip/methods/body/old pricingSummary/
-  // old finalContact) are dropped outright, not merged — there is
-  // deliberately no homePage-en this run (EN gate stays; see
-  // src/app/[locale]/page.tsx), and the pre-existing homePage-en document
-  // (still on the old schema) is left untouched rather than deleted —
-  // flagged as a known, disclosed leftover in this pass's report.
-  await client.createOrReplace({
-    _id: "homePage-it",
-    _type: "homePage",
+  // not to invent new placeholder wording. There is deliberately no
+  // homePage-en this run (EN gate stays; see src/app/[locale]/page.tsx),
+  // and the pre-existing homePage-en document (still on the old schema)
+  // is left untouched rather than deleted — flagged as a known, disclosed
+  // leftover in this pass's report.
+  //
+  // upsertManagedSingleton (not createOrReplace, see that helper's own
+  // comment): re-running this on an already-migrated document only sets
+  // the fields listed below — it does NOT drop fields this script doesn't
+  // manage, e.g. the "video" section group (schema: homePage.video)
+  // entered by hand in Studio, which this script has no data for and must
+  // never touch. That's a deliberate trade-off: the one-time OLD-shape
+  // cleanup (credentialsStrip/methods/body/old pricingSummary/old
+  // finalContact) already happened the first time this pass's seed ran
+  // against createOrReplace — a fresh dataset seeded via
+  // upsertManagedSingleton's createIfNotExists path never has those
+  // fields to begin with, so nothing is lost either way.
+  await upsertManagedSingleton("homePage-it", "homePage", {
     language: "it",
     title: "Giuseppe Iannone",
     hero: {
