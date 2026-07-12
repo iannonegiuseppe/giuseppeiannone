@@ -204,8 +204,12 @@
 
 .labHeaderNavLink {
   font-family: var(--font-body);
-  font-size: 0.875rem; // 14px, per spec — REST state
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600 (Lato has no 600 cut)
+  // Header nav style fix: bumped 14px -> 16px, bold (700) -> regular (400)
+  // — was set to the nearest real weight to an old spec's 600 target
+  // (Lato has no 600 cut); this pass replaces that with a plain
+  // regular-weight, larger-size look instead. REST state.
+  font-size: 1rem; // 16px, REST state (was 14px)
+  font-weight: var(--font-weight-regular); // 400 (was --font-weight-bold, 700)
   color: var(--color-text);
   text-decoration: none;
   transition: color 200ms ease, font-size 250ms ease;
@@ -232,8 +236,14 @@
 // .labHeaderNav's own display:none/breakpoint-up(lg) gate above), so no
 // explicit breakpoint-up wrapper is needed here — this rule is inert
 // below lg regardless.
+// Header nav style fix: rest size moved 14px -> 16px; this collapsed value
+// moves 13px -> 15px, preserving the same ~93% collapsed/rest ratio the
+// two sizes already had (13/14 -> 15/16) rather than picking an
+// unrelated number. font-weight isn't set here — it cascades from the
+// updated (now regular, 400) .labHeaderNavLink rule above, so both
+// states carry the lighter weight automatically.
 .labHeader[data-collapsed="true"] .labHeaderNavLink {
-  font-size: 0.8125rem; // 13px
+  font-size: 0.9375rem; // 15px (was 13px)
 }
 
 .labHeaderActions {
@@ -475,8 +485,14 @@
   border: none;
   background: transparent;
   font-family: var(--font-body);
-  font-size: 0.875rem; // 14px, matching .labHeaderNavLink
-  font-weight: var(--font-weight-bold);
+  // Header nav style fix: kept matching .labHeaderNavLink's new REST
+  // values (16px, regular) — "Aree" is one of the top-level items the
+  // fix covers. Unlike the plain links, this button has no existing
+  // collapsed-state size override (no .labHeader[data-collapsed="true"]
+  // .headerNavButton rule) — it already didn't shrink on collapse before
+  // this fix, so that's left as-is (out of this fix's scope).
+  font-size: 1rem; // 16px, matching .labHeaderNavLink (was 14px)
+  font-weight: var(--font-weight-regular); // 400 (was --font-weight-bold, 700)
   color: var(--color-text);
   cursor: pointer;
 
