@@ -9,7 +9,8 @@ import {
 } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { whatsappUrl } from "@/sanity/contact";
-import type { ContactChannel } from "@/sanity/seo";
+import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
+import { AvailabilityBadge } from "./AvailabilityBadge";
 import styles from "./HeaderInteractive.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -44,8 +45,12 @@ function channelHref(channel: ContactChannel): string {
 // or immediately, with no transition at all, under reduced motion.
 export const ChannelPickerDialog = forwardRef<
   ChannelPickerDialogHandle,
-  { contactChannels?: ContactChannel[] }
->(function ChannelPickerDialog({ contactChannels }, ref) {
+  {
+    contactChannels?: ContactChannel[];
+    availabilityStatus?: AvailabilityStatus;
+    availabilityText?: string;
+  }
+>(function ChannelPickerDialog({ contactChannels, availabilityStatus, availabilityText }, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const cardRef = useRef<HTMLDivElement | null>(null);
     const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -163,8 +168,20 @@ export const ChannelPickerDialog = forwardRef<
           <h2 id="channel-dialog-heading" className={styles.channelDialogHeading}>
             Scrivimi come ti è più comodo.
           </h2>
+          <AvailabilityBadge
+            status={availabilityStatus}
+            text={availabilityText}
+            variant="onLight"
+            className={styles.channelDialogAvailability}
+          />
 
-          <div className={styles.channelDialogChannels}>
+          <div
+            className={
+              availabilityText
+                ? `${styles.channelDialogChannels} ${styles.channelDialogChannelsTight}`
+                : styles.channelDialogChannels
+            }
+          >
             {contactChannels
               ?.slice()
               .sort((a, b) => a.order - b.order)

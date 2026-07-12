@@ -221,10 +221,24 @@
   color: color-mix(in srgb, var(--color-bg) 85%, transparent);
 }
 
+// Availability-badge pass: sits between the paragraph and the CTA
+// button, onDark variant (ivory text/ringed dots — see
+// AvailabilityBadge.module.scss). Same "two smaller gaps replace one
+// larger gap" technique as the other two placements —
+// .finalContactCtaTight halves the button's own top margin (32px ->
+// 16px) only when the badge actually renders.
+.finalContactAvailability {
+  margin-top: var(--space-4); // 16px below the paragraph
+}
+
 // On-pine button variant of the shared .btnPrimaryInverted — this class
 // only adds the spacing this specific placement needs.
 .finalContactCta {
   margin-top: var(--space-6); // 32px below the paragraph, per spec
+}
+
+.finalContactCtaTight {
+  margin-top: var(--space-4); // 16px, replacing the 32px above when the badge is present
 }
 
 .finalContactQuietLines {

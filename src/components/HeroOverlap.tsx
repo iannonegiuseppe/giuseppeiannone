@@ -1,6 +1,8 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
+import { AvailabilityBadge } from "./AvailabilityBadge";
 import { urlFor } from "@/sanity/image";
+import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./HeroOverlap.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -32,6 +34,8 @@ export function HeroOverlap({
   ctaLabel,
   registrationNumber,
   photo,
+  availabilityStatus,
+  availabilityText,
 }: {
   treatment: "raw" | "treated";
   // Internal review annotation only (e.g. "Hero — approved") — omitted
@@ -43,6 +47,8 @@ export function HeroOverlap({
   ctaLabel: string;
   registrationNumber?: string;
   photo?: SanityImage;
+  availabilityStatus?: AvailabilityStatus;
+  availabilityText?: string;
 }) {
   const photoClassName =
     treatment === "treated"
@@ -81,7 +87,19 @@ export function HeroOverlap({
             <a href="#" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
               {ctaLabel}
             </a>
-            <p className={styles.heroOverlapRegistration}>
+            <AvailabilityBadge
+              status={availabilityStatus}
+              text={availabilityText}
+              variant="onLight"
+              className={styles.heroOverlapAvailability}
+            />
+            <p
+              className={
+                availabilityText
+                  ? `${styles.heroOverlapRegistration} ${styles.heroOverlapRegistrationTight}`
+                  : styles.heroOverlapRegistration
+              }
+            >
               Iscrizione all&apos;Albo degli Psicologi n. {registrationNumber ?? "[segnaposto]"}
             </p>
           </div>

@@ -25,7 +25,7 @@ import {
   latestArticlesQuery,
   sedesQuery,
 } from "@/sanity/queries";
-import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+import { buildMetadata, getSiteSettings, resolveAvailabilityText } from "@/sanity/seo";
 
 interface HomePageData {
   title?: string;
@@ -175,6 +175,7 @@ export default async function Home({
   ]);
 
   const authorName = siteSettings?.author?.name ?? "";
+  const availability = resolveAvailabilityText(siteSettings);
 
   return (
     <main>
@@ -186,6 +187,8 @@ export default async function Home({
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
+        availabilityStatus={availability?.status}
+        availabilityText={availability?.text}
       />
 
       <ChiSonoOverlap
@@ -282,6 +285,8 @@ export default async function Home({
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
         photo={homePage?.finalCta?.photo}
+        availabilityStatus={availability?.status}
+        availabilityText={availability?.text}
       />
 
       <FaqSection

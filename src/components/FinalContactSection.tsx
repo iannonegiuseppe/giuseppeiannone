@@ -1,7 +1,9 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
-import { urlFor } from "@/sanity/image";
+import { AvailabilityBadge } from "./AvailabilityBadge";
 import { RevealOnScroll } from "./RevealOnScroll";
+import { urlFor } from "@/sanity/image";
+import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./FinalContactSection.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -32,6 +34,8 @@ export function FinalContactSection({
   googleProfileLabel,
   googleProfileUrl,
   photo,
+  availabilityStatus,
+  availabilityText,
 }: {
   kicker: string;
   heading: string;
@@ -42,6 +46,8 @@ export function FinalContactSection({
   googleProfileLabel: string;
   googleProfileUrl?: string;
   photo?: SanityImage;
+  availabilityStatus?: AvailabilityStatus;
+  availabilityText?: string;
 }) {
   // Image-quality diagnostic pass: dropped the urlFor(1200) cap — capped
   // just below next/image's own retina candidate (1200 vs ~1260 needed
@@ -77,7 +83,20 @@ export function FinalContactSection({
               </p>
               <h2 className={styles.finalContactHeading}>{heading}</h2>
               <p className={styles.finalContactBody}>{body}</p>
-              <a href="#" className={`${styles.btnPrimaryInverted} ${styles.finalContactCta}`}>
+              <AvailabilityBadge
+                status={availabilityStatus}
+                text={availabilityText}
+                variant="onDark"
+                className={styles.finalContactAvailability}
+              />
+              <a
+                href="#"
+                className={
+                  availabilityText
+                    ? `${styles.btnPrimaryInverted} ${styles.finalContactCta} ${styles.finalContactCtaTight}`
+                    : `${styles.btnPrimaryInverted} ${styles.finalContactCta}`
+                }
+              >
                 {ctaLabel}
               </a>
               <div className={styles.finalContactQuietLines}>

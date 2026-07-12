@@ -51,7 +51,11 @@ export const siteSettingsQuery = defineQuery(`
     piva,
     crisisSupportText,
     googleProfileUrl,
-    carePathway
+    carePathway,
+    availabilityStatus,
+    acceptingText,
+    waitlistText,
+    pausedText
   }
 `);
 
