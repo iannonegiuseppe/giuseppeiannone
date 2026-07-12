@@ -25,6 +25,15 @@ import sharedStyles from "./sharedSections.module.scss";
 // re-entered as homepage-local fields; positioningStatement/ctaLabel/photo
 // come from homePage.hero. Falls back to the original placeholder photo
 // path when no CMS photo is set yet.
+//
+// Mobile hero revision (<=767px only — see HeroOverlap.module.scss's own
+// comments for the full breakpoint-by-breakpoint reasoning): the photo
+// now fills the full viewport height (100dvh) and the text block sits
+// absolutely-positioned at the bottom, over a gradient dissolving the
+// photo into --color-bg. Desktop (>=1024px) and tablet (768-1023px) are
+// UNCHANGED — every new rule is gated to the mobile tier, with an
+// explicit breakpoint-up(md) reset back to the original tablet values
+// wherever this pass touches a class tablet already used.
 export function HeroOverlap({
   treatment,
   label,
@@ -78,6 +87,12 @@ export function HeroOverlap({
             sizes="(min-width: 64rem) 100vw, 100vw"
             className={photoClassName}
           />
+          {/* Mobile-only revision: bottom-anchored gradient dissolving
+              the photo into --color-bg so the text block below sits on
+              solid ivory, not photo texture. display:none above mobile
+              (see .heroOverlapMobileGradient) — tablet/desktop keep the
+              plain photo, no scrim. */}
+          <div className={styles.heroOverlapMobileGradient} aria-hidden="true" />
         </div>
         <div className={styles.heroOverlapContent}>
           <div className={styles.heroOverlapTextInner}>

@@ -51,10 +51,30 @@
 // space to lay text over at narrow widths). At `lg` and up, the photo
 // becomes a full-bleed absolute layer and the content column overlaps it,
 // landing on the photo's own empty background space (not the subject).
+// Mobile hero revision — full-viewport-height hero, per spec. Fallback
+// chain: min-height:100vh (oldest/safest baseline) -> min-height:100svh
+// (small viewport height — accounts for the address bar being SHOWN,
+// the worst-case smallest viewport) -> height:100dvh (dynamic viewport
+// height — recomputes live as the address bar shows/hides, so the hero
+// always fills exactly the CURRENT visible viewport; this is what
+// actually guarantees the bottom text block is never hidden under the
+// address bar). Declaration order matters: each later rule overrides in
+// browsers that support it, degrading gracefully in ones that don't.
 .heroOverlapSection {
-  
+  min-height: 100vh;
+  min-height: 100svh;
+  height: 100dvh;
+
+  @include mixins.breakpoint-up(md) {
+    // Tablet: UNCHANGED — back to the original auto/content-driven
+    // height (stacked photo-then-text), per this pass's own explicit
+    // "tablet unchanged" guard.
+    min-height: 0;
+    height: auto;
+  }
+
   @include mixins.breakpoint-up(lg) {
-    height: 100vh; // the photo is full-bleed, so the section must be tall enough to fill the viewport
+    height: 100vh; // unchanged — the photo is full-bleed, so the section must be tall enough to fill the viewport
   }
 }
 
@@ -72,6 +92,16 @@
   position: relative;
   width: 100vw;
   margin-inline: calc(50% - 50vw);
+  // Mobile hero revision — fills .heroOverlapSection's own 100dvh, so
+  // .heroOverlapPhotoWrap (absolute, inset:0 at mobile below) has a real
+  // height to stretch against, same mechanism this class already gives
+  // the desktop overlap treatment below.
+  height: 100%;
+
+  @include mixins.breakpoint-up(md) {
+    // Tablet: UNCHANGED — back to auto (content-driven stacked layout).
+    height: auto;
+  }
 
   @include mixins.breakpoint-up(lg) {
     display: flex;
@@ -84,10 +114,23 @@
   }
 }
 
+// Mobile hero revision — the photo becomes a full-bleed absolute layer
+// (inset:0 against .heroOverlap's own 100dvh) instead of a stacked,
+// aspect-ratio-boxed block, so it fills the whole screen height with the
+// text block overlaid on top (see .heroOverlapContent below).
 .heroOverlapPhotoWrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
+  position: absolute;
+  inset: 0;
+  aspect-ratio: unset;
+
+  @include mixins.breakpoint-up(md) {
+    // Tablet: UNCHANGED — back to the original stacked, aspect-ratio-
+    // boxed treatment.
+    position: relative;
+    inset: auto;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
 
   @include mixins.breakpoint-up(lg) {
     position: absolute;
@@ -99,7 +142,25 @@
 
 .heroOverlapPhotoImg {
   object-fit: cover;
-  object-position: center top;
+  // Mobile hero revision — the crop box is now the full 100dvh screen
+  // (was a compact aspect-ratio 4/3 box), so "center top" crops far too
+  // aggressively. Empirically swept object-position-x in 10-20% steps
+  // against a real render (not estimated from the source image alone —
+  // the source's own visual layout doesn't map linearly onto the
+  // object-fit:cover crop window once the box is this much narrower than
+  // the image): 50%+ crops straight through empty backdrop past his
+  // face, 30% centers it cleanly. Vertical (15%) has little effect at
+  // this box's proportions (the image's height barely overflows the
+  // box), tested 0/15/25% — all near-identical, 15% picked as a safe
+  // middle value. Confirmed face fully visible, not cropped, not behind
+  // the bottom text block, at both 390x844 and 360x640 — see this pass's
+  // own report.
+  object-position: 30% 15%;
+
+  @include mixins.breakpoint-up(md) {
+    // Tablet: UNCHANGED — back to the original crop.
+    object-position: center top;
+  }
 
   @include mixins.breakpoint-up(lg) {
     object-position: right center;
@@ -109,6 +170,33 @@
     // the subject ends up left, empty background right, matching the
     // reference composition (photo left, headline right).
     // transform: scaleX(-1);
+  }
+}
+
+// Mobile hero revision — bottom-anchored gradient dissolving the photo
+// into --color-bg (the ivory page background — NOT pine, NOT dark) so
+// the text block below sits on solid ivory, not photo texture. Because
+// the fade IS to the light background, the text keeps its normal dark
+// ink/pine treatment (see .heroOverlapName/.heroOverlapSubtitle/etc.
+// below, unchanged colors) — this is the opposite direction from every
+// OTHER dark-band gradient in this codebase (FinalContactSection's own
+// photo dissolve fades TO pine), so don't copy that technique's color.
+// Stops tuned against real contrast measurement at each text line's
+// actual rendered position — see this pass's own report for the exact
+// ratios and final stop values.
+.heroOverlapMobileGradient {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 35%,
+    var(--color-bg) 68%
+  );
+
+  @include mixins.breakpoint-up(md) {
+    display: none; // tablet/desktop: no scrim, unchanged — explicit, not just inherited
   }
 }
 
@@ -127,10 +215,31 @@
 //    lightened photo or a background fill.
 // Grid-12 wrapper — governs where the TEXT snaps to; the photo stays a
 // separate, full-bleed absolute layer untouched by this grid.
+// Mobile hero revision — the text block moves out of normal flow and
+// pins to the bottom of .heroOverlap (over the photo + gradient),
+// instead of stacking below the photo. left:0/right:0 keeps
+// shared.grid-12's own container padding-inline as the horizontal inset
+// (unchanged mechanism, just now on an absolutely-positioned box); the
+// `bottom` offset is the spec's own "~32-40px breathing room above the
+// screen bottom edge" — 2rem (32px), low end of that range, reported.
 .heroOverlapContent {
   @include shared.grid-12;
-  position: relative;
-  padding-block: var(--space-6);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2rem;
+  z-index: 1;
+  padding-block: 0;
+
+  @include mixins.breakpoint-up(md) {
+    // Tablet: UNCHANGED — back to normal flow, original padding.
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    padding-block: var(--space-6);
+  }
 
   @include mixins.breakpoint-up(lg) {
     z-index: 1;
