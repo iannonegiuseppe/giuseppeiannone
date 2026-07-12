@@ -1,0 +1,75 @@
+@use "../styles/mixins";
+
+// Video-section pass: ivory background (the page's own default — no
+// override needed), standard section padding/container, centered header
+// — same device family as Risorse/Formazione/Come si svolge (kicker with
+// a rule on each side, centered column), per this file's own established
+// convention (see ResourcesSection.module.scss's identical structure).
+.videoSection {
+  @include mixins.section;
+}
+
+.videoHeader {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 4rem; // 64px, mobile tier — matches Risorse's own established default
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: 6rem; // 96px, desktop tier
+  }
+}
+
+.videoKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to the brief's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.videoKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+// font-family inherits the global h2 -> Marcellus default (globals.scss)
+// — not restated here, per this file family's own established pattern.
+.videoHeading {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text);
+  font-size: 1.75rem; // 28px, mobile tier — same scale step as Risorse's own heading
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2rem; // 32px, per spec
+  }
+}
+
+.videoLead {
+  margin: var(--space-4) 0 0; // 16px below the heading, per spec
+  max-width: 52ch; // per spec
+  font-family: var(--font-body);
+  font-size: 1.0625rem; // 17px, per spec
+  line-height: 1.6; // per spec
+  // ink@85% — same established pairing used elsewhere in this app
+  // (SedesSection's own paragraph, etc.), verified AA-passing there.
+  color: color-mix(in srgb, var(--color-text) 85%, transparent);
+}
+
+.videoPlayerWrap {
+  @include mixins.container;
+  // 40px isn't a step on the spacing scale (nearest are --space-6=32px,
+  // --space-7=48px) — rem per this file's no-raw-px rule, exact value
+  // per spec rather than silently rounding to the nearest token.
+  margin-top: 2.5rem; // 40px, per spec
+}

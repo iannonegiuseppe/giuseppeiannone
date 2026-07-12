@@ -17,6 +17,7 @@ import { RecognitionSection } from "@/components/RecognitionSection";
 import { type RealArticle, ResourcesSection } from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
 import { StatementBand } from "@/components/StatementBand";
+import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
 import {
@@ -79,6 +80,14 @@ interface HomePageData {
     noPricesSentence?: string;
   };
   risorse?: { kicker?: string; heading?: string; allArticlesLabel?: string };
+  video?: {
+    kicker?: string;
+    heading?: string;
+    lead?: string;
+    videoUrl?: string;
+    poster?: SanityImage;
+    captionsUrl?: string;
+  };
   finalCta?: {
     kicker?: string;
     heading?: string;
@@ -273,6 +282,15 @@ export default async function Home({
         locale={locale}
         realArticles={realArticles}
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
+      />
+
+      <VideoSection
+        kicker={homePage?.video?.kicker}
+        heading={homePage?.video?.heading}
+        lead={homePage?.video?.lead}
+        videoUrl={homePage?.video?.videoUrl}
+        poster={homePage?.video?.poster}
+        captionsUrl={homePage?.video?.captionsUrl}
       />
 
       <FinalContactSection

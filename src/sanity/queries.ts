@@ -107,6 +107,14 @@ export const homePageQuery = defineQuery(`
     sedi,
     prezzi,
     risorse,
+    video{
+      kicker,
+      heading,
+      lead,
+      "videoUrl": file.asset->url,
+      poster,
+      "captionsUrl": captions.asset->url
+    },
     finalCta,
     faq{
       kicker,

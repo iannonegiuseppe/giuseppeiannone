@@ -11,6 +11,7 @@ import { useLenisRef } from "@/components/LenisProvider";
 import { whatsappUrl } from "@/sanity/contact";
 import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
 import { AvailabilityBadge } from "./AvailabilityBadge";
+import { PAUSE_VIDEO_EVENT } from "./VideoPlayer";
 import styles from "./HeaderInteractive.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -61,6 +62,9 @@ export const ChannelPickerDialog = forwardRef<
       open: () => {
         previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
         setClosing(false);
+        // Video-section pass: pauses "La prima seduta" if it's playing —
+        // see VideoPlayer.tsx's own comment on this event.
+        window.dispatchEvent(new Event(PAUSE_VIDEO_EVENT));
         dialogRef.current?.showModal();
         document.body.style.overflow = "hidden";
         // Same lock this dialog already applies via body overflow —

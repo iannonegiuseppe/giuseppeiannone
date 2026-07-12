@@ -624,6 +624,15 @@
   }
 }
 
+// --- Video-section pass: VideoPlayer demo -------------------------------
+// The real component is imported directly (unlike SedesMapDemo's own
+// duplicated map setup) — nothing here to style beyond spacing, since
+// VideoPlayer.module.scss already owns its own max-width/aspect-ratio/
+// radius.
+.videoPlayerDemo {
+  margin-bottom: var(--space-6);
+}
+
 // --- Come funziona devices (single-block pass): MediaBand -----------------
 // Compact demo box for the image-mode MediaBand. Filter duplicated from
 // design-lab's .heroOverlapPhotoTreated (same rationale as every other
