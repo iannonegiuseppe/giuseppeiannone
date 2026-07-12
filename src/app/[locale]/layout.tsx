@@ -16,8 +16,12 @@ import {
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
-import { locationsQuery } from "@/sanity/queries";
-import { getSiteSettings, resolveAvailabilityText } from "@/sanity/seo";
+import { sedesQuery } from "@/sanity/queries";
+import {
+  getSiteSettings,
+  resolveAvailabilityText,
+  resolveLogoImage,
+} from "@/sanity/seo";
 import "./globals.scss";
 
 // Marcellus ships Regular (400) only — there is no bold cut, so no other
@@ -53,12 +57,29 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-function getLocations(locale: string) {
-  return sanityFetch<{ title: string; address?: string; slug?: string }[]>(
-    locationsQuery,
-    { locale },
-    ["locationPage"],
-  );
+interface SedeAddress {
+  centerName?: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+interface SedeDoc {
+  _id: string;
+  city: string;
+  isOnline?: boolean;
+  onlineLine?: string;
+  addresses?: SedeAddress[];
+}
+
+// CMS-driven header/footer pass: was locationsQuery (locationPage-backed,
+// query since retired — see queries.ts's own comment). Footer's "Sedi"
+// column now reads the SAME sede docs the homepage's own Sedi section
+// already uses (per spec's explicit "addresses come from sede docs"),
+// fixing a pre-existing bug an earlier audit pass flagged (locationPage
+// had no published documents, so the footer column rendered empty).
+function getSedes(locale: string) {
+  return sanityFetch<SedeDoc[]>(sedesQuery, { locale }, ["sede"]);
 }
 
 export default async function LocaleLayout({
@@ -76,9 +97,9 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  const [siteSettings, locations, isDraft] = await Promise.all([
+  const [siteSettings, sedes, isDraft] = await Promise.all([
     getSiteSettings(locale),
-    getLocations(locale),
+    getSedes(locale),
     isDraftModeEnabled(),
   ]);
 
@@ -90,17 +111,31 @@ export default async function LocaleLayout({
         socialLinks: siteSettings.socialLinks,
       })
     : undefined;
+  // buildMedicalBusinessJsonLd's own shape (LocationFields: flat
+  // {title, address}[]) predates sede's richer city+addresses[] shape and
+  // is left untouched (out of scope) — flattened here instead, one entry
+  // per physical address (online-only sedi have no address, excluded;
+  // "MedicalBusiness location" means a physical place).
+  const physicalLocations = sedes
+    .filter((sede) => !sede.isOnline)
+    .flatMap((sede) =>
+      (sede.addresses ?? []).map((addr) => ({
+        title: addr.centerName ? `${sede.city} — ${addr.centerName}` : sede.city,
+        address: addr.address,
+      })),
+    );
   const medicalBusinessJsonLd =
-    siteSettings?.title && locations.length > 0
+    siteSettings?.title && physicalLocations.length > 0
       ? buildMedicalBusinessJsonLd({
           name: siteSettings.title,
           siteUrl,
-          locations,
+          locations: physicalLocations,
         })
       : undefined;
 
   const typedLocale = locale as Locale;
   const availability = resolveAvailabilityText(siteSettings);
+  const resolvedLogo = resolveLogoImage(siteSettings?.logo);
 
   return (
     <html
@@ -127,6 +162,7 @@ export default async function LocaleLayout({
             <Header
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
+              logo={resolvedLogo}
               contactChannels={siteSettings?.contactChannels}
               availabilityStatus={availability?.status}
               availabilityText={availability?.text}
@@ -135,11 +171,12 @@ export default async function LocaleLayout({
             <Footer
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
+              logo={resolvedLogo}
               authorCredentials={siteSettings?.author?.credentials}
               authorRegistrationNumber={siteSettings?.author?.registrationNumber}
               contactChannels={siteSettings?.contactChannels}
               piva={siteSettings?.piva}
-              locations={locations}
+              sedes={sedes}
               crisisSupportText={siteSettings?.crisisSupportText}
               googleProfileUrl={siteSettings?.googleProfileUrl}
               socialLinks={siteSettings?.socialLinks}

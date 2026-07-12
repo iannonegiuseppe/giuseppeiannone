@@ -104,6 +104,46 @@ export const singletonPathFns: Array<(locale: Locale) => string> = [
   cookiePolicyPath,
 ];
 
+// CMS-driven header/footer pass: the fixed-route allow-list a headerSettings/
+// footerSettings nav item's `routeKey` (Studio dropdown, see navLink.ts) is
+// constrained to — reuses the SAME path functions as singletonPathFns
+// (same order, same source) rather than a second hand-typed list, so the
+// two can't drift apart; add an entry here alongside singletonPathFns
+// whenever a new fixed route is introduced. `home` is included per the
+// allow-list requirement even though the current seeded nav never uses it
+// (the wordmark/logo already links home — see headerNavItems.ts).
+//
+// HONESTY-RULE NOTE: "aree" is deliberately NOT a key here. Unlike every
+// route above, "Aree" has no fixed path function of its own anywhere in
+// this file — it has always been a pure grouping label whose children are
+// pillarPage links (see headerNavItems.ts's pre-existing buildAreasChildren
+// and this pass's own report). Inventing an areePath() with no real route
+// behind it would violate "source this list from the route convention" —
+// a navLink item can still represent "Aree" correctly with no routeKey/
+// page of its own, just a customLabel and children (see navLink.ts).
+export interface NavRouteKeyEntry {
+  key: string;
+  // English, since Studio UI stays English regardless of site locale
+  // (existing project convention) — this is the STUDIO dropdown label,
+  // not visitor-facing copy. The visitor-facing default (per locale) is
+  // ROUTE_KEY_DEFAULT_LABELS in headerNavItems.ts; customLabel overrides
+  // either.
+  studioLabel: string;
+  pathFn: (locale: Locale) => string;
+}
+
+export const NAV_ROUTE_KEYS: NavRouteKeyEntry[] = [
+  { key: "home", studioLabel: "Home", pathFn: homePath },
+  { key: "chi-sono", studioLabel: "About (Chi sono)", pathFn: aboutPath },
+  { key: "metodo", studioLabel: "Method (Metodo)", pathFn: methodPath },
+  { key: "prezzi", studioLabel: "Pricing (Prezzi)", pathFn: pricePath },
+  { key: "risorse", studioLabel: "Resources (Risorse)", pathFn: articlesPath },
+  { key: "faq", studioLabel: "FAQ", pathFn: faqPath },
+  { key: "contatti", studioLabel: "Contact (Contatti)", pathFn: contactPath },
+  { key: "privacy", studioLabel: "Privacy", pathFn: privacyPath },
+  { key: "cookie-policy", studioLabel: "Cookie policy", pathFn: cookiePolicyPath },
+];
+
 function isLocale(value: string): value is Locale {
   return value === "it" || value === "en";
 }
@@ -157,6 +197,12 @@ export function hrefFor(locale: Locale, doc: ReferencedDoc): string {
   }
   if (doc._type === "subtopicPage" && doc.slug && doc.parentSlug) {
     return `${prefix}/${doc.parentSlug}/${doc.slug}`;
+  }
+  // CMS-driven header/footer pass: added for navLink's "reference" link
+  // type (see headerNavItems.ts) — articlePath already exists as the
+  // established convention, just not previously wired through here.
+  if (doc._type === "article" && doc.slug) {
+    return articlePath(locale, doc.slug);
   }
 
   return prefix || "/";

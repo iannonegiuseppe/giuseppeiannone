@@ -6,6 +6,12 @@ import type { StructureBuilder, StructureResolver } from "sanity/structure";
 // "homePage-en"), established here for Step 9's seed script to follow.
 export const SINGLETON_TYPES = new Set([
   "siteSettings",
+  // CMS-driven header/footer pass: two new singletons, pinned under the
+  // desk's own "Settings" group alongside siteSettings (see `structure`
+  // below) — same singleton-pane/no-delete-or-duplicate treatment as
+  // every other entry in this set.
+  "headerSettings",
+  "footerSettings",
   "homePage",
   "aboutPage",
   "methodPage",
@@ -93,5 +99,19 @@ export const structure: StructureResolver = (S) =>
             ]),
         ),
       S.divider(),
-      singletonListItem(S, "siteSettings", "Settings"),
+      // CMS-driven header/footer pass: grouped under one "Settings" desk
+      // item (was a single siteSettings pane before) — same fixed-pane,
+      // no-delete-or-duplicate singleton treatment, per document, via
+      // singletonListItem, unchanged.
+      S.listItem()
+        .title("Settings")
+        .child(
+          S.list()
+            .title("Settings")
+            .items([
+              singletonListItem(S, "siteSettings", "Site settings"),
+              singletonListItem(S, "headerSettings", "Header"),
+              singletonListItem(S, "footerSettings", "Footer"),
+            ]),
+        ),
     ]);

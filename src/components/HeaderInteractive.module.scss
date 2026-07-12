@@ -170,6 +170,15 @@
   }
 }
 
+// CMS-driven header/footer pass: only used when siteSettings.logo is set
+// (Logo.tsx's image branch) — scoped separately from .labHeaderWordmark
+// itself so the far-more-common text path (logo empty) keeps its exact
+// existing CSS untouched, zero risk of an unintended pixel diff there.
+// display: block avoids the few-px inline-baseline gap under an <img>.
+.labHeaderLogoImage {
+  display: block;
+}
+
 .labHeader[data-collapsed="true"] .labHeaderWordmark {
   @include mixins.breakpoint-up(lg) {
     font-size: 1.0625rem; // 17px, per round 4 (was round 3's 18px)

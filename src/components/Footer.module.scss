@@ -44,6 +44,15 @@
   }
 }
 
+// CMS-driven header/footer pass: only used when siteSettings.logo is set
+// (Logo.tsx's image branch) — scoped separately from .labFooterWordmark
+// so the far-more-common text path (logo empty) keeps its exact existing
+// CSS untouched. display: block avoids the few-px inline-baseline gap
+// under an <img>.
+.labFooterLogoImage {
+  display: block;
+}
+
 .labFooterAlboLine {
   margin: var(--space-2) 0 0;
   font-family: var(--font-body);
@@ -124,6 +133,27 @@
   display: flex;
   flex-direction: column;
   row-gap: 1rem; // 16px between cities, per spec
+}
+
+// CMS-driven header/footer pass: the footer's Sedi column now sources
+// from `sede` docs (see this pass's own report) instead of the old
+// one-location-per-line locationPage — a city can carry more than one
+// address (Milano has two), so each city is its own tightly-stacked
+// group; .labFooterSediList's own 16px gap above (its comment already
+// said "between cities", suggesting this grouping was anticipated)
+// separates the groups, this 4px separates a city's own lines.
+.labFooterSedeGroup {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25rem; // 4px
+}
+
+.labFooterSedeCityName {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, matches .labFooterSediAddress
+  font-weight: var(--font-weight-bold);
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
 .labFooterSediAddress {
@@ -232,7 +262,13 @@
   color: color-mix(in srgb, var(--color-bg) 60%, transparent);
 }
 
-.labFooterDevCredit {
+// CMS-driven header/footer pass: only "Bandziuk" itself is a link now
+// (the whole line used to be one <a>, back when it was placeholder text
+// with no real href) — interactive states move to this new inner class;
+// .labFooterDevCredit above (now a plain <p>) keeps the shared text
+// styling with its two siblings, unchanged.
+.labFooterDevCreditLink {
+  color: inherit;
   text-decoration: none;
 
   &:hover {

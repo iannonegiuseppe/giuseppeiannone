@@ -1,41 +1,45 @@
-import { getTranslations } from "next-intl/server";
-import { buildNavItems } from "./headerNavItems";
+import { resolveNavItems } from "./headerNavItems";
 import { HeaderInteractive } from "./HeaderInteractive";
 import type { Locale } from "@/sanity/paths";
-import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
+import { getHeaderSettings } from "@/sanity/seo";
+import type {
+  AvailabilityStatus,
+  ContactChannel,
+  ResolvedLogo,
+} from "@/sanity/seo";
 
-// Promoted from design-lab's own DesignLabHeader.tsx (glass-on-scroll,
-// two-state collapse, data-driven nav with the "Aree" submenu, channel
-// dialog, mobile burger overlay) — see HeaderInteractive.tsx for the
-// client-side implementation this wraps. Stays a server component so it
-// can fetch translations the same way the pre-promotion Header.tsx did;
-// authorName stays a prop (Sanity-driven, wired by layout.tsx) rather than
-// hardcoded, since that wiring already existed and this pass doesn't
-// remove working infrastructure, just restyles around it. contactChannels
-// (CMS-wiring pass) threads through to ChannelPickerDialog, replacing its
-// old static import of src/components/contactChannels.ts.
+// CMS-driven header/footer pass: nav items + the CTA button label now
+// come from the new headerSettings singleton (fetched here, colocated —
+// this data is Header-exclusive, unlike siteSettings/logo which layout.tsx
+// already fetches once for the whole page tree and passes down, matching
+// authorName/contactChannels' own existing pattern). Replaces the old
+// next-intl-catalog-driven buildNavItems/t("cta") entirely — see
+// headerNavItems.ts's own comment on the resolver this now uses.
 export async function Header({
   locale,
   authorName,
+  logo,
   contactChannels,
   availabilityStatus,
   availabilityText,
 }: {
   locale: Locale;
   authorName: string;
+  logo?: ResolvedLogo;
   contactChannels?: ContactChannel[];
   availabilityStatus?: AvailabilityStatus;
   availabilityText?: string;
 }) {
-  const t = await getTranslations({ locale, namespace: "Header" });
-  const navItems = buildNavItems(locale, t);
+  const headerSettings = await getHeaderSettings(locale);
+  const navItems = resolveNavItems(locale, headerSettings?.navItems);
 
   return (
     <HeaderInteractive
       navItems={navItems}
       locale={locale}
       authorName={authorName}
-      ctaLabel={t("cta")}
+      logo={logo}
+      ctaLabel={headerSettings?.ctaButtonText ?? "Prenota un primo colloquio"}
       contactChannels={contactChannels}
       availabilityStatus={availabilityStatus}
       availabilityText={availabilityText}

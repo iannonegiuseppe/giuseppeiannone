@@ -3,6 +3,7 @@ import { ctaBlock } from "./ctaBlock";
 import { faqAnswer } from "./faqAnswer";
 import { faqBlock } from "./faqBlock";
 import { keyTakeaways } from "./keyTakeaways";
+import { navLink } from "./navLink";
 import { portableText } from "./portableText";
 import { relatedTopics } from "./relatedTopics";
 import { seo } from "./seo";
@@ -18,4 +19,5 @@ export const objectTypes = [
   treatmentCard,
   portableText,
   faqAnswer,
+  navLink,
 ];

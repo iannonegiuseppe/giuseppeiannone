@@ -38,6 +38,14 @@ export const siteSettings = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "logo",
+      title: "Logo",
+      description:
+        'Brand mark shared by both the header and the footer. Optional — when empty, both render the existing text wordmark ("Giuseppe Iannone", Marcellus) instead. Alt text is fixed to "Giuseppe Iannone" regardless of what the image shows (accessibility + SEO — the logo must carry the name even as an image), not editable per-upload.',
+      type: "image",
+      options: { hotspot: true },
+    }),
+    defineField({
       name: "description",
       title: "Site description",
       type: "text",

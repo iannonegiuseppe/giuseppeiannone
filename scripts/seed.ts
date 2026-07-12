@@ -865,6 +865,149 @@ async function seed() {
     ),
   );
 
+  // --- headerSettings / footerSettings ------------------------------------
+  // CMS-driven header/footer pass. Seeded LAST (after pillarPage-anxiety
+  // above) since the "Aree" submenu's one real link is a `reference` to
+  // that document — this script has already hit the "Sanity rejects a
+  // mutation referencing a not-yet-existing document" error once before
+  // (see the faqItem block's own comment above), so reference targets are
+  // seeded first, referrers after.
+  //
+  // HONESTY-RULE FLAG (report this to the owner plainly): the OLD
+  // hardcoded "Aree" submenu showed FOUR items (Ansia/Depressione/Stress/
+  // Cambiamenti di vita) — only Ansia ever had a real pillarPage behind
+  // it; the other three were bare pillarPath() hrefs pointing at
+  // documents that don't exist, a deliberate "ship structure now, 404
+  // until built" placeholder policy from an earlier pass. The new
+  // navLink schema has no way to represent that: a link is either a
+  // fixed routeKey (from a real path function) or a reference to a real
+  // document — never an arbitrary typed slug. So this seed can only
+  // wire the ONE real link (Ansia, referencing pillarPage-anxiety-it/en)
+  // — Depressione/Stress/Cambiamenti di vita are genuinely OMITTED here,
+  // not broken: per spec, an unresolved item must render nothing rather
+  // than a dead link, and there is nothing for those three to resolve
+  // to yet. The visible "Aree" submenu goes from 4 items (3 of them
+  // 404ing) to 1 item (fully working) as a direct, correct consequence
+  // of this pass's own validation rule. Add the other three back once
+  // real pillarPage documents exist for them.
+  await upsertManagedSingleton("headerSettings-it", "headerSettings", {
+    language: "it",
+    navItems: [
+      { _key: "nav-1", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "Chi sono" },
+      { _key: "nav-2", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Metodo" },
+      {
+        _key: "nav-3",
+        _type: "navLink",
+        customLabel: "Aree",
+        children: [
+          {
+            _key: "nav-3-1",
+            _type: "navLink",
+            linkType: "reference",
+            page: { _type: "reference", _ref: "pillarPage-anxiety-it" },
+            customLabel: "Ansia",
+          },
+        ],
+      },
+      { _key: "nav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Prezzi" },
+      { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contatti" },
+    ],
+    ctaButtonText: "Prenota un primo colloquio",
+  });
+
+  await upsertManagedSingleton("headerSettings-en", "headerSettings", {
+    language: "en",
+    navItems: [
+      { _key: "nav-1", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "About" },
+      { _key: "nav-2", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Method" },
+      {
+        _key: "nav-3",
+        _type: "navLink",
+        customLabel: "Areas",
+        children: [
+          {
+            _key: "nav-3-1",
+            _type: "navLink",
+            linkType: "reference",
+            page: { _type: "reference", _ref: "pillarPage-anxiety-en" },
+            customLabel: "Anxiety",
+          },
+        ],
+      },
+      { _key: "nav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Pricing" },
+      { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contact" },
+    ],
+    ctaButtonText: "Book a first consultation",
+  });
+
+  await client.createOrReplace(
+    translationMetadata("translation.metadata.headerSettings", "headerSettings", [
+      { language: "it", documentId: "headerSettings-it" },
+      { language: "en", documentId: "headerSettings-en" },
+    ]),
+  );
+
+  await upsertManagedSingleton("footerSettings-it", "footerSettings", {
+    language: "it",
+    columnHeadings: {
+      explore: "Esplora",
+      locations: "Sedi",
+      contact: "Contatti",
+      legal: "Informazioni legali",
+    },
+    navItems: [
+      { _key: "fnav-1", _type: "navLink", linkType: "route", routeKey: "home", customLabel: "Home" },
+      { _key: "fnav-2", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "Chi sono" },
+      { _key: "fnav-3", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Metodo" },
+      { _key: "fnav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Prezzi" },
+      { _key: "fnav-5", _type: "navLink", linkType: "route", routeKey: "risorse", customLabel: "Risorse" },
+      { _key: "fnav-6", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "fnav-7", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contatti" },
+    ],
+    legalNavItems: [
+      { _key: "lnav-1", _type: "navLink", linkType: "route", routeKey: "privacy", customLabel: "Privacy" },
+      { _key: "lnav-2", _type: "navLink", linkType: "route", routeKey: "cookie-policy", customLabel: "Cookie policy" },
+    ],
+    instagramLabel: "Instagram",
+    googleProfileLabel: "Trovami su Google",
+  });
+
+  await upsertManagedSingleton("footerSettings-en", "footerSettings", {
+    language: "en",
+    columnHeadings: {
+      explore: "Explore",
+      locations: "Locations",
+      contact: "Contact",
+      legal: "Legal",
+    },
+    navItems: [
+      { _key: "fnav-1", _type: "navLink", linkType: "route", routeKey: "home", customLabel: "Home" },
+      { _key: "fnav-2", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "About" },
+      { _key: "fnav-3", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Method" },
+      { _key: "fnav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Pricing" },
+      { _key: "fnav-5", _type: "navLink", linkType: "route", routeKey: "risorse", customLabel: "Resources" },
+      { _key: "fnav-6", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "fnav-7", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contact" },
+    ],
+    legalNavItems: [
+      { _key: "lnav-1", _type: "navLink", linkType: "route", routeKey: "privacy", customLabel: "Privacy" },
+      { _key: "lnav-2", _type: "navLink", linkType: "route", routeKey: "cookie-policy", customLabel: "Cookie policy" },
+    ],
+    instagramLabel: "Instagram",
+    googleProfileLabel: "Find me on Google",
+  });
+
+  await client.createOrReplace(
+    translationMetadata("translation.metadata.footerSettings", "footerSettings", [
+      { language: "it", documentId: "footerSettings-it" },
+      { language: "en", documentId: "footerSettings-en" },
+    ]),
+  );
+
+  console.log("Header/footer settings seeded.");
+
   console.log("Seed complete.");
 }
 

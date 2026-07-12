@@ -79,4 +79,21 @@ export const presentationLocations: DocumentLocationResolvers = {
       locations: [{ title: doc?.title ?? "FAQ item", href: homePath("it") }],
     }),
   }),
+  // CMS-driven header/footer pass: headerSettings/footerSettings have no
+  // route of their own either (site-wide chrome, not a page) — same
+  // "jump to the homepage" pattern as sede/diploma/faqItem above, same
+  // unconditional-IT reasoning (the homepage's own EN variant redirects
+  // to IT while the temporary EN gate stands).
+  headerSettings: defineLocations({
+    select: { language: "language" },
+    resolve: (doc) => ({
+      locations: [{ title: "Header", href: homePath(doc?.language === "en" ? "en" : "it") }],
+    }),
+  }),
+  footerSettings: defineLocations({
+    select: { language: "language" },
+    resolve: (doc) => ({
+      locations: [{ title: "Footer", href: homePath(doc?.language === "en" ? "en" : "it") }],
+    }),
+  }),
 };
