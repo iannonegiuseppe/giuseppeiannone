@@ -270,12 +270,23 @@ export const siteSettings = defineType({
       name: "socialLinks",
       title: "Social profiles",
       description:
-        "Used for JSON-LD sameAs (Stage 2 Step 4). Leave blank until real profiles exist — omitted entirely from structured data when empty.",
+        "instagram/linkedin/facebook feed JSON-LD sameAs (Stage 2 Step 4) " +
+        "AND the footer's social icon row. whatsapp/youtube (footer social " +
+        "icons pass) are footer-icons only — a WhatsApp link isn't a " +
+        "\"profile\" in the schema.org sameAs sense, so it's deliberately " +
+        "left out of structured data. Icons themselves are fixed code " +
+        "assets (see components/icons/social/), not editable here — only " +
+        "the URL is. Leave a field blank to hide that icon entirely; " +
+        "display order in the footer is fixed (Instagram, WhatsApp, " +
+        "Facebook, YouTube, LinkedIn) regardless of the order filled in " +
+        "here.",
       type: "object",
       fields: [
         defineField({ name: "instagram", title: "Instagram URL", type: "url" }),
-        defineField({ name: "linkedin", title: "LinkedIn URL", type: "url" }),
+        defineField({ name: "whatsapp", title: "WhatsApp URL", type: "url" }),
         defineField({ name: "facebook", title: "Facebook URL", type: "url" }),
+        defineField({ name: "youtube", title: "YouTube URL", type: "url" }),
+        defineField({ name: "linkedin", title: "LinkedIn URL", type: "url" }),
       ],
     }),
     languageField(),

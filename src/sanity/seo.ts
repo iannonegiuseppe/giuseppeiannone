@@ -23,10 +23,16 @@ export interface AuthorFields {
   bio?: string;
 }
 
+// Footer social icons pass: whatsapp/youtube added alongside the
+// existing instagram/linkedin/facebook. Fixed footer render order
+// (Instagram, WhatsApp, Facebook, YouTube, LinkedIn) lives in Footer.tsx,
+// not here — this interface's field order doesn't drive it.
 export interface SocialLinks {
   instagram?: string;
+  whatsapp?: string;
   linkedin?: string;
   facebook?: string;
+  youtube?: string;
 }
 
 export interface PathwayStep {

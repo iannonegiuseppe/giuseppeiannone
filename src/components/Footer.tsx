@@ -1,6 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import type { ReactElement } from "react";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  WhatsappIcon,
+  YoutubeIcon,
+} from "@/components/icons/social";
 import { resolveNavItems } from "./headerNavItems";
 import { Logo } from "./Logo";
 import { whatsappUrl } from "@/sanity/contact";
@@ -12,6 +20,23 @@ import type {
   SocialLinks,
 } from "@/sanity/seo";
 import styles from "./Footer.module.scss";
+
+// Footer social icons pass: fixed display order regardless of which
+// fields are filled in Studio (per spec) — a plain array literal, walked
+// once per render and filtered to whichever URLs are actually set. Icons
+// are fixed code assets (components/icons/social/), not CMS-managed;
+// only the URL + accessible label live here.
+const SOCIAL_ICONS: {
+  key: keyof SocialLinks;
+  label: string;
+  Icon: () => ReactElement;
+}[] = [
+  { key: "instagram", label: "Instagram", Icon: InstagramIcon },
+  { key: "whatsapp", label: "WhatsApp", Icon: WhatsappIcon },
+  { key: "facebook", label: "Facebook", Icon: FacebookIcon },
+  { key: "youtube", label: "YouTube", Icon: YoutubeIcon },
+  { key: "linkedin", label: "LinkedIn", Icon: LinkedinIcon },
+];
 
 interface SedeAddress {
   centerName?: string;
@@ -76,13 +101,33 @@ export async function Footer({
   const legalNavItems = resolveNavItems(locale, footerSettings?.legalNavItems);
   const columnHeadings = footerSettings?.columnHeadings;
 
+  const socialIcons = SOCIAL_ICONS.filter(({ key }) => socialLinks?.[key]);
+
   return (
     <footer className={styles.labFooter} data-lab-section="footer" data-lab-footer>
       <div className={styles.labFooterContainer}>
         <div className={styles.labFooterBrand}>
-          <p className={styles.labFooterWordmark}>
-            <Logo logo={logo} authorName={authorName} imageClassName={styles.labFooterLogoImage} />
-          </p>
+          <div className={styles.labFooterBrandRow}>
+            <p className={styles.labFooterWordmark}>
+              <Logo logo={logo} authorName={authorName} imageClassName={styles.labFooterLogoImage} />
+            </p>
+            {socialIcons.length > 0 ? (
+              <div className={styles.labFooterSocialRow}>
+                {socialIcons.map(({ key, label, Icon }) => (
+                  <a
+                    key={key}
+                    href={socialLinks?.[key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={styles.labFooterSocialLink}
+                  >
+                    <Icon />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <p className={styles.labFooterAlboLine}>
             {authorCredentials ?? "Psicologo Psicoterapeuta"} — Iscrizione all&apos;Albo degli Psicologi della Lombardia n. {authorRegistrationNumber ?? "[segnaposto]"}
           </p>
@@ -160,6 +205,15 @@ export async function Footer({
                     </a>
                   );
                 })}
+              {/* Footer social icons pass — HONESTY-RULE FLAG: this text
+                  Instagram link (footerSettings.instagramLabel-driven,
+                  predates this pass) now duplicates the same URL shown as
+                  an icon in the new top-row social row above. Left
+                  untouched deliberately — retiring the footerSettings
+                  field is a separate, not-requested schema change with
+                  its own blast radius (an editor may already have typed
+                  into it); flagged here and in this pass's own report for
+                  the owner to decide, not silently removed or kept. */}
               {socialLinks?.instagram && footerSettings?.instagramLabel ? (
                 <a
                   href={socialLinks.instagram}
