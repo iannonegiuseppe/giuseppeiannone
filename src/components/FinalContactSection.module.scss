@@ -7,23 +7,47 @@
 // own convention. grid-12/col/button-base are shared mixins (see
 // sharedSections.module.scss); everything else below is local.
 
-// --- 5. Final CTA band: media-anchored, photo bleeds left ------------------
-// Single-block refinement pass: replaces the old centered-text-only green
-// band. Same calc()-derived bleed technique as Come funziona/Di cosa
-// (own custom-property namespace, "fc-" — duplicated, not shared, since
-// this pass doesn't touch those sections' own CSS). Photo "sinks into"
-// the pine via a tonal filter + a multiply-blend pine overlay + an edge
-// melt gradient (right edge desktop/tablet, bottom edge mobile).
-@mixin finalcontact-grid-vars($media-end-col, $padding-inline) {
-  $n: $media-end-col - 1;
-  --fc-content-width: calc(var(--container-max-width) - 2 * #{$padding-inline});
-  --fc-col-width: calc((var(--fc-content-width) - 11 * var(--space-6)) / 12);
-  --fc-photo-end: calc(
-    (100vw - var(--container-max-width)) / 2 + #{$padding-inline} + #{$n} *
-      var(--fc-col-width) + #{$n} * var(--space-6)
-  );
-}
+// --- 5. Final CTA band ------------------------------------------------------
+// REVISION 4 — "fix the broken split": REVISION 3 put the kicker/heading/
+// lead/badge onto the photo's own scrim (absolutely positioned) and had
+// the photo bleed to the viewport edge with a multiply-blend "sinks into
+// the pine" overlay + edge-melt gradient. At some viewports the header
+// content escaped the container and sat illegibly over the image — an
+// owner-reported bug, not a tuning problem. This revision retires that
+// whole approach: the header block is now row 1, plain in-flow content on
+// the same mixins.container every other section's kicker uses; the photo
+// is a clean, contained, rounded card (row 2, left column) with no text
+// and no edge-blend treatment, since it no longer touches any bleed edge.
+// The classes below that implemented the retired approach
+// (.finalContactPhotoTextScrim, .finalContactPhotoMelt,
+// .finalContactPhotoContent, .finalContactPhotoOverlay, the
+// .finalContactPhotoGoogle/.finalContactFormGoogle breakpoint-gated pair,
+// the finalcontact-grid-vars bleed-width mixin) are DELETED outright here,
+// not flagged-and-kept — unlike this file's other "flag, don't delete"
+// cases (.btnPrimaryInverted, .finalContactCta/.finalContactCtaTight,
+// .finalContactQuietLines/.finalContactQuietLine below, which stay
+// dormant because a future pass could plausibly revive that exact
+// content), these implemented a structurally rejected layout with no
+// plausible revival path — keeping them would leave misleading, no-longer
+// -true contrast-tuning commentary in the file. Flagged here per the
+// Honesty Rule instead of silently dropped.
+//
+// REVISION 5 — "restore the full-bleed photo": builds on REVISION 4's
+// row-1/row-2 split (row 1 = heading, untouched by this pass). Row 2's
+// desktop (>=1024px) treatment changes from a contained two-column card
+// layout back to a full-bleed-left photo that dissolves into the pine via
+// a gradient, form on clean pine at cols 7-12 — effectively reinstating
+// the pre-REVISION-3 bleed technique (see .finalContactGridWrap's own
+// comment below for the scrollbar-safe math) but scoped to row 2 only,
+// so it can never touch row 1's heading. Mobile/tablet (<1024px) are
+// unchanged from REVISION 4 (contained card stack).
 
+// Contact form pass — HONESTY-RULE FLAG: this class (and
+// .finalContactCta/.finalContactCtaTight below) are now UNUSED — the
+// button they styled was replaced by ContactForm.tsx's own form. Left
+// defined rather than deleted (cheap to revive, and deleting CSS is out
+// of this pass's own scope) — flagged for a follow-up cleanup pass.
+//
 // Primary, on a pine background: ivory fill, pine text.
 .btnPrimaryInverted {
   @include shared.button-base;
@@ -61,39 +85,155 @@
 }
 
 .finalContactBand {
-  position: relative;
-  overflow: hidden; // belt-and-braces against the calc() ever producing an
-  // unexpected value, same reasoning as every other bleed band in this file.
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
   background: var(--color-accent);
+  padding-block: var(--space-band-y);
+}
+
+// ROW 1 — heading block, on the container grid, left-aligned to column 1
+// — the same mixins.container every other section's kicker (Sedi's
+// included) uses, so this edge is flush with the rest of the page by
+// construction, not by a tuned offset value. This is the fix for
+// REVISION 3's escaped-container bug.
+.finalContactHeaderRow {
+  @include mixins.container;
+  margin-bottom: 2rem; // 32px, mobile/tablet tier
+
+  @include mixins.breakpoint-up(lg) {
+    margin-bottom: 2.75rem; // 44px — spec's "40-48px below this block"
+  }
+}
+
+.finalContactHeader {
+  max-width: 40rem;
+}
+
+// "Standard kicker, inverted" — ivory-on-pine colorway (matching
+// Formazione's inverted treatment) but the single-rule-before-text
+// structure (matching Chi Sono/Methods/Concerns/Percorso/Pricing), since
+// this content is left-aligned, not centered like Formazione's band. On
+// solid pine again (row 1 sits directly on the band's own background,
+// not over a photo) — same colorway REVISION 3 used, no scrim-contrast
+// tuning needed here since there's no photo underneath anymore.
+.finalContactKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.finalContactKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+}
+
+.finalContactHeading {
+  margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
+  color: var(--color-bg);
+  font-size: 1.75rem; // 28px, mobile tier
 
   @include mixins.breakpoint-up(md) {
-    // "Everything else unchanged" at tablet per spec — min-height and
-    // vertical centering apply from md up, not just desktop.
-    min-height: 35rem; // 560px, per spec
-    display: flex;
-    align-items: center;
-    @include finalcontact-grid-vars(5, var(--space-5)); // tablet: photo cols 1-4
+    font-size: 2rem; // 32px, tablet
   }
 
   @include mixins.breakpoint-up(lg) {
-    @include finalcontact-grid-vars(6, var(--space-7)); // desktop: photo cols 1-5
+    font-size: 2.25rem; // 36px, desktop
+  }
+}
+
+.finalContactBody {
+  margin: var(--space-5) 0 0; // 24px below the heading
+  max-width: 52ch; // REVISION 4 — spec's "~52ch" (was 40ch under REVISION 3's photo scrim, tighter since it had to survive a busier background)
+  font-family: var(--font-body);
+  font-size: 1.0625rem; // 17px
+  line-height: 1.7;
+  // Solid pine background — ivory 85% is comfortably AA (>7:1), same
+  // baseline every other on-pine paragraph in this codebase relies on.
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+}
+
+// Availability-badge pass: sits between the paragraph and the row-2 grid,
+// onDark variant (ivory text/ringed dots — see AvailabilityBadge.module.scss).
+.finalContactAvailability {
+  margin-top: var(--space-4); // 16px below the paragraph
+}
+
+// ROW 2 — mobile/tablet (<1024px): unchanged from REVISION 4 — plain
+// container-bound stack (photo card, then form), no bleed, no dissolve,
+// no overlap, per REVISION 5's own explicit "leave it" instruction.
+//
+// Desktop (>=1024px) — REVISION 5: reinstates a full-bleed-left photo
+// that dissolves into the pine band (the pre-REVISION-3 version of this
+// section did the same thing; REVISION 3/4 retired it, this pass brings
+// it back, scoped to row 2 only — row 1's heading stays a plain contained
+// row, see .finalContactHeaderRow above, unaffected). The wrapper itself
+// becomes the full-bleed element: width:100vw + margin-inline:
+// calc(50% - 50vw) is the SAME scrollbar-safe formula every other
+// full-bleed element in this codebase uses (ConcernsSection's own photo
+// bleed is the clearest twin) — guarded by the global overflow-x:clip on
+// html/body (globals.scss) against the small overshoot a classic
+// (non-overlay) scrollbar's own reserved width causes between 100vw and
+// the true visible viewport width. Verified zero horizontal overflow at
+// all six spec'd widths with a real classic scrollbar present — see this
+// pass's own report.
+//
+// padding-inline recreates mixins.container's own left/right inset
+// relative to the TRUE viewport edge (rather than a centered max-width
+// box), so grid column 7 below lands at the exact same pixel
+// x-coordinate ROW 1's own mixins.container would place it at — this is
+// what keeps the form grid-consistent with row 1 despite this row's own
+// box now spanning the full viewport instead of the container. The
+// max(0rem, ...) clamp matters for real: without it, any viewport
+// narrower than --container-max-width (1320px) — e.g. 1024px, one of
+// this pass's own six mandated QA widths — computes a NEGATIVE outer
+// gutter and silently breaks the whole alignment; mixins.container
+// itself never has this problem (max-width + margin-inline:auto handle
+// it natively), only this manual recreation needs the explicit clamp.
+.finalContactGridWrap {
+  position: relative;
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; // 24px, mobile/tablet stack gap (photo -> form)
+
+  @include mixins.breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6); // 32px, matches sharedSections.module.scss's own grid-12
+    width: 100vw;
+    max-width: none;
+    margin-inline: calc(50% - 50vw);
+    padding-inline: calc(max(0rem, (100vw - var(--container-max-width)) / 2) + var(--space-7));
+    gap: 0;
+    overflow: hidden; // belt-and-braces against the calc() ever producing
+    // an unexpected value, same reasoning as every other bleed band in
+    // this codebase.
   }
 }
 
 .finalContactPhotoZone {
   position: relative;
   overflow: hidden;
-  height: 20rem; // 320px, mobile tier per spec
+  border-radius: var(--radius-l); // 20px, "imagery" per _tokens.scss's own comment — mobile/tablet only, see below
+  aspect-ratio: 16 / 9; // mobile/tablet, per spec
 
-  @include mixins.breakpoint-up(md) {
+  @include mixins.breakpoint-up(lg) {
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    height: auto;
-    width: var(--fc-photo-end);
+    inset: 0 auto 0 0; // top:0 right:auto bottom:0 left:0 — bleeds to the
+    // TRUE viewport left edge: this element's containing block
+    // (.finalContactGridWrap) already starts there once it goes
+    // full-bleed above.
+    width: 57vw; // spec's "about 55-60% of the viewport width"
+    aspect-ratio: unset;
+    border-radius: 0; // no rounded corners on a bleed edge, per spec
   }
 }
 
@@ -110,129 +250,56 @@
   // silhouette in this specific (reused, not purpose-shot) landscape crop.
 }
 
-// Multiply-blend for a true "sinks into the pine" darkening rather than a
-// flat translucent wash — mix-blend-mode has near-universal support, no
-// fallback code path needed.
-.finalContactPhotoOverlay {
-  position: absolute;
-  inset: 0;
-  background: var(--color-accent);
-  opacity: 0.35;
-  mix-blend-mode: multiply;
-}
+// REVISION 5 — the photo's right portion dissolves into the pine band
+// instead of ending at a hard edge (mobile/tablet: not rendered at all,
+// per spec's explicit "no bleed, no dissolve" there). Reaches full solid
+// --color-accent at 85% of the PHOTO LAYER's own width (57vw) — i.e. at
+// roughly 48vw absolute (pushed later than the original 65% stop, so more
+// of the photo stays visible before the fade starts) — before both the
+// photo layer's own right edge (57vw) and the form's actual left edge
+// (further right still, at grid column 7, ~51vw at 1440px / ~51vw at
+// 1920px, since the container caps at 1320px and the gutter math
+// converges toward ~50% of viewport width). The margin here is real but
+// tight (roughly 16-46px depending on viewport, not the 130-250px the
+// original 65% stop gave) — re-verified via real pixel sampling at the
+// form's own left edge after this stop moved, not assumed — see this
+// pass's own report for the exact measured values proving no form field
+// ever sits over image texture.
+.finalContactPhotoDissolve {
+  display: none;
 
-// Melt gradient: bottom edge on mobile (120px), right edge from md up
-// (160px) — per spec.
-.finalContactPhotoMelt {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent calc(100% - 7.5rem),
-    var(--color-accent) 100%
-  );
-
-  @include mixins.breakpoint-up(md) {
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     background: linear-gradient(
       to right,
-      transparent calc(100% - 10rem),
-      var(--color-accent) 100%
+      transparent 0%,
+      transparent 30%,
+      var(--color-accent) 85%
     );
   }
 }
 
-.finalContactGridWrap {
-  @include mixins.container;
-  position: relative;
-  z-index: 1;
-  padding-top: 3rem; // 48px, mobile tier per spec
-  padding-bottom: 4rem; // 64px, mobile tier per spec
-
-  @include mixins.breakpoint-up(md) {
-    @include shared.grid-12;
-    width: 100%;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
-
 .finalContactContent {
-  // Wraps a single block-level RevealOnScroll child; the text stack inside
-  // it (kicker/heading/paragraph/button/etc.) uses normal block flow with
-  // per-element margin-top, same rhythm technique as the hero's own stack.
-  text-align: left;
-
-  @include mixins.breakpoint-up(md) {
-    @include shared.col(5, 8); // tablet: content cols 5-12
-  }
-
   @include mixins.breakpoint-up(lg) {
-    @include shared.col(7, 6); // desktop: content cols 7-12
+    // Stacking context above the absolutely-positioned photo/dissolve
+    // layers above (they precede this in DOM but must never paint over
+    // it) — explicit, not relying on default in-flow-vs-positioned
+    // paint-order ambiguity.
+    position: relative;
+    z-index: 1;
+    @include shared.col(7, 6);
   }
-}
-
-// "Standard kicker, inverted" — ivory-on-pine colorway (matching
-// Formazione's inverted treatment) but the single-rule-before-text
-// structure (matching Chi Sono/Methods/Concerns/Percorso/Pricing), since
-// this content is left-aligned, not centered like Formazione's band.
-.finalContactKicker {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  // ivory@70% on solid pine measures 5.83:1 — passes AA, no substitution needed.
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
-}
-
-.finalContactKickerRule {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
-}
-
-.finalContactHeading {
-  margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
-  color: var(--color-bg);
-  font-size: 1.75rem; // 28px, mobile tier per spec
-
-  @include mixins.breakpoint-up(md) {
-    font-size: 2rem; // 32px, tablet per spec
-  }
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 2.25rem; // 36px, desktop per spec
-  }
-}
-
-.finalContactBody {
-  margin: var(--space-5) 0 0; // 24px below the heading, per spec
-  max-width: 44ch;
-  font-family: var(--font-body);
-  font-size: 1.0625rem; // 17px, per spec
-  line-height: 1.7;
-  // ivory@85% on solid pine measures 7.75:1 — passes AA, no substitution needed.
-  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
-}
-
-// Availability-badge pass: sits between the paragraph and the CTA
-// button, onDark variant (ivory text/ringed dots — see
-// AvailabilityBadge.module.scss). Same "two smaller gaps replace one
-// larger gap" technique as the other two placements —
-// .finalContactCtaTight halves the button's own top margin (32px ->
-// 16px) only when the badge actually renders.
-.finalContactAvailability {
-  margin-top: var(--space-4); // 16px below the paragraph
 }
 
 // On-pine button variant of the shared .btnPrimaryInverted — this class
 // only adds the spacing this specific placement needs.
+// HONESTY-RULE FLAG (carried over): .finalContactCta/.finalContactCtaTight
+// are UNUSED — the button they styled was replaced by ContactForm.tsx's
+// own form. Left defined rather than deleted, same precedent as
+// .btnPrimaryInverted above.
 .finalContactCta {
   margin-top: var(--space-6); // 32px below the paragraph, per spec
 }
@@ -241,6 +308,13 @@
   margin-top: var(--space-4); // 16px, replacing the 32px above when the badge is present
 }
 
+// Declutter pass — HONESTY-RULE FLAG: .finalContactQuietLines and
+// .finalContactQuietLine are now UNUSED — the two-line block they styled
+// (privacyNote + responseNote) was replaced by ContactForm's own single
+// .responseLine, living under the consent row instead of below the
+// submit button. Left defined rather than deleted (same "flag, don't
+// delete" precedent as .btnPrimaryInverted/.finalContactCta above) —
+// flagged here and in this pass's own report.
 .finalContactQuietLines {
   margin-top: var(--space-5); // 24px below the button, per spec
   display: flex;
@@ -258,17 +332,26 @@
   color: color-mix(in srgb, var(--color-bg) 65%, transparent);
 }
 
+// REVISION 4 — revived: moved to the section's own bottom, left-aligned
+// on the grid under the photo column (same container edge as row 1's
+// kicker and row 2's photo, all anchored to the same mixins.container).
 // Deliberately demoted — plain text, underline on hover only, no arrow,
-// no caps, must not compete with the button. HONESTY-RULE NOTE (not a
-// substitution, since spec explicitly excludes this link from its
-// "measure and report" list and explicitly wants it faint): ivory@50% on
-// solid pine measures 3.79:1, below standard AA body-text contrast (4.5:1)
-// — flagged for the record since it's real, if secondary, content, but
-// left at the spec's literal value since low visibility here is stated
-// design intent, not an oversight.
+// no caps, must not compete with the form's submit button.
+// HONESTY-RULE NOTE: ivory@50% on solid pine measures 3.79:1, below
+// standard AA body-text contrast (4.5:1) — flagged for the record since
+// it's real, if secondary, content, but left at the spec's literal value
+// since low visibility here is stated design intent, not an oversight
+// (unchanged from every prior pass's own note on this exact value).
+.finalContactGoogleRow {
+  @include mixins.container;
+  margin-top: 2rem; // 32px, mobile/tablet tier
+
+  @include mixins.breakpoint-up(lg) {
+    margin-top: 2.5rem; // 40px
+  }
+}
+
 .finalContactGoogle {
-  margin-top: 1.25rem; // 20px below the quiet lines, per spec — not an
-  // existing spacing token, exact spec value in rem.
   display: inline-block;
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec

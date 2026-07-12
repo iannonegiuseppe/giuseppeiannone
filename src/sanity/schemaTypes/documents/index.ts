@@ -4,6 +4,8 @@ import { contactPage } from "./contactPage";
 import { diploma } from "./diploma";
 import { faqItem } from "./faqItem";
 import { faqPage } from "./faqPage";
+import { footerSettings } from "./footerSettings";
+import { headerSettings } from "./headerSettings";
 import { homePage } from "./homePage";
 import { locationPage } from "./locationPage";
 import { methodPage } from "./methodPage";
@@ -17,6 +19,10 @@ import { subtopicPage } from "./subtopicPage";
 export const documentTypes = [
   // Singletons
   siteSettings,
+  // CMS-driven header/footer pass: two new singletons, grouped with
+  // siteSettings under desk structure's "Settings" group.
+  headerSettings,
+  footerSettings,
   homePage,
   aboutPage,
   methodPage,

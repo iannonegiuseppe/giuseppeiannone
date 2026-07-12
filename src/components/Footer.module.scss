@@ -34,6 +34,25 @@
   margin-bottom: var(--space-7); // 48px, per spec
 }
 
+// Footer social icons pass: wordmark left, icon row right, vertically
+// centered — a flex row rather than touching .labFooterBrand itself
+// (which also holds the Albo line below, outside this row). flex-wrap +
+// justify-content: space-between is what gives the mobile fallback for
+// free: with only the icon row left to wrap onto its own line, a lone
+// flex item under space-between sits at the line's start (no partner to
+// distribute space against) — i.e. it lands left-aligned under the
+// wordmark with no extra mobile-only rule needed. Verified via screenshot
+// at 390px, see this pass's own report for which layout mobile actually
+// uses.
+.labFooterBrandRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--space-4); // 16px
+  row-gap: var(--space-2); // 8px, between wordmark and a wrapped icon row
+}
+
 .labFooterWordmark {
   margin: 0;
   color: var(--color-bg);
@@ -41,6 +60,76 @@
 
   @include mixins.breakpoint-up(lg) {
     font-size: 1.75rem; // 28px, desktop tier per spec
+  }
+}
+
+// CMS-driven header/footer pass: only used when siteSettings.logo is set
+// (Logo.tsx's image branch) — scoped separately from .labFooterWordmark
+// so the far-more-common text path (logo empty) keeps its exact existing
+// CSS untouched. display: block avoids the few-px inline-baseline gap
+// under an <img>.
+.labFooterLogoImage {
+  display: block;
+}
+
+// Footer social icons pass. Icon glyphs are 24px (see the svg selector on
+// .labFooterSocialLink below); gap is small since each link already
+// carries its own 44px tap-target padding around the glyph — the padding
+// alone gives ~20px of visual breathing room between adjacent glyphs.
+.labFooterSocialRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1); // 4px
+}
+
+// Icons are fixed code assets (components/icons/social/), not CMS-
+// managed — only the href is data-driven. 44px min tap target (per
+// spec), 24px glyph centered inside via the svg selector. Rest color is
+// ivory (--color-bg, this project's --color-ivory substitute — see
+// Logo.tsx/HeaderInteractive.module.scss for the same established
+// substitution), matching every other ivory-on-pine element in this
+// file.
+//
+// Hover/focus color: spec suggested trying --color-amber (the
+// availability token) directly, but that token's own definition in
+// _tokens.scss documents it measuring only ~2.7:1 against --color-accent
+// (this footer's background) — below the 3:1 WCAG 1.4.11 floor for
+// non-text UI. Brightened via color-mix toward --color-bg (80% amber /
+// 20% ivory) instead of the raw token; measured ~4:1 against pine (see
+// this pass's own report), comfortably clearing the floor while still
+// reading as amber/gold, not just "more ivory." Paired with a subtle
+// scale(1.12), both on a 200ms transition, per spec.
+.labFooterSocialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px tap target
+  height: 2.75rem;
+  color: var(--color-bg);
+  transition:
+    color 200ms ease,
+    transform 200ms ease;
+
+  svg {
+    width: 1.5rem; // 24px
+    height: 1.5rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: color-mix(in srgb, var(--color-amber) 80%, var(--color-bg));
+    transform: scale(1.12);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: color 200ms ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
   }
 }
 
@@ -124,6 +213,27 @@
   display: flex;
   flex-direction: column;
   row-gap: 1rem; // 16px between cities, per spec
+}
+
+// CMS-driven header/footer pass: the footer's Sedi column now sources
+// from `sede` docs (see this pass's own report) instead of the old
+// one-location-per-line locationPage — a city can carry more than one
+// address (Milano has two), so each city is its own tightly-stacked
+// group; .labFooterSediList's own 16px gap above (its comment already
+// said "between cities", suggesting this grouping was anticipated)
+// separates the groups, this 4px separates a city's own lines.
+.labFooterSedeGroup {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25rem; // 4px
+}
+
+.labFooterSedeCityName {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px, matches .labFooterSediAddress
+  font-weight: var(--font-weight-bold);
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
 .labFooterSediAddress {
@@ -232,7 +342,13 @@
   color: color-mix(in srgb, var(--color-bg) 60%, transparent);
 }
 
-.labFooterDevCredit {
+// CMS-driven header/footer pass: only "Bandziuk" itself is a link now
+// (the whole line used to be one <a>, back when it was placeholder text
+// with no real href) — interactive states move to this new inner class;
+// .labFooterDevCredit above (now a plain <p>) keeps the shared text
+// styling with its two siblings, unchanged.
+.labFooterDevCreditLink {
+  color: inherit;
   text-decoration: none;
 
   &:hover {

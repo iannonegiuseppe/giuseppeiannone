@@ -44,6 +44,10 @@ const alternatesProjection = `
 export const siteSettingsQuery = defineQuery(`
   *[_type == "siteSettings" && language == $locale][0]{
     title,
+    logo{
+      ...,
+      "aspectRatio": asset->metadata.dimensions.aspectRatio
+    },
     seo,
     author,
     socialLinks,
@@ -62,11 +66,62 @@ export const siteSettingsQuery = defineQuery(`
 // locationPage is protected to exactly two (Milan, Monza; see
 // structure.ts), so this always returns at most 2 documents for the
 // requested locale.
-export const locationsQuery = defineQuery(`
-  *[_type == "locationPage" && language == $locale] | order(title asc) {
+// CMS-driven header/footer pass: locationsQuery (locationPage-backed) is
+// retired here — the footer's "Sedi" column now sources addresses from
+// `sede` (sedesQuery below), same as the homepage's own Sedi section,
+// per this pass's explicit "addresses come from sede docs" instruction.
+// This fixes a pre-existing bug an earlier audit pass flagged: locationPage
+// had no published documents, so the footer's Sedi column rendered empty.
+// The locationPage SCHEMA/document type itself is untouched and still
+// protected (CLAUDE.md: "exactly two, Milan/Monza") — only this now-dead
+// query projection is removed; nothing about the content model changes.
+
+// Shared by headerSettingsQuery/footerSettingsQuery below — one level of
+// nesting (children) is all the UI supports (HeaderNavItem/HeaderNavChild
+// is a fixed two-tier shape), so this fragment isn't recursed a third
+// time. Reference targets are pillarPage/subtopicPage/article only (see
+// navLink.ts's own comment on why "service" isn't included) — the
+// parentSlug dereference is a no-op (null) for types that don't have a
+// parentPillar field, which is fine, hrefFor only reads it for subtopicPage.
+const navLinkFields = `
+  linkType,
+  routeKey,
+  customLabel,
+  page->{
+    _id,
+    _type,
     title,
-    address,
-    "slug": slug.current
+    "slug": slug.current,
+    "parentSlug": parentPillar->slug.current
+  }
+`;
+
+export const headerSettingsQuery = defineQuery(`
+  *[_type == "headerSettings" && language == $locale][0]{
+    navItems[]{
+      ${navLinkFields},
+      children[]{
+        ${navLinkFields}
+      }
+    },
+    ctaButtonText
+  }
+`);
+
+export const footerSettingsQuery = defineQuery(`
+  *[_type == "footerSettings" && language == $locale][0]{
+    columnHeadings,
+    navItems[]{
+      ${navLinkFields},
+      children[]{
+        ${navLinkFields}
+      }
+    },
+    legalNavItems[]{
+      ${navLinkFields}
+    },
+    instagramLabel,
+    googleProfileLabel
   }
 `);
 

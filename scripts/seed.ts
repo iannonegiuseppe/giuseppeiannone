@@ -98,6 +98,27 @@ function imageBlock(assetId: string, alt: string, key: string) {
   };
 }
 
+// CMS-driven header/footer pass (post-facto hardening): same lesson as the
+// createIfNotExists fix already applied to pillarPage/subtopicPage/faqItem
+// below (see that block's own "HARDENING" comment) — createOrReplace on a
+// singleton document silently WIPES any field this script doesn't set,
+// including fields added by later schema passes and populated by hand in
+// Studio between seed runs (e.g. homePage.video, siteSettings.logo/
+// availabilityStatus — confirmed live risk, not hypothetical, per the
+// owner's own report before this fix). createIfNotExists (first run) +
+// patch().set() (every run, including re-runs) only ever write the keys
+// this script actually passes in `fields` — any other existing field on
+// the document is left exactly as-is, unlike createOrReplace which
+// discards everything not present in the payload.
+async function upsertManagedSingleton(
+  id: string,
+  type: string,
+  fields: Record<string, unknown>,
+) {
+  await client.createIfNotExists({ _id: id, _type: type, ...fields });
+  await client.patch(id).set(fields).commit();
+}
+
 function translationMetadata(
   id: string,
   schemaType: string,
@@ -189,15 +210,18 @@ async function seed() {
 
   // --- siteSettings ------------------------------------------------------
   // CMS-wiring pass: contactChannels replaces the flat contactEmail/
-  // contactPhone/whatsappNumber scalars (createOrReplace below drops them
-  // outright, since they're simply not in this payload — see this pass's
-  // report for why that's the intended behavior, not an oversight).
-  // crisisSupportText corrected to match the text actually live on the
-  // site today (a Studio edit had drifted from what this script produced
-  // on a fresh run — the "known seed drift" this pass was asked to fix).
-  await client.createOrReplace({
-    _id: "siteSettings-it",
-    _type: "siteSettings",
+  // contactPhone/whatsappNumber scalars — that one-time drop already
+  // happened when this pass's seed first ran against createOrReplace; see
+  // this pass's report for why that was the intended behavior. Now uses
+  // upsertManagedSingleton (see that helper's own comment) so a re-run
+  // never touches fields this script doesn't manage, e.g. `logo`
+  // (CMS-driven header/footer pass) or availabilityStatus/acceptingText/
+  // waitlistText/pausedText (availability-badge pass) if set by hand in
+  // Studio. crisisSupportText corrected to match the text actually live on
+  // the site today (a Studio edit had drifted from what this script
+  // produced on a fresh run — the "known seed drift" this pass was asked
+  // to fix).
+  await upsertManagedSingleton("siteSettings-it", "siteSettings", {
     language: "it",
     title: "Giuseppe Iannone – Psicologo Psicoterapeuta",
     description: "Sito in costruzione.",
@@ -206,6 +230,21 @@ async function seed() {
       { _key: "channel-phone", type: "phone", label: "[segnaposto — telefono]", value: "+390000000000", order: 2 },
       { _key: "channel-email", type: "email", label: "[segnaposto — email]", value: "info@example.com", order: 3 },
     ],
+    // Footer social icons pass: socialLinks wasn't seeded at all before
+    // this pass (siteSettings.socialLinks existed in schema but had no
+    // seed data). Well-formed placeholder URLs, not "[segnaposto]" bracket
+    // text — same convention as contactChannels' own "+390000000000"/
+    // "info@example.com" above: these are url-typed fields the footer
+    // actually renders as clickable hrefs, not free-text copy, so a
+    // functional-looking placeholder is more correct than bracket text
+    // (and lets the footer social row's QA screenshot show all 5 icons).
+    socialLinks: {
+      instagram: "https://instagram.com/giuseppeiannone",
+      whatsapp: "https://wa.me/390000000000",
+      facebook: "https://facebook.com/giuseppeiannone",
+      youtube: "https://youtube.com/@giuseppeiannone",
+      linkedin: "https://linkedin.com/in/giuseppeiannone",
+    },
     piva: "[segnaposto]",
     crisisSupportText:
       "In caso di emergenza o pericolo immediato, non utilizzare questo sito: chiama il 112 (numero unico di emergenza) o recati al pronto soccorso più vicino. Per un sostegno emotivo immediato puoi contattare Telefono Amico Italia al 02 2327 2327. Questo sito non fornisce assistenza in situazioni di emergenza.",
@@ -254,9 +293,7 @@ async function seed() {
     },
   });
 
-  await client.createOrReplace({
-    _id: "siteSettings-en",
-    _type: "siteSettings",
+  await upsertManagedSingleton("siteSettings-en", "siteSettings", {
     language: "en",
     title: "Giuseppe Iannone – Psychologist Psychotherapist",
     description: "Site under construction.",
@@ -265,6 +302,15 @@ async function seed() {
       { _key: "channel-phone", type: "phone", label: "[placeholder — phone]", value: "+390000000000", order: 2 },
       { _key: "channel-email", type: "email", label: "[placeholder — email]", value: "info@example.com", order: 3 },
     ],
+    // Same profiles as siteSettings-it — a social account isn't
+    // per-locale content, unlike the copy fields below.
+    socialLinks: {
+      instagram: "https://instagram.com/giuseppeiannone",
+      whatsapp: "https://wa.me/390000000000",
+      facebook: "https://facebook.com/giuseppeiannone",
+      youtube: "https://youtube.com/@giuseppeiannone",
+      linkedin: "https://linkedin.com/in/giuseppeiannone",
+    },
     piva: "[placeholder]",
     crisisSupportText:
       "If this is an emergency or you are in immediate danger, do not use this website: call 112 (the single European emergency number) or go to your nearest emergency room. For immediate emotional support you can contact Telefono Amico Italia at 02 2327 2327. This website does not provide emergency assistance.",
@@ -346,16 +392,24 @@ async function seed() {
   // schemaTypes/documents/homePage.ts) — every string below is the exact
   // copy the hardcoded components used to carry, preserved as-is
   // including every [segnaposto] marker, per this pass's own instruction
-  // not to invent new placeholder wording. createOrReplace here means the
-  // OLD shape's fields (credentialsStrip/methods/body/old pricingSummary/
-  // old finalContact) are dropped outright, not merged — there is
-  // deliberately no homePage-en this run (EN gate stays; see
-  // src/app/[locale]/page.tsx), and the pre-existing homePage-en document
-  // (still on the old schema) is left untouched rather than deleted —
-  // flagged as a known, disclosed leftover in this pass's report.
-  await client.createOrReplace({
-    _id: "homePage-it",
-    _type: "homePage",
+  // not to invent new placeholder wording. There is deliberately no
+  // homePage-en this run (EN gate stays; see src/app/[locale]/page.tsx),
+  // and the pre-existing homePage-en document (still on the old schema)
+  // is left untouched rather than deleted — flagged as a known, disclosed
+  // leftover in this pass's report.
+  //
+  // upsertManagedSingleton (not createOrReplace, see that helper's own
+  // comment): re-running this on an already-migrated document only sets
+  // the fields listed below — it does NOT drop fields this script doesn't
+  // manage, e.g. the "video" section group (schema: homePage.video)
+  // entered by hand in Studio, which this script has no data for and must
+  // never touch. That's a deliberate trade-off: the one-time OLD-shape
+  // cleanup (credentialsStrip/methods/body/old pricingSummary/old
+  // finalContact) already happened the first time this pass's seed ran
+  // against createOrReplace — a fresh dataset seeded via
+  // upsertManagedSingleton's createIfNotExists path never has those
+  // fields to begin with, so nothing is lost either way.
+  await upsertManagedSingleton("homePage-it", "homePage", {
     language: "it",
     title: "Giuseppe Iannone",
     hero: {
@@ -477,8 +531,14 @@ async function seed() {
       heading: "Non sai da dove iniziare?",
       body: "Se ti riconosci in questi temi, scrivimi: possiamo capire insieme da dove partire.",
       ctaLabel: "Prenota un primo colloquio",
+      // Declutter pass: privacyNote is no longer rendered in
+      // FinalContactSection (see that component's own HONESTY-RULE
+      // flag) — kept seeded since the schema field itself still exists,
+      // just unused at this specific render site now. responseNote
+      // wording shortened ("in genere" -> "di solito") to match the new
+      // single quiet-line copy this pass moved under the consent row.
       privacyNote: "I tuoi dati saranno trattati con la massima riservatezza.",
-      responseNote: "Rispondo di persona, in genere entro [segnaposto] giorni.",
+      responseNote: "Rispondo di persona, di solito entro [segnaposto] giorni.",
       googleProfileLabel: "Trovami su Google",
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: finalCtaPhotoId } },
     },
@@ -834,6 +894,149 @@ async function seed() {
       ],
     ),
   );
+
+  // --- headerSettings / footerSettings ------------------------------------
+  // CMS-driven header/footer pass. Seeded LAST (after pillarPage-anxiety
+  // above) since the "Aree" submenu's one real link is a `reference` to
+  // that document — this script has already hit the "Sanity rejects a
+  // mutation referencing a not-yet-existing document" error once before
+  // (see the faqItem block's own comment above), so reference targets are
+  // seeded first, referrers after.
+  //
+  // HONESTY-RULE FLAG (report this to the owner plainly): the OLD
+  // hardcoded "Aree" submenu showed FOUR items (Ansia/Depressione/Stress/
+  // Cambiamenti di vita) — only Ansia ever had a real pillarPage behind
+  // it; the other three were bare pillarPath() hrefs pointing at
+  // documents that don't exist, a deliberate "ship structure now, 404
+  // until built" placeholder policy from an earlier pass. The new
+  // navLink schema has no way to represent that: a link is either a
+  // fixed routeKey (from a real path function) or a reference to a real
+  // document — never an arbitrary typed slug. So this seed can only
+  // wire the ONE real link (Ansia, referencing pillarPage-anxiety-it/en)
+  // — Depressione/Stress/Cambiamenti di vita are genuinely OMITTED here,
+  // not broken: per spec, an unresolved item must render nothing rather
+  // than a dead link, and there is nothing for those three to resolve
+  // to yet. The visible "Aree" submenu goes from 4 items (3 of them
+  // 404ing) to 1 item (fully working) as a direct, correct consequence
+  // of this pass's own validation rule. Add the other three back once
+  // real pillarPage documents exist for them.
+  await upsertManagedSingleton("headerSettings-it", "headerSettings", {
+    language: "it",
+    navItems: [
+      { _key: "nav-1", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "Chi sono" },
+      { _key: "nav-2", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Metodo" },
+      {
+        _key: "nav-3",
+        _type: "navLink",
+        customLabel: "Aree",
+        children: [
+          {
+            _key: "nav-3-1",
+            _type: "navLink",
+            linkType: "reference",
+            page: { _type: "reference", _ref: "pillarPage-anxiety-it" },
+            customLabel: "Ansia",
+          },
+        ],
+      },
+      { _key: "nav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Prezzi" },
+      { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contatti" },
+    ],
+    ctaButtonText: "Prenota un primo colloquio",
+  });
+
+  await upsertManagedSingleton("headerSettings-en", "headerSettings", {
+    language: "en",
+    navItems: [
+      { _key: "nav-1", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "About" },
+      { _key: "nav-2", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Method" },
+      {
+        _key: "nav-3",
+        _type: "navLink",
+        customLabel: "Areas",
+        children: [
+          {
+            _key: "nav-3-1",
+            _type: "navLink",
+            linkType: "reference",
+            page: { _type: "reference", _ref: "pillarPage-anxiety-en" },
+            customLabel: "Anxiety",
+          },
+        ],
+      },
+      { _key: "nav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Pricing" },
+      { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contact" },
+    ],
+    ctaButtonText: "Book a first consultation",
+  });
+
+  await client.createOrReplace(
+    translationMetadata("translation.metadata.headerSettings", "headerSettings", [
+      { language: "it", documentId: "headerSettings-it" },
+      { language: "en", documentId: "headerSettings-en" },
+    ]),
+  );
+
+  await upsertManagedSingleton("footerSettings-it", "footerSettings", {
+    language: "it",
+    columnHeadings: {
+      explore: "Esplora",
+      locations: "Sedi",
+      contact: "Contatti",
+      legal: "Informazioni legali",
+    },
+    navItems: [
+      { _key: "fnav-1", _type: "navLink", linkType: "route", routeKey: "home", customLabel: "Home" },
+      { _key: "fnav-2", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "Chi sono" },
+      { _key: "fnav-3", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Metodo" },
+      { _key: "fnav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Prezzi" },
+      { _key: "fnav-5", _type: "navLink", linkType: "route", routeKey: "risorse", customLabel: "Risorse" },
+      { _key: "fnav-6", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "fnav-7", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contatti" },
+    ],
+    legalNavItems: [
+      { _key: "lnav-1", _type: "navLink", linkType: "route", routeKey: "privacy", customLabel: "Privacy" },
+      { _key: "lnav-2", _type: "navLink", linkType: "route", routeKey: "cookie-policy", customLabel: "Cookie policy" },
+    ],
+    instagramLabel: "Instagram",
+    googleProfileLabel: "Trovami su Google",
+  });
+
+  await upsertManagedSingleton("footerSettings-en", "footerSettings", {
+    language: "en",
+    columnHeadings: {
+      explore: "Explore",
+      locations: "Locations",
+      contact: "Contact",
+      legal: "Legal",
+    },
+    navItems: [
+      { _key: "fnav-1", _type: "navLink", linkType: "route", routeKey: "home", customLabel: "Home" },
+      { _key: "fnav-2", _type: "navLink", linkType: "route", routeKey: "chi-sono", customLabel: "About" },
+      { _key: "fnav-3", _type: "navLink", linkType: "route", routeKey: "metodo", customLabel: "Method" },
+      { _key: "fnav-4", _type: "navLink", linkType: "route", routeKey: "prezzi", customLabel: "Pricing" },
+      { _key: "fnav-5", _type: "navLink", linkType: "route", routeKey: "risorse", customLabel: "Resources" },
+      { _key: "fnav-6", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
+      { _key: "fnav-7", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contact" },
+    ],
+    legalNavItems: [
+      { _key: "lnav-1", _type: "navLink", linkType: "route", routeKey: "privacy", customLabel: "Privacy" },
+      { _key: "lnav-2", _type: "navLink", linkType: "route", routeKey: "cookie-policy", customLabel: "Cookie policy" },
+    ],
+    instagramLabel: "Instagram",
+    googleProfileLabel: "Find me on Google",
+  });
+
+  await client.createOrReplace(
+    translationMetadata("translation.metadata.footerSettings", "footerSettings", [
+      { language: "it", documentId: "footerSettings-it" },
+      { language: "en", documentId: "footerSettings-en" },
+    ]),
+  );
+
+  console.log("Header/footer settings seeded.");
 
   console.log("Seed complete.");
 }

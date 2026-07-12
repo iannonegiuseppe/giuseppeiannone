@@ -1,0 +1,514 @@
+@use "../styles/mixins";
+@use "./sharedSections.module.scss" as shared;
+
+// Contact form pass: replaces FinalContactSection's old single CTA
+// button. All colors here reuse existing tokens (--color-bg as this
+// project's --color-ivory substitute, --color-accent as pine,
+// --color-amber for errors) via color-mix() for computed tints, matching
+// this codebase's established convention everywhere else — no new raw
+// hex introduced.
+
+// Local custom property (component-scoped, not a global token) — the
+// input's own background is pine darkened 4-6% for affordance against
+// the section's own solid pine, per spec. Reused as the autofill
+// box-shadow inset fill too, so an autofilled field's paint matches a
+// normal field's real background exactly.
+.contactForm {
+  --cf-input-bg: color-mix(in srgb, var(--color-accent) 95%, black);
+  // Declutter pass: shared amber-on-pine value — reused by both the
+  // error text and the invalid-field border below, same computed color
+  // in both places (same reasoning as --cf-input-bg's own reuse).
+  --cf-error-color: color-mix(in srgb, var(--color-amber) 65%, var(--color-bg));
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem; // 14px between fields — compact pass (was 24px), low end of spec's "~14-16px" range
+  margin-top: var(--space-6); // 32px, matches the old button's own top margin
+  // Split-layout pass: 28rem -> 29.5rem. The shortened consent text
+  // ("...trattamento dei dati.") still measured 434px natural width
+  // against only 420px available (448px row minus the checkbox+gap) at
+  // the old 28rem — 14px short of fitting on one line at desktop, per
+  // spec's explicit requirement. Widened just enough to clear it with a
+  // real margin (measured, not guessed) — every field's own width
+  // follows this same max-width, so nothing else shifts out of
+  // alignment.
+  max-width: 29.5rem;
+
+  // Mirrors the old .finalContactCtaTight: halved top margin when the
+  // availability badge renders just above (see ContactForm.tsx's own
+  // comment on why this is a data-attribute, not an external className).
+  &[data-tight="true"] {
+    margin-top: var(--space-4); // 16px
+  }
+}
+
+// --- Floating-label fields (input + textarea share this) ------------------
+@mixin field-base {
+  width: 100%;
+  background: var(--cf-input-bg);
+  border: 1px solid color-mix(in srgb, var(--color-bg) 35%, transparent);
+  border-radius: var(--radius-s); // "inputs, tags" per _tokens.scss's own comment
+  // Compact pass: 10px/14px (was 14px/16px), symmetric now — the label
+  // no longer needs reserved top room, since it floats onto the border
+  // line itself (see .ffLabel below) rather than tucking inside the
+  // input. It's still position:absolute in both states either way, so
+  // this was never load-bearing for the "zero layout shift" guarantee,
+  // just a leftover from the old float target.
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-body);
+  font-size: 1rem; // unchanged, per spec
+  color: var(--color-bg);
+  caret-color: var(--color-bg);
+  transition:
+    border-color 250ms ease,
+    box-shadow 250ms ease;
+
+  &:focus {
+    outline: none; // replaced by the custom border+glow treatment below
+    border-color: var(--color-bg);
+    // Soft outward glow ring, ivory ~15%, per spec.
+    box-shadow: 0 0 0 0.375rem color-mix(in srgb, var(--color-bg) 15%, transparent);
+  }
+
+  // Declutter pass: "the border is the primary signal; the text is the
+  // detail." Placed AFTER &:focus in source order (same specificity, one
+  // attribute selector each) so the error border wins even while the
+  // user is actively correcting a still-invalid field — it only clears
+  // once revalidation (on blur) actually removes the error.
+  &[aria-invalid="true"] {
+    border-color: var(--cf-error-color);
+  }
+
+  // --- AUTOFILL VISUAL OVERRIDE (owner requirement) ------------------------
+  // Browsers refuse a plain background-color override on autofilled
+  // inputs — both standard workarounds applied, per spec:
+  // (1) an inset box-shadow big enough to paint over the forced fill —
+  //     62.5rem = 1000px, spec's own literal example value, expressed in
+  //     rem per this project's "no raw px" rule (except 1px borders);
+  // (2) the transition-delay hack as a fallback for engines the shadow
+  //     trick misses.
+  //
+  // -webkit-autofill and the standards-track autofill are deliberately
+  // in SEPARATE rule blocks, not one comma-joined selector list — an
+  // engine that doesn't recognize one pseudo-class in a plain
+  // (non-:is()) selector list invalidates the WHOLE rule, not just that
+  // branch. Caught empirically: the compiled/minified output merged an
+  // earlier joined-list draft into a `:-webkit-any(...)` wrapper, which
+  // Firefox (standards-track :autofill, no -webkit-any support) would
+  // never match — silently losing the override there. Duplicated
+  // declarations across engines that support both is harmless.
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--color-bg);
+    caret-color: var(--color-bg);
+    box-shadow: 0 0 0 62.5rem var(--cf-input-bg) inset;
+    transition: background-color 999999s ease-in-out 0s;
+  }
+
+  &:autofill,
+  &:autofill:hover {
+    -webkit-text-fill-color: var(--color-bg);
+    caret-color: var(--color-bg);
+    box-shadow: 0 0 0 62.5rem var(--cf-input-bg) inset;
+    transition: background-color 999999s ease-in-out 0s;
+  }
+
+  // Chrome focuses the field it just autofilled, so this is the common
+  // case, not an edge case — layers the SAME focus glow on top of the
+  // autofill fill (the shadow trick must not cover the border/glow).
+  &:-webkit-autofill:focus {
+    border-color: var(--color-bg);
+    box-shadow:
+      0 0 0 62.5rem var(--cf-input-bg) inset,
+      0 0 0 0.375rem color-mix(in srgb, var(--color-bg) 15%, transparent);
+  }
+
+  &:autofill:focus {
+    border-color: var(--color-bg);
+    box-shadow:
+      0 0 0 62.5rem var(--cf-input-bg) inset,
+      0 0 0 0.375rem color-mix(in srgb, var(--color-bg) 15%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.ffWrap {
+  position: relative;
+}
+
+.ffInput {
+  @include field-base;
+  min-height: 2.75rem; // 44px — compact pass (was 56px), meets the touch-target floor exactly
+}
+
+.ffTextarea {
+  @include field-base;
+  min-height: 4.75rem; // ~76px, ~2 visible rows — compact pass (was 112px)
+  resize: vertical;
+}
+
+// Autofill-only keyframe (duration effectively instant, 1ms — must be
+// non-zero to reliably fire animationstart in every engine) — detected
+// in JS via ContactFormField.tsx's useHasValue() to catch autofill even
+// in engines that don't dispatch input/change on it. Not a visible
+// animation; purely a detection hook.
+@keyframes ffAutofillDetector {
+  from {
+  }
+  to {
+  }
+}
+
+.ffInput:-webkit-autofill,
+.ffTextarea:-webkit-autofill {
+  animation-name: ffAutofillDetector;
+  animation-duration: 1ms;
+}
+
+// Real <label htmlFor> (a11y), not a styled placeholder — see
+// ContactFormField.tsx. Positioned as a plain absolutely-positioned
+// element so its own top/font-size changes never affect the input's box
+// model (no layout shift by construction). z-index keeps it visually on
+// top of the input's own autofill box-shadow paint.
+// Compact-pass revision: the label used to tuck fully inside the input's
+// reserved top padding when floated (see git history for that version's
+// own reasoning). Owner review called it "too tall and airy" — this
+// version floats the label onto the TOP BORDER LINE itself (half above,
+// half below — the classic outlined-field notch), which also lets the
+// input's own padding shrink to plain typing padding instead of
+// reserving extra room. Still position:absolute in both states, so
+// still zero layout shift by construction regardless of which target
+// the label floats to.
+//
+// `top` + a CONSTANT translateY(-50%) is what makes one shared rule work
+// for both rest states (input AND textarea) and the floated state: at
+// rest, top:1.375rem places the label's own vertical center exactly
+// 22px from the parent's top edge — the true center of a 44px input,
+// AND (deliberately, per spec) the SAME fixed distance from the top of
+// the taller textarea, not that box's own center. Floated, top:0 moves
+// that same self-centering point onto the border line itself. transform
+// never changes between states, so it's not even in the transition list.
+.ffLabel {
+  position: absolute;
+  left: 0.875rem; // matches the field's own new horizontal padding
+  top: 1.375rem;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-family: var(--font-body);
+  font-size: 1rem; // 16px, per spec
+  color: color-mix(in srgb, var(--color-bg) 60%, transparent); // ivory 60%, per spec
+  pointer-events: none; // clicks pass through to the input beneath
+  transition:
+    top 200ms ease,
+    font-size 200ms ease,
+    color 200ms ease,
+    background-color 200ms ease,
+    padding-inline 200ms ease;
+
+  &[data-floated="true"] {
+    top: 0;
+    font-size: 0.75rem; // ~12px, per spec
+    color: color-mix(in srgb, var(--color-bg) 80%, transparent); // ivory 80%, per spec
+    // Chip that "cuts" the border under the label — per spec, this MUST
+    // be a solid, opaque color exactly matching the input's own
+    // background, or the cut reads as dirty/translucent. --cf-input-bg
+    // already is solid/opaque: it's a color-mix of two fully opaque
+    // colors (--color-accent and black, no `transparent` involved), so
+    // no extra "make it solid" work was needed — reused directly.
+    // Reported per spec's own "report how" instruction.
+    background-color: var(--cf-input-bg);
+    padding-inline: 0.3125rem; // 5px, per spec's "4-6px"
+    // Declutter pass: the textarea's new (longer) invitation label needs
+    // a width boundary once floated on the chip, or it visually spills
+    // past the field's own right edge — resting state is deliberately
+    // left unconstrained (spec: "resting state always full"), only the
+    // floated state truncates. 1.75rem = the label's own left inset
+    // (0.875rem) mirrored on the right, so the chip text never reaches
+    // the field's own border corner. Whether this actually engages at
+    // each width is measured, not assumed — see this pass's own report.
+    max-width: calc(100% - 1.75rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Declutter pass — HONESTY-RULE FLAG: .ffHint is now UNUSED. Both hints
+// that used it (nome's "Anche solo il nome..." and messaggio's sub-hint)
+// were removed this pass — nome's outright, messaggio's folded into its
+// own floating label instead (see ContactForm.tsx). Left defined rather
+// than deleted (cheap to revive, matches this codebase's established
+// "flag rather than delete" precedent for now-dead rules) — flagged
+// here and in this pass's own report.
+.ffHint {
+  margin: 0.375rem 0 0; // 6px, per spec (was --space-1/4px) — compact pass, not an existing token
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px
+  line-height: 1.35; // compact pass — this text wraps to 2 lines at the form's width, so default line-height compounds noticeably
+  color: color-mix(in srgb, var(--color-bg) 60%, transparent);
+}
+
+// Declutter pass — errors no longer take flow space at all: absolutely
+// positioned, hanging from the owning element's own bottom edge (top:
+// 100%), inside the 14px row gap that already exists between rows. This
+// is why the form's total height never changes when an error appears or
+// clears — verified via before/after height measurement, see this
+// pass's own report. NOT literally inside the input box (at 44px height
+// that would overlap typed text) — hanging just below delivers the same
+// "no layout growth" intent without covering the value. Border color on
+// the owning field is the PRIMARY signal (see &[aria-invalid="true"] on
+// field-base above); this text is the detail, sized down accordingly
+// (11px) with ellipsis if it doesn't fit on one line.
+@mixin hanging-error {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.125rem; // 2px, per spec's "top: 100% + 2px"
+  font-family: var(--font-body);
+  font-size: 0.6875rem; // 11px, per spec
+  // line-height 1.2 (13.2px) + the 2px offset measured 1px INTO the next
+  // row's own top edge at 390px — caught via this pass's own explicit
+  // "verify no overlap at 390px" instruction, not assumed away. 1.1 got
+  // it to exactly touching (0px gap, no true pixel overlap, but no
+  // breathing room either); settled on 1 for a real, measured margin —
+  // instead of touching the 14px row gap (a separate, explicitly-
+  // specified value from the prior pass) or the 2px offset (specified
+  // literally by this pass's own spec). Re-verified clean, see this
+  // pass's own report.
+  line-height: 1;
+  color: var(--cf-error-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; // single line, per spec
+}
+
+// For errors owned by an input/textarea (nome, contact) — left-aligned
+// with the field's own text padding, per spec.
+.ffError {
+  @include hanging-error;
+  left: 0.875rem;
+  right: 0.875rem;
+}
+
+// For errors owned by a group container (the channel fieldset, the
+// consent row) rather than a bordered input — same mechanics, flush
+// with the group's own edges instead of an input's internal padding.
+.groupError {
+  @include hanging-error;
+  left: 0;
+  right: 0;
+}
+
+// --- Channel pills (real <input type="radio"> underneath) -----------------
+.pillFieldset {
+  position: relative; // positioning context for .groupError (channel's error)
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pillLegend {
+  padding: 0;
+  margin: 0 0 var(--space-2); // 8px — compact pass (was 12px)
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px
+  line-height: 1.3; // compact pass — default line-height added unnecessary height to a single short line
+  color: color-mix(in srgb, var(--color-bg) 80%, transparent);
+}
+
+.pillGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3); // 12px
+}
+
+// Visually hidden but real/focusable/keyboard-operable — NOT
+// display:none or visibility:hidden, which would break native radio
+// arrow-key navigation. Same off-canvas-free technique as
+// mixins.visually-hidden, just not imported since it's one line.
+.pillInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Declutter pass: visual height shrinks to ~36px (was the 44px tap-
+// target minimum itself) — the touch target is preserved separately via
+// ::after below, per spec's explicit "keep the effective touch target
+// >=44px via a transparent expanded hit area" instruction, rather than
+// shrinking the real interactive area.
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem; // 36px — compact pass (was 44px)
+  padding: 0.4375rem 0.875rem; // ~7px 14px, per spec
+  border-radius: var(--radius-button);
+  border: 1px solid color-mix(in srgb, var(--color-bg) 35%, transparent); // ivory 35%, per spec
+  font-family: var(--font-body);
+  font-size: 0.9375rem; // unchanged, per spec
+  color: var(--color-bg);
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease;
+
+  // Expanded invisible hit area: 4px on every side restores the 44px
+  // effective touch target (36px visual + 4px + 4px = 44px), per WCAG
+  // 2.5.5/2.5.8. A ::after inside the SAME <label> still triggers that
+  // label's native click-to-toggle behavior across its whole rendered
+  // box (pseudo-content included), so no pointer-events trick is
+  // needed — verified via a real click at the expanded-only zone, see
+  // this pass's own report.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.25rem; // 4px
+  }
+
+  &[data-selected="true"] {
+    border-color: var(--color-bg);
+    background: color-mix(in srgb, var(--color-bg) 12%, transparent); // subtle fill, per spec
+  }
+
+  &:has(.pillInput:focus-visible) {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// --- GDPR consent row -------------------------------------------------------
+// Wraps .consentRow + its error paragraph — position:relative anchor
+// for .groupError (see ContactForm.tsx's own comment on why the error
+// isn't nested inside the <label> itself).
+.consentWrap {
+  position: relative;
+}
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2); // 8px — compact pass (was 12px)
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem; // optical alignment against the first text line
+  accent-color: var(--color-bg);
+
+  @include mixins.focus-ring;
+}
+
+.consentText {
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px
+  line-height: 1.35; // compact pass — this text wraps to 2 lines at the form's width
+  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+}
+
+.consentLink {
+  color: var(--color-bg);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  @include mixins.focus-ring;
+}
+
+// --- Honeypot ---------------------------------------------------------------
+// Off-screen positioning (not display:none) so naive bots still "see"
+// and fill it; excluded from tab order (tabindex=-1 on the input itself,
+// set in ContactForm.tsx) and screen readers (aria-hidden on the
+// wrapper).
+.honeypotWrap {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+// --- Submit + quiet line -----------------------------------------------------
+// Secondary-on-dark: transparent, ivory border/text — mirrors
+// sharedSections.module.scss's own .btnSecondary (pine border/text on
+// light) inverted for this pine-background context, the same
+// relationship .btnPrimaryInverted already has to .btnSecondary's
+// sibling .btnPrimary elsewhere in this codebase.
+.submitButton {
+  @include shared.button-base;
+  align-self: flex-start;
+  background: transparent;
+  color: var(--color-bg);
+  border: var(--button-border-width) solid var(--color-bg);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-bg) 12%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+// Declutter pass: the form's own quiet line ("I tuoi dati non vengono
+// condivisi...") is deleted outright — genuinely dead, single-purpose,
+// self-contained (unlike e.g. .btnPrimaryInverted elsewhere in this
+// codebase, which stayed flagged-but-defined because it might be
+// revived; this one has no other conceivable use). Replaced by
+// .responseLine below: the ONE surviving quiet line site-wide for this
+// section, sourced from the CMS responseNote field, now living under
+// the consent row instead of below the submit button. Below the submit
+// button there is nothing, per spec.
+.responseLine {
+  margin: 0.375rem 0 0; // 6px, per spec
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px, per spec ("Lato 12")
+  color: color-mix(in srgb, var(--color-bg) 65%, transparent); // ivory 65%, per spec
+}
+
+// --- States -------------------------------------------------------------
+.successMessage {
+  margin: var(--space-6) 0 0; // replaces the form's own top margin
+  max-width: 32rem;
+  font-family: var(--font-body);
+  font-size: 1.0625rem; // matches .finalContactBody's own register
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--color-bg) 90%, transparent);
+
+  &[data-tight="true"] {
+    margin-top: var(--space-4); // 16px, same rule as .contactForm above
+  }
+}
+
+.formBanner {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 60%, transparent);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-amber) 15%, transparent);
+}
+
+.formBannerText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-bg);
+}

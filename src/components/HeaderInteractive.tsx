@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homePath, type Locale } from "@/sanity/paths";
-import type { AvailabilityStatus, ContactChannel } from "@/sanity/seo";
+import type {
+  AvailabilityStatus,
+  ContactChannel,
+  ResolvedLogo,
+} from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
 import type { HeaderNavItem } from "./headerNavItems";
 import { HeaderNavItemWithSubmenu } from "./HeaderNavItemWithSubmenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { Logo } from "./Logo";
 import { MobileMenuOverlay } from "./MobileMenuOverlay";
 import styles from "./HeaderInteractive.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
@@ -50,6 +55,7 @@ export function HeaderInteractive({
   navItems,
   locale,
   authorName,
+  logo,
   ctaLabel,
   contactChannels,
   availabilityStatus,
@@ -58,6 +64,7 @@ export function HeaderInteractive({
   navItems: HeaderNavItem[];
   locale: Locale;
   authorName: string;
+  logo?: ResolvedLogo;
   ctaLabel: string;
   contactChannels?: ContactChannel[];
   availabilityStatus?: AvailabilityStatus;
@@ -117,7 +124,7 @@ export function HeaderInteractive({
       <header className={styles.labHeader} ref={headerRef} data-lab-header="true" data-collapsed="false">
         <div className={styles.labHeaderInner}>
           <Link href={homePath(locale)} className={styles.labHeaderWordmark}>
-            {authorName}
+            <Logo logo={logo} authorName={authorName} imageClassName={styles.labHeaderLogoImage} />
           </Link>
 
           <nav className={styles.labHeaderNav} aria-label="Menu principale">

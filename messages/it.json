@@ -25,37 +25,10 @@
     "privacyNoteLinkLabel": "Leggi l'informativa sulla privacy"
   },
   "Header": {
-    "nav": {
-      "home": "Home",
-      "about": "Chi sono",
-      "method": "Metodo",
-      "areas": "Aree",
-      "price": "Prezzi",
-      "faq": "FAQ",
-      "contact": "Contatti"
-    },
-    "areasSubmenu": {
-      "anxiety": "Ansia",
-      "depression": "Depressione",
-      "stress": "Stress",
-      "lifeChanges": "Cambiamenti di vita"
-    },
-    "menuToggle": "Menu",
-    "cta": "Prenota un primo colloquio"
+    "menuToggle": "Menu"
   },
   "Footer": {
-    "exploreHeading": "Esplora",
-    "resourcesLabel": "Risorse",
-    "contactHeading": "Contatti",
-    "locationsHeading": "Sedi",
-    "legalHeading": "Informazioni legali",
-    "privacy": "Privacy",
-    "cookiePolicy": "Cookie policy",
-    "googleProfile": "Trovami su Google",
-    "whatsapp": "Scrivimi su WhatsApp",
-    "instagram": "Instagram",
-    "copyright": "© {year} {name} — Tutti i diritti riservati.",
-    "devCredit": "Sito: [segnaposto — nome/link sviluppatore]"
+    "copyright": "© {year} {name} — Tutti i diritti riservati."
   },
   "NotFound": {
     "title": "Pagina non trovata",
