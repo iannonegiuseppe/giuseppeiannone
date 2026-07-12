@@ -14,7 +14,10 @@ import { MiniContactBand } from "@/components/MiniContactBand";
 import { PercorsoSection } from "@/components/PercorsoSection";
 import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
-import { type RealArticle, ResourcesSection } from "@/components/ResourcesSection";
+import {
+  type RealArticle,
+  ResourcesSection,
+} from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
 import { StatementBand } from "@/components/StatementBand";
 import { VideoSection } from "@/components/VideoSection";
@@ -26,7 +29,11 @@ import {
   latestArticlesQuery,
   sedesQuery,
 } from "@/sanity/queries";
-import { buildMetadata, getSiteSettings, resolveAvailabilityText } from "@/sanity/seo";
+import {
+  buildMetadata,
+  getSiteSettings,
+  resolveAvailabilityText,
+} from "@/sanity/seo";
 
 interface HomePageData {
   title?: string;
@@ -45,7 +52,12 @@ interface HomePageData {
     watermarkText?: string;
     photo?: SanityImage;
   };
-  comeFunziona?: { kicker?: string; heading?: string; body?: string; media?: SanityImage };
+  comeFunziona?: {
+    kicker?: string;
+    heading?: string;
+    body?: string;
+    media?: SanityImage;
+  };
   formazione?: {
     kicker?: string;
     credentials?: string[];
@@ -60,12 +72,23 @@ interface HomePageData {
   };
   statement?: { statement?: string };
   diplomi?: { kicker?: string; heading?: string };
-  percorso?: { kicker?: string; heading?: string; paragraph?: string; steps?: { title: string; text: string }[] };
+  percorso?: {
+    kicker?: string;
+    heading?: string;
+    paragraph?: string;
+    steps?: { title: string; text: string }[];
+  };
   recognition?: {
     kicker?: string;
     heading?: string;
     bridgeLine?: string;
-    vignettes?: { id: string; vignette: string; area: string; slug: string; visualImage?: SanityImage }[];
+    vignettes?: {
+      id: string;
+      vignette: string;
+      area: string;
+      slug: string;
+      visualImage?: SanityImage;
+    }[];
   };
   miniContact?: { kicker?: string; heading?: string; body?: string };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
@@ -111,7 +134,12 @@ interface SedeData {
   city: string;
   isOnline?: boolean;
   onlineLine?: string;
-  addresses?: { centerName?: string; address: string; lat: number; lng: number }[];
+  addresses?: {
+    centerName?: string;
+    address: string;
+    lat: number;
+    lng: number;
+  }[];
 }
 
 interface DiplomaData {
@@ -171,17 +199,18 @@ export default async function Home({
     redirect(homePath("it"));
   }
 
-  const [homePage, siteSettings, sedes, diplomas, realArticles] = await Promise.all([
-    sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
-    getSiteSettings(locale),
-    sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
-    sanityFetch<DiplomaData[]>(diplomasQuery, { locale }, ["diploma"]),
-    // Tagged "article" per the project's type-driven revalidation convention
-    // (src/app/api/revalidate/route.ts revalidates the raw _type string on
-    // every write) — same tag family the webhook already produces for this
-    // document type, no changes needed there.
-    sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
-  ]);
+  const [homePage, siteSettings, sedes, diplomas, realArticles] =
+    await Promise.all([
+      sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+      getSiteSettings(locale),
+      sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
+      sanityFetch<DiplomaData[]>(diplomasQuery, { locale }, ["diploma"]),
+      // Tagged "article" per the project's type-driven revalidation convention
+      // (src/app/api/revalidate/route.ts revalidates the raw _type string on
+      // every write) — same tag family the webhook already produces for this
+      // document type, no changes needed there.
+      sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
+    ]);
 
   const authorName = siteSettings?.author?.name ?? "";
   const availability = resolveAvailabilityText(siteSettings);
@@ -276,14 +305,6 @@ export default async function Home({
         noPricesSentence={homePage?.prezzi?.noPricesSentence}
       />
 
-      <ResourcesSection
-        kicker={homePage?.risorse?.kicker ?? ""}
-        heading={homePage?.risorse?.heading ?? ""}
-        locale={locale}
-        realArticles={realArticles}
-        allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
-      />
-
       <VideoSection
         kicker={homePage?.video?.kicker}
         heading={homePage?.video?.heading}
@@ -297,14 +318,21 @@ export default async function Home({
         kicker={homePage?.finalCta?.kicker ?? ""}
         heading={homePage?.finalCta?.heading ?? ""}
         body={homePage?.finalCta?.body ?? ""}
-        ctaLabel={homePage?.finalCta?.ctaLabel ?? ""}
-        privacyNote={homePage?.finalCta?.privacyNote ?? ""}
         responseNote={homePage?.finalCta?.responseNote ?? ""}
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
         photo={homePage?.finalCta?.photo}
         availabilityStatus={availability?.status}
         availabilityText={availability?.text}
+        locale={locale}
+      />
+
+      <ResourcesSection
+        kicker={homePage?.risorse?.kicker ?? ""}
+        heading={homePage?.risorse?.heading ?? ""}
+        locale={locale}
+        realArticles={realArticles}
+        allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
       />
 
       <FaqSection

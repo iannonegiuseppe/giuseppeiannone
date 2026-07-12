@@ -231,12 +231,11 @@ export default async function DesignLabPage({
         kicker={homePage?.finalCta?.kicker ?? ""}
         heading={homePage?.finalCta?.heading ?? ""}
         body={homePage?.finalCta?.body ?? ""}
-        ctaLabel={homePage?.finalCta?.ctaLabel ?? ""}
-        privacyNote={homePage?.finalCta?.privacyNote ?? ""}
         responseNote={homePage?.finalCta?.responseNote ?? ""}
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
         photo={homePage?.finalCta?.photo}
+        locale={locale}
       />
 
       <FaqSection
