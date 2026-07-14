@@ -343,26 +343,9 @@
 // 12px text (needs 4.5:1). Raised to 60% (4.74:1, passes) — same
 // substitution procedure as the CTA pass's own contrast fixes.
 .labFooterCopyright,
-.labFooterLocaleSwitcher,
-.labFooterDevCredit {
+.labFooterLocaleSwitcher {
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec
   color: color-mix(in srgb, var(--color-bg) 60%, transparent);
-}
-
-// CMS-driven header/footer pass: only "Bandziuk" itself is a link now
-// (the whole line used to be one <a>, back when it was placeholder text
-// with no real href) — interactive states move to this new inner class;
-// .labFooterDevCredit above (now a plain <p>) keeps the shared text
-// styling with its two siblings, unchanged.
-.labFooterDevCreditLink {
-  color: inherit;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  @include mixins.focus-ring;
 }

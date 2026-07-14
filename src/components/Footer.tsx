@@ -274,19 +274,6 @@ export async function Footer({
           <p className={styles.labFooterLocaleSwitcher}>
             <LocaleSwitcher currentLocale={locale} />
           </p>
-          {/* Static, not a CMS field — per spec, must not be editable or
-              deletable via Studio. Only "Bandziuk" itself is the link. */}
-          <p className={styles.labFooterDevCredit}>
-            Developed by{" "}
-            <a
-              href="https://www.bandziuk.com"
-              target="_blank"
-              rel="noopener"
-              className={styles.labFooterDevCreditLink}
-            >
-              Bandziuk
-            </a>
-          </p>
         </div>
       </div>
     </footer>
