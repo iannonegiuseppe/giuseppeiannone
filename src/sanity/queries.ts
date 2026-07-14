@@ -158,6 +158,7 @@ export const homePageQuery = defineQuery(`
         visualImage
       }
     },
+    hope,
     miniContact,
     sedi,
     prezzi,

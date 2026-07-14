@@ -313,6 +313,24 @@ export const homePage = defineType({
       ],
     }),
 
+    // Hope (new — global restyle pass). A small, static transitional band:
+    // eyebrow + one heading line only, no photo, no body paragraph. Field-
+    // group numbering across this file reflects the PRE-restyle page
+    // order; the restyle pass's own reorder step renumbers all of these
+    // titles to match the new order in one pass, so this one is
+    // deliberately left unnumbered for now rather than guessing a slot.
+    defineField({
+      name: "hope",
+      title: "Hope",
+      description:
+        "A short transitional band between Recognition and How therapy helps — reassurance, not a claim of outcome. Placeholder copy until real text is supplied.",
+      type: "object",
+      fields: [
+        stringField("eyebrow", "Eyebrow", { initialValue: "[segnaposto]" }),
+        textField("heading", "Heading", { rows: 2, initialValue: "[segnaposto]" }),
+      ],
+    }),
+
     // 10. MiniContactBand (channel list itself comes from siteSettings.contactChannels)
     defineField({
       name: "miniContact",

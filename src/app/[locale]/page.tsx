@@ -72,6 +72,7 @@ interface HomePageData {
     photo?: SanityImage;
   };
   statement?: { statement?: string };
+  hope?: { eyebrow?: string; heading?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: {
     kicker?: string;

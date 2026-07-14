@@ -498,6 +498,10 @@ async function seed() {
         { _key: "vignette-cambiamenti", id: "cambiamenti-di-vita", vignette: "Evito situazioni che prima non mi pesavano. Qualcosa è cambiato, ma non saprei dire esattamente quando.", area: "Cambiamenti di vita", slug: "cambiamenti-di-vita" },
       ],
     },
+    hope: {
+      eyebrow: "[segnaposto]",
+      heading: "[segnaposto — testo di Giuseppe non ancora arrivato]",
+    },
     miniContact: {
       kicker: "Primo contatto",
       heading: "Non serve arrivare con una richiesta chiara.",
