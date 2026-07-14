@@ -9,6 +9,7 @@ import { FaqSection } from "@/components/FaqSection";
 import { FinalContactSection } from "@/components/FinalContactSection";
 import { FormazioneBand } from "@/components/FormazioneBand";
 import { HeroOverlap } from "@/components/HeroOverlap";
+import { HopeSection } from "@/components/HopeSection";
 import { PercorsoSection } from "@/components/PercorsoSection";
 import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
@@ -215,6 +216,36 @@ export default async function Home({
         youtubeId={homePage?.hero?.youtubeId}
       />
 
+      <RecognitionSection
+        kicker={homePage?.recognition?.kicker ?? ""}
+        heading={homePage?.recognition?.heading ?? ""}
+        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
+        vignettes={homePage?.recognition?.vignettes}
+      />
+
+      <HopeSection
+        eyebrow={homePage?.hope?.eyebrow ?? ""}
+        heading={homePage?.hope?.heading ?? ""}
+      />
+
+      <PercorsoSection
+        kicker={homePage?.percorso?.kicker ?? ""}
+        heading={homePage?.percorso?.heading ?? ""}
+        paragraph={homePage?.percorso?.paragraph ?? ""}
+        steps={homePage?.percorso?.steps}
+      />
+
+      <DiplomiSection
+        kicker={homePage?.diplomi?.kicker ?? ""}
+        heading={homePage?.diplomi?.heading ?? ""}
+        diplomas={diplomas}
+      />
+      <FormazioneBand
+        kicker={homePage?.formazione?.kicker ?? ""}
+        credentials={homePage?.formazione?.credentials}
+        counters={homePage?.formazione?.counters}
+      />
+
       <ChiSonoOverlap
         introHeading={homePage?.chiSono?.introHeading ?? ""}
         introLinkLabel={homePage?.chiSono?.introLinkLabel ?? ""}
@@ -227,12 +258,6 @@ export default async function Home({
         photo={homePage?.chiSono?.photo}
       />
 
-      <FormazioneBand
-        kicker={homePage?.formazione?.kicker ?? ""}
-        credentials={homePage?.formazione?.credentials}
-        counters={homePage?.formazione?.counters}
-      />
-
       <ConcernsSection
         kicker={homePage?.diCosa?.kicker ?? ""}
         heading={homePage?.diCosa?.heading ?? ""}
@@ -240,28 +265,14 @@ export default async function Home({
         areas={homePage?.diCosa?.areas}
         photo={homePage?.diCosa?.photo}
       />
-      <DiplomiSection
-        kicker={homePage?.diplomi?.kicker ?? ""}
-        heading={homePage?.diplomi?.heading ?? ""}
-        diplomas={diplomas}
-      />
-      <PercorsoSection
-        kicker={homePage?.percorso?.kicker ?? ""}
-        heading={homePage?.percorso?.heading ?? ""}
-        paragraph={homePage?.percorso?.paragraph ?? ""}
-        steps={homePage?.percorso?.steps}
-      />
-      <RecognitionSection
-        kicker={homePage?.recognition?.kicker ?? ""}
-        heading={homePage?.recognition?.heading ?? ""}
-        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
-        vignettes={homePage?.recognition?.vignettes}
-      />
-      <SedesSection
-        kicker={homePage?.sedi?.kicker ?? ""}
-        heading={homePage?.sedi?.heading ?? ""}
-        paragraph={homePage?.sedi?.paragraph ?? ""}
-        sedes={sedes}
+
+      <VideoSection
+        kicker={homePage?.video?.kicker}
+        heading={homePage?.video?.heading}
+        lead={homePage?.video?.lead}
+        videoUrl={homePage?.video?.videoUrl}
+        poster={homePage?.video?.poster}
+        captionsUrl={homePage?.video?.captionsUrl}
       />
 
       <PricingSection
@@ -275,13 +286,12 @@ export default async function Home({
         noPricesSentence={homePage?.prezzi?.noPricesSentence}
       />
 
-      <VideoSection
-        kicker={homePage?.video?.kicker}
-        heading={homePage?.video?.heading}
-        lead={homePage?.video?.lead}
-        videoUrl={homePage?.video?.videoUrl}
-        poster={homePage?.video?.poster}
-        captionsUrl={homePage?.video?.captionsUrl}
+      <FaqSection
+        kicker={homePage?.faq?.kicker ?? ""}
+        heading={homePage?.faq?.heading ?? ""}
+        linkLabel={homePage?.faq?.linkLabel ?? ""}
+        locale={locale}
+        items={homePage?.faq?.items}
       />
 
       <FinalContactSection
@@ -294,6 +304,12 @@ export default async function Home({
         photo={homePage?.finalCta?.photo}
         locale={locale}
       />
+      <SedesSection
+        kicker={homePage?.sedi?.kicker ?? ""}
+        heading={homePage?.sedi?.heading ?? ""}
+        paragraph={homePage?.sedi?.paragraph ?? ""}
+        sedes={sedes}
+      />
 
       <ResourcesSection
         kicker={homePage?.risorse?.kicker ?? ""}
@@ -301,14 +317,6 @@ export default async function Home({
         locale={locale}
         realArticles={realArticles}
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
-      />
-
-      <FaqSection
-        kicker={homePage?.faq?.kicker ?? ""}
-        heading={homePage?.faq?.heading ?? ""}
-        linkLabel={homePage?.faq?.linkLabel ?? ""}
-        locale={locale}
-        items={homePage?.faq?.items}
       />
     </main>
   );
