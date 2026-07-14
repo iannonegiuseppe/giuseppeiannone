@@ -897,27 +897,12 @@
   font-size: 1.625rem; // 26px, per spec
 }
 
-// Availability-badge pass: sits between the heading and the channel
-// buttons, left-aligned to match .channelDialogChannels' own
-// align-items: flex-start below. Same "two smaller gaps replace one
-// larger gap" technique as HeroOverlap.module.scss's own badge —
-// .channelDialogChannelsTight halves the channels list's own top margin
-// (32px -> 16px) only when the badge actually renders, so absence of the
-// badge leaves the original spacing untouched.
-.channelDialogAvailability {
-  margin-top: var(--space-4); // 16px below the heading
-}
-
 .channelDialogChannels {
   margin-top: var(--space-6);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-4); // 16px, matching the mini-contact band's own channel-stack gap
-}
-
-.channelDialogChannelsTight {
-  margin-top: var(--space-4); // 16px, replacing the 32px above when the badge is present
 }
 
 .channelDialogWhatsapp {

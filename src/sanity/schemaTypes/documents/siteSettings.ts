@@ -1,35 +1,11 @@
 import { defineField, defineType } from "sanity";
-import { deontologyCheck, deontologyCheckWithExtraWords } from "../lib/deontologyValidator";
+import { deontologyCheck } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
-
-// Availability-badge pass: on top of the shared §9 list, these three
-// status texts specifically forbid scarcity wording — an editor writing
-// "waitlist" copy is the single most likely place on this whole site for
-// a "solo 2 posti rimasti" style phrase to slip in, since the field's
-// entire purpose invites it. "%" is already in the shared FORBIDDEN_WORDS
-// list (deontologyValidator.ts), so it's covered without repeating it
-// here.
-const AVAILABILITY_SCARCITY_WORDS = ["ultimi", "posti limitati", "affrettati", "solo"];
 
 export const siteSettings = defineType({
   name: "siteSettings",
   title: "Site settings",
   type: "document",
-  // No other schema in this project uses Sanity's fieldsets/groups
-  // features yet (checked: zero matches project-wide) — introduced here
-  // specifically because the spec asks for flat, prefixed field names
-  // (availabilityStatus, acceptingText...) rather than a nested object
-  // like `author`/`socialLinks` use elsewhere. `fieldsets` groups them
-  // visually in the Studio form without changing the data shape; no
-  // separate desk-structure entry is needed since these are just new
-  // fields on the existing siteSettings singleton.
-  fieldsets: [
-    {
-      name: "availability",
-      title: "Availability",
-      options: { collapsible: true, collapsed: false },
-    },
-  ],
   fields: [
     defineField({
       name: "title",
@@ -111,56 +87,6 @@ export const siteSettings = defineType({
       name: "piva",
       title: "P.IVA",
       type: "string",
-    }),
-    defineField({
-      name: "availabilityStatus",
-      title: "Availability status",
-      description:
-        "Drives the availability badge (hero, contact popup, final CTA). " +
-        "Information for the visitor, not a scarcity device — see the " +
-        "status text fields below.",
-      type: "string",
-      fieldset: "availability",
-      options: {
-        layout: "radio",
-        list: [
-          { title: "Accepting new patients", value: "accepting" },
-          { title: "Waitlist / limited", value: "waitlist" },
-          { title: "Not accepting right now", value: "paused" },
-        ],
-      },
-      initialValue: "accepting",
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "acceptingText",
-      title: "Status text — Accepting",
-      description: "Shown when status is \"Accepting new patients\". One short line.",
-      type: "string",
-      fieldset: "availability",
-      initialValue: "Attualmente accolgo nuovi pazienti.",
-      validation: (Rule) =>
-        Rule.required().max(90).custom(deontologyCheckWithExtraWords(AVAILABILITY_SCARCITY_WORDS)),
-    }),
-    defineField({
-      name: "waitlistText",
-      title: "Status text — Waitlist",
-      description: "Shown when status is \"Waitlist / limited\". One short line.",
-      type: "string",
-      fieldset: "availability",
-      initialValue: "Nuovi percorsi da [segnaposto — periodo]: scrivimi per riservare un posto.",
-      validation: (Rule) =>
-        Rule.required().max(90).custom(deontologyCheckWithExtraWords(AVAILABILITY_SCARCITY_WORDS)),
-    }),
-    defineField({
-      name: "pausedText",
-      title: "Status text — Paused",
-      description: "Shown when status is \"Not accepting right now\". One short line.",
-      type: "string",
-      fieldset: "availability",
-      initialValue: "Al momento non accolgo nuovi pazienti.",
-      validation: (Rule) =>
-        Rule.required().max(90).custom(deontologyCheckWithExtraWords(AVAILABILITY_SCARCITY_WORDS)),
     }),
     defineField({
       name: "seo",

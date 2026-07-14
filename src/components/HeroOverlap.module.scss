@@ -334,20 +334,6 @@
   margin-top: var(--space-6); // 32px below the subtitle, per spec
 }
 
-// Availability-badge pass: sits between the CTA and the Albo line, 12px
-// gaps on both sides per spec — .heroOverlapRegistrationTight below
-// halves the registration line's OWN top margin from 24px to 12px so the
-// two 12px gaps (CTA->badge, badge->Albo) replace the original single
-// 24px gap rather than stacking on top of it. Only applied when the
-// badge actually renders (see the conditional class in the JSX) — when
-// it's absent, .heroOverlapRegistration keeps its original 24px margin
-// untouched, so there's zero layout difference from before this feature
-// existed.
-.heroOverlapAvailability {
-  align-self: flex-start;
-  margin-top: var(--space-3); // 12px, per spec
-}
-
 // Spec asks for "pine at 65% opacity" — verified against the same photo
 // background range and it fails AA everywhere tested (2.24-3.44:1, well
 // under 4.5). Using the same locally-darkened on-photo color already
@@ -359,10 +345,6 @@
   font-family: var(--font-body);
   font-size: 0.8125rem; // 13px
   color: #3a3630;
-}
-
-.heroOverlapRegistrationTight {
-  margin-top: var(--space-3); // 12px, replacing the 24px above when the badge is present
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -2,11 +2,7 @@ import { resolveNavItems } from "./headerNavItems";
 import { HeaderInteractive } from "./HeaderInteractive";
 import type { Locale } from "@/sanity/paths";
 import { getHeaderSettings } from "@/sanity/seo";
-import type {
-  AvailabilityStatus,
-  ContactChannel,
-  ResolvedLogo,
-} from "@/sanity/seo";
+import type { ContactChannel, ResolvedLogo } from "@/sanity/seo";
 
 // CMS-driven header/footer pass: nav items + the CTA button label now
 // come from the new headerSettings singleton (fetched here, colocated —
@@ -20,15 +16,11 @@ export async function Header({
   authorName,
   logo,
   contactChannels,
-  availabilityStatus,
-  availabilityText,
 }: {
   locale: Locale;
   authorName: string;
   logo?: ResolvedLogo;
   contactChannels?: ContactChannel[];
-  availabilityStatus?: AvailabilityStatus;
-  availabilityText?: string;
 }) {
   const headerSettings = await getHeaderSettings(locale);
   const navItems = resolveNavItems(locale, headerSettings?.navItems);
@@ -41,8 +33,6 @@ export async function Header({
       logo={logo}
       ctaLabel={headerSettings?.ctaButtonText ?? "Prenota un primo colloquio"}
       contactChannels={contactChannels}
-      availabilityStatus={availabilityStatus}
-      availabilityText={availabilityText}
     />
   );
 }

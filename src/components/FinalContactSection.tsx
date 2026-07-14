@@ -1,11 +1,9 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
-import { AvailabilityBadge } from "./AvailabilityBadge";
 import { ContactForm } from "./ContactForm";
 import { RevealOnScroll } from "./RevealOnScroll";
 import { urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
-import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./FinalContactSection.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -67,8 +65,6 @@ export function FinalContactSection({
   googleProfileLabel,
   googleProfileUrl,
   photo,
-  availabilityStatus,
-  availabilityText,
   locale,
 }: {
   kicker: string;
@@ -78,8 +74,6 @@ export function FinalContactSection({
   googleProfileLabel: string;
   googleProfileUrl?: string;
   photo?: SanityImage;
-  availabilityStatus?: AvailabilityStatus;
-  availabilityText?: string;
   locale: string;
 }) {
   const typedLocale = locale as Locale;
@@ -96,12 +90,6 @@ export function FinalContactSection({
             </p>
             <h2 className={styles.finalContactHeading}>{heading}</h2>
             <p className={styles.finalContactBody}>{body}</p>
-            <AvailabilityBadge
-              status={availabilityStatus}
-              text={availabilityText}
-              variant="onDark"
-              className={styles.finalContactAvailability}
-            />
           </div>
         </RevealOnScroll>
       </div>
@@ -122,11 +110,12 @@ export function FinalContactSection({
         <div className={styles.finalContactContent}>
           <RevealOnScroll>
             <div>
-              <ContactForm
-                locale={typedLocale}
-                tight={Boolean(availabilityText)}
-                responseNote={responseNote}
-              />
+              <ContactForm locale={typedLocale} responseNote={responseNote} />
+              {/* Global restyle pass: replaces the removed availability
+                  indicator — a static, deontology-safe reassurance line
+                  (not a specific appointment-time promise unless Giuseppe
+                  confirms he can always honor one), not CMS-sourced. */}
+              <p className={styles.finalContactReassurance}>Rispondo entro 24 ore.</p>
             </div>
           </RevealOnScroll>
         </div>

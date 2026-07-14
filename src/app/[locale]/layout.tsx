@@ -17,11 +17,7 @@ import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
 import { sedesQuery } from "@/sanity/queries";
-import {
-  getSiteSettings,
-  resolveAvailabilityText,
-  resolveLogoImage,
-} from "@/sanity/seo";
+import { getSiteSettings, resolveLogoImage } from "@/sanity/seo";
 import "./globals.scss";
 
 // Global restyle pass: EB Garamond replaces Marcellus entirely (not kept
@@ -143,7 +139,6 @@ export default async function LocaleLayout({
       : undefined;
 
   const typedLocale = locale as Locale;
-  const availability = resolveAvailabilityText(siteSettings);
   const resolvedLogo = resolveLogoImage(siteSettings?.logo);
 
   return (
@@ -173,8 +168,6 @@ export default async function LocaleLayout({
               authorName={siteSettings?.author?.name ?? ""}
               logo={resolvedLogo}
               contactChannels={siteSettings?.contactChannels}
-              availabilityStatus={availability?.status}
-              availabilityText={availability?.text}
             />
             {children}
             <Footer

@@ -1,9 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
-import { AvailabilityBadge } from "./AvailabilityBadge";
 import { HeroVideo } from "./HeroVideo";
 import { urlFor } from "@/sanity/image";
-import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./HeroOverlap.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -45,8 +43,6 @@ export function HeroOverlap({
   registrationNumber,
   photo,
   youtubeId,
-  availabilityStatus,
-  availabilityText,
 }: {
   treatment: "raw" | "treated";
   // Internal review annotation only (e.g. "Hero — approved") — omitted
@@ -61,8 +57,6 @@ export function HeroOverlap({
   // When set, a click-to-play YouTube embed appears over the photo below
   // instead of the plain static image — see HeroVideo.tsx.
   youtubeId?: string;
-  availabilityStatus?: AvailabilityStatus;
-  availabilityText?: string;
 }) {
   const photoClassName =
     treatment === "treated"
@@ -117,19 +111,7 @@ export function HeroOverlap({
             <a href="#" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
               {ctaLabel}
             </a>
-            <AvailabilityBadge
-              status={availabilityStatus}
-              text={availabilityText}
-              variant="onLight"
-              className={styles.heroOverlapAvailability}
-            />
-            <p
-              className={
-                availabilityText
-                  ? `${styles.heroOverlapRegistration} ${styles.heroOverlapRegistrationTight}`
-                  : styles.heroOverlapRegistration
-              }
-            >
+            <p className={styles.heroOverlapRegistration}>
               Iscrizione all&apos;Albo degli Psicologi n. {registrationNumber ?? "[segnaposto]"}
             </p>
           </div>
