@@ -1,0 +1,83 @@
+// Design-preview artifact — Giuseppe's own taupe/ivory palette, placed in
+// this project's established distinctive-composition design language
+// (asymmetry, oversized numerals, dark atmospheric bands, overlapping
+// photography), for the client's video call comparison.
+//
+// Raw hex values are permitted ONLY in this file, per this task's own
+// constraint. Everywhere else under design-preview/, colors are consumed
+// exclusively via these var(--dp-*) custom properties. Scoped to
+// [data-design-preview] (the page's own root wrapper) rather than :root,
+// so this can never leak onto/collide with the real site's own
+// --color-* tokens even though both trees share one Next.js build.
+//
+// Contrast verification (WCAG, computed programmatically — see this
+// pass's own final report for the full table):
+[data-design-preview] {
+  --dp-bg-page: #f6f3ee;
+  --dp-bg-hero: #ede7db;
+  --dp-bg-alt-1: #f1ece2;
+  --dp-bg-alt-2: #e8e1d4;
+  --dp-bg-alt-3: #f9f7f2;
+  // Patch pass — the one intentional gradient on the page (hero ->
+  // recognition, like the cyprusvipestates.com hero->about melt). Hero
+  // itself now sits on --dp-bg-page (lightest); this is a lifted
+  // --dp-secondary (a full #cfc7be reads as a visible band at this large
+  // a background size, per this task's own explicit instruction), close
+  // enough to bg-page that the ~140px bridge gradient between them reads
+  // as breathing room, not a seam. Contrast re-verified against this new
+  // background specifically: --dp-text 11.21:1 (needs 7), --dp-text-muted
+  // 4.92:1 and --dp-accent-text 5.07:1 (both need 4.5) — all pass as
+  // given, no darkening needed.
+  --dp-bg-recognition: #eae5db;
+
+  --dp-text: #2e2b28;
+  // Adjusted from the client-provided #6e655d — worst-case 4.39:1 against
+  // --dp-bg-alt-2 failed the 4.5:1 floor; darkened one L-2% HSL step
+  // until passing (final: 4.75-5.76:1 across all five backgrounds). Not
+  // explicitly asked for in the task's own contrast checklist (which
+  // named accent-text/on-accent/accent-on-dark specifically) but a real,
+  // measured failure on a color this page actually uses as text — fixed
+  // and reported rather than left quietly broken.
+  --dp-text-muted: #686058;
+
+  // Taupe-Bronzo — kept EXACTLY as the client's own anchor value. Used
+  // for borders, left-accents, decorative fills, and outline buttons —
+  // never as a SOLID fill behind --on-accent text (see --dp-accent-button
+  // below for that role specifically).
+  --dp-accent: #8a7564;
+  // Passes as given (4.90-5.95:1 across all five backgrounds) — no
+  // adjustment needed, unlike --dp-text-muted above.
+  --dp-accent-text: #6e5c4c;
+  --dp-accent-on-dark: #c0aa95;
+  --dp-on-accent: #f7f2ea;
+  // --dp-on-accent on the client's own --dp-accent measures 3.92:1,
+  // failing the 4.5:1 floor for button-label text. Per this task's own
+  // explicit instruction ("darken the button fill, not the swatch"),
+  // --dp-accent itself is UNCHANGED (it stays the client's real anchor
+  // color for borders/decoration); this is a SEPARATE token, used only
+  // as a solid CTA button's own background, darkened 2 L-2% steps until
+  // --dp-on-accent passes against it (final: 4.55:1).
+  --dp-accent-button: #7e6b5b;
+
+  --dp-dark: #2e2b28;
+  --dp-dark-2: #3a3631;
+
+  --dp-secondary: #cfc7be;
+  --dp-border: #ddd6c9;
+
+  --dp-shine-base: #6e5c4c; // = --dp-accent-text, passes as given (4.90:1 worst case)
+  --dp-shine-mid: #8a7564; // = --dp-accent, passes the large-text 3:1 floor (3.36:1 worst case)
+  // Adjusted from the client-derived #c9b8a4 — worst-case 1.49:1 against
+  // the five backgrounds badly failed even the 3:1 large-text floor (this
+  // stop is the gradient's brightest, most transient highlight, seen only
+  // for an instant during the sweep — still real content, still checked).
+  // Darkened 12 L-2% steps until passing (final: 3.01-3.66:1).
+  --dp-shine-light: #987c5a;
+
+  // Section numeral tints (oversized faint markers, section 4's earned
+  // sequence numbers) — a light warm-neutral derived from --dp-secondary,
+  // decorative/non-text-bearing (no contrast floor applies to a purely
+  // ambient background numeral), same reasoning _tokens.scss itself uses
+  // for its own numeral tints elsewhere in this codebase.
+  --dp-numeral: #e2dad0;
+}
