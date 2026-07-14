@@ -15,7 +15,6 @@ import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { type RealArticle, ResourcesSection } from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
-import { StatementBand } from "@/components/StatementBand";
 import { sanityFetch } from "@/sanity/client";
 import { diplomasQuery, homePageQuery, latestArticlesQuery, sedesQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
@@ -66,7 +65,6 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  statement?: { statement?: string };
   hope?: { eyebrow?: string; heading?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: { kicker?: string; heading?: string; paragraph?: string; steps?: { title: string; text: string }[] };
@@ -179,11 +177,6 @@ export default async function DesignLabPage({
         linkLabel={homePage?.diCosa?.linkLabel ?? ""}
         areas={homePage?.diCosa?.areas}
         photo={homePage?.diCosa?.photo}
-      />
-      <StatementBand
-        statement={homePage?.statement?.statement ?? ""}
-        signature={authorName}
-        role={siteSettings?.author?.credentials ?? "Psicologo Psicoterapeuta"}
       />
       <DiplomiSection
         kicker={homePage?.diplomi?.kicker ?? ""}

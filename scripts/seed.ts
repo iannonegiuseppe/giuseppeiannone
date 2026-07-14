@@ -464,10 +464,6 @@ async function seed() {
       ],
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: diCosaPhotoId } },
     },
-    statement: {
-      statement:
-        "Il mio lavoro non è dare risposte pronte, ma costruire insieme un modo di stare nelle cose — più chiaro, più sostenibile.",
-    },
     diplomi: {
       kicker: "Percorso formativo",
       heading: "Diplomi e formazione",

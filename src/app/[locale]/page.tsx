@@ -19,7 +19,6 @@ import {
   ResourcesSection,
 } from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
-import { StatementBand } from "@/components/StatementBand";
 import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
@@ -67,7 +66,6 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  statement?: { statement?: string };
   hope?: { eyebrow?: string; heading?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: {
@@ -254,11 +252,6 @@ export default async function Home({
         linkLabel={homePage?.diCosa?.linkLabel ?? ""}
         areas={homePage?.diCosa?.areas}
         photo={homePage?.diCosa?.photo}
-      />
-      <StatementBand
-        statement={homePage?.statement?.statement ?? ""}
-        signature={authorName}
-        role={siteSettings?.author?.credentials ?? "Psicologo Psicoterapeuta"}
       />
       <DiplomiSection
         kicker={homePage?.diplomi?.kicker ?? ""}

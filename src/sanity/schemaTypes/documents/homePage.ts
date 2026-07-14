@@ -225,16 +225,6 @@ export const homePage = defineType({
       ],
     }),
 
-    // 6. StatementBand
-    defineField({
-      name: "statement",
-      title: "6. Statement",
-      description:
-        "The doctor's own signed statement, not a testimonial (docs/design-direction.md §9/§11) — signature and role come from Site settings' Author fields, not re-entered here.",
-      type: "object",
-      fields: [textField("statement", "Statement", { rows: 3 })],
-    }),
-
     // 7. DiplomiSection (list itself is the separate `diploma` document type)
     defineField({
       name: "diplomi",

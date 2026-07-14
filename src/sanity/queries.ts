@@ -139,7 +139,6 @@ export const homePageQuery = defineQuery(`
     comeFunziona,
     formazione,
     diCosa,
-    statement,
     diplomi,
     percorso,
     recognition{
