@@ -8,8 +8,6 @@ import { FaqSection } from "@/components/FaqSection";
 import { FinalContactSection } from "@/components/FinalContactSection";
 import { FormazioneBand } from "@/components/FormazioneBand";
 import { HeroOverlap } from "@/components/HeroOverlap";
-import { MethodsOverlap } from "@/components/MethodsOverlap";
-import { MiniContactBand } from "@/components/MiniContactBand";
 import { PercorsoSection } from "@/components/PercorsoSection";
 import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
@@ -48,11 +46,11 @@ interface HomePageData {
     kicker?: string;
     heading?: string;
     bio?: string;
+    methodsBody?: string;
     storyLinkLabel?: string;
     watermarkText?: string;
     photo?: SanityImage;
   };
-  comeFunziona?: { kicker?: string; heading?: string; body?: string; media?: SanityImage };
   formazione?: {
     kicker?: string;
     credentials?: string[];
@@ -74,7 +72,6 @@ interface HomePageData {
     bridgeLine?: string;
     vignettes?: { id: string; vignette: string; area: string; slug: string; visualImage?: SanityImage }[];
   };
-  miniContact?: { kicker?: string; heading?: string; body?: string };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
   prezzi?: {
     kicker?: string;
@@ -154,15 +151,10 @@ export default async function DesignLabPage({
         kicker={homePage?.chiSono?.kicker ?? ""}
         heading={homePage?.chiSono?.heading ?? ""}
         bio={homePage?.chiSono?.bio ?? ""}
+        methodsBody={homePage?.chiSono?.methodsBody}
         storyLinkLabel={homePage?.chiSono?.storyLinkLabel ?? ""}
         watermarkText={homePage?.chiSono?.watermarkText}
         photo={homePage?.chiSono?.photo}
-      />
-      <MethodsOverlap
-        kicker={homePage?.comeFunziona?.kicker ?? ""}
-        heading={homePage?.comeFunziona?.heading ?? ""}
-        body={homePage?.comeFunziona?.body ?? ""}
-        media={homePage?.comeFunziona?.media}
       />
 
       <FormazioneBand
@@ -194,12 +186,6 @@ export default async function DesignLabPage({
         heading={homePage?.recognition?.heading ?? ""}
         bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
         vignettes={homePage?.recognition?.vignettes}
-      />
-      <MiniContactBand
-        kicker={homePage?.miniContact?.kicker ?? ""}
-        heading={homePage?.miniContact?.heading ?? ""}
-        body={homePage?.miniContact?.body ?? ""}
-        contactChannels={siteSettings?.contactChannels}
       />
       <SedesSection
         kicker={homePage?.sedi?.kicker ?? ""}

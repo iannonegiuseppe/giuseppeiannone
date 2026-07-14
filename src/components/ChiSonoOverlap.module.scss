@@ -362,6 +362,20 @@
   }
 }
 
+// Global restyle pass: MethodsOverlap's retired approach/philosophy
+// paragraph, merged in as a second paragraph — same body treatment as
+// .chiSonoBio but no drop-cap (that's a one-per-block device) and a
+// tighter gap (16px, two stacked paragraphs) rather than the 24px
+// heading-to-bio gap.
+.chiSonoMethodsBody {
+  margin: var(--space-4) 0 0;
+  max-width: 40ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+}
+
 .chiSonoStoryLink {
   margin-top: var(--space-5); // 24px below the paragraph, per spec
 }

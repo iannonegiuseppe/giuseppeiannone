@@ -136,7 +136,6 @@ export const homePageQuery = defineQuery(`
       youtubeId
     },
     chiSono,
-    comeFunziona,
     formazione,
     diCosa,
     diplomi,
@@ -154,7 +153,6 @@ export const homePageQuery = defineQuery(`
       }
     },
     hope,
-    miniContact,
     sedi,
     prezzi,
     risorse,

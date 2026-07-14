@@ -113,6 +113,10 @@ export const homePage = defineType({
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
         textField("bio", "Bio", { rows: 4 }),
+        textField("methodsBody", "Approach paragraph (merged from retired 'Come funziona' section)", {
+          rows: 4,
+          required: false,
+        }),
         stringField("storyLinkLabel", "Story link label"),
         stringField("watermarkText", "Background watermark word", {
           required: false,
@@ -120,25 +124,6 @@ export const homePage = defineType({
         defineField({
           name: "photo",
           title: "Photo",
-          type: "image",
-          options: { hotspot: true },
-          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
-        }),
-      ],
-    }),
-
-    // 3. MethodsOverlap
-    defineField({
-      name: "comeFunziona",
-      title: "3. Come funziona (metodo)",
-      type: "object",
-      fields: [
-        stringField("kicker", "Kicker"),
-        stringField("heading", "Heading"),
-        textField("body", "Body"),
-        defineField({
-          name: "media",
-          title: "Media image",
           type: "image",
           options: { hotspot: true },
           fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
@@ -319,14 +304,6 @@ export const homePage = defineType({
         stringField("eyebrow", "Eyebrow", { initialValue: "[segnaposto]" }),
         textField("heading", "Heading", { rows: 2, initialValue: "[segnaposto]" }),
       ],
-    }),
-
-    // 10. MiniContactBand (channel list itself comes from siteSettings.contactChannels)
-    defineField({
-      name: "miniContact",
-      title: "10. Primo contatto (mini)",
-      type: "object",
-      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("body", "Body")],
     }),
 
     // 11. SedesSection (scene list is the separate `sede` document type)
