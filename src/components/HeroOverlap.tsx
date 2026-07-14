@@ -1,6 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
 import { AvailabilityBadge } from "./AvailabilityBadge";
+import { HeroVideo } from "./HeroVideo";
 import { urlFor } from "@/sanity/image";
 import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./HeroOverlap.module.scss";
@@ -43,6 +44,7 @@ export function HeroOverlap({
   ctaLabel,
   registrationNumber,
   photo,
+  youtubeId,
   availabilityStatus,
   availabilityText,
 }: {
@@ -56,6 +58,9 @@ export function HeroOverlap({
   ctaLabel: string;
   registrationNumber?: string;
   photo?: SanityImage;
+  // When set, a click-to-play YouTube embed appears over the photo below
+  // instead of the plain static image — see HeroVideo.tsx.
+  youtubeId?: string;
   availabilityStatus?: AvailabilityStatus;
   availabilityText?: string;
 }) {
@@ -73,20 +78,30 @@ export function HeroOverlap({
   // wants at 2x DPR; the source itself needs a larger owner re-upload,
   // no pipeline fix closes that gap, see this pass's own report).
   const photoSrc = photo ? urlFor(photo).url() : "/design-lab/01.webp";
+  const photoSizes = "(min-width: 64rem) 100vw, 100vw";
 
   return (
     <section className={styles.heroOverlapSection} data-lab-section={`hero-${treatment}`}>
       {label ? <p className={styles.heroOverlapLabel}>{label}</p> : null}
       <div className={styles.heroOverlap}>
         <div className={styles.heroOverlapPhotoWrap}>
-          <Image
-            src={photoSrc}
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 64rem) 100vw, 100vw"
-            className={photoClassName}
-          />
+          {youtubeId ? (
+            <HeroVideo
+              youtubeId={youtubeId}
+              photoSrc={photoSrc}
+              photoClassName={photoClassName}
+              sizes={photoSizes}
+            />
+          ) : (
+            <Image
+              src={photoSrc}
+              alt=""
+              fill
+              priority
+              sizes={photoSizes}
+              className={photoClassName}
+            />
+          )}
           {/* Mobile-only revision: bottom-anchored gradient dissolving
               the photo into --color-bg so the text block below sits on
               solid ivory, not photo texture. display:none above mobile

@@ -137,7 +137,7 @@ export const homePageQuery = defineQuery(`
       positioningStatement,
       ctaLabel,
       photo,
-      "videoUrl": video.asset->url
+      youtubeId
     },
     chiSono,
     comeFunziona,

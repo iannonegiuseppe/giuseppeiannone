@@ -37,7 +37,12 @@ export const metadata: Metadata = {
 };
 
 interface HomePageData {
-  hero?: { positioningStatement?: string; ctaLabel?: string; photo?: SanityImage };
+  hero?: {
+    positioningStatement?: string;
+    ctaLabel?: string;
+    photo?: SanityImage;
+    youtubeId?: string;
+  };
   chiSono?: {
     introHeading?: string;
     introLinkLabel?: string;
@@ -141,6 +146,7 @@ export default async function DesignLabPage({
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
+        youtubeId={homePage?.hero?.youtubeId}
       />
 
       <ChiSonoOverlap

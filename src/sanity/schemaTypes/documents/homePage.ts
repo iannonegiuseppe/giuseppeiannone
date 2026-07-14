@@ -89,12 +89,15 @@ export const homePage = defineType({
           ],
         }),
         defineField({
-          name: "video",
-          title: "Background video (optional)",
+          name: "youtubeId",
+          title: "YouTube video ID (optional)",
           description:
-            "Short, silent, looping clip layered over the photo — never the default. Small screens, reduced-motion preference, and data-saver connections all get the photo instead, no matter what's set here.",
-          type: "file",
-          options: { accept: "video/mp4,video/webm" },
+            "The 11-character ID from a YouTube URL (the part after \"v=\"). When set, a click-to-play button appears over the photo above; the photo stays the poster frame and fallback either way. Leave empty to keep the current static-photo hero.",
+          type: "string",
+          validation: (Rule) =>
+            Rule.regex(/^[\w-]{11}$/, { name: "YouTube video ID" }).warning(
+              "Doesn't look like an 11-character YouTube video ID — double-check it's just the ID, not the full URL.",
+            ),
         }),
       ],
     }),

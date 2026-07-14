@@ -41,6 +41,7 @@ interface HomePageData {
     positioningStatement?: string;
     ctaLabel?: string;
     photo?: SanityImage;
+    youtubeId?: string;
   };
   chiSono?: {
     introHeading?: string;
@@ -225,6 +226,7 @@ export default async function Home({
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
+        youtubeId={homePage?.hero?.youtubeId}
         availabilityStatus={availability?.status}
         availabilityText={availability?.text}
       />

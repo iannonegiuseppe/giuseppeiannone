@@ -230,6 +230,14 @@
   bottom: 2rem;
   z-index: 1;
   padding-block: 0;
+  // At lg+ this grid's implicit row spans the full hero height (see
+  // .heroOverlapTextInner's own comment) even though visible text only
+  // occupies columns 7-12 — the empty columns 1-6, over the photo's
+  // subject side, would otherwise silently swallow clicks meant for
+  // whatever's in the photo layer beneath (surfaced by HeroVideo's new
+  // click-to-play button). pointer-events re-enabled on the actual text
+  // column below, so the CTA stays clickable everywhere it always was.
+  pointer-events: none;
 
   @include mixins.breakpoint-up(md) {
     // Tablet: UNCHANGED — back to normal flow, original padding.
@@ -255,6 +263,7 @@
   display: flex;
   flex-direction: column;
   grid-column: 1 / -1;
+  pointer-events: auto;
 
   @include mixins.breakpoint-up(lg) {
     // Snaps to columns 7-12, vertically centered against the photo (the
