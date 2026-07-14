@@ -82,11 +82,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-// Marcellus has no bold cut — hierarchy between h1/h2 is by size only,
-// font-weight is never set above 400 (the default). h3 deliberately does
-// NOT use the display font: Marcellus loses legibility below ~24px, and
-// Lato has no 500/600 to lean on for emphasis at h3's size, so it stays on
-// the body font at its own size step instead of faking either.
+// EB Garamond is only loaded at weight 400 — hierarchy between h1/h2 is by
+// size only, font-weight is never set above 400. h3 deliberately does NOT
+// use the display font: a display serif loses legibility below ~24px at
+// h3's size, so it stays on the body font at its own size step instead.
 h1,
 h2 {
   font-family: var(--font-display);

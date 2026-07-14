@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { VisualEditing } from "next-sanity/visual-editing";
-import { Lato, Marcellus } from "next/font/google";
+import { EB_Garamond, Source_Sans_3 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { Footer } from "@/components/Footer";
@@ -24,25 +24,34 @@ import {
 } from "@/sanity/seo";
 import "./globals.scss";
 
-// Marcellus ships Regular (400) only — there is no bold cut, so no other
-// weight is requested here. Never apply a heavier font-weight to it in CSS.
-const marcellus = Marcellus({
-  variable: "--font-marcellus",
+// Global restyle pass: EB Garamond replaces Marcellus entirely (not kept
+// alongside it for any heading tier). Regular (400) is still the only
+// weight requested, matching this codebase's "only load what's used"
+// discipline — no component sets a heavier display weight. Unlike
+// Marcellus, EB Garamond has a real italic cut, loaded here too even
+// though nothing currently sets font-style italic on --font-display —
+// cheap to have available now that it's real, rather than the browser's
+// faux-slanted fallback if a future block needs it.
+const ebGaramond = EB_Garamond({
+  variable: "--font-eb-garamond",
   subsets: ["latin"],
   weight: ["400"],
+  style: ["normal", "italic"],
 });
 
-// Lato's real (non-synthesized) weights are 100/300/400/700/900 — no 500 or
-// 600. 700 is kept for inline emphasis within body copy only; heading
-// hierarchy uses 400 at different sizes, not weight. Italic is loaded
-// too — the restricted Portable Text schema allows an `em` mark, and
-// without it that would fall back to the browser's own faux-slanted
-// rendering instead of Lato's real italic cut.
-const lato = Lato({
-  variable: "--font-lato",
-  subsets: ["latin"],
+// Global restyle pass: Source Sans 3 replaces Lato. Config mirrors the two
+// scoped loaders already proven in this repo (design-preview, styleguide)
+// rather than Lato's older/narrower one: latin-ext added (better Italian
+// diacritic coverage) and display: "swap" added (both strictly better,
+// not just a literal swap). 700 is kept for inline emphasis within body
+// copy only, matching the same convention as before; italic is loaded for
+// the restricted Portable Text `em` mark, as before.
+const sourceSans3 = Source_Sans_3({
+  variable: "--font-source-sans-3",
+  subsets: ["latin", "latin-ext"],
   weight: ["400", "700"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 // Site-wide fallback + noindex default. Individual pages (e.g. the
@@ -140,7 +149,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${marcellus.variable} ${lato.variable}`}
+      className={`${ebGaramond.variable} ${sourceSans3.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
