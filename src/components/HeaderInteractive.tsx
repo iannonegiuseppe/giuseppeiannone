@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { homePath, type Locale } from "@/sanity/paths";
-import type { ContactChannel, ResolvedLogo } from "@/sanity/seo";
+import type { ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
 import type { HeaderNavItem } from "./headerNavItems";
 import { HeaderNavItemWithSubmenu } from "./HeaderNavItemWithSubmenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
-import { Logo } from "./Logo";
+import { SignatureMark } from "./Logo";
 import { MobileMenuOverlay } from "./MobileMenuOverlay";
 import styles from "./HeaderInteractive.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
@@ -50,15 +50,11 @@ function getScrollTop(container: HTMLElement | (Window & typeof globalThis)): nu
 export function HeaderInteractive({
   navItems,
   locale,
-  authorName,
-  logo,
   ctaLabel,
   contactChannels,
 }: {
   navItems: HeaderNavItem[];
   locale: Locale;
-  authorName: string;
-  logo?: ResolvedLogo;
   ctaLabel: string;
   contactChannels?: ContactChannel[];
 }) {
@@ -115,8 +111,17 @@ export function HeaderInteractive({
     <>
       <header className={styles.labHeader} ref={headerRef} data-lab-header="true" data-collapsed="false">
         <div className={styles.labHeaderInner}>
+          {/* Logo pass: signature + a live "Psicoterapeuta" descriptor,
+              both inside one link. No aria-label added here — the SVG's
+              own role="img"/aria-label="Dr. Giuseppe Iannone" plus the
+              visible descriptor text already compose into a complete,
+              non-redundant accessible name ("Dr. Giuseppe Iannone
+              Psicoterapeuta") via the standard link-name algorithm;
+              adding a second aria-label on the Link would only replace
+              that with a hand-written duplicate. */}
           <Link href={homePath(locale)} className={styles.labHeaderWordmark}>
-            <Logo logo={logo} authorName={authorName} imageClassName={styles.labHeaderLogoImage} />
+            <SignatureMark className={styles.labHeaderSignature} />
+            <span className={styles.labHeaderDescriptor}>Psicoterapeuta</span>
           </Link>
 
           <nav className={styles.labHeaderNav} aria-label="Menu principale">

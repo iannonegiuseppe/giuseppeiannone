@@ -147,50 +147,67 @@
   }
 }
 
+// Logo pass: was a text glyph ("Giuseppe Iannone", --font-display),
+// scroll-collapse-shrunk via font-size (see the old comment history in
+// git). Now a real vectorized signature + a live "Psicoterapeuta"
+// descriptor stacked in a column — color stays here (inherited by the
+// SVG via currentColor, exactly like it inherited the text's own ink
+// color before) and the collapse-driven size interpolation is preserved,
+// just re-expressed as a width on .labHeaderSignature below instead of a
+// font-size on this element (no direct ref/dataset entanglement to
+// unpick — the old collapse effect only ever wrote data-collapsed on the
+// header/CTA button, this shrink was always a plain CSS descendant
+// selector keyed off that attribute, see below).
 .labHeaderWordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1875rem; // 3px between signature and descriptor
   flex-shrink: 0;
   min-width: 0;
-  font-family: var(--font-display);
   color: var(--color-text);
   text-decoration: none;
-  white-space: nowrap;
-  // Mobile tier (16px, not interpolated — the wordmark shrink range
-  // below is a desktop-only refinement over a plain, unmoving mobile
-  // size): part of the same empirical mobile-overflow fix as
-  // .labHeaderInner's gap and .labHeaderCta's sizing above/below —
-  // "Giuseppe Iannone" at the desktop 22px rest-size alone measured
-  // 178px, already most of a 375px mobile row before the button or
-  // burger are even accounted for.
-  font-size: 1rem; // 16px, mobile tier
-  transition: font-size 250ms ease;
-
-  @include mixins.breakpoint-up(lg) {
-    // Revision round 3, item 1: 24px rest — resolved the earlier flagged
-    // 22-vs-24px rest-size inconsistency by making this the authoritative
-    // rest value.
-    font-size: 1.5rem; // 24px, REST state
-  }
 
   @include mixins.focus-ring;
+}
+
+// Mobile tier: 130px wide (≈22px tall at the signature's own 5.9:1
+// ratio) — part of the same empirical mobile-overflow budget as
+// .labHeaderInner's gap and .labHeaderCta's sizing. Desktop rest: 170px
+// (≈29px tall), sized against a real render for hairline-stroke
+// legibility (see this pass's own report). Width transitions exactly
+// like the old font-size did.
+.labHeaderSignature {
+  display: block;
+  width: 8.125rem; // 130px, mobile tier
+  height: auto;
+  transition: width 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    width: 10.625rem; // 170px, REST state
+  }
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
 }
 
-// CMS-driven header/footer pass: only used when siteSettings.logo is set
-// (Logo.tsx's image branch) — scoped separately from .labHeaderWordmark
-// itself so the far-more-common text path (logo empty) keeps its exact
-// existing CSS untouched, zero risk of an unintended pixel diff there.
-// display: block avoids the few-px inline-baseline gap under an <img>.
-.labHeaderLogoImage {
-  display: block;
+.labHeader[data-collapsed="true"] .labHeaderSignature {
+  @include mixins.breakpoint-up(lg) {
+    width: 7.8125rem; // 125px, collapsed — mirrors the old 24px->17px rest/collapsed ratio
+  }
 }
 
-.labHeader[data-collapsed="true"] .labHeaderWordmark {
-  @include mixins.breakpoint-up(lg) {
-    font-size: 1.0625rem; // 17px, per round 4 (was round 3's 18px)
-  }
+// Live text, not baked into the SVG — screen-reader friendly, crisp at
+// any size, color from tokens rather than a second inlined path set.
+.labHeaderDescriptor {
+  font-family: var(--font-body);
+  font-size: 0.625rem; // 10px
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  white-space: nowrap;
 }
 
 .labHeaderNav {
@@ -198,6 +215,11 @@
 
   @include mixins.breakpoint-up(lg) {
     display: block;
+    // Pushes nav (and, since .labHeaderActions is its next flex sibling,
+    // everything after it) as far right as the row allows, leaving the
+    // logo alone on the left — the standard flexbox "group the rest"
+    // technique, one auto margin rather than a second wrapper element.
+    margin-left: auto;
   }
 }
 

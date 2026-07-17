@@ -44,10 +44,6 @@ const alternatesProjection = `
 export const siteSettingsQuery = defineQuery(`
   *[_type == "siteSettings" && language == $locale][0]{
     title,
-    logo{
-      ...,
-      "aspectRatio": asset->metadata.dimensions.aspectRatio
-    },
     seo,
     author,
     socialLinks,
