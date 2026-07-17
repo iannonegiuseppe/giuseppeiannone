@@ -80,7 +80,7 @@ export function FinalContactSection({
   const photoSrc = photo ? urlFor(photo).url() : "/design-lab/11.webp";
 
   return (
-    <div className={styles.finalContactBand} data-lab-section="final-contact">
+    <div id="contatto" className={styles.finalContactBand} data-lab-section="final-contact">
       <div className={styles.finalContactHeaderRow}>
         <RevealOnScroll>
           <div className={styles.finalContactHeader}>

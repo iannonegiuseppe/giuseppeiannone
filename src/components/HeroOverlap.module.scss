@@ -45,36 +45,22 @@
   }
 }
 
-// --- Williamson-adaptation hero: overlap composition ---------------------
-// (docs/adaptation/adaptation-brief.md). Mobile-first: photo and content
-// are plain stacked flow siblings (no overlap — there's no safe empty
-// space to lay text over at narrow widths). At `lg` and up, the photo
-// becomes a full-bleed absolute layer and the content column overlaps it,
-// landing on the photo's own empty background space (not the subject).
-// Mobile hero revision — full-viewport-height hero, per spec. Fallback
-// chain: min-height:100vh (oldest/safest baseline) -> min-height:100svh
-// (small viewport height — accounts for the address bar being SHOWN,
-// the worst-case smallest viewport) -> height:100dvh (dynamic viewport
-// height — recomputes live as the address bar shows/hides, so the hero
-// always fills exactly the CURRENT visible viewport; this is what
-// actually guarantees the bottom text block is never hidden under the
-// address bar). Declaration order matters: each later rule overrides in
-// browsers that support it, degrading gracefully in ones that don't.
+// --- Hero — full-height pass -----------------------------------------------
+// Full-viewport again on both breakpoints — 100dvh where supported
+// (recomputes live as mobile browser chrome shows/hides, so the hero
+// always fills exactly the CURRENT visible viewport), 100vh as the
+// fallback for browsers without dvh support. See this pass's own report
+// for whether dvh's live resize caused visible jank on a real mobile
+// viewport, and whether 100svh (the smaller, static "worst case" unit)
+// was needed instead.
 .heroOverlapSection {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  min-height: 100svh;
-  height: 100dvh;
 
-  @include mixins.breakpoint-up(md) {
-    // Tablet: UNCHANGED — back to the original auto/content-driven
-    // height (stacked photo-then-text), per this pass's own explicit
-    // "tablet unchanged" guard.
-    min-height: 0;
-    height: auto;
-  }
-
-  @include mixins.breakpoint-up(lg) {
-    height: 100vh; // unchanged — the photo is full-bleed, so the section must be tall enough to fill the viewport
+  @supports (min-height: 100dvh) {
+    min-height: 100dvh;
   }
 }
 
@@ -88,245 +74,214 @@
   letter-spacing: 0.08em;
 }
 
+// 12-col grid, stretched to fill the section's full (viewport) height —
+// `flex: 1` on a flex-column section, `grid-template-rows: minmax(0, 1fr)`
+// so the single row (and every percentage-height child resolving against
+// it) equals that full height, not just the items' own content height.
+// `position: relative` establishes the containing block the mobile-tier
+// absolutely-positioned photo/gradient/text below anchor against.
 .heroOverlap {
+  @include shared.grid-12;
   position: relative;
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
-  // Mobile hero revision — fills .heroOverlapSection's own 100dvh, so
-  // .heroOverlapPhotoWrap (absolute, inset:0 at mobile below) has a real
-  // height to stretch against, same mechanism this class already gives
-  // the desktop overlap treatment below.
-  height: 100%;
-
-  @include mixins.breakpoint-up(md) {
-    // Tablet: UNCHANGED — back to auto (content-driven stacked layout).
-    height: auto;
-  }
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr);
 
   @include mixins.breakpoint-up(lg) {
-    display: flex;
     align-items: center;
-    // Tall enough that the photo genuinely dominates the first viewport,
-    // not a horizontal band with ivory visible above/below it (the earlier
-    // version's "tidy rectangle" problem).
-    // min-height: 46rem;
-    height: 100%;
+    // Sparse auto-placement (the grid default) advances its cursor past
+    // column 12 once the DOM-first item (photo) is placed at columns
+    // 7-12, so the next item never backtracks into row 1's now-empty
+    // columns 1-6 — it drops to row 2 instead, even though nothing
+    // occupies that space. `dense` re-packs into that hole, putting both
+    // items in row 1 side by side, which is what column placement alone
+    // implies but sparse packing doesn't deliver.
+    grid-auto-flow: dense;
   }
 }
 
-// Mobile hero revision — the photo becomes a full-bleed absolute layer
-// (inset:0 against .heroOverlap's own 100dvh) instead of a stacked,
-// aspect-ratio-boxed block, so it fills the whole screen height with the
-// text block overlaid on top (see .heroOverlapContent below).
+// Below lg: a full-bleed absolute layer again (position:absolute ignores
+// any grid-column placement, so none is set here — inset-inline:0 alone
+// spans the full width), pinned to the BOTTOM of .heroOverlap rather than
+// stretched to inset:0 like the old mobile-hero-revision was — the photo
+// grows upward from the bottom edge instead of filling the whole screen.
+// At lg+: an ordinary grid item (photo right, col 7-12), bottom-aligned
+// within its row via align-self (the row itself is vertically centered
+// by .heroOverlap's own align-items, which this overrides just for this
+// item).
+//
+// Both tiers share the actual sizing logic: height:100% of the row
+// (established above), capped by max-height so the box can grow but can
+// never reach the fixed header — --header-height (src/styles/_tokens.scss)
+// is a new token this pass adds; none existed before because nothing
+// previously needed to measure against the header's real height (the
+// header is position:fixed and overlays content, so nothing else reads
+// this implicitly). 1.5rem extra clearance per spec, beyond the header's
+// own edge.
 .heroOverlapPhotoWrap {
   position: absolute;
-  inset: 0;
-  aspect-ratio: unset;
-
-  @include mixins.breakpoint-up(md) {
-    // Tablet: UNCHANGED — back to the original stacked, aspect-ratio-
-    // boxed treatment.
-    position: relative;
-    inset: auto;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-  }
+  inset-inline: 0;
+  bottom: 0;
+  height: 100%;
+  max-height: calc(100% - var(--header-height) - 1.5rem);
+  z-index: 0;
 
   @include mixins.breakpoint-up(lg) {
-    position: absolute;
-    inset: 0;
-    aspect-ratio: unset;
-    height: 100%;
+    position: relative;
+    inset-inline: auto;
+    bottom: auto;
+    // Was col(7, 6) — a fixed 6-track width (~596px at 1440px) that was
+    // actually the thing capping the photo's size, not the header-
+    // clearance max-height above: the cutout's own ~0.94:1 ratio is wider
+    // than that 6-track box's own aspect ratio, so `contain` was shrinking
+    // it to fit the box's WIDTH, leaving it well short of the allowed
+    // height. Fixed at the root: width:auto + aspect-ratio lets the box's
+    // width be DERIVED from its already-correct (header-capped) height,
+    // so it renders at the full allowed size regardless of column math.
+    //
+    // grid-column is deliberately just the LAST column (a single, narrow
+    // track), not a wide span — an earlier attempt at col 6/-1 (7 tracks)
+    // overlapped .heroOverlapTextInner's own col(1,6) at column 6, and
+    // since neither item has an explicit grid-row, the auto-placement
+    // algorithm detected that collision and pushed text into a SECOND
+    // row, splitting the grid's height in half and starving the photo of
+    // exactly the height this whole change was meant to restore (caught
+    // via getBoundingClientRect on both items, not assumed). A 1-track
+    // zone with justify-self:end anchors the box's right edge flush with
+    // the container edge and lets its aspect-ratio-derived width overflow
+    // LEFTWARD across the middle columns (empty space in this layout —
+    // nothing else claims it) without any column overlap for the
+    // auto-placement algorithm to trip over.
+    grid-column: 12 / -1;
+    justify-self: end;
+    width: auto;
+    // Safety cap: the aspect-ratio-derived width above depends only on
+    // the box's HEIGHT, which can grow arbitrarily large on a narrow-but-
+    // tall viewport (e.g. 1024x1400) regardless of how little horizontal
+    // room is actually available — verified this actually happened
+    // (derived width hit ~998px on a 1024px-wide viewport, genuinely
+    // overlapping the text column, confirmed via screenshot before this
+    // cap was added). max-width in vw (not %) deliberately — a percentage
+    // here resolves against the grid item's own single-track grid area
+    // (91px at 1440px), not the container, for the same non-stretched-
+    // grid-item reason percentage HEIGHT doesn't behave as expected
+    // either (see above); vw sidesteps that entirely. 47vw tuned to keep
+    // a real margin (40px+) from the text column across 1024-1440px+,
+    // measured via getBoundingClientRect, not assumed from the number
+    // alone.
+    max-width: 47vw;
+    aspect-ratio: 0.94;
+    align-self: end;
   }
 }
 
+// object-fit: contain (not cover) — the subject is already tightly
+// cropped by its own alpha edge, so nothing should be cropped further by
+// the box; cover would risk clipping the cutout at the box's own bounds.
+// object-position: bottom (not center) — the box is now taller than the
+// image needs to be in many cases (capped by the header-clearance max-
+// height, not by the image's own aspect ratio), so the image must hug the
+// box's bottom edge rather than float centered with a gap beneath it. No
+// mirroring transform — the crop already faces the right way.
 .heroOverlapPhotoImg {
   object-fit: cover;
-  // Mobile hero revision — the crop box is now the full 100dvh screen
-  // (was a compact aspect-ratio 4/3 box), so "center top" crops far too
-  // aggressively. Empirically swept object-position-x in 10-20% steps
-  // against a real render (not estimated from the source image alone —
-  // the source's own visual layout doesn't map linearly onto the
-  // object-fit:cover crop window once the box is this much narrower than
-  // the image): 50%+ crops straight through empty backdrop past his
-  // face, 30% centers it cleanly. Vertical (15%) has little effect at
-  // this box's proportions (the image's height barely overflows the
-  // box), tested 0/15/25% — all near-identical, 15% picked as a safe
-  // middle value. Confirmed face fully visible, not cropped, not behind
-  // the bottom text block, at both 390x844 and 360x640 — see this pass's
-  // own report.
-  object-position: 30% 15%;
-
-  @include mixins.breakpoint-up(md) {
-    // Tablet: UNCHANGED — back to the original crop.
-    object-position: center top;
-  }
+  // object-position: bottom center;
 
   @include mixins.breakpoint-up(lg) {
-    object-position: right center;
-    // Mirrored so the subject reads as emerging from the LEFT edge (photo
-    // 01's subject is originally framed to the right) — the crop/position
-    // above is computed pre-mirror, then the whole result is flipped, so
-    // the subject ends up left, empty background right, matching the
-    // reference composition (photo left, headline right).
-    // transform: scaleX(-1);
+    object-fit: contain;
+    object-position: bottom center;
   }
 }
 
-// Mobile hero revision — bottom-anchored gradient dissolving the photo
-// into --color-bg (the ivory page background — NOT pine, NOT dark) so
-// the text block below sits on solid ivory, not photo texture. Because
-// the fade IS to the light background, the text keeps its normal dark
-// ink/pine treatment (see .heroOverlapName/.heroOverlapSubtitle/etc.
-// below, unchanged colors) — this is the opposite direction from every
-// OTHER dark-band gradient in this codebase (FinalContactSection's own
-// photo dissolve fades TO pine), so don't copy that technique's color.
-// Stops tuned against real contrast measurement at each text line's
-// actual rendered position — see this pass's own report for the exact
-// ratios and final stop values.
-.heroOverlapMobileGradient {
-  display: none;
+// Fades the photo's bottom edge into the page background — see this
+// pass's own comment in HeroOverlap.tsx for why (melts the hero into the
+// next section with no seam, AND dissolves the cutout's own hard crop
+// line). Sits above the photo (z-index above its implicit/auto stacking),
+// below the text. Height is a percentage of the FULL hero (not just the
+// photo), same reference frame as the photo's own height:100% above —
+// tuned within the spec's 25-35% range against a real render until the
+// crop edge was genuinely gone, not just softened.
+.heroOverlapGradient {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent 35%,
-    var(--color-bg) 68%
-  );
-
-  @include mixins.breakpoint-up(md) {
-    display: none; // tablet/desktop: no scrim, unchanged — explicit, not just inherited
-  }
-}
-
-// NO SCRIM — the two previous passes (a wide translucent wall, then a
-// "tighter" gradient) both amounted to painting a solid ivory panel over
-// the photo and setting text on that, which isn't overlap. Text now sits
-// directly on the photograph. Contrast is handled per the two rules below
-// instead of by covering the image:
-// 1. --color-text on the photo's calm background measures 9-11:1 (verified
-//    against every sampled tone in the overlap zone) — passes AA on its
-//    own, no treatment needed (see .heroOverlapName/.heroOverlapPositioning
-//    below, unchanged from --color-text).
-// 2. --color-text-muted measures 3.3-4.2:1 on the same tones — fails AA.
-//    Per instruction, the fix is a locally darkened color (used directly
-//    in .heroOverlapCredentials/.heroOverlapTrustLine below), not a
-//    lightened photo or a background fill.
-// Grid-12 wrapper — governs where the TEXT snaps to; the photo stays a
-// separate, full-bleed absolute layer untouched by this grid.
-// Mobile hero revision — the text block moves out of normal flow and
-// pins to the bottom of .heroOverlap (over the photo + gradient),
-// instead of stacking below the photo. left:0/right:0 keeps
-// shared.grid-12's own container padding-inline as the horizontal inset
-// (unchanged mechanism, just now on an absolutely-positioned box); the
-// `bottom` offset is the spec's own "~32-40px breathing room above the
-// screen bottom edge" — 2rem (32px), low end of that range, reported.
-.heroOverlapContent {
-  @include shared.grid-12;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 2rem;
+  inset-inline: 0;
+  bottom: 0;
+  height: 70%;
   z-index: 1;
-  padding-block: 0;
-  // At lg+ this grid's implicit row spans the full hero height (see
-  // .heroOverlapTextInner's own comment) even though visible text only
-  // occupies columns 7-12 — the empty columns 1-6, over the photo's
-  // subject side, would otherwise silently swallow clicks meant for
-  // whatever's in the photo layer beneath (surfaced by HeroVideo's new
-  // click-to-play button). pointer-events re-enabled on the actual text
-  // column below, so the CTA stays clickable everywhere it always was.
   pointer-events: none;
-
-  @include mixins.breakpoint-up(md) {
-    // Tablet: UNCHANGED — back to normal flow, original padding.
-    position: relative;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    z-index: auto;
-    padding-block: var(--space-6);
-  }
+  background: linear-gradient(to bottom, transparent, var(--color-bg) 60%);
 
   @include mixins.breakpoint-up(lg) {
-    z-index: 1;
-    padding-block: 0;
+    height: 32%;
   }
 }
 
-// No flex `gap` here — the spec calls for a DIFFERENT gap between each
-// pair (24px name-to-subtitle, 32px subtitle-to-CTA, 24px CTA-to-
-// registration), so each is set as an explicit margin-top on the element
-// below it instead of one uniform gap value.
+// Below lg: overlays the photo, bottom-anchored — the one thing this
+// pass reintroduces from the old mobile-hero-revision, now to sit on the
+// gradient's strong (near-solid ivory) zone rather than on a real
+// photograph's own background. padding-inline matches mixins.container's
+// own mobile-tier value directly (not the mixin itself — that also sets
+// width/max-width/margin-inline, which would fight this element's own
+// absolute inset-inline:0) so the text aligns with the header/rest of the
+// site's content edge despite being absolutely positioned.
+//
+// At lg+: reverts to an ordinary, non-positioned grid item (col 1-6,
+// vertically centered) — unchanged from the previous pass.
+//
+// No flex `gap` — the spec calls for a DIFFERENT gap between each pair
+// (name-to-subtitle, subtitle-to-CTA), so each is set as an explicit
+// margin-top on the element below it instead of one uniform gap value.
 .heroOverlapTextInner {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  padding-inline: var(--space-5);
+  padding-bottom: var(--space-8);
   display: flex;
   flex-direction: column;
-  grid-column: 1 / -1;
-  pointer-events: auto;
 
   @include mixins.breakpoint-up(lg) {
-    // Snaps to columns 7-12, vertically centered against the photo (the
-    // grid item's own align-self, since .heroOverlapContent's grid rows
-    // are a single implicit row spanning the full min-height).
-    @include shared.col(7, 6);
+    position: static;
+    padding-inline: 0;
+    padding-bottom: 0;
+    @include shared.col(1, 6);
     align-self: center;
   }
 }
 
-// Moved ABOVE the name per spec (previously "credentials", below the
-// name) — same field, reordered and restyled as an eyebrow label.
-// Spec asks for "pine at 80% opacity" — verified against the photo's
-// actual tonal range (the same range .heroOverlapRegistration was
-// checked against below) and it FAILS AA at several realistic points
-// (as low as 2.74:1 in the darker end); full-strength pine holds
-// 6.37-8.04:1 at this text's actual rendered position, so that's what's
-// used here instead. Flagged in the review notes, not silently changed.
-.heroOverlapEyebrow {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.875rem; // 14px
-  font-weight: var(--font-weight-bold); // 700 — nearest real weight to spec's 600
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
 .heroOverlapName {
-  // Gap above the name isn't specced explicitly; a modest step (12px) —
-  // eyebrow labels typically sit close to their heading.
-  margin: var(--space-3) 0 0;
+  margin: 0;
   font-family: var(--font-display);
-  // Mobile keeps the normal site scale — the overlap/oversized treatment
-  // is a desktop-only composition (mobile stacks plainly, see the other
-  // breakpoint-up(lg) rules throughout this file).
+  // Hero — finish it pass: --fs-display's clamp tops out at 3.75rem
+  // (60px) at any viewport ≥1200px — the reference's headline reads
+  // closer to 3.25-3.5rem. No token sits in that narrower range (every
+  // other real H1 site-wide uses this exact token), so it's reused as-is
+  // rather than hand-rolling a one-off clamp; the gap (~0.25rem/4px over
+  // the upper end of the reference) is reported, not silently absorbed.
+  // Same reasoning for line-height: --lh-display is 1.15 vs. the
+  // reference's ~1.25 — reused rather than a one-off value.
   font-size: var(--fs-display);
   line-height: var(--lh-display);
-  // Pine ink, per spec — verified at this text's actual rendered position
-  // (6.37-8.04:1 against the sampled background range), same check as
-  // the eyebrow above.
-  color: var(--color-accent);
+  color: var(--color-text);
+}
 
-  @include mixins.breakpoint-up(lg) {
-    // Reference measured directly (docs/adaptation/reference-hero.jpg):
-    // the two-line headline block spans ~16% of the viewport height.
-    // Roughly double the site's normal --fs-display — local to this
-    // hero, not a change to the shared token, since no other heading on
-    // the site is meant to run this large. clamp's own min bound (5rem)
-    // would overflow below lg if applied there, hence gating it here.
-    font-size: clamp(5rem, 10vw, 7.5rem);
-    line-height: 1.05;
-  }
+// Real emphasis technique — EB Garamond italic 400 + --color-accent, the
+// exact recipe documented in /styleguide.
+.heroOverlapEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
 }
 
 .heroOverlapSubtitle {
-  margin: var(--space-5) 0 0; // 24px below the name, per spec
-  max-width: 38ch;
+  margin: var(--space-5) 0 0; // 24px below the headline
+  // Narrower than the headline's own column (naturally ~560px at lg+) so
+  // it reads as a distinct, tighter measure — tuned against the real copy
+  // to land at roughly three lines, per spec.
+  max-width: 42ch;
   font-family: var(--font-body);
-  font-size: 1.1875rem; // 19px — not an existing type-scale step; rem per
-  // the project's no-raw-px rule, exact value per spec.
-  line-height: 1.6;
-  color: var(--color-text);
+  font-size: var(--fs-body); // 1rem, per spec
+  line-height: var(--lh-body); // 1.7, per spec
+  color: var(--color-text-muted);
 }
 
 .heroOverlapCta {
@@ -334,45 +289,22 @@
   margin-top: var(--space-6); // 32px below the subtitle, per spec
 }
 
-// Spec asks for "pine at 65% opacity" — verified against the same photo
-// background range and it fails AA everywhere tested (2.24-3.44:1, well
-// under 4.5). Using the same locally-darkened on-photo color already
-// established and verified elsewhere in this file (5.4-9.8:1 across the
-// range) instead of the literal opacity value.
-.heroOverlapRegistration {
-  margin: var(--space-5) 0 0; // 24px below the button, per spec
-  max-width: 32ch;
-  font-family: var(--font-body);
-  font-size: 0.8125rem; // 13px
-  color: #3a3630;
-}
-
 @media (prefers-reduced-motion: no-preference) {
-  .heroOverlapEyebrow,
   .heroOverlapName,
   .heroOverlapSubtitle,
-  .heroOverlapCta,
-  .heroOverlapRegistration {
+  .heroOverlapCta {
     animation: heroStaggerIn 450ms ease-out both;
   }
 
-  .heroOverlapEyebrow {
+  .heroOverlapName {
     animation-delay: 0ms;
   }
 
-  .heroOverlapName {
+  .heroOverlapSubtitle {
     animation-delay: 120ms;
   }
 
-  .heroOverlapSubtitle {
-    animation-delay: 240ms;
-  }
-
   .heroOverlapCta {
-    animation-delay: 360ms;
-  }
-
-  .heroOverlapRegistration {
-    animation-delay: 480ms;
+    animation-delay: 240ms;
   }
 }

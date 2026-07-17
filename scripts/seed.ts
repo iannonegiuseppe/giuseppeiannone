@@ -412,9 +412,11 @@ async function seed() {
     language: "it",
     title: "Giuseppe Iannone",
     hero: {
+      headline: "Uno spazio sicuro per ritrovare chiarezza e benessere.",
+      headlineEmphasisWord: "chiarezza",
       positioningStatement:
-        "Uno spazio calmo per affrontare ciò che pesa, con metodo e senza fretta.",
-      ctaLabel: "Prenota un primo colloquio",
+        "Un percorso di psicoterapia costruito su ascolto, rispetto e professionalità, per accompagnarti a stare meglio con te stesso e con gli altri.",
+      ctaLabel: "Inizia il percorso",
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: heroPhotoId } },
     },
     chiSono: {

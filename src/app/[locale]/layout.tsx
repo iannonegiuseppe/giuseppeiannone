@@ -17,7 +17,7 @@ import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
 import { sedesQuery } from "@/sanity/queries";
-import { getSiteSettings, resolveLogoImage } from "@/sanity/seo";
+import { getSiteSettings } from "@/sanity/seo";
 import "./globals.scss";
 
 // Global restyle pass: EB Garamond replaces Marcellus entirely (not kept
@@ -42,10 +42,16 @@ const ebGaramond = EB_Garamond({
 // not just a literal swap). 700 is kept for inline emphasis within body
 // copy only, matching the same convention as before; italic is loaded for
 // the restricted Portable Text `em` mark, as before.
+//
+// Header/hero restyle pass: 500 added — the header nav wants a real
+// medium weight (calmer than 700, more substantial than 400). Without a
+// real 500 face, font-weight:500 silently falls back to rendering as
+// plain 400 (the CSS spec's own 400/500 fallback pairing) rather than
+// faux-bolding, so it would have been a no-op otherwise.
 const sourceSans3 = Source_Sans_3({
   variable: "--font-source-sans-3",
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -139,7 +145,6 @@ export default async function LocaleLayout({
       : undefined;
 
   const typedLocale = locale as Locale;
-  const resolvedLogo = resolveLogoImage(siteSettings?.logo);
 
   return (
     <html
@@ -165,15 +170,12 @@ export default async function LocaleLayout({
           <LenisProvider>
             <Header
               locale={typedLocale}
-              authorName={siteSettings?.author?.name ?? ""}
-              logo={resolvedLogo}
               contactChannels={siteSettings?.contactChannels}
             />
             {children}
             <Footer
               locale={typedLocale}
               authorName={siteSettings?.author?.name ?? ""}
-              logo={resolvedLogo}
               authorCredentials={siteSettings?.author?.credentials}
               authorRegistrationNumber={siteSettings?.author?.registrationNumber}
               contactChannels={siteSettings?.contactChannels}

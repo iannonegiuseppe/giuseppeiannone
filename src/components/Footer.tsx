@@ -10,15 +10,11 @@ import {
   YoutubeIcon,
 } from "@/components/icons/social";
 import { resolveNavItems } from "./headerNavItems";
-import { Logo } from "./Logo";
+import { FullLockupMark } from "./Logo";
 import { whatsappUrl } from "@/sanity/contact";
 import type { Locale } from "@/sanity/paths";
 import { getFooterSettings } from "@/sanity/seo";
-import type {
-  ContactChannel,
-  ResolvedLogo,
-  SocialLinks,
-} from "@/sanity/seo";
+import type { ContactChannel, SocialLinks } from "@/sanity/seo";
 import styles from "./Footer.module.scss";
 
 // Footer social icons pass: fixed display order regardless of which
@@ -65,7 +61,6 @@ interface SedeDoc {
 export async function Footer({
   locale,
   authorName,
-  logo,
   authorCredentials,
   authorRegistrationNumber,
   contactChannels,
@@ -77,7 +72,6 @@ export async function Footer({
 }: {
   locale: Locale;
   authorName: string;
-  logo?: ResolvedLogo;
   authorCredentials?: string;
   authorRegistrationNumber?: string;
   contactChannels?: ContactChannel[];
@@ -109,7 +103,7 @@ export async function Footer({
         <div className={styles.labFooterBrand}>
           <div className={styles.labFooterBrandRow}>
             <p className={styles.labFooterWordmark}>
-              <Logo logo={logo} authorName={authorName} imageClassName={styles.labFooterLogoImage} />
+              <FullLockupMark className={styles.labFooterLogoImage} />
             </p>
             {socialIcons.length > 0 ? (
               <div className={styles.labFooterSocialRow}>

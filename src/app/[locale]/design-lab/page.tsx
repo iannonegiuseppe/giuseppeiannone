@@ -37,6 +37,8 @@ export const metadata: Metadata = {
 
 interface HomePageData {
   hero?: {
+    headline?: string;
+    headlineEmphasisWord?: string;
     positioningStatement?: string;
     ctaLabel?: string;
     photo?: SanityImage;
@@ -139,16 +141,13 @@ export default async function DesignLabPage({
     sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
   ]);
 
-  const authorName = siteSettings?.author?.name ?? "";
-
   return (
     <main>
       <HeroOverlap
         treatment="treated"
         label="Hero — approved"
-        authorName={authorName}
-        authorCredentials={siteSettings?.author?.credentials}
-        registrationNumber={siteSettings?.author?.registrationNumber}
+        headline={homePage?.hero?.headline ?? ""}
+        headlineEmphasisWord={homePage?.hero?.headlineEmphasisWord}
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}

@@ -117,7 +117,15 @@
   transition: padding-block 250ms ease;
 
   @include mixins.breakpoint-up(lg) {
-    gap: var(--space-6); // 32px, desktop tier — the burger is gone and the row has room
+    gap: var(--space-6); // 32px, desktop tier — governs the nav-to-actions gap once both are right-clustered below
+    // Header/hero restyle pass: was space-between (logo far left, nav
+    // clustered near it, then a large empty gap, then actions pushed to
+    // the far right edge). .labHeaderNav's own margin-left: auto (below)
+    // now consumes all the free space itself, grouping nav+actions into
+    // one right-aligned cluster next to the logo — flex-start here makes
+    // that explicit rather than relying on the auto-margin to silently
+    // override space-between's own distribution.
+    justify-content: flex-start;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -139,50 +147,67 @@
   }
 }
 
+// Logo pass: was a text glyph ("Giuseppe Iannone", --font-display),
+// scroll-collapse-shrunk via font-size (see the old comment history in
+// git). Now a real vectorized signature + a live "Psicoterapeuta"
+// descriptor stacked in a column — color stays here (inherited by the
+// SVG via currentColor, exactly like it inherited the text's own ink
+// color before) and the collapse-driven size interpolation is preserved,
+// just re-expressed as a width on .labHeaderSignature below instead of a
+// font-size on this element (no direct ref/dataset entanglement to
+// unpick — the old collapse effect only ever wrote data-collapsed on the
+// header/CTA button, this shrink was always a plain CSS descendant
+// selector keyed off that attribute, see below).
 .labHeaderWordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1875rem; // 3px between signature and descriptor
   flex-shrink: 0;
   min-width: 0;
-  font-family: var(--font-display);
   color: var(--color-text);
   text-decoration: none;
-  white-space: nowrap;
-  // Mobile tier (16px, not interpolated — the wordmark shrink range
-  // below is a desktop-only refinement over a plain, unmoving mobile
-  // size): part of the same empirical mobile-overflow fix as
-  // .labHeaderInner's gap and .labHeaderCta's sizing above/below —
-  // "Giuseppe Iannone" at the desktop 22px rest-size alone measured
-  // 178px, already most of a 375px mobile row before the button or
-  // burger are even accounted for.
-  font-size: 1rem; // 16px, mobile tier
-  transition: font-size 250ms ease;
-
-  @include mixins.breakpoint-up(lg) {
-    // Revision round 3, item 1: 24px rest — resolved the earlier flagged
-    // 22-vs-24px rest-size inconsistency by making this the authoritative
-    // rest value.
-    font-size: 1.5rem; // 24px, REST state
-  }
 
   @include mixins.focus-ring;
+}
+
+// Mobile tier: 130px wide (≈22px tall at the signature's own 5.9:1
+// ratio) — part of the same empirical mobile-overflow budget as
+// .labHeaderInner's gap and .labHeaderCta's sizing. Desktop rest: 170px
+// (≈29px tall), sized against a real render for hairline-stroke
+// legibility (see this pass's own report). Width transitions exactly
+// like the old font-size did.
+.labHeaderSignature {
+  display: block;
+  width: 8.125rem; // 130px, mobile tier
+  height: auto;
+  transition: width 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    width: 10.625rem; // 170px, REST state
+  }
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
 }
 
-// CMS-driven header/footer pass: only used when siteSettings.logo is set
-// (Logo.tsx's image branch) — scoped separately from .labHeaderWordmark
-// itself so the far-more-common text path (logo empty) keeps its exact
-// existing CSS untouched, zero risk of an unintended pixel diff there.
-// display: block avoids the few-px inline-baseline gap under an <img>.
-.labHeaderLogoImage {
-  display: block;
+.labHeader[data-collapsed="true"] .labHeaderSignature {
+  @include mixins.breakpoint-up(lg) {
+    width: 7.8125rem; // 125px, collapsed — mirrors the old 24px->17px rest/collapsed ratio
+  }
 }
 
-.labHeader[data-collapsed="true"] .labHeaderWordmark {
-  @include mixins.breakpoint-up(lg) {
-    font-size: 1.0625rem; // 17px, per round 4 (was round 3's 18px)
-  }
+// Live text, not baked into the SVG — screen-reader friendly, crisp at
+// any size, color from tokens rather than a second inlined path set.
+.labHeaderDescriptor {
+  font-family: var(--font-body);
+  font-size: 0.625rem; // 10px
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  white-space: nowrap;
 }
 
 .labHeaderNav {
@@ -190,6 +215,11 @@
 
   @include mixins.breakpoint-up(lg) {
     display: block;
+    // Pushes nav (and, since .labHeaderActions is its next flex sibling,
+    // everything after it) as far right as the row allows, leaving the
+    // logo alone on the left — the standard flexbox "group the rest"
+    // technique, one auto margin rather than a second wrapper element.
+    margin-left: auto;
   }
 }
 
@@ -204,12 +234,16 @@
 
 .labHeaderNavLink {
   font-family: var(--font-body);
-  // Header nav style fix: bumped 14px -> 16px, bold (700) -> regular (400)
-  // — was set to the nearest real weight to an old spec's 600 target
-  // (Lato has no 600 cut); this pass replaces that with a plain
-  // regular-weight, larger-size look instead. REST state.
-  font-size: 1rem; // 16px, REST state (was 14px)
-  font-weight: var(--font-weight-regular); // 400 (was --font-weight-bold, 700)
+  // Header/hero restyle pass: was font-family inherited correctly already
+  // (Source Sans 3), but weight sat at regular (400) with no letter-
+  // spacing — read cramped/plain. Real weight 500 now loaded (see
+  // layout.tsx's own comment) for a calmer, slightly more substantial
+  // look; small positive tracking opens it up further. Size (16px REST /
+  // 15px collapsed, below) already read fine at actual render — kept
+  // unchanged, not part of what was wrong.
+  font-size: 1rem; // 16px, REST state
+  font-weight: var(--font-weight-medium); // 500 (was --font-weight-regular, 400)
+  letter-spacing: 0.01em;
   color: var(--color-text);
   text-decoration: none;
   transition: color 200ms ease, font-size 250ms ease;
@@ -309,6 +343,27 @@
 // element, independent of module bundling order.
 .labHeaderCta.labHeaderCta {
   display: inline-flex;
+  // Header/hero restyle pass: was the outline .btnSecondary recipe at
+  // rest, switching to this exact solid recipe only once collapsed (see
+  // the removed duplicate in the [data-collapsed="true"] block below) —
+  // now solid at every scroll position, matching the shared solid button
+  // recipe used elsewhere on the site (Button.module.scss's .solid,
+  // HeroOverlap's own .btnPrimary): same --color-accent fill,
+  // --color-accent-contrast text, --color-accent-hover on hover. Still
+  // built on sharedStyles.btnSecondary as its structural base (button-
+  // base's display/padding/radius/font/cursor/focus-ring via
+  // mixins.focus-ring) rather than the real Button component — this
+  // element needs a direct ref for the scroll-collapse effect's own
+  // dataset writes, which Button.tsx doesn't support (no forwardRef).
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
   // Round 4: durations unified to 250ms, matching every other collapse-
   // driven transition in this header (background/blur/padding/wordmark/
   // nav links above) — was 200ms since round 3, a leftover mismatch this
@@ -420,22 +475,12 @@
   }
 }
 
-// Collapsed-phase Primary override (progress >= 0.6) — mirrors
-// .btnPrimary's exact values so the 200ms transition on
-// background-color/color/border-color (declared on .labHeaderCta itself)
-// animates smoothly between the two states on the SAME element, rather
-// than swapping React className (which wouldn't transition across a
-// class boundary the way a same-element property change does).
+// Collapsed-phase size override only — the color recipe used to live
+// here too (a rest=outline/collapsed=solid two-state design), duplicated
+// from .labHeaderCta's own base rule now that the button is solid at
+// every scroll position (header/hero restyle pass) — removed rather than
+// left as an inert duplicate.
 .labHeaderCta[data-collapsed="true"] {
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  border-color: var(--color-accent);
-
-  &:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
-  }
-
   // Revision round 3, item 1 / round 4 retune: true compact collapsed
   // variant, desktop only — reuses the SAME data-collapsed hard-threshold
   // switch already driving the color swap above ("interpolated/switched
@@ -485,14 +530,15 @@
   border: none;
   background: transparent;
   font-family: var(--font-body);
-  // Header nav style fix: kept matching .labHeaderNavLink's new REST
-  // values (16px, regular) — "Aree" is one of the top-level items the
-  // fix covers. Unlike the plain links, this button has no existing
-  // collapsed-state size override (no .labHeader[data-collapsed="true"]
-  // .headerNavButton rule) — it already didn't shrink on collapse before
-  // this fix, so that's left as-is (out of this fix's scope).
-  font-size: 1rem; // 16px, matching .labHeaderNavLink (was 14px)
-  font-weight: var(--font-weight-regular); // 400 (was --font-weight-bold, 700)
+  // Header/hero restyle pass: kept matching .labHeaderNavLink's values
+  // exactly — "Aree" is a top-level nav item like the others. Unlike the
+  // plain links, this button has no existing collapsed-state size
+  // override (no .labHeader[data-collapsed="true"] .headerNavButton
+  // rule) — it already didn't shrink on collapse before this pass, left
+  // as-is (out of scope here).
+  font-size: 1rem; // 16px, matching .labHeaderNavLink
+  font-weight: var(--font-weight-medium); // 500
+  letter-spacing: 0.01em;
   color: var(--color-text);
   cursor: pointer;
 

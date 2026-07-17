@@ -51,13 +51,6 @@ export interface ContactChannel {
 
 interface SiteSettingsData {
   title: string;
-  // CMS-driven header/footer pass: shared brand mark, header + footer.
-  // Optional — the Logo component renders the text wordmark when absent.
-  // aspectRatio (asset->metadata.dimensions.aspectRatio, see queries.ts)
-  // lets Logo.tsx size an arbitrary uploaded image correctly without
-  // guessing — Sanity images don't otherwise expose their real dimensions
-  // without dereferencing the asset.
-  logo?: Image & { aspectRatio?: number };
   seo?: SeoFields;
   author?: AuthorFields;
   socialLinks?: SocialLinks;
@@ -78,38 +71,6 @@ export function getSiteSettings(locale: string) {
     { locale },
     ["siteSettings"],
   );
-}
-
-// CMS-driven header/footer pass. Resolved server-side (called from
-// layout.tsx) and passed down as a plain-string src — never raw Sanity
-// image data — because Logo.tsx is imported by HeaderInteractive.tsx, a
-// "use client" component. urlFor() transitively imports ./client.ts,
-// which imports next/headers (draftMode()) and is server-only; if Logo.tsx
-// called urlFor() itself, that import would be pulled into the client
-// bundle and fail the build. Same established pattern as HeroOverlap.tsx's
-// own server-computed `photoSrc`.
-export interface ResolvedLogo {
-  src: string;
-  width: number;
-  height: number;
-}
-
-const LOGO_HEIGHT = 28;
-const LOGO_FALLBACK_ASPECT_RATIO = 4; // used only if metadata.dimensions is ever missing
-
-export function resolveLogoImage(
-  logo?: Image & { aspectRatio?: number },
-): ResolvedLogo | undefined {
-  if (!logo?.asset) return undefined;
-  const aspectRatio = logo.aspectRatio ?? LOGO_FALLBACK_ASPECT_RATIO;
-  return {
-    // No .width()/.height() cap — image-quality pass's own established
-    // lesson: capping the source via urlFor below next/image's own retina
-    // candidates silently upscales. next/image resizes from the raw asset.
-    src: urlFor(logo).url(),
-    width: Math.round(LOGO_HEIGHT * aspectRatio),
-    height: LOGO_HEIGHT,
-  };
 }
 
 // CMS-driven header/footer pass.
