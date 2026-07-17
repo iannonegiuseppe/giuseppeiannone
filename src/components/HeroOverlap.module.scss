@@ -164,12 +164,13 @@
 
   @include mixins.breakpoint-up(lg) {
     object-position: right center;
-    // Mirrored so the subject reads as emerging from the LEFT edge (photo
-    // 01's subject is originally framed to the right) — the crop/position
-    // above is computed pre-mirror, then the whole result is flipped, so
-    // the subject ends up left, empty background right, matching the
-    // reference composition (photo left, headline right).
-    // transform: scaleX(-1);
+    // Header/hero restyle pass: the crop/position above already reads as
+    // subject-left, calm background-right (verified via screenshot, not
+    // assumed from the crop values alone). Mirroring that same, already-
+    // well-composed result horizontally swaps it to subject-right,
+    // background-left — exactly the swap this pass needs (text now sits
+    // left, per .heroOverlapTextInner above), with no new crop tuning.
+    transform: scaleX(-1);
   }
 }
 
@@ -266,10 +267,13 @@
   pointer-events: auto;
 
   @include mixins.breakpoint-up(lg) {
-    // Snaps to columns 7-12, vertically centered against the photo (the
-    // grid item's own align-self, since .heroOverlapContent's grid rows
-    // are a single implicit row spanning the full min-height).
-    @include shared.col(7, 6);
+    // Header/hero restyle pass: was columns 7-12 (photo left, text
+    // right) — swapped to 1-6 (text left, photo right), matching the
+    // client's original reference direction. Vertically centered against
+    // the photo (the grid item's own align-self, since
+    // .heroOverlapContent's grid rows are a single implicit row spanning
+    // the full min-height).
+    @include shared.col(1, 6);
     align-self: center;
   }
 }
@@ -297,31 +301,34 @@
   // eyebrow labels typically sit close to their heading.
   margin: var(--space-3) 0 0;
   font-family: var(--font-display);
-  // Mobile keeps the normal site scale — the overlap/oversized treatment
-  // is a desktop-only composition (mobile stacks plainly, see the other
-  // breakpoint-up(lg) rules throughout this file).
   font-size: var(--fs-display);
   line-height: var(--lh-display);
-  // Pine ink, per spec — verified at this text's actual rendered position
-  // (6.37-8.04:1 against the sampled background range), same check as
-  // the eyebrow above.
-  color: var(--color-accent);
+  // Header/hero restyle pass: was --color-accent (a big two-word NAME,
+  // "Giuseppe Iannone," reading as an accent-branded statement). Now a
+  // full benefit sentence — standard heading ink, matching every other
+  // H1 site-wide; the ONE emphasized word (.heroOverlapEmphasis below)
+  // carries the accent color instead. The oversized desktop-only clamp
+  // this class used to carry (roughly double --fs-display, tuned for a
+  // short name overlaid on the photo) is gone too — a sentence-length
+  // headline in its own half-width column reads better at the site's
+  // normal display size, not a hero-specific special case.
+  color: var(--color-text);
+}
 
-  @include mixins.breakpoint-up(lg) {
-    // Reference measured directly (docs/adaptation/reference-hero.jpg):
-    // the two-line headline block spans ~16% of the viewport height.
-    // Roughly double the site's normal --fs-display — local to this
-    // hero, not a change to the shared token, since no other heading on
-    // the site is meant to run this large. clamp's own min bound (5rem)
-    // would overflow below lg if applied there, hence gating it here.
-    font-size: clamp(5rem, 10vw, 7.5rem);
-    line-height: 1.05;
-  }
+// Real emphasis technique — EB Garamond italic 400 + --color-accent, the
+// exact recipe documented in /styleguide (never used live before this).
+.heroOverlapEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
 }
 
 .heroOverlapSubtitle {
   margin: var(--space-5) 0 0; // 24px below the name, per spec
-  max-width: 38ch;
+  // Header/hero restyle pass: widened from 38ch — the new subtext is a
+  // notably longer sentence than the old one-liner it replaces; 38ch
+  // wrapped it awkwardly narrow within the text column's own width.
+  max-width: 46ch;
   font-family: var(--font-body);
   font-size: 1.1875rem; // 19px — not an existing type-scale step; rem per
   // the project's no-raw-px rule, exact value per spec.

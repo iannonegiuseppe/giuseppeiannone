@@ -72,10 +72,18 @@ export const homePage = defineType({
       name: "hero",
       title: "1. Hero",
       description:
-        "Name, credentials, and registration number come from Site settings' Author fields, not from here — kept in one place.",
+        "Credentials and registration number come from Site settings' Author fields, not from here — kept in one place. The headline below is the benefit statement shown to visitors; it no longer displays the author's name.",
       type: "object",
       fields: [
-        textField("positioningStatement", "Positioning statement (subtitle)"),
+        textField("headline", "Headline", {
+          rows: 2,
+        }),
+        stringField(
+          "headlineEmphasisWord",
+          "Headline — emphasized word (must match one word from the headline above exactly, case-sensitive; that word renders in the site's italic-accent style — leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField("positioningStatement", "Subtext"),
         stringField("ctaLabel", "CTA button label"),
         defineField({
           name: "photo",

@@ -130,6 +130,8 @@ export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,
     hero{
+      headline,
+      headlineEmphasisWord,
       positioningStatement,
       ctaLabel,
       photo,

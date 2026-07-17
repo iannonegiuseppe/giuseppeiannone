@@ -33,11 +33,35 @@ import sharedStyles from "./sharedSections.module.scss";
 // UNCHANGED — every new rule is gated to the mobile tier, with an
 // explicit breakpoint-up(md) reset back to the original tablet values
 // wherever this pass touches a class tablet already used.
+// Header/hero restyle pass: splits the headline on the ONE word an
+// editor names in headlineEmphasisWord (Studio field), wrapping just
+// that occurrence in the site's real italic-accent emphasis span (EB
+// Garamond italic + --color-accent — the exact technique documented in
+// /styleguide, applied here for the first time anywhere live). Matches
+// only the first occurrence, case-sensitively, per the schema field's
+// own description — a plain substring split, not a regex, so no special-
+// character escaping concern for ordinary Italian copy.
+function renderHeadline(headline: string, emphasisWord: string | undefined, emphasisClassName: string | undefined) {
+  if (!emphasisWord) return headline;
+  const index = headline.indexOf(emphasisWord);
+  if (index === -1) return headline;
+  const before = headline.slice(0, index);
+  const after = headline.slice(index + emphasisWord.length);
+  return (
+    <>
+      {before}
+      <em className={emphasisClassName}>{emphasisWord}</em>
+      {after}
+    </>
+  );
+}
+
 export function HeroOverlap({
   treatment,
   label,
-  authorName,
   authorCredentials,
+  headline,
+  headlineEmphasisWord,
   positioningStatement,
   ctaLabel,
   registrationNumber,
@@ -48,8 +72,12 @@ export function HeroOverlap({
   // Internal review annotation only (e.g. "Hero — approved") — omitted
   // entirely once the route reads as a clean client-facing preview.
   label?: string;
-  authorName: string;
   authorCredentials?: string;
+  headline: string;
+  // Must match one word inside `headline` exactly — see homePage.ts's
+  // own schema description. Optional: no match (or no value) renders the
+  // headline as plain text, no emphasis applied.
+  headlineEmphasisWord?: string;
   positioningStatement: string;
   ctaLabel: string;
   registrationNumber?: string;
@@ -106,7 +134,9 @@ export function HeroOverlap({
         <div className={styles.heroOverlapContent}>
           <div className={styles.heroOverlapTextInner}>
             <p className={styles.heroOverlapEyebrow}>{authorCredentials ?? "Psicologo Psicoterapeuta"}</p>
-            <h1 className={styles.heroOverlapName}>{authorName}</h1>
+            <h1 className={styles.heroOverlapName}>
+              {renderHeadline(headline, headlineEmphasisWord, styles.heroOverlapEmphasis)}
+            </h1>
             <p className={styles.heroOverlapSubtitle}>{positioningStatement}</p>
             <a href="#" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
               {ctaLabel}
