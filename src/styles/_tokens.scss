@@ -2,10 +2,12 @@
 // Everything else (globals, component .module.scss files) must reference
 // these via var(--token-name) or the breakpoint/z-index helpers below.
 //
-// Source: design-direction-stage3.md (Stage 3 brief). Values here are a
-// deliberate, non-generic pairing — ivory + one deep pine-ink accent, not
-// the generic cream+terracotta AI default — and must not be adjusted
-// without re-checking the WCAG AA contrast floor noted below.
+// Source: design-direction-stage3.md (Stage 3 brief), superseded by the
+// global restyle pass — ivory + one deep pine-ink accent replaced with a
+// taupe/ivory palette (client-provided anchors, contrast-verified via the
+// same manual sRGB relative-luminance method used throughout this file).
+// Values here must not be adjusted without re-checking the WCAG AA
+// contrast floor noted below.
 
 @use "sass:map";
 
@@ -40,91 +42,89 @@ $z-index: (
 }
 
 :root {
-  // --- Color palette: warm ivory + one deep pine-ink accent ----------------
+  // --- Color palette: taupe/ivory (global restyle pass) ---------------------
   // Contrast floor (WCAG AA, verified): --color-text and --color-text-muted
   // both pass on --color-bg, --color-surface-tint, and --color-sand.
   // Re-verify if any of these six are ever adjusted.
-  --color-bg: #f7f4ee;
+  --color-bg: #f6f3ee;
   --color-surface: #ffffff;
-  --color-surface-tint: #efeae0;
-  // Group B refinement pass (design-lab): replaces the old
-  // --color-surface-warm (#f4e3ca, hue 36°/sat 66%) — it clashed against
-  // the approved hero photo's warm taupe backdrop (measured hue ~28°).
-  // Rule going forward: every warm neutral on the page sits at hue
-  // 26-30°, sat ≤35%, anchored to that hero backdrop hue. Contrast
-  // verified: 12.58:1 vs --color-text, 4.64:1 vs --color-text-muted.
-  --color-sand: #eee5dd;
+  --color-surface-tint: #f9f7f2;
+  // Warm-neutral family, all anchored to the client's taupe palette (hue
+  // ~30-35°, low saturation) rather than the old pine-era hue-28° rule.
+  --color-sand: #f1ece2;
   // Optional deeper tint, for a second band depth if one is ever needed —
-  // NOT currently used anywhere. Flagged: 4.21:1 vs --color-text-muted
-  // FAILS AA (needs 4.5) — do not put muted text directly on this tone
-  // without re-checking; --color-text (11.42:1) is fine on it.
+  // NOT currently used anywhere. Left as-is from the prior palette pass;
+  // re-verify contrast against the taupe text colors before ever using it.
   --color-sand-deep: #e7dad0;
   // Come funziona media-band pass: a third neutral step, deliberately
-  // darker/grayer than --color-sand — hue ~30°/sat ~15% (measured),
-  // consistent with the same warm-neutral family rule (hue 26-30°, sat
-  // <=35%). Contrast verified: 12.37:1 vs --color-text, 4.56:1 vs
-  // --color-text-muted (both pass AA); only 1.15:1 against --color-bg,
-  // which is expected/fine — it's a background-vs-background distinction,
-  // not a text-contrast pairing.
-  --color-greige: #e8e4e0;
-  // Card borders/hairlines on the new neutral scale. Low contrast against
-  // white (1.52:1) and ivory (1.38:1) is intentional, matching the
-  // existing --color-hairline pattern below (1.35:1 vs white) — this
-  // design system treats dividers as soft/decorative, not WCAG-critical
-  // boundaries; the card's own white fill (not the border) provides the
-  // real visual separation from its background.
-  --color-line: #d9d0c9;
-  --color-accent: #22423a;
-  --color-accent-hover: #2e5348;
+  // darker/grayer than --color-sand, same warm-neutral family.
+  --color-greige: #e8e1d4;
+  // Card borders/hairlines on the new neutral scale. Low contrast is
+  // intentional, matching the existing --color-hairline pattern below —
+  // this design system treats dividers as soft/decorative, not
+  // WCAG-critical boundaries; the card's own white fill (not the border)
+  // provides the real visual separation from its background.
+  --color-line: #ddd6c9;
+  --color-hairline: #e7e0d3;
+  // Solid CTA fill. This is a client-anchor color (#8a7564) darkened two
+  // steps specifically so --color-accent-contrast (ivory) text on top of a
+  // solid button clears AA (raw anchor only measures ~3.95:1; this value
+  // measures ~4.58:1, verified via the same manual sRGB relative-luminance
+  // method used elsewhere in this file). Never lighten this back toward
+  // the raw anchor without re-checking that contrast.
+  --color-accent: #7e6b5b;
+  // Hover state: darkened further rather than lightened (the old
+  // pine-era palette lightened on hover, but the new accent sits close to
+  // the AA floor already — lightening it toward the raw #8a7564 anchor
+  // would drop --color-accent-contrast text below 4.5:1). Verified ~5.43:1.
+  --color-accent-hover: #715c52;
   --color-accent-soft: #e4eae6;
-  --color-text: #26231f;
-  --color-text-muted: #6b655c;
-  --color-hairline: #e3ddd1;
-  --color-focus: #2e5348;
+  --color-text: #2e2b28;
+  --color-text-muted: #686058;
+  --color-focus: #715c52;
   // Text color for content sitting on --color-accent (footer, solid
   // buttons) — the brief specifically calls for "ivory text", not plain
   // white, so this reuses --color-bg rather than a separate hardcoded value.
   --color-accent-contrast: var(--color-bg);
 
-  // Availability-badge pass: no warm/amber accent existed anywhere in this
-  // palette before this (checked fresh — every other color here is either
-  // the cool pine family or a warm-NEUTRAL, hue 26-30°). This is the
-  // waitlist-status dot only, used nowhere else. Tuned darker than the
-  // spec's own "#C08A3E-ish" starting point specifically to clear the
-  // WCAG 1.4.11 non-text 3:1 floor as a small graphical dot against
-  // --color-bg (measured ~3.29:1 via manual sRGB relative-luminance calc,
-  // same method used elsewhere in this codebase's own contrast checks) —
-  // the lighter starting value measured ~2.76:1, under the floor. Against
-  // --color-accent (pine, the onDark badge variant's background) this
-  // same value only measures ~2.7:1 — AvailabilityBadge.module.scss gives
-  // every dot color a thin ivory ring on that variant specifically to
-  // cover the gap, rather than needing a second amber value.
+  // Warm accent for error/hover states — originally added for the
+  // availability badge's waitlist dot, that consumer is gone (removed with
+  // AvailabilityBadge) but this hex is independently load-bearing for
+  // ContactForm's error tint and Footer's link hover color, so it's kept
+  // and re-verified rather than deleted. Against the new --color-bg it
+  // still measures ~3.26:1 (non-text/graphical floor, essentially
+  // unchanged from before). Against the new, much LIGHTER --color-accent
+  // (a taupe mid-tone, not the old near-black pine) any amber-based blend
+  // now measures well under 3:1 — flagged separately, since the old
+  // near-black accent is what made that specific pairing pass before.
   --color-amber: #b07d2a;
 
   // --- Fonts (variables populated by next/font in layout.tsx) --------------
-  // Marcellus: display only, Regular (400) is the only weight that exists —
-  // never apply font-weight above 400 to it. Lato: 500/600 don't exist in
-  // this typeface (only 100/300/400/700/900 are real, non-synthesized
-  // weights) — hierarchy among Lato text is by size, matching how Marcellus
-  // is already handled, not by a weight that would have to be faux-bolded.
-  --font-display: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-lato), system-ui, -apple-system, Helvetica, Arial,
-    sans-serif;
+  // Global restyle pass: EB Garamond replaces Marcellus entirely, Source
+  // Sans 3 replaces Lato. EB Garamond: Regular (400) is the only weight
+  // requested — never apply font-weight above 400 to it (no component
+  // does; keep it that way). Source Sans 3: 400/700 are both real,
+  // non-synthesized weights — hierarchy is still by size first, matching
+  // how the display font is handled, with 700 reserved for inline
+  // emphasis only.
+  --font-display: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-source-sans-3), system-ui, -apple-system, Helvetica,
+    Arial, sans-serif;
 
   // --- Type scale ------------------------------------------------------------
   // Paired 1:1 with a line-height token — the brief ties fs+lh together per
   // role rather than treating line-height as an independent generic scale.
-  --fs-display: clamp(2.5rem, 5vw, 3.75rem); // H1, Marcellus 400
+  --fs-display: clamp(2.5rem, 5vw, 3.75rem); // H1, EB Garamond 400
   --lh-display: 1.15;
-  --fs-h2: clamp(1.75rem, 3vw, 2.25rem); // Marcellus 400
+  --fs-h2: clamp(1.75rem, 3vw, 2.25rem); // EB Garamond 400
   --lh-h2: 1.25;
-  --fs-h3: 1.375rem; // Lato 400 (not Marcellus — too small at this size)
+  --fs-h3: 1.375rem; // Source Sans 3 400 (not EB Garamond — too small at this size)
   --lh-h3: 1.3;
-  --fs-body-lg: 1.125rem; // Lato 400, intro paragraphs
+  --fs-body-lg: 1.125rem; // Source Sans 3 400, intro paragraphs
   --lh-body-lg: 1.65;
-  --fs-body: 1rem; // Lato 400, max measure 68ch
+  --fs-body: 1rem; // Source Sans 3 400, max measure 68ch
   --lh-body: 1.7;
-  --fs-small: 0.875rem; // Lato 400, captions, breadcrumbs
+  --fs-small: 0.875rem; // Source Sans 3 400, captions, breadcrumbs
   --lh-small: 1.5;
 
   --font-weight-regular: 400;
@@ -168,13 +168,14 @@ $z-index: (
   // below this :root block, not here, since they change per breakpoint.
 
   // --- Buttons (Group B refinement pass) -----------------------------------
-  // Exactly two variants (Primary, Secondary) plus an inverted-on-pine
+  // Exactly two variants (Primary, Secondary) plus an inverted-on-accent
   // state for each — see docs/design-direction.md and the styleguide.
-  // Spec calls for "Lato 16px/600" — Lato has no real 600 cut in this
-  // project (only 100/300/400/700/900 are real weights, per the type-
-  // scale comment above); using --font-weight-bold (700) instead of
-  // faking 600, consistent with the existing rule against synthesized
-  // weights.
+  // Original spec called for "16px/600" — Lato had no real 600 cut, so
+  // --font-weight-bold (700) was used instead of faking it. Global restyle
+  // pass: Source Sans 3 DOES ship a real 600, but this token still uses
+  // 700 for continuity with the button weight already shipped everywhere
+  // — flagged as a discovered opportunity, not silently changed (adding a
+  // real 600 would need its own weight-array update in layout.tsx first).
   --button-padding-block: 0.875rem; // 14px
   --button-padding-inline: 1.75rem; // 28px
   --button-font-size: 1rem; // 16px

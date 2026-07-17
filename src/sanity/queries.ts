@@ -55,11 +55,7 @@ export const siteSettingsQuery = defineQuery(`
     piva,
     crisisSupportText,
     googleProfileUrl,
-    carePathway,
-    availabilityStatus,
-    acceptingText,
-    waitlistText,
-    pausedText
+    carePathway
   }
 `);
 
@@ -137,13 +133,11 @@ export const homePageQuery = defineQuery(`
       positioningStatement,
       ctaLabel,
       photo,
-      "videoUrl": video.asset->url
+      youtubeId
     },
     chiSono,
-    comeFunziona,
     formazione,
     diCosa,
-    statement,
     diplomi,
     percorso,
     recognition{
@@ -158,7 +152,7 @@ export const homePageQuery = defineQuery(`
         visualImage
       }
     },
-    miniContact,
+    hope,
     sedi,
     prezzi,
     risorse,

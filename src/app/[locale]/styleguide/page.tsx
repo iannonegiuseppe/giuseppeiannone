@@ -1,68 +1,50 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isProductionDeployment, resolveRobots } from "@/sanity/metadata";
-import { cormorant, sourceSans3 } from "./fonts";
-import { PaletteRoot } from "./PaletteContext";
-import { PaletteSwitcher } from "./PaletteSwitcher";
-import { DEFAULT_PALETTE, isPalette } from "./palettes";
+import { ContrastTable } from "./ContrastTable";
 import { TokenTable } from "./TokenTable";
 import styles from "./styleguide.module.scss";
-import "./styleguide-palettes.scss";
 
-// Stage 3.5 groundwork — REWORK of the previous /styleguide (a component-
-// museum documenting every past "single-block pass" decision) into a
-// four-palette explorer for the client's approved redesign-direction
-// call. The old content is fully replaced, not archived — confirmed with
-// the owner before doing this (a large, deliberate rework of an
-// extensively-documented file, not an ambiguous one) — it stays
-// recoverable via git history if ever needed again.
+// Global restyle pass: collapses the four-palette explorer (terracotta/
+// plum/olive/bronze — a pre-decision comparison tool) into the single,
+// permanent design reference for the ONE live system now shipped
+// site-wide (taupe/ivory palette, EB Garamond + Source Sans 3). No more
+// palette switcher, no more --sg-* proxy tokens, no more Cormorant/
+// Marcellus comparison rows — every value on this page reads the real
+// global --color-*/--font-*/--fs-*/--lh-* tokens from
+// src/styles/_tokens.scss directly (this route sits under
+// [locale]/layout.tsx, so it already inherits the real EB Garamond/
+// Source Sans 3 CSS variables applied to <html> — no separate scoped
+// font load needed at all).
 //
-// Still gated exactly like the page it replaces: hard 404 in production
-// (never just noindexed) via isProductionDeployment(), noindex as a
-// second, redundant layer for the window while reachable on preview
-// deployments. Static — no Sanity queries, per this task's own
-// constraint (nothing here needs live content).
+// Still gated exactly as before: hard 404 in production
+// (isProductionDeployment()), noindex as a redundant second layer for
+// the window while reachable on preview deployments.
 export const metadata: Metadata = {
-  title: "Style guide (internal) — Palette Explorer",
+  title: "Style guide (internal) — Design System",
   robots: resolveRobots(true),
 };
 
-export default async function StyleguidePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ palette?: string }>;
-}) {
+export default function StyleguidePage() {
   if (isProductionDeployment()) {
     notFound();
   }
 
-  // Resolved SERVER-SIDE so the very first HTML byte already carries the
-  // correct data-palette — no client-side flash of the wrong theme before
-  // hydration (this task's own explicit deep-link requirement).
-  const { palette: rawPalette } = await searchParams;
-  const initialPalette = isPalette(rawPalette) ? rawPalette : DEFAULT_PALETTE;
-
   return (
-    <PaletteRoot
-      initialPalette={initialPalette}
-      rootClassName={`${sourceSans3.variable} ${cormorant.variable}`}
-    >
+    <div className={styles.root}>
       {/* ================= 1. Header strip ================= */}
       <header className={styles.headerStrip}>
-        <div className={styles.headerStripTop}>
-          <h1 className={styles.headerStripTitle}>
-            Design Direction — Palette Explorer
-          </h1>
-          <PaletteSwitcher />
-        </div>
+        <h1 className={styles.headerStripTitle}>Design System</h1>
         <p className={styles.headerStripNote}>
-          Pagina di esplorazione interna — non collegata pubblicamente, non
-          indicizzata. / Internal exploration page — not publicly linked,
-          not indexed.
+          Pagina di riferimento interna — non collegata pubblicamente, non
+          indicizzata. Unica fonte di verità per palette, tipografia e
+          componenti reali del sito. / Internal reference page — not
+          publicly linked, not indexed. Single source of truth for the
+          real, live palette/typography/components.
         </p>
       </header>
 
-      {/* ================= 2. Background progression strip ================= */}
+      {/* ================= 2. Background progression ================= */}
       <section className={styles.section} aria-labelledby="sg-bg-heading">
         <h2 id="sg-bg-heading" className={styles.sectionHeading}>
           Background progression
@@ -70,21 +52,23 @@ export default async function StyleguidePage({
         <div className={styles.bgStrip}>
           {(
             [
-              ["--sg-bg-page", "page"],
-              ["--sg-bg-hero", "hero"],
-              ["--sg-bg-alt-1", "alt-1"],
-              ["--sg-bg-alt-2", "alt-2"],
-              ["--sg-bg-alt-3", "alt-3"],
-              ["--sg-bg-alt-4", "alt-4"],
+              ["--color-bg", "bg"],
+              ["--color-sand", "sand"],
+              ["--color-greige", "greige"],
+              ["--color-surface-tint", "surface-tint"],
+              ["--color-sand-deep", "sand-deep"],
             ] as const
           ).map(([token, label]) => (
             <BgStop key={token} token={token} label={label} />
           ))}
         </div>
         <p className={styles.caption}>
-          Sul sito reale queste tonalità evolvono in modo impercettibile
-          durante lo scroll. / On the real site these evolve imperceptibly
-          while scrolling.
+          Il hero non è in questa progressione — è sempre una foto piena
+          pagina, non un colore. / The hero isn&apos;t part of this
+          progression — it&apos;s always a full-bleed photo, never a solid
+          color. <code>--color-sand-deep</code> is defined but not
+          currently consumed by any component — kept available for a
+          future deeper band.
         </p>
       </section>
 
@@ -94,48 +78,50 @@ export default async function StyleguidePage({
           Typography specimen
         </h2>
 
-        <h3 className={styles.subsectionHeading}>Display — Marcellus 400</h3>
+        <h3 className={styles.subsectionHeading}>Display — EB Garamond 400</h3>
         <ul className={styles.typeSpecList}>
           <TypeRow
-            name="display-xl"
-            fsVar="--sg-fs-display-xl"
-            lhVar="--sg-lh-display-xl"
+            name="display"
+            fsVar="--fs-display"
+            lhVar="--lh-display"
             font="display"
+            note="clamp(2.5rem, 5vw, 3.75rem) — fluid, not a fixed mobile/desktop pair"
           />
-          <TypeRow name="h1" fsVar="--sg-fs-h1" lhVar="--sg-lh-h1" font="display" />
-          <TypeRow name="h2" fsVar="--sg-fs-h2" lhVar="--sg-lh-h2" font="display" />
-          <TypeRow name="h3" fsVar="--sg-fs-h3" lhVar="--sg-lh-h3" font="display" />
+          <TypeRow name="h2" fsVar="--fs-h2" lhVar="--lh-h2" font="display" note="clamp(1.75rem, 3vw, 2.25rem)" />
           <TypeRow
             name="numeral"
-            fsVar="--sg-fs-numeral"
-            lhVar="--sg-lh-numeral"
+            fsVar={undefined}
+            lhVar={undefined}
             font="numeral"
             sample="01"
+            note="6rem mobile / 7.5rem tablet+, as implemented in ChiSonoOverlap — no global --fs-numeral token"
           />
         </ul>
 
         <h3 className={styles.subsectionHeading}>Body &amp; UI — Source Sans 3</h3>
+        <p className={styles.caption} style={{ marginTop: 0, marginBottom: "1rem" }}>
+          <code>h3</code> uses the body font, not the display font — too
+          small at that size for EB Garamond to stay legible (see
+          _tokens.scss&apos;s own comment). / <code>h3</code> is
+          deliberately body-font, not display-font.
+        </p>
         <ul className={styles.typeSpecList}>
-          <TypeRow name="lead" fsVar="--sg-fs-lead" lhVar="--sg-lh-lead" font="body" />
-          <TypeRow name="body" fsVar="--sg-fs-body" lhVar="--sg-lh-body" font="body" />
-          <TypeRow name="small" fsVar="--sg-fs-small" lhVar="--sg-lh-small" font="body" />
-          <TypeRow
-            name="caption"
-            fsVar="--sg-fs-caption"
-            lhVar="--sg-lh-caption"
-            font="body"
-          />
+          <TypeRow name="h3" fsVar="--fs-h3" lhVar="--lh-h3" font="body" />
+          <TypeRow name="body-lg" fsVar="--fs-body-lg" lhVar="--lh-body-lg" font="body" />
+          <TypeRow name="body" fsVar="--fs-body" lhVar="--lh-body" font="body" />
+          <TypeRow name="small" fsVar="--fs-small" lhVar="--lh-small" font="body" />
           <TypeRow
             name="eyebrow"
-            fsVar="--sg-fs-eyebrow"
-            lhVar="--sg-lh-eyebrow"
+            fsVar={undefined}
+            lhVar={undefined}
             font="eyebrow"
             sample="Primo passo"
+            note="0.875rem / 700 / --color-accent, as implemented in HeroOverlap — sizes like this are set per-component, not a single global token"
           />
           <TypeRow
             name="button"
-            fsVar="--sg-fs-button"
-            lhVar="--sg-lh-button"
+            fsVar="--button-font-size"
+            lhVar={undefined}
             font="button"
             sample="Prenota un primo colloquio"
           />
@@ -144,85 +130,37 @@ export default async function StyleguidePage({
         <h3 className={styles.subsectionHeading}>Italic emphasis technique</h3>
         <p className={styles.emphasisBodySpecimen}>
           A volte basta{" "}
-          <em className={styles.emphasisBodyWord}>nominare</em> ciò che si
+          <em className={styles.emphasisWord}>nominare</em> ciò che si
           prova per iniziare a capirlo.
         </p>
         <p className={styles.caption}>
-          Emphasis = Source Sans 3 italic 400 + --sg-accent-text (never
-          bold/semibold), pensata per una o due parole per sezione. La
-          dimensione mobile si vede ridimensionando la finestra — nessun
-          secondo blocco statico. / Sized for one or two words per
-          section; resize the window to see the mobile size — no second
-          static block.
+          EB Garamond italic 400 + <code>--color-accent</code>, mai
+          bold/semibold — pensata per una o due parole per sezione. Tecnica
+          disponibile (EB Garamond carica un vero corsivo, cosa che
+          Marcellus non aveva mai avuto) ma non ancora usata in nessun
+          componente reale — questa è la specifica di riferimento, non una
+          copia da un blocco già live. / Sized for one or two words per
+          section. The technique is available (EB Garamond loads a real
+          italic cut, which Marcellus never had) but nothing live uses it
+          yet — this is the reference spec, not a copy of a shipped block.
         </p>
-
-        <h3 className={styles.subsectionHeading}>
-          Heading emphasis — Variant A / B / C
-        </h3>
-        <div className={styles.headingVariantStack}>
-          <div className={styles.headingVariantRow}>
-            <p className={styles.headingVariantLabel}>
-              Variant A — quiet (Marcellus, colored, no italic)
-            </p>
-            <h3 className={styles.emphasisHeadingMarcellus}>
-              Da dove possiamo{" "}
-              <em className={styles.emphasisQuiet}>iniziare</em>?
-            </h3>
-          </div>
-
-          <div className={styles.headingVariantRow}>
-            <p className={styles.headingVariantLabel}>
-              Variant B — Cyprus-style shine (Marcellus + Cormorant italic
-              shine)
-            </p>
-            <h3 className={styles.emphasisHeadingMarcellus}>
-              Da dove possiamo{" "}
-              <em className={styles.emphasisShine}>iniziare</em>?
-            </h3>
-            <p className={styles.caption}>
-              Riservato a un massimo di un titolo per pagina (l&apos;hero). /
-              Reserved for at most one heading per page (the hero).
-            </p>
-          </div>
-
-          <div className={styles.headingVariantRow}>
-            <p className={styles.headingVariantLabel}>
-              Variant C — single-family candidate (Cormorant entirely)
-            </p>
-            <h3 className={styles.emphasisHeadingCormorant}>
-              Da dove possiamo{" "}
-              <em className={styles.emphasisShine}>iniziare</em>?
-            </h3>
-            <p className={styles.caption}>
-              Candidate: replacing Marcellus entirely — a genre shift from
-              inscriptional to old-style serif; the client asked to keep
-              Marcellus, so this is shown only for comparison.
-            </p>
-          </div>
-        </div>
       </section>
 
-      {/* ================= 4. Accent anatomy ================= */}
+      {/* ================= 4. Component anatomy ================= */}
       <section className={styles.section} aria-labelledby="sg-anatomy-heading">
         <h2 id="sg-anatomy-heading" className={styles.sectionHeading}>
-          Accent anatomy
+          Component anatomy
         </h2>
         <div className={styles.anatomyGrid}>
-          <AnatomyItem label="Active nav item">
+          <AnatomyItem label="Active nav item (generic pattern — no page currently implements a current-page indicator)">
             <span className={styles.anatomyNavActive}>Chi sono</span>
           </AnatomyItem>
 
-          <AnatomyItem label="Eyebrow label">
+          <AnatomyItem label="Eyebrow label — HeroOverlap">
             <p className={styles.anatomyEyebrow}>Primo passo</p>
           </AnatomyItem>
 
-          <AnatomyItem label="Italic emphasis in a Marcellus heading">
-            <h3 className={styles.emphasisHeadingMarcellusSmall}>
-              Da dove <em className={styles.emphasisQuiet}>iniziare</em>?
-            </h3>
-          </AnatomyItem>
-
-          <AnatomyItem label="Primary CTA — default / hover / focus / disabled">
+          <AnatomyItem label="Primary CTA — default / hover / focus / disabled (Button.module.scss .solid)">
             <div className={styles.anatomyButtonRow}>
               <button type="button" className={styles.anatomyButton}>
                 Scrivimi
@@ -245,7 +183,7 @@ export default async function StyleguidePage({
             </div>
           </AnatomyItem>
 
-          <AnatomyItem label="Text link with arrow — default / hover">
+          <AnatomyItem label="Text link with arrow — default / hover (ChiSonoOverlap ArrowLink)">
             <div className={styles.anatomyLinkRow}>
               <a href="#" className={styles.anatomyLink}>
                 Approfondisci →
@@ -259,13 +197,7 @@ export default async function StyleguidePage({
             </div>
           </AnatomyItem>
 
-          <AnatomyItem label="Decorative oversized quote mark">
-            <span className={styles.anatomyQuoteMark} aria-hidden="true">
-              &ldquo;
-            </span>
-          </AnatomyItem>
-
-          <AnatomyItem label="Card with left accent border — default / hover">
+          <AnatomyItem label="Card with left accent border — default / hover (ConcernsSection pattern)">
             <div className={styles.anatomyCardRow}>
               <div className={styles.anatomyCard}>
                 <h4 className={styles.anatomyCardTitle}>Ansia</h4>
@@ -284,34 +216,36 @@ export default async function StyleguidePage({
             </div>
           </AnatomyItem>
 
-          <AnatomyItem label="Form input — default / focus / error">
-            <div className={styles.anatomyInputRow}>
-              <label className={styles.anatomyInputWrap}>
-                <span className={styles.anatomyInputLabel}>Il tuo nome</span>
-                <input type="text" className={styles.anatomyInput} />
-              </label>
-              <label className={styles.anatomyInputWrap}>
-                <span className={styles.anatomyInputLabel}>Email</span>
-                <input
-                  type="email"
-                  className={`${styles.anatomyInput} ${styles.anatomyInputFocusDemo}`}
-                />
-              </label>
-              <label className={styles.anatomyInputWrap}>
-                <span className={styles.anatomyInputLabel}>Email</span>
-                <input
-                  type="email"
-                  className={`${styles.anatomyInput} ${styles.anatomyInputErrorDemo}`}
-                  aria-invalid="true"
-                />
-                <span className={styles.anatomyInputError}>
-                  Controlla l&apos;indirizzo email.
-                </span>
-              </label>
+          <AnatomyItem label="Form input — default / focus / error (ContactForm, as actually implemented: ivory-on-accent, never a light card)">
+            <div className={styles.anatomyFormDemo}>
+              <div className={styles.anatomyInputRow}>
+                <label className={styles.anatomyInputWrap}>
+                  <span className={styles.anatomyInputLabel}>Il tuo nome</span>
+                  <input type="text" className={styles.anatomyInput} />
+                </label>
+                <label className={styles.anatomyInputWrap}>
+                  <span className={styles.anatomyInputLabel}>Email</span>
+                  <input
+                    type="email"
+                    className={`${styles.anatomyInput} ${styles.anatomyInputFocusDemo}`}
+                  />
+                </label>
+                <label className={styles.anatomyInputWrap}>
+                  <span className={styles.anatomyInputLabel}>Email</span>
+                  <input
+                    type="email"
+                    className={`${styles.anatomyInput} ${styles.anatomyInputErrorDemo}`}
+                    aria-invalid="true"
+                  />
+                  <span className={styles.anatomyInputError}>
+                    Controlla l&apos;indirizzo email.
+                  </span>
+                </label>
+              </div>
             </div>
           </AnatomyItem>
 
-          <AnatomyItem label="Oversized faint section numeral">
+          <AnatomyItem label="Oversized faint numeral — color-mix(--color-text 6%), as implemented in ChiSonoOverlap/RecognitionSection">
             <span className={styles.anatomyNumeral} aria-hidden="true">
               02
             </span>
@@ -319,18 +253,28 @@ export default async function StyleguidePage({
         </div>
       </section>
 
-      {/* ================= 5. Dark band sample ================= */}
-      <section className={styles.section} aria-labelledby="sg-dark-heading">
-        <h2 id="sg-dark-heading" className={styles.sectionHeading}>
-          Dark band sample
+      {/* ================= 5. Accent band sample ================= */}
+      <section className={styles.section} aria-labelledby="sg-accentband-heading">
+        <h2 id="sg-accentband-heading" className={styles.sectionHeading}>
+          Accent band sample
         </h2>
-        <div className={styles.darkBand}>
-          <p className={styles.darkBandEyebrow}>LE COSE POSSONO CAMBIARE</p>
-          <h3 className={styles.darkBandHeading}>
+        <p className={styles.caption} style={{ marginTop: 0 }}>
+          Non esiste un secondo livello &quot;scuro&quot; separato — le sezioni a
+          tinta piena del sito reale (FinalContactSection, Footer,
+          HopeSection) usano tutte lo stesso <code>--color-accent</code>{" "}
+          con <code>--color-accent-contrast</code> (avorio) sopra. / There
+          is no separate darker tier — every solid-fill band on the real
+          site (FinalContactSection, Footer, HopeSection) uses this exact
+          same <code>--color-accent</code> / <code>--color-accent-contrast</code>{" "}
+          pairing.
+        </p>
+        <div className={styles.accentBand}>
+          <p className={styles.accentBandEyebrow}>LE COSE POSSONO CAMBIARE</p>
+          <h3 className={styles.accentBandHeading}>
             Non è sempre stato così. E non deve restare così.
           </h3>
         </div>
-        <div className={styles.darkBand2}>
+        <div className={styles.accentBand2}>
           <div className={styles.videoPlaceholder}>
             <span className={styles.playButton} aria-hidden="true">
               <span className={styles.playButtonGlyph} />
@@ -344,6 +288,12 @@ export default async function StyleguidePage({
         <h2 id="sg-mini-heading" className={styles.sectionHeading}>
           Mini-page preview
         </h2>
+        <p className={styles.caption} style={{ marginTop: 0 }}>
+          Composizione compatta a scopo dimostrativo — non è uno specchio
+          della homepage reale (quello è <code>/design-lab</code>). / A
+          compact demo composition, not a mirror of the real homepage
+          (that&apos;s <code>/design-lab</code>).
+        </p>
         <MiniPagePreview />
       </section>
 
@@ -354,7 +304,20 @@ export default async function StyleguidePage({
         </h2>
         <TokenTable />
       </section>
-    </PaletteRoot>
+
+      {/* ================= 8. Contrast audit ================= */}
+      <section className={styles.section} aria-labelledby="sg-contrast-heading">
+        <h2 id="sg-contrast-heading" className={styles.sectionHeading}>
+          Contrast audit
+        </h2>
+        <p className={styles.caption} style={{ marginTop: 0 }}>
+          Calcolato live, ad ogni caricamento, dai valori reali dei token —
+          non una tabella scritta a mano. / Computed live, on every page
+          load, from the real token values — not a hand-typed table.
+        </p>
+        <ContrastTable />
+      </section>
+    </div>
   );
 }
 
@@ -377,36 +340,51 @@ function TypeRow({
   lhVar,
   font,
   sample,
+  note,
 }: {
   name: string;
-  fsVar: string;
-  lhVar: string;
+  fsVar?: string;
+  lhVar?: string;
   font: "display" | "body" | "numeral" | "eyebrow" | "button";
   sample?: string;
+  note?: string;
 }) {
   const fontClass =
-    font === "display" || font === "numeral"
+    font === "display"
       ? styles.typeSampleDisplay
-      : font === "eyebrow"
-        ? styles.typeSampleEyebrow
-        : font === "button"
-          ? styles.typeSampleButton
-          : styles.typeSampleBody;
+      : font === "numeral"
+        ? `${styles.typeSampleDisplay} ${styles.typeSampleNumeralSize}`
+        : font === "eyebrow"
+          ? styles.typeSampleEyebrow
+          : font === "button"
+            ? styles.typeSampleButton
+            : styles.typeSampleBody;
+
+  // Rows without a named global token (numeral, eyebrow) get their real,
+  // fixed values from a dedicated class instead — see each call site's
+  // own `note` and styleguide.module.scss's own comment on those classes.
+  const style =
+    font === "numeral" || font === "eyebrow"
+      ? undefined
+      : ({
+          fontSize: fsVar ? `var(${fsVar})` : undefined,
+          lineHeight: lhVar ? `var(${lhVar})` : undefined,
+        } as const);
 
   return (
     <li className={styles.typeSpecRow}>
       <p className={styles.typeSpecLabel}>
         <code>{name}</code>{" "}
         <span className={styles.typeSpecMeta}>
-          <code>{fsVar}</code> / <code>{lhVar}</code>
+          {fsVar ? <code>{fsVar}</code> : null}
+          {fsVar && lhVar ? " / " : null}
+          {lhVar ? <code>{lhVar}</code> : null}
         </span>
       </p>
-      <p
-        className={fontClass}
-        style={{ fontSize: `var(${fsVar})`, lineHeight: `var(${lhVar})` }}
-      >
+      <p className={fontClass} style={style}>
         {sample ?? "Disturbi d'ansia, attacchi di panico"}
       </p>
+      {note ? <p className={styles.typeSpecNote}>{note}</p> : null}
     </li>
   );
 }
@@ -431,11 +409,9 @@ function MiniPagePreview() {
     <div className={styles.miniPage}>
       {/* Hero */}
       <div className={styles.miniHero}>
-        <span className={styles.miniHeroTag}>video ambientale</span>
         <p className={styles.miniHeroEyebrow}>Primo passo</p>
         <h3 className={styles.miniHeroHeading}>
-          Da dove possiamo{" "}
-          <em className={styles.emphasisQuiet}>iniziare</em>?
+          Da dove possiamo <em className={styles.emphasisWord}>iniziare</em>?
         </h3>
         <p className={styles.miniHeroSub}>
           Uno spazio per capire cosa stai vivendo e cosa puoi farci, con
@@ -443,20 +419,10 @@ function MiniPagePreview() {
         </p>
       </div>
 
-      {/* Quote */}
-      <div className={styles.miniQuote}>
-        <span className={styles.miniQuoteMark} aria-hidden="true">
-          &ldquo;
-        </span>
-        <p className={styles.miniQuoteText}>
-          Mi sveglio già stanco, e non so nemmeno perché.
-        </p>
-      </div>
-
-      {/* Dark band */}
-      <div className={styles.miniDarkBand}>
-        <p className={styles.miniDarkBandEyebrow}>LE COSE POSSONO CAMBIARE</p>
-        <h4 className={styles.miniDarkBandHeading}>
+      {/* Accent band */}
+      <div className={styles.miniAccentBand}>
+        <p className={styles.miniAccentBandEyebrow}>LE COSE POSSONO CAMBIARE</p>
+        <h4 className={styles.miniAccentBandHeading}>
           Non è sempre stato così. E non deve restare così.
         </h4>
       </div>

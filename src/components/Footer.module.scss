@@ -92,13 +92,22 @@
 //
 // Hover/focus color: spec suggested trying --color-amber (the
 // availability token) directly, but that token's own definition in
-// _tokens.scss documents it measuring only ~2.7:1 against --color-accent
-// (this footer's background) — below the 3:1 WCAG 1.4.11 floor for
-// non-text UI. Brightened via color-mix toward --color-bg (80% amber /
-// 20% ivory) instead of the raw token; measured ~4:1 against pine (see
-// this pass's own report), comfortably clearing the floor while still
-// reading as amber/gold, not just "more ivory." Paired with a subtle
-// scale(1.12), both on a 200ms transition, per spec.
+// _tokens.scss documents it measuring only ~2.7:1 against the old pine
+// --color-accent — below the 3:1 WCAG 1.4.11 floor for non-text UI.
+// Brightened via color-mix toward --color-bg instead of the raw token.
+//
+// Global-restyle pass: --color-accent went from near-black pine to a much
+// lighter taupe mid-tone, which collapsed this blend's own margin (the
+// old 80% amber / 20% ivory mix measured ~4:1 against pine; against the
+// new, lighter accent it measures only ~1.84:1 — a real regression, not a
+// stylistic choice). Re-derived at 30% amber / 70% ivory instead — this
+// flips which color dominates the blend (ivory-led, gold-tinted, rather
+// than gold-led), which is the trade-off the lighter accent forces: there
+// simply isn't as much contrast budget available against it. Measures
+// ~3.34:1 against the new accent, clearing the 3:1 floor with a real
+// margin (verified via this codebase's own manual sRGB relative-luminance
+// method). Paired with a subtle scale(1.12), both on a 200ms transition,
+// per spec.
 .labFooterSocialLink {
   display: inline-flex;
   align-items: center;
@@ -117,7 +126,7 @@
 
   &:hover,
   &:focus-visible {
-    color: color-mix(in srgb, var(--color-amber) 80%, var(--color-bg));
+    color: color-mix(in srgb, var(--color-amber) 30%, var(--color-bg));
     transform: scale(1.12);
   }
 
@@ -334,26 +343,9 @@
 // 12px text (needs 4.5:1). Raised to 60% (4.74:1, passes) — same
 // substitution procedure as the CTA pass's own contrast fixes.
 .labFooterCopyright,
-.labFooterLocaleSwitcher,
-.labFooterDevCredit {
+.labFooterLocaleSwitcher {
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec
   color: color-mix(in srgb, var(--color-bg) 60%, transparent);
-}
-
-// CMS-driven header/footer pass: only "Bandziuk" itself is a link now
-// (the whole line used to be one <a>, back when it was placeholder text
-// with no real href) — interactive states move to this new inner class;
-// .labFooterDevCredit above (now a plain <p>) keeps the shared text
-// styling with its two siblings, unchanged.
-.labFooterDevCreditLink {
-  color: inherit;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  @include mixins.focus-ring;
 }

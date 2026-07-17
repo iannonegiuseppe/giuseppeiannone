@@ -89,12 +89,15 @@ export const homePage = defineType({
           ],
         }),
         defineField({
-          name: "video",
-          title: "Background video (optional)",
+          name: "youtubeId",
+          title: "YouTube video ID (optional)",
           description:
-            "Short, silent, looping clip layered over the photo — never the default. Small screens, reduced-motion preference, and data-saver connections all get the photo instead, no matter what's set here.",
-          type: "file",
-          options: { accept: "video/mp4,video/webm" },
+            "The 11-character ID from a YouTube URL (the part after \"v=\"). When set, a click-to-play button appears over the photo above; the photo stays the poster frame and fallback either way. Leave empty to keep the current static-photo hero.",
+          type: "string",
+          validation: (Rule) =>
+            Rule.regex(/^[\w-]{11}$/, { name: "YouTube video ID" }).warning(
+              "Doesn't look like an 11-character YouTube video ID — double-check it's just the ID, not the full URL.",
+            ),
         }),
       ],
     }),
@@ -110,6 +113,10 @@ export const homePage = defineType({
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
         textField("bio", "Bio", { rows: 4 }),
+        textField("methodsBody", "Approach paragraph (merged from retired 'Come funziona' section)", {
+          rows: 4,
+          required: false,
+        }),
         stringField("storyLinkLabel", "Story link label"),
         stringField("watermarkText", "Background watermark word", {
           required: false,
@@ -117,25 +124,6 @@ export const homePage = defineType({
         defineField({
           name: "photo",
           title: "Photo",
-          type: "image",
-          options: { hotspot: true },
-          fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
-        }),
-      ],
-    }),
-
-    // 3. MethodsOverlap
-    defineField({
-      name: "comeFunziona",
-      title: "3. Come funziona (metodo)",
-      type: "object",
-      fields: [
-        stringField("kicker", "Kicker"),
-        stringField("heading", "Heading"),
-        textField("body", "Body"),
-        defineField({
-          name: "media",
-          title: "Media image",
           type: "image",
           options: { hotspot: true },
           fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
@@ -222,16 +210,6 @@ export const homePage = defineType({
       ],
     }),
 
-    // 6. StatementBand
-    defineField({
-      name: "statement",
-      title: "6. Statement",
-      description:
-        "The doctor's own signed statement, not a testimonial (docs/design-direction.md §9/§11) — signature and role come from Site settings' Author fields, not re-entered here.",
-      type: "object",
-      fields: [textField("statement", "Statement", { rows: 3 })],
-    }),
-
     // 7. DiplomiSection (list itself is the separate `diploma` document type)
     defineField({
       name: "diplomi",
@@ -310,12 +288,22 @@ export const homePage = defineType({
       ],
     }),
 
-    // 10. MiniContactBand (channel list itself comes from siteSettings.contactChannels)
+    // Hope (new — global restyle pass). A small, static transitional band:
+    // eyebrow + one heading line only, no photo, no body paragraph. Field-
+    // group numbering across this file reflects the PRE-restyle page
+    // order; the restyle pass's own reorder step renumbers all of these
+    // titles to match the new order in one pass, so this one is
+    // deliberately left unnumbered for now rather than guessing a slot.
     defineField({
-      name: "miniContact",
-      title: "10. Primo contatto (mini)",
+      name: "hope",
+      title: "Hope",
+      description:
+        "A short transitional band between Recognition and How therapy helps — reassurance, not a claim of outcome. Placeholder copy until real text is supplied.",
       type: "object",
-      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("body", "Body")],
+      fields: [
+        stringField("eyebrow", "Eyebrow", { initialValue: "[segnaposto]" }),
+        textField("heading", "Heading", { rows: 2, initialValue: "[segnaposto]" }),
+      ],
     }),
 
     // 11. SedesSection (scene list is the separate `sede` document type)

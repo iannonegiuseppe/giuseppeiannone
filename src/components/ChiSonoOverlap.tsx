@@ -35,6 +35,11 @@ export function ChiSonoOverlap({
   kicker,
   heading,
   bio,
+  // Global restyle pass: MethodsOverlap ("Come funziona") was retired as
+  // its own section — its approach/philosophy paragraph moves here as a
+  // second paragraph rather than being dropped, since PercorsoSection now
+  // owns the "How therapy helps" slot.
+  methodsBody,
   storyLinkLabel,
   watermarkText,
   photo,
@@ -44,6 +49,7 @@ export function ChiSonoOverlap({
   kicker: string;
   heading: string;
   bio: string;
+  methodsBody?: string;
   storyLinkLabel: string;
   watermarkText?: string;
   photo?: SanityImage;
@@ -100,6 +106,7 @@ export function ChiSonoOverlap({
             </p>
             <h2 className={styles.chiSonoHeading}>{heading}</h2>
             <p className={styles.chiSonoBio}>{bio}</p>
+            {methodsBody ? <p className={styles.chiSonoMethodsBody}>{methodsBody}</p> : null}
             <ArrowLink
               href="#"
               label={storyLinkLabel}

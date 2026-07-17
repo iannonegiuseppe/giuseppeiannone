@@ -49,9 +49,6 @@ export interface ContactChannel {
   order: number;
 }
 
-// Availability-badge pass.
-export type AvailabilityStatus = "accepting" | "waitlist" | "paused";
-
 interface SiteSettingsData {
   title: string;
   // CMS-driven header/footer pass: shared brand mark, header + footer.
@@ -73,10 +70,6 @@ interface SiteSettingsData {
   crisisSupportText?: string;
   googleProfileUrl?: string;
   carePathway?: PathwayStep[];
-  availabilityStatus?: AvailabilityStatus;
-  acceptingText?: string;
-  waitlistText?: string;
-  pausedText?: string;
 }
 
 export function getSiteSettings(locale: string) {
@@ -117,29 +110,6 @@ export function resolveLogoImage(
     width: Math.round(LOGO_HEIGHT * aspectRatio),
     height: LOGO_HEIGHT,
   };
-}
-
-// Picks the status text matching availabilityStatus, and centralizes the
-// "no text for the active status -> no badge" rule (spec: "never an empty
-// dot") in one place, rather than leaving each of the 3 call sites
-// (Hero, ChannelPickerDialog, FinalContactSection) to re-implement it.
-// AvailabilityBadge itself also defensively checks for empty text, so a
-// future caller that bypasses this helper still can't render a bare dot.
-export function resolveAvailabilityText(
-  settings?: Pick<SiteSettingsData, "availabilityStatus" | "acceptingText" | "waitlistText" | "pausedText"> | null,
-): { status: AvailabilityStatus; text: string } | null {
-  const status = settings?.availabilityStatus;
-  if (!status) return null;
-
-  const text =
-    status === "accepting"
-      ? settings?.acceptingText
-      : status === "waitlist"
-        ? settings?.waitlistText
-        : settings?.pausedText;
-
-  if (!text) return null;
-  return { status, text };
 }
 
 // CMS-driven header/footer pass.

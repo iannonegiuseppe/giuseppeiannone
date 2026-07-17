@@ -1,66 +1,53 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePalette } from "./PaletteContext";
+import { resolveTokenColor } from "./colorUtils";
 import styles from "./styleguide.module.scss";
 
-// Color tokens only (the type-scale --sg-fs-*/--sg-lh-* custom properties
-// aren't colors — a swatch+hex row wouldn't mean anything for them, so
-// they're out of scope for a "swatch + name + hex" token table).
+// Global restyle pass: this page is now the single-source design
+// reference for the ONE live palette — no more --sg-* proxy layer to
+// keep in sync. Reads the LIVE computed value straight off :root (real
+// --color-* custom properties, defined once in src/styles/_tokens.scss)
+// rather than a second, hand-maintained mirror — can never silently
+// drift from the real CSS source of truth the way the old --sg-* file
+// did (that's exactly how Footer's hover color broke unnoticed once,
+// see this pass's own report).
 const TOKEN_NAMES = [
-  "--sg-text",
-  "--sg-text-muted",
-  "--sg-card",
-  "--sg-placeholder",
-  "--sg-bg-page",
-  "--sg-bg-hero",
-  "--sg-bg-alt-1",
-  "--sg-bg-alt-2",
-  "--sg-bg-alt-3",
-  "--sg-bg-alt-4",
-  "--sg-accent",
-  "--sg-accent-text",
-  "--sg-accent-on-dark",
-  "--sg-on-accent",
-  "--sg-dark",
-  "--sg-dark-2",
-  "--sg-border",
-  "--sg-border-input",
-  "--sg-numeral-1",
-  "--sg-numeral-2",
-  "--sg-numeral-3",
-  "--sg-numeral-4",
-  "--sg-photo",
-  "--sg-shine-base",
-  "--sg-shine-mid",
-  "--sg-shine-light",
+  "--color-text",
+  "--color-text-muted",
+  "--color-bg",
+  "--color-surface",
+  "--color-surface-tint",
+  "--color-sand",
+  "--color-sand-deep",
+  "--color-greige",
+  "--color-line",
+  "--color-hairline",
+  "--color-accent",
+  "--color-accent-hover",
+  "--color-accent-soft",
+  "--color-accent-contrast",
+  "--color-amber",
+  "--color-focus",
 ] as const;
 
-// Reads the LIVE computed value straight off the DOM rather than keeping
-// a second, hand-maintained JS mirror of styleguide-palettes.scss's own
-// hex values — genuinely "auto-rendered" (per this task's own wording)
-// and can never silently drift from the real CSS source of truth.
-// Re-reads whenever the active palette changes (the effect's own
-// dependency), since the same custom property resolves to a different
-// value once [data-palette] changes on an ancestor.
 export function TokenTable() {
-  const { palette } = usePalette();
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const probeRef = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const el = anchorRef.current;
-    if (!el) return;
-    const computed = getComputedStyle(el);
+    const probe = probeRef.current;
+    if (!probe) return;
     const next: Record<string, string> = {};
     for (const name of TOKEN_NAMES) {
-      next[name] = computed.getPropertyValue(name).trim().toUpperCase();
+      next[name] = resolveTokenColor(probe, name);
     }
     setValues(next);
-  }, [palette]);
+  }, []);
 
   return (
-    <div ref={anchorRef} className={styles.tokenTable}>
+    <div className={styles.tokenTable}>
+      <div ref={probeRef} aria-hidden="true" className={styles.tokenProbe} />
       {TOKEN_NAMES.map((name) => (
         <div key={name} className={styles.tokenRow}>
           <span

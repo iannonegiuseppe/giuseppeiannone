@@ -1,8 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import Image from "next/image";
-import { AvailabilityBadge } from "./AvailabilityBadge";
+import { HeroVideo } from "./HeroVideo";
 import { urlFor } from "@/sanity/image";
-import type { AvailabilityStatus } from "@/sanity/seo";
 import styles from "./HeroOverlap.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
 
@@ -43,8 +42,7 @@ export function HeroOverlap({
   ctaLabel,
   registrationNumber,
   photo,
-  availabilityStatus,
-  availabilityText,
+  youtubeId,
 }: {
   treatment: "raw" | "treated";
   // Internal review annotation only (e.g. "Hero — approved") — omitted
@@ -56,8 +54,9 @@ export function HeroOverlap({
   ctaLabel: string;
   registrationNumber?: string;
   photo?: SanityImage;
-  availabilityStatus?: AvailabilityStatus;
-  availabilityText?: string;
+  // When set, a click-to-play YouTube embed appears over the photo below
+  // instead of the plain static image — see HeroVideo.tsx.
+  youtubeId?: string;
 }) {
   const photoClassName =
     treatment === "treated"
@@ -73,20 +72,30 @@ export function HeroOverlap({
   // wants at 2x DPR; the source itself needs a larger owner re-upload,
   // no pipeline fix closes that gap, see this pass's own report).
   const photoSrc = photo ? urlFor(photo).url() : "/design-lab/01.webp";
+  const photoSizes = "(min-width: 64rem) 100vw, 100vw";
 
   return (
     <section className={styles.heroOverlapSection} data-lab-section={`hero-${treatment}`}>
       {label ? <p className={styles.heroOverlapLabel}>{label}</p> : null}
       <div className={styles.heroOverlap}>
         <div className={styles.heroOverlapPhotoWrap}>
-          <Image
-            src={photoSrc}
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 64rem) 100vw, 100vw"
-            className={photoClassName}
-          />
+          {youtubeId ? (
+            <HeroVideo
+              youtubeId={youtubeId}
+              photoSrc={photoSrc}
+              photoClassName={photoClassName}
+              sizes={photoSizes}
+            />
+          ) : (
+            <Image
+              src={photoSrc}
+              alt=""
+              fill
+              priority
+              sizes={photoSizes}
+              className={photoClassName}
+            />
+          )}
           {/* Mobile-only revision: bottom-anchored gradient dissolving
               the photo into --color-bg so the text block below sits on
               solid ivory, not photo texture. display:none above mobile
@@ -102,19 +111,7 @@ export function HeroOverlap({
             <a href="#" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
               {ctaLabel}
             </a>
-            <AvailabilityBadge
-              status={availabilityStatus}
-              text={availabilityText}
-              variant="onLight"
-              className={styles.heroOverlapAvailability}
-            />
-            <p
-              className={
-                availabilityText
-                  ? `${styles.heroOverlapRegistration} ${styles.heroOverlapRegistrationTight}`
-                  : styles.heroOverlapRegistration
-              }
-            >
+            <p className={styles.heroOverlapRegistration}>
               Iscrizione all&apos;Albo degli Psicologi n. {registrationNumber ?? "[segnaposto]"}
             </p>
           </div>

@@ -1,0 +1,44 @@
+@use "../styles/mixins";
+
+// New — global restyle pass. Full-bleed solid-accent band (ivory-on-
+// accent, same colorway/contrast already verified for FinalContactSection
+// and Footer) rather than a new dark/on-dark token pair — this stays
+// within the palette already established in Step 1, no new global tokens
+// needed for a single small transitional band.
+.hopeSection {
+  background: var(--color-accent);
+  padding-block: var(--space-band-y);
+}
+
+.hopeInner {
+  @include mixins.container;
+  max-width: 40rem;
+  text-align: center;
+  margin-inline: auto;
+}
+
+// Same "rule-free, ivory@70%" kicker treatment as FinalContactSection's
+// own inverted kicker on this same accent background.
+.hopeEyebrow {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.hopeHeading {
+  margin: var(--space-4) 0 0; // 16px below the eyebrow, established rhythm
+  color: var(--color-bg);
+  font-size: 1.75rem; // 28px, mobile tier
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 2rem; // 32px, tablet
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2.25rem; // 36px, desktop
+  }
+}

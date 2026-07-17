@@ -1,56 +1,26 @@
 @use "../../../styles/mixins";
 
-// Stage 3.5 groundwork — four-palette explorer. Every color here is
-// consumed via var(--sg-*) (defined in styleguide-palettes.scss, the ONE
-// file allowed raw hex, per this task's own constraint #3). Shared, non-
-// color helpers (container/breakpoint-up/visually-hidden) are reused from
-// the site-wide _mixins.scss — safe, since none of them touch color.
-// mixins.focus-ring is deliberately NOT used anywhere in this file: it
-// hardcodes var(--color-focus), a global (non --sg-*) color — every focus
-// ring here is hand-written against an --sg-* token instead.
-
-@mixin sg-palette-transition {
-  transition:
-    background-color 300ms ease,
-    color 300ms ease,
-    border-color 300ms ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-}
+// Global restyle pass: collapses the four-palette explorer into the
+// single, permanent design reference for the ONE live system. Every
+// color here is a real global --color-* token (src/styles/_tokens.scss)
+// — no more --sg-* proxy layer. Fonts are the real --font-display/
+// --font-body variables, inherited from [locale]/layout.tsx's <html>
+// (this route is nested under it) — no separate scoped font load.
 
 .root {
-  @include sg-palette-transition;
-  font-family: var(--sg-font-body), system-ui, -apple-system, Helvetica, Arial,
+  font-family: var(--font-body), system-ui, -apple-system, Helvetica, Arial,
     sans-serif;
-  background: var(--sg-bg-page);
-  color: var(--sg-text);
-  // Deliberately NO min-height:100vh here — globals.scss makes <body>
-  // display:flex/flex-direction:column (the site's sticky-footer layout,
-  // Header/this root div/Footer as flex siblings). A flex item's
-  // automatic minimum size (min-height:auto, the default) is based on
-  // its own content, which is already several times taller than 100vh
-  // on this page — plenty. Explicitly setting min-height:100vh on a
-  // flex item in a column layout REMOVES that automatic content-based
-  // floor and replaces it with a fixed one, which — caught empirically,
-  // not assumed — let flex-shrink collapse this whole div down to
-  // exactly one viewport tall (1000px in testing) while its real
-  // content (6500px+) kept painting past that boundary and visually
-  // colliding with the real Footer, which sits immediately after this
-  // div in DOM order. Removing it restores normal, uncapped, content-
-  // driven flex-item sizing — verified via getBoundingClientRect()
-  // after the fix, see this pass's own report.
+  background: var(--color-bg);
+  color: var(--color-text);
+  // See the previous pass's own note on why NOT min-height:100vh here —
+  // this is a flex item in globals.scss's sticky-footer column layout;
+  // an explicit min-height collapses it and lets real content overflow
+  // past the (wrongly-short) box into the Footer below it. Uncapped,
+  // content-driven flex-item sizing is what's needed.
   //
-  // The real site Header (layout.tsx wraps every route, including this
-  // one) is position:fixed and transparent at rest — by design, since
-  // every OTHER page starts with a full-bleed hero photo it's meant to
-  // overlay. This page's own header strip is plain UI chrome, not a
-  // hero image, so it genuinely needs to clear the fixed header rather
-  // than sit under it. Measured real header height: ~113px desktop,
-  // ~100px mobile — 8rem (128px) clears both with margin, a single
-  // value rather than a breakpoint-tuned one since the header's own
-  // height doesn't vary enough between tiers to need it.
+  // The real site Header is position:fixed/transparent-at-rest, built to
+  // overlay a hero photo — this page has no hero image, so its own
+  // header strip needs real clearance instead of sitting under it.
   padding-top: 8rem;
   padding-bottom: 6rem;
 }
@@ -62,18 +32,18 @@
 
 .sectionHeading {
   margin: 0 0 1.5rem;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  font-size: var(--sg-fs-h2);
-  line-height: var(--sg-lh-h2);
-  color: var(--sg-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
 }
 
 .subsectionHeading {
   margin: 2rem 0 1rem;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-lead);
-  font-weight: 600;
-  color: var(--sg-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--color-text);
 
   &:first-of-type {
     margin-top: 0.5rem;
@@ -82,143 +52,69 @@
 
 .caption {
   margin: 0.75rem 0 0;
-  font-size: var(--sg-fs-caption);
-  line-height: var(--sg-lh-caption);
-  color: var(--sg-text-muted);
-  max-width: 60ch;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+  max-width: 65ch;
 }
 
 // --- 1. Header strip ---------------------------------------------------
 .headerStrip {
   @include mixins.container;
-  @include sg-palette-transition;
   padding-block: 2rem;
-  background: var(--sg-bg-hero);
-  border-bottom: 1px solid var(--sg-border);
-}
-
-.headerStripTop {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
+  background: var(--color-sand);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .headerStripTitle {
   margin: 0;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  font-size: var(--sg-fs-h3);
-  line-height: var(--sg-lh-h3);
-  color: var(--sg-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
 }
 
 .headerStripNote {
   margin: 1rem 0 0;
-  font-size: var(--sg-fs-small);
-  line-height: var(--sg-lh-small);
-  color: var(--sg-text-muted);
-  max-width: 70ch;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+  max-width: 75ch;
 }
 
-// --- Palette switcher (palette-NEUTRAL — charcoal/limestone only) ------
-.switcherFieldset {
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.switcherLegend {
-  @include mixins.visually-hidden;
-}
-
-.switcherGroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  background: var(--sg-switcher-bg);
-  border: 1px solid var(--sg-switcher-border);
-  border-radius: 999px;
-  padding: 0.25rem;
-}
-
-.switcherInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.switcherPill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-size: var(--sg-fs-small);
-  font-weight: 600;
-  color: var(--sg-switcher-text);
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
-
-  &[data-selected="true"] {
-    background: var(--sg-switcher-selected-bg);
-    color: var(--sg-switcher-selected-text);
-  }
-
-  &:has(.switcherInput:focus-visible) {
-    outline: 2px solid var(--sg-switcher-focus);
-    outline-offset: 2px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-}
-
-// --- 2. Background progression strip ------------------------------------
+// --- 2. Background progression -------------------------------------------
 .bgStrip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: 1px;
-  border: 1px solid var(--sg-border);
+  border: 1px solid var(--color-line);
 }
 
 .bgStop {
-  @include sg-palette-transition;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 1.5rem 0.75rem;
-  background: var(--sg-card);
+  background: var(--color-surface);
 }
 
 .bgStopSwatch {
-  @include sg-palette-transition;
   width: 3rem;
   height: 3rem;
   border-radius: 999px;
-  border: 1px solid var(--sg-border);
+  border: 1px solid var(--color-line);
 }
 
 .bgStopLabel {
-  font-size: var(--sg-fs-small);
-  font-weight: 600;
-  color: var(--sg-text);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .bgStopVar {
-  font-size: var(--sg-fs-caption);
-  color: var(--sg-text-muted);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 // --- 3. Typography specimen ---------------------------------------------
@@ -232,175 +128,94 @@
 }
 
 .typeSpecRow {
-  border-bottom: 1px solid var(--sg-border);
+  border-bottom: 1px solid var(--color-line);
   padding-bottom: 1.5rem;
 }
 
 .typeSpecLabel {
   margin: 0 0 0.5rem;
-  font-size: var(--sg-fs-caption);
-  color: var(--sg-text-muted);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .typeSpecMeta code {
-  color: var(--sg-text-muted);
+  color: var(--color-text-muted);
+}
+
+.typeSpecNote {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  max-width: 60ch;
 }
 
 .typeSampleDisplay {
   margin: 0;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  color: var(--sg-text);
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+
+// No global --fs-numeral token exists — real value, exactly as
+// implemented in ChiSonoOverlap (6rem below md, 7.5rem at md+).
+.typeSampleNumeralSize {
+  font-size: 6rem;
+  line-height: 1;
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 7.5rem;
+  }
 }
 
 .typeSampleBody {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
+  font-family: var(--font-body);
   font-weight: 400;
-  color: var(--sg-text);
+  color: var(--color-text);
 }
 
+// No global --fs-eyebrow token exists — real value, exactly as
+// implemented in HeroOverlap.
 .typeSampleEyebrow {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--sg-accent-text);
+  color: var(--color-accent);
 }
 
 .typeSampleButton {
   margin: 0;
   display: inline-block;
-  font-family: var(--sg-font-body), sans-serif;
-  font-weight: 600;
-  color: var(--sg-on-accent);
-  background: var(--sg-accent);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent-contrast);
+  background: var(--color-accent);
   padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-button);
 }
 
-// Italic emphasis technique — Source Sans 3 italic 400, never bold.
+// Italic emphasis technique — EB Garamond italic 400, never bold. The
+// ONE final technique (no more quiet/shine/single-family comparison).
 .emphasisBodySpecimen {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-lead);
-  line-height: var(--sg-lh-lead);
-  color: var(--sg-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text);
   max-width: 60ch;
 }
 
-.emphasisBodyWord {
+.emphasisWord {
+  font-family: var(--font-display);
   font-style: italic;
   font-weight: 400;
-  color: var(--sg-accent-text);
+  color: var(--color-accent);
 }
 
-// Heading emphasis variants
-.headingVariantStack {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
-
-.headingVariantRow {
-  border-left: 2px solid var(--sg-border);
-  padding-left: 1.5rem;
-}
-
-.headingVariantLabel {
-  margin: 0 0 0.5rem;
-  font-size: var(--sg-fs-caption);
-  font-weight: 600;
-  color: var(--sg-text-muted);
-}
-
-.emphasisHeadingMarcellus {
-  margin: 0;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  font-size: var(--sg-fs-display-xl);
-  line-height: var(--sg-lh-display-xl);
-  color: var(--sg-text);
-}
-
-.emphasisHeadingMarcellusSmall {
-  margin: 0;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  font-size: var(--sg-fs-h3);
-  line-height: var(--sg-lh-h3);
-  color: var(--sg-text);
-}
-
-.emphasisHeadingCormorant {
-  margin: 0;
-  font-family: var(--sg-font-cormorant), Georgia, serif;
-  font-weight: 500;
-  font-style: normal;
-  font-size: var(--sg-fs-display-xl);
-  line-height: var(--sg-lh-display-xl);
-  color: var(--sg-text);
-}
-
-// Variant A — quiet: upright Marcellus, no italic (Marcellus has no
-// italic cut loaded anywhere in this project — see fonts.ts/report), just
-// recolored. This IS the documented safe fallback path the task itself
-// describes for a face lacking a true italic.
-.emphasisQuiet {
-  font-style: normal;
-  color: var(--sg-accent-text);
-}
-
-// Variant B/C shared shine device — Cormorant italic 500, metallic
-// gradient text-fill with a periodic sweep. Solid `color` fallback is
-// declared UNCONDITIONALLY first; the transparent/gradient-fill
-// treatment only applies inside the @supports guard below, so a browser
-// without background-clip:text support keeps the plain solid color
-// (never invisible text).
-.emphasisShine {
-  font-family: var(--sg-font-cormorant), Georgia, serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: 1.12em; // Cormorant runs small — optically matched to the surrounding Marcellus/Cormorant cap height, per spec
-  color: var(--sg-accent-text);
-  background-image: linear-gradient(
-    100deg,
-    var(--sg-shine-base),
-    var(--sg-shine-mid) 40%,
-    var(--sg-shine-light) 50%,
-    var(--sg-shine-mid) 60%,
-    var(--sg-shine-base)
-  );
-  background-size: 200% 100%;
-  background-position: 0% 0%;
-  animation: sg-shine 7s ease-in-out infinite;
-}
-
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-  .emphasisShine {
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
-}
-
-@keyframes sg-shine {
-  0% {
-    background-position: 200% 0%;
-  }
-  35%,
-  100% {
-    background-position: -200% 0%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .emphasisShine {
-    animation: none;
-    background-position: 50% 0%;
-  }
-}
-
-// --- 4. Accent anatomy ---------------------------------------------------
+// --- 4. Component anatomy ---------------------------------------------
 .anatomyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -408,37 +223,36 @@
 }
 
 .anatomyItem {
-  @include sg-palette-transition;
   padding: 1.5rem;
-  background: var(--sg-card);
-  border: 1px solid var(--sg-border);
-  border-radius: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
 }
 
 .anatomyItemLabel {
   margin: 0 0 1rem;
-  font-size: var(--sg-fs-caption);
-  font-weight: 600;
-  color: var(--sg-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
 }
 
 .anatomyNavActive {
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-body);
-  font-weight: 600;
-  color: var(--sg-accent-text);
-  border-bottom: 1px solid var(--sg-accent-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--color-accent);
+  border-bottom: 1px solid var(--color-accent);
   padding-bottom: 0.25rem;
 }
 
 .anatomyEyebrow {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-eyebrow);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--sg-accent-text);
+  color: var(--color-accent);
 }
 
 .anatomyButtonRow {
@@ -447,25 +261,30 @@
   gap: 0.75rem;
 }
 
+// Mirrors Button.module.scss's real .solid variant exactly.
 .anatomyButton {
-  @include sg-palette-transition;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-button);
-  font-weight: 600;
-  line-height: var(--sg-lh-button);
-  color: var(--sg-on-accent);
-  background: var(--sg-accent);
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  font-family: var(--font-body);
+  font-size: var(--button-font-size);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  color: var(--color-accent-contrast);
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-button);
+  padding: var(--button-padding-block) var(--button-padding-inline);
+  min-height: var(--button-min-height);
   cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--sg-accent) 94%, black);
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--sg-accent-text);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
 
@@ -475,15 +294,14 @@
   }
 }
 
-// Static reference states (screenshots can't hover/focus a real pointer) —
-// forces the SAME visual treatment the real :hover/:focus-visible rules
-// above already apply interactively.
+// Static reference states (screenshots can't hover/focus a real pointer).
 .anatomyButtonHoverDemo {
-  background: color-mix(in srgb, var(--sg-accent) 94%, black);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .anatomyButtonFocusDemo {
-  outline: 2px solid var(--sg-accent-text);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -494,10 +312,10 @@
 }
 
 .anatomyLink {
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-small);
-  font-weight: 600;
-  color: var(--sg-accent-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--color-accent);
   text-decoration: none;
 
   &:hover {
@@ -509,14 +327,6 @@
   text-decoration: underline;
 }
 
-.anatomyQuoteMark {
-  display: block;
-  font-family: var(--font-marcellus), Georgia, serif;
-  font-size: 5rem;
-  line-height: 1;
-  color: color-mix(in srgb, var(--sg-accent) 25%, transparent);
-}
-
 .anatomyCardRow {
   display: flex;
   flex-direction: column;
@@ -525,15 +335,12 @@
 
 .anatomyCard {
   padding: 1rem 1.25rem;
-  background: var(--sg-bg-alt-3);
+  background: var(--color-surface-tint);
   border-left: 2px solid transparent;
-  transition:
-    border-color 200ms ease,
-    background-color 300ms ease,
-    color 300ms ease;
+  transition: border-color 200ms ease;
 
   &:hover {
-    border-left-color: var(--sg-accent);
+    border-left-color: var(--color-accent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -542,22 +349,32 @@
 }
 
 .anatomyCardHoverDemo {
-  border-left-color: var(--sg-accent);
+  border-left-color: var(--color-accent);
 }
 
 .anatomyCardTitle {
   margin: 0 0 0.375rem;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-body);
-  font-weight: 600;
-  color: var(--sg-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .anatomyCardBody {
   margin: 0;
-  font-size: var(--sg-fs-small);
-  line-height: var(--sg-lh-small);
-  color: var(--sg-text-muted);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}
+
+// Real ContactForm only ever renders on the accent band (ivory-on-
+// accent) — never a light card. This wrapper reproduces that real
+// backdrop rather than showing the input as an invented light-mode
+// field that doesn't exist anywhere on the real site.
+.anatomyFormDemo {
+  padding: 1.5rem;
+  background: var(--color-accent);
+  border-radius: var(--radius-m);
 }
 
 .anatomyInputRow {
@@ -574,18 +391,20 @@
 }
 
 .anatomyInputLabel {
-  font-size: var(--sg-fs-small);
-  font-weight: 600;
-  color: var(--sg-text);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--color-accent-contrast);
 }
 
+// Mirrors ContactForm.module.scss's real field-base mixin.
 .anatomyInput {
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-body);
-  color: var(--sg-text);
-  background: var(--sg-card);
-  border: 1.5px solid var(--sg-border-input);
-  border-radius: 0.375rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-accent-contrast);
+  caret-color: var(--color-accent-contrast);
+  background: color-mix(in srgb, var(--color-accent) 95%, black);
+  border: 1px solid color-mix(in srgb, var(--color-accent-contrast) 35%, transparent);
+  border-radius: var(--radius-s);
   padding: 0.625rem 0.875rem;
   transition:
     border-color 200ms ease,
@@ -593,13 +412,12 @@
 
   &:focus {
     outline: none;
-    border-color: var(--sg-accent);
-    caret-color: var(--sg-accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sg-accent) 18%, transparent);
+    border-color: var(--color-accent-contrast);
+    box-shadow: 0 0 0 0.375rem color-mix(in srgb, var(--color-accent-contrast) 15%, transparent);
   }
 
   &[aria-invalid="true"] {
-    border-color: var(--sg-error);
+    border-color: var(--color-amber);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -608,88 +426,83 @@
 }
 
 .anatomyInputFocusDemo {
-  border-color: var(--sg-accent);
-  caret-color: var(--sg-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sg-accent) 18%, transparent);
+  border-color: var(--color-accent-contrast);
+  box-shadow: 0 0 0 0.375rem color-mix(in srgb, var(--color-accent-contrast) 15%, transparent);
 }
 
 .anatomyInputErrorDemo {
-  border-color: var(--sg-error);
+  border-color: var(--color-amber);
 }
 
 .anatomyInputError {
-  font-size: var(--sg-fs-caption);
-  color: var(--sg-error);
+  font-size: 0.75rem;
+  color: var(--color-amber);
 }
 
+// Real formula, exactly as implemented in ChiSonoOverlap/
+// RecognitionSection — not a preset numeral-tint token (none exists).
 .anatomyNumeral {
   display: block;
-  font-family: var(--font-marcellus), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 4.5rem;
   line-height: 1;
-  color: var(--sg-numeral-1);
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
-// --- 5. Dark band sample --------------------------------------------------
-.darkBand {
+// --- 5. Accent band sample ------------------------------------------------
+.accentBand {
   @include mixins.container;
-  @include sg-palette-transition;
   width: 100vw;
-  // margin-inline: calc(50% - 50vw);
-  background: var(--sg-dark);
+  background: var(--color-accent);
   padding-block: 3rem;
 }
 
-.darkBandEyebrow {
+.accentBandEyebrow {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
-  font-size: var(--sg-fs-eyebrow);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--sg-accent-on-dark);
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--color-accent-contrast) 70%, transparent);
 }
 
-.darkBandHeading {
+.accentBandHeading {
   margin: 0.75rem 0 0;
-  font-family: var(--font-marcellus), Georgia, "Times New Roman", serif;
-  font-size: var(--sg-fs-h2);
-  line-height: var(--sg-lh-h2);
-  color: var(--sg-bg-page);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-accent-contrast);
   max-width: 24ch;
 }
 
-.darkBand2 {
+.accentBand2 {
   @include mixins.container;
-  @include sg-palette-transition;
   width: 100vw;
-  // margin-inline: calc(50% - 50vw);
-  background: var(--sg-dark-2);
+  background: var(--color-accent-hover);
   padding-block: 3rem;
 }
 
 .videoPlaceholder {
-  @include sg-palette-transition;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   max-width: 32rem;
   aspect-ratio: 16 / 9;
-  background: color-mix(in srgb, var(--sg-dark) 60%, var(--sg-dark-2));
-  border: 1px solid color-mix(in srgb, var(--sg-bg-page) 15%, transparent);
-  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-accent-hover) 80%, black);
+  border: 1px solid color-mix(in srgb, var(--color-accent-contrast) 15%, transparent);
+  border-radius: var(--radius-s);
 }
 
 .playButton {
-  @include sg-palette-transition;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 999px;
-  background: var(--sg-accent);
+  background: var(--color-accent);
 }
 
 .playButtonGlyph {
@@ -698,55 +511,39 @@
   margin-left: 0.25rem;
   border-top: 0.625rem solid transparent;
   border-bottom: 0.625rem solid transparent;
-  border-left: 1rem solid var(--sg-on-accent);
+  border-left: 1rem solid var(--color-accent-contrast);
 }
 
 // --- 6. Mini-page preview -------------------------------------------------
 .miniPage {
-  @include sg-palette-transition;
-  border: 1px solid var(--sg-border);
-  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
   overflow: hidden;
-  background: var(--sg-bg-page);
+  background: var(--color-bg);
   font-size: 0.8125rem;
 }
 
 .miniHero {
-  @include sg-palette-transition;
-  position: relative;
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-hero);
-}
-
-.miniHeroTag {
-  display: inline-block;
-  margin-bottom: 1rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 999px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--sg-on-accent);
-  background: var(--sg-accent);
+  background: var(--color-sand);
 }
 
 .miniHeroEyebrow {
   margin: 0;
-  font-family: var(--sg-font-body), sans-serif;
+  font-family: var(--font-body);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--sg-accent-text);
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
 }
 
 .miniHeroHeading {
   margin: 0.5rem 0 0;
-  font-family: var(--font-marcellus), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.75rem;
   line-height: 1.15;
-  color: var(--sg-text);
+  color: var(--color-text);
   max-width: 16ch;
 }
 
@@ -754,65 +551,39 @@
   margin: 0.75rem 0 0;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--sg-text);
+  color: var(--color-text);
   max-width: 32ch;
 }
 
-.miniQuote {
-  @include sg-palette-transition;
+.miniAccentBand {
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-alt-3);
-  text-align: center;
+  background: var(--color-accent);
 }
 
-.miniQuoteMark {
-  display: block;
-  font-family: var(--font-marcellus), Georgia, serif;
-  font-size: 2.5rem;
-  line-height: 1;
-  color: color-mix(in srgb, var(--sg-accent) 30%, transparent);
-}
-
-.miniQuoteText {
-  margin: 0.25rem auto 0;
-  max-width: 28ch;
-  font-family: var(--font-marcellus), Georgia, serif;
-  font-size: 1.125rem;
-  line-height: 1.4;
-  color: var(--sg-text);
-}
-
-.miniDarkBand {
-  @include sg-palette-transition;
-  padding: 2rem 1.5rem;
-  background: var(--sg-dark);
-}
-
-.miniDarkBandEyebrow {
+.miniAccentBandEyebrow {
   margin: 0;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--sg-accent-on-dark);
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--color-accent-contrast) 70%, transparent);
 }
 
-.miniDarkBandHeading {
+.miniAccentBandHeading {
   margin: 0.5rem 0 0;
-  font-family: var(--font-marcellus), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.25rem;
   line-height: 1.3;
-  color: var(--sg-bg-page);
+  color: var(--color-accent-contrast);
   max-width: 22ch;
 }
 
 .miniSteps {
-  @include sg-palette-transition;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1.5rem;
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-page);
+  background: var(--color-bg);
 }
 
 .miniStep {
@@ -822,33 +593,31 @@
 }
 
 .miniStepNumeral {
-  font-family: var(--font-marcellus), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  color: var(--sg-numeral-2);
+  color: color-mix(in srgb, var(--color-text) 25%, transparent);
 }
 
 .miniStepText {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--sg-text);
+  color: var(--color-text);
 }
 
 .miniBioRow {
-  @include sg-palette-transition;
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
   align-items: center;
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-alt-1);
+  background: var(--color-surface-tint);
 }
 
 .miniPhoto {
-  @include sg-palette-transition;
   flex: 0 0 6rem;
   height: 6rem;
-  border-radius: 0.5rem;
-  background: var(--sg-photo);
+  border-radius: var(--radius-s);
+  background: var(--color-greige);
 }
 
 .miniBioText {
@@ -858,55 +627,52 @@
 .miniBioEyebrow {
   margin: 0;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--sg-accent-text);
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
 }
 
 .miniBioBody {
   margin: 0.375rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--sg-text);
+  color: var(--color-text);
   max-width: 40ch;
 }
 
 .miniCards {
-  @include sg-palette-transition;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1rem;
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-page);
+  background: var(--color-bg);
 }
 
 .miniCard {
-  @include sg-palette-transition;
   padding: 1rem;
-  background: var(--sg-card);
-  border-left: 2px solid var(--sg-accent);
-  border-radius: 0.25rem;
+  background: var(--color-surface);
+  border-left: 2px solid var(--color-accent);
+  border-radius: var(--radius-s);
 }
 
 .miniCardTitle {
   margin: 0 0 0.5rem;
   font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--sg-text);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .miniFormBand {
-  @include sg-palette-transition;
   padding: 2rem 1.5rem;
-  background: var(--sg-bg-alt-2);
+  background: var(--color-greige);
 }
 
 .miniFormHeading {
   margin: 0 0 1rem;
-  font-family: var(--font-marcellus), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.375rem;
-  color: var(--sg-text);
+  color: var(--color-text);
 }
 
 .miniForm {
@@ -917,12 +683,11 @@
 }
 
 .miniFooter {
-  @include sg-palette-transition;
   display: flex;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  background: var(--sg-dark);
-  color: var(--sg-bg-page);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
   font-size: 0.75rem;
 }
 
@@ -938,28 +703,109 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--sg-border);
+  border-bottom: 1px solid var(--color-line);
 }
 
 .tokenSwatch {
-  @include sg-palette-transition;
   flex: 0 0 1.5rem;
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 0.25rem;
-  border: 1px solid var(--sg-border);
+  border: 1px solid var(--color-line);
 }
 
 .tokenName {
   flex: 1 1 auto;
-  font-size: var(--sg-fs-caption);
-  color: var(--sg-text-muted);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .tokenHex {
-  font-size: var(--sg-fs-caption);
-  font-weight: 600;
-  color: var(--sg-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+// Offscreen element TokenTable/ContrastTable use to force-resolve
+// custom-property chains (see colorUtils.ts's own comment on why a
+// plain getPropertyValue() read isn't enough for alias tokens).
+.tokenProbe {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+// --- 8. Contrast audit ------------------------------------------------------
+.contrastTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.contrastHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem 4.5rem 4.5rem;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.contrastRow {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem 4.5rem 4.5rem;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.contrastLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.contrastNote {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.contrastRatio,
+.contrastFloor {
+  font-size: var(--fs-small);
+  color: var(--color-text);
+}
+
+.contrastResult {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.contrastPass {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.contrastFail {
+  background: color-mix(in srgb, var(--color-amber) 20%, transparent);
+  color: var(--color-amber);
 }
 
 // --- Tablet+ layout tweaks -------------------------------------------------

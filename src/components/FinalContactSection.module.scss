@@ -160,12 +160,6 @@
   color: color-mix(in srgb, var(--color-bg) 85%, transparent);
 }
 
-// Availability-badge pass: sits between the paragraph and the row-2 grid,
-// onDark variant (ivory text/ringed dots — see AvailabilityBadge.module.scss).
-.finalContactAvailability {
-  margin-top: var(--space-4); // 16px below the paragraph
-}
-
 // ROW 2 — mobile/tablet (<1024px): unchanged from REVISION 4 — plain
 // container-bound stack (photo card, then form), no bleed, no dissolve,
 // no overlap, per REVISION 5's own explicit "leave it" instruction.
@@ -292,6 +286,16 @@
     z-index: 1;
     @include shared.col(7, 6);
   }
+}
+
+// Global restyle pass: replaces the removed availability badge. Sits
+// below the form, quiet — same ivory@70%-on-pine treatment as this
+// section's own kicker, not full-strength like the heading/body.
+.finalContactReassurance {
+  margin: var(--space-4) 0 0; // 16px below the form
+  font-family: var(--font-body);
+  font-size: 0.875rem; // 14px
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
 // On-pine button variant of the shared .btnPrimaryInverted — this class

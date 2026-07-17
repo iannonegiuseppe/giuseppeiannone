@@ -198,7 +198,6 @@ async function seed() {
   // the exact files the hardcoded components used to import directly.
   const heroPhotoId = await uploadPublicImage("design-lab/01.webp");
   const chiSonoPhotoId = await uploadPublicImage("design-lab/04.webp");
-  const comeFunzionaMediaId = await uploadPublicImage("design-lab/12.webp");
   const diCosaPhotoId = await uploadPublicImage("design-lab/03.webp");
   const finalCtaPhotoId = await uploadPublicImage("design-lab/11.webp");
   const diplomaImageIds = await Promise.all(
@@ -424,15 +423,11 @@ async function seed() {
       kicker: "Il percorso",
       heading: "Chi sono",
       bio: "Da anni accompagno persone che attraversano ansia, cambiamenti di vita e momenti di difficoltà, con un approccio integrato e concreto.",
+      methodsBody:
+        "Ogni percorso nasce da un ascolto attento: strumenti cognitivo-comportamentali, adattati alla persona che ho davanti, non a uno schema fisso.",
       storyLinkLabel: "La mia storia",
       watermarkText: "Benvenuto",
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: chiSonoPhotoId } },
-    },
-    comeFunziona: {
-      kicker: "Il metodo",
-      heading: "Come funziona",
-      body: "Ogni percorso nasce da un ascolto attento: strumenti cognitivo-comportamentali, adattati alla persona che ho davanti, non a uno schema fisso.",
-      media: { _type: "image", alt: "", asset: { _type: "reference", _ref: comeFunzionaMediaId } },
     },
     formazione: {
       kicker: "Formazione e iscrizioni",
@@ -464,10 +459,6 @@ async function seed() {
       ],
       photo: { _type: "image", alt: "", asset: { _type: "reference", _ref: diCosaPhotoId } },
     },
-    statement: {
-      statement:
-        "Il mio lavoro non è dare risposte pronte, ma costruire insieme un modo di stare nelle cose — più chiaro, più sostenibile.",
-    },
     diplomi: {
       kicker: "Percorso formativo",
       heading: "Diplomi e formazione",
@@ -498,10 +489,9 @@ async function seed() {
         { _key: "vignette-cambiamenti", id: "cambiamenti-di-vita", vignette: "Evito situazioni che prima non mi pesavano. Qualcosa è cambiato, ma non saprei dire esattamente quando.", area: "Cambiamenti di vita", slug: "cambiamenti-di-vita" },
       ],
     },
-    miniContact: {
-      kicker: "Primo contatto",
-      heading: "Non serve arrivare con una richiesta chiara.",
-      body: "Se vuoi, scrivimi due righe così come viene: ti rispondo personalmente e capiamo insieme se posso esserti utile. [segnaposto]",
+    hope: {
+      eyebrow: "[segnaposto]",
+      heading: "[segnaposto — testo di Giuseppe non ancora arrivato]",
     },
     sedi: {
       kicker: "Dove ricevo",

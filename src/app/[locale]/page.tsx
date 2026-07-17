@@ -9,8 +9,7 @@ import { FaqSection } from "@/components/FaqSection";
 import { FinalContactSection } from "@/components/FinalContactSection";
 import { FormazioneBand } from "@/components/FormazioneBand";
 import { HeroOverlap } from "@/components/HeroOverlap";
-import { MethodsOverlap } from "@/components/MethodsOverlap";
-import { MiniContactBand } from "@/components/MiniContactBand";
+import { HopeSection } from "@/components/HopeSection";
 import { PercorsoSection } from "@/components/PercorsoSection";
 import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
@@ -19,7 +18,6 @@ import {
   ResourcesSection,
 } from "@/components/ResourcesSection";
 import { SedesSection } from "@/components/SedesSection";
-import { StatementBand } from "@/components/StatementBand";
 import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
@@ -29,11 +27,7 @@ import {
   latestArticlesQuery,
   sedesQuery,
 } from "@/sanity/queries";
-import {
-  buildMetadata,
-  getSiteSettings,
-  resolveAvailabilityText,
-} from "@/sanity/seo";
+import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
 interface HomePageData {
   title?: string;
@@ -41,6 +35,7 @@ interface HomePageData {
     positioningStatement?: string;
     ctaLabel?: string;
     photo?: SanityImage;
+    youtubeId?: string;
   };
   chiSono?: {
     introHeading?: string;
@@ -48,15 +43,10 @@ interface HomePageData {
     kicker?: string;
     heading?: string;
     bio?: string;
+    methodsBody?: string;
     storyLinkLabel?: string;
     watermarkText?: string;
     photo?: SanityImage;
-  };
-  comeFunziona?: {
-    kicker?: string;
-    heading?: string;
-    body?: string;
-    media?: SanityImage;
   };
   formazione?: {
     kicker?: string;
@@ -70,7 +60,7 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  statement?: { statement?: string };
+  hope?: { eyebrow?: string; heading?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: {
     kicker?: string;
@@ -90,7 +80,6 @@ interface HomePageData {
       visualImage?: SanityImage;
     }[];
   };
-  miniContact?: { kicker?: string; heading?: string; body?: string };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
   prezzi?: {
     kicker?: string;
@@ -213,7 +202,6 @@ export default async function Home({
     ]);
 
   const authorName = siteSettings?.author?.name ?? "";
-  const availability = resolveAvailabilityText(siteSettings);
 
   return (
     <main>
@@ -225,8 +213,37 @@ export default async function Home({
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
-        availabilityStatus={availability?.status}
-        availabilityText={availability?.text}
+        youtubeId={homePage?.hero?.youtubeId}
+      />
+
+      <RecognitionSection
+        kicker={homePage?.recognition?.kicker ?? ""}
+        heading={homePage?.recognition?.heading ?? ""}
+        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
+        vignettes={homePage?.recognition?.vignettes}
+      />
+
+      <HopeSection
+        eyebrow={homePage?.hope?.eyebrow ?? ""}
+        heading={homePage?.hope?.heading ?? ""}
+      />
+
+      <PercorsoSection
+        kicker={homePage?.percorso?.kicker ?? ""}
+        heading={homePage?.percorso?.heading ?? ""}
+        paragraph={homePage?.percorso?.paragraph ?? ""}
+        steps={homePage?.percorso?.steps}
+      />
+
+      <DiplomiSection
+        kicker={homePage?.diplomi?.kicker ?? ""}
+        heading={homePage?.diplomi?.heading ?? ""}
+        diplomas={diplomas}
+      />
+      <FormazioneBand
+        kicker={homePage?.formazione?.kicker ?? ""}
+        credentials={homePage?.formazione?.credentials}
+        counters={homePage?.formazione?.counters}
       />
 
       <ChiSonoOverlap
@@ -235,21 +252,10 @@ export default async function Home({
         kicker={homePage?.chiSono?.kicker ?? ""}
         heading={homePage?.chiSono?.heading ?? ""}
         bio={homePage?.chiSono?.bio ?? ""}
+        methodsBody={homePage?.chiSono?.methodsBody}
         storyLinkLabel={homePage?.chiSono?.storyLinkLabel ?? ""}
         watermarkText={homePage?.chiSono?.watermarkText}
         photo={homePage?.chiSono?.photo}
-      />
-      <MethodsOverlap
-        kicker={homePage?.comeFunziona?.kicker ?? ""}
-        heading={homePage?.comeFunziona?.heading ?? ""}
-        body={homePage?.comeFunziona?.body ?? ""}
-        media={homePage?.comeFunziona?.media}
-      />
-
-      <FormazioneBand
-        kicker={homePage?.formazione?.kicker ?? ""}
-        credentials={homePage?.formazione?.credentials}
-        counters={homePage?.formazione?.counters}
       />
 
       <ConcernsSection
@@ -259,39 +265,14 @@ export default async function Home({
         areas={homePage?.diCosa?.areas}
         photo={homePage?.diCosa?.photo}
       />
-      <StatementBand
-        statement={homePage?.statement?.statement ?? ""}
-        signature={authorName}
-        role={siteSettings?.author?.credentials ?? "Psicologo Psicoterapeuta"}
-      />
-      <DiplomiSection
-        kicker={homePage?.diplomi?.kicker ?? ""}
-        heading={homePage?.diplomi?.heading ?? ""}
-        diplomas={diplomas}
-      />
-      <PercorsoSection
-        kicker={homePage?.percorso?.kicker ?? ""}
-        heading={homePage?.percorso?.heading ?? ""}
-        paragraph={homePage?.percorso?.paragraph ?? ""}
-        steps={homePage?.percorso?.steps}
-      />
-      <RecognitionSection
-        kicker={homePage?.recognition?.kicker ?? ""}
-        heading={homePage?.recognition?.heading ?? ""}
-        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
-        vignettes={homePage?.recognition?.vignettes}
-      />
-      <MiniContactBand
-        kicker={homePage?.miniContact?.kicker ?? ""}
-        heading={homePage?.miniContact?.heading ?? ""}
-        body={homePage?.miniContact?.body ?? ""}
-        contactChannels={siteSettings?.contactChannels}
-      />
-      <SedesSection
-        kicker={homePage?.sedi?.kicker ?? ""}
-        heading={homePage?.sedi?.heading ?? ""}
-        paragraph={homePage?.sedi?.paragraph ?? ""}
-        sedes={sedes}
+
+      <VideoSection
+        kicker={homePage?.video?.kicker}
+        heading={homePage?.video?.heading}
+        lead={homePage?.video?.lead}
+        videoUrl={homePage?.video?.videoUrl}
+        poster={homePage?.video?.poster}
+        captionsUrl={homePage?.video?.captionsUrl}
       />
 
       <PricingSection
@@ -305,13 +286,12 @@ export default async function Home({
         noPricesSentence={homePage?.prezzi?.noPricesSentence}
       />
 
-      <VideoSection
-        kicker={homePage?.video?.kicker}
-        heading={homePage?.video?.heading}
-        lead={homePage?.video?.lead}
-        videoUrl={homePage?.video?.videoUrl}
-        poster={homePage?.video?.poster}
-        captionsUrl={homePage?.video?.captionsUrl}
+      <FaqSection
+        kicker={homePage?.faq?.kicker ?? ""}
+        heading={homePage?.faq?.heading ?? ""}
+        linkLabel={homePage?.faq?.linkLabel ?? ""}
+        locale={locale}
+        items={homePage?.faq?.items}
       />
 
       <FinalContactSection
@@ -322,9 +302,13 @@ export default async function Home({
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
         photo={homePage?.finalCta?.photo}
-        availabilityStatus={availability?.status}
-        availabilityText={availability?.text}
         locale={locale}
+      />
+      <SedesSection
+        kicker={homePage?.sedi?.kicker ?? ""}
+        heading={homePage?.sedi?.heading ?? ""}
+        paragraph={homePage?.sedi?.paragraph ?? ""}
+        sedes={sedes}
       />
 
       <ResourcesSection
@@ -333,14 +317,6 @@ export default async function Home({
         locale={locale}
         realArticles={realArticles}
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
-      />
-
-      <FaqSection
-        kicker={homePage?.faq?.kicker ?? ""}
-        heading={homePage?.faq?.heading ?? ""}
-        linkLabel={homePage?.faq?.linkLabel ?? ""}
-        locale={locale}
-        items={homePage?.faq?.items}
       />
     </main>
   );
