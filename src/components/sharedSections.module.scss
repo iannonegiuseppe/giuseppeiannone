@@ -88,14 +88,20 @@
   }
 }
 
-// Gentle warm desaturation toward the ivory/pine-green palette — unifies
-// this photo set's mixed backgrounds/tones (brief's own framing). Filter
-// only now — the earlier paired soft-light color-wash layer (sand token,
-// blend-mode) amplified the photo's own natural bright patch in the
-// overlap zone into a visible "fades to ivory" column, which is exactly
-// the artifact being removed here. A filter alone doesn't locally
-// brighten one area more than another the way a blend-mode layer does.
+// Hero — finish it pass: the previous filter (saturate(0.7) sepia(0.25)
+// hue-rotate(-12deg) brightness(1.06) contrast(0.95)) was tuned for the
+// OLD green/ivory palette and rotated hue toward green — nobody retuned
+// it when the palette moved to taupe (photo treatment wasn't in scope of
+// that restyle pass at all). Measured on the actual cutout against the
+// new taupe/ivory palette: the only element clashing with it is the
+// shirt (warmth R-B = -0.1, i.e. neutral white, reading cold against the
+// warm ivory background's own +8 warmth) — skin is already at +62 and
+// must not be warmed further or it goes orange. sepia(0.08) warms
+// neutrals so the shirt lands at ~+7.7 (essentially the palette's own
+// +8); saturate(0.95) damps already-saturated tones just enough that
+// skin only moves +62 -> +58 (imperceptible). The two values balance
+// each other — no brightness/contrast/hue-rotate needed, and adding
+// either would unbalance this pairing.
 .heroOverlapPhotoTreated {
-  filter: saturate(0.7) sepia(0.25) hue-rotate(-12deg) brightness(1.06)
-    contrast(0.95);
+  filter: sepia(0.08) saturate(0.95);
 }

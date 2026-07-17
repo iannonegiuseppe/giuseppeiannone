@@ -211,3 +211,27 @@ $z-index: (
     --space-card-pad: 2rem; // 32px
   }
 }
+
+// --- Header height (Hero — full-height pass) --------------------------------
+// No such token existed before this pass needed to cap the hero's photo
+// against the header's real height (`.labHeader` is `position: fixed`, so
+// it overlays page content rather than pushing it down — nothing else
+// reads this value implicitly). Measured directly via a rendered header's
+// own getBoundingClientRect() at rest (data-collapsed="false", the only
+// state possible at scroll position 0, which is where the hero always
+// sits): 100px mobile/tablet, 114px at lg+ — driven by
+// .labHeaderInner's fixed 28px padding-block plus the wordmark's taller
+// desktop-tier signature/descriptor stack. A static, breakpoint-scoped
+// value (same mechanism as --space-section above) rather than a
+// JS-measured one: the header's rest-state height only changes at this
+// one breakpoint, not continuously, so there's nothing a resize/mutation
+// observer would catch that this doesn't already.
+:root {
+  --header-height: 6.25rem; // 100px, mobile/tablet rest-state header height
+}
+
+@media (min-width: #{breakpoint(lg)}) {
+  :root {
+    --header-height: 7.125rem; // 114px, desktop rest-state header height
+  }
+}

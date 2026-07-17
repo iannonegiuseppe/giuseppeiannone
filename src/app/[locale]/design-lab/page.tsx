@@ -144,10 +144,8 @@ export default async function DesignLabPage({
   return (
     <main>
       <HeroOverlap
-        treatment="raw"
+        treatment="treated"
         label="Hero — approved"
-        authorCredentials={siteSettings?.author?.credentials}
-        registrationNumber={siteSettings?.author?.registrationNumber}
         headline={homePage?.hero?.headline ?? ""}
         headlineEmphasisWord={homePage?.hero?.headlineEmphasisWord}
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}

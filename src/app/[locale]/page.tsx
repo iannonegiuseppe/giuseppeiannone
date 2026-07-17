@@ -206,9 +206,7 @@ export default async function Home({
   return (
     <main>
       <HeroOverlap
-        treatment="raw"
-        authorCredentials={siteSettings?.author?.credentials}
-        registrationNumber={siteSettings?.author?.registrationNumber}
+        treatment="treated"
         headline={homePage?.hero?.headline ?? ""}
         headlineEmphasisWord={homePage?.hero?.headlineEmphasisWord}
         positioningStatement={homePage?.hero?.positioningStatement ?? ""}
