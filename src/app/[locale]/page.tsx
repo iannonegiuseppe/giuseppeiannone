@@ -1,13 +1,12 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
 import { PreviewPlaceholderSection } from "@/components/PreviewPlaceholderSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { sanityFetch } from "@/sanity/client";
-import { homePath, type Locale } from "@/sanity/paths";
+import type { Locale } from "@/sanity/paths";
 import { homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
@@ -164,24 +163,13 @@ interface HomePageData {
 //   year: number;
 // }
 
-// TEMPORARY EN GATE: this composition's copy is hardcoded Italian —
-// translations arrive with the content phase, not this promotion pass.
-// Until then the EN homepage redirects to the IT root (below) and its
-// hreflang pair is suppressed here (localizedPaths omits `en`) rather
-// than dismantling the hreflang system itself — every other page keeps
-// emitting both. Remove this gate, restore `en: "/en"` here, and drop
-// the redirect once real EN copy exists.
-//
-// SPEC-VS-LIBRARY MISMATCH, flagged rather than silently guessed: the
-// spec calls for a 302. next/navigation's redirect() only offers 307
-// (TemporaryRedirect, the default used below), 303 (SeeOther), or 308
-// (PermanentRedirect) — there is no literal 302 in the App Router's
-// page-level redirect primitive; forcing one would mean bypassing
-// redirect() for a hand-rolled Response, a bigger change than this gate
-// warrants. 307 is used instead — the modern, unambiguous equivalent of
-// "temporary redirect" (preserves method, unlike 302's historically
-// inconsistent handling across clients) — and is what's actually shipped
-// here; reported plainly rather than claimed as 302.
+// EN GATE LIFTED: homePage-en now has real (translated, still
+// placeholder-marked — see scripts/patch-homepage-en.ts's own comment)
+// content on the current schema, so the hardcoded IT redirect and the
+// hreflang suppression this comment used to document are both removed.
+// `en: "/en"` is restored below; proxy.ts's own matching
+// EN_GATED_PATHNAMES block should be removed in lockstep (see that
+// file).
 export async function generateMetadata({
   params,
 }: {
@@ -196,7 +184,7 @@ export async function generateMetadata({
     seo: siteSettings?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
-    localizedPaths: { it: "/" },
+    localizedPaths: { it: "/", en: "/en" },
   });
 }
 
@@ -207,11 +195,6 @@ export default async function Home({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-
-  // TEMPORARY EN GATE — see generateMetadata's own comment above.
-  if (locale === "en") {
-    redirect(homePath("it"));
-  }
 
   // PREVIEW-GATE (temporary): only homePage is fetched while the lower
   // sections are gated — siteSettings (here; generateMetadata above has
