@@ -1,102 +1,26 @@
 @use "../styles/mixins";
 @use "./sharedSections.module.scss" as shared;
 
-// Split from the former sectionsShared.module.scss monolith as part of
-// the homepage promotion pass (Stage 3) — classes used by RecognitionSection
-// and its own private sub-components, co-located here per that pass's
-// own convention. grid-12/col/button-base are shared mixins (see
-// sharedSections.module.scss); everything else below is local.
-
-// --- "Ti riconosci?" v3: scroll-highlight vertical list --------------------
-// Single-block REBUILD: the v2 autoplay crossfade slider is removed
-// entirely (timer, dots, crossfade stage, grid-stack fixed-height
-// machinery, hover/focus/offscreen pause matrix, sr-only canonical list —
-// v3's vignettes are always-visible real content, not slider-hidden, so a
-// separate screen-reader-only copy would be duplicate content). Kicker/
-// heading/bridge (.recognitionHeader/Kicker/KickerRule/Heading/Bridge) are
-// UNCHANGED from v1/v2 — reused verbatim below. --color-pine and
-// --color-ivory (spec's own vocabulary) map to this project's real tokens
-// --color-accent and --color-bg — see the identical substitution note on
-// .indexedItemNumeral above; no new custom properties invented.
+// --- "Ti riconosci?" asymmetric-constellation rebuild ----------------------
+// Full rebuild: the old scroll-driven pinned "drum" (RecognitionStage.tsx),
+// its dimmed/lit vignette list (RecognitionHighlightList.tsx), and the
+// crossfading zigzag-line background visuals (RecognitionBackgroundVisuals.tsx
+// + the recognition-visual-*.svg placeholders) are gone entirely — no
+// internal scroll container, no pinned stage, no background motif of any
+// kind. Kicker/heading/bridge classes below are unchanged in spirit from
+// the old version (same tokens/sizes); everything from
+// .recognitionConstellation down is new.
 .recognitionSection {
-  position: relative; // positioning context for the background visual layer
-  background: var(--color-bg); // ivory
-  padding-block: var(--space-8); // 64px, mobile tier per spec (literal,
-  // not --space-band-y's own mobile tier of 57.6px)
+  position: relative;
+  background: var(--color-bg);
+  padding-block: var(--space-8); // 64px, mobile tier
 
   @include mixins.breakpoint-up(md) {
-    padding-block: var(--space-band-y); // 72px (md) / 96px (lg), per spec
+    padding-block: var(--space-band-y); // 72px (md) / 96px (lg)
   }
-}
-
-// Revision round 2, item 4: pinned track — same formula family as
-// SedesStage's own track (round 1, item 7a: scenes * 55vh + 30vh tail),
-// driven by the vignette count so it never drifts out of sync with the
-// data array. Only rendered by RecognitionStage.tsx's pinned branch
-// (md+ width, motion-safe) — mobile/reduced-motion never mount this.
-.recognitionTrack {
-  position: relative;
-  height: calc(var(--recognition-vignette-count) * 55vh + 30vh);
-}
-
-.recognitionStage {
-  position: sticky;
-  // Header-aware offset: reuses the exact value Timeline.tsx's mobile
-  // stack already uses to clear this same header (100px) — the header is
-  // always in its collapsed state (78px, measured) by the time a visitor
-  // has scrolled this far down the page, so this is comfortable
-  // clearance, not a minimum. Height is 100vh MINUS that same offset —
-  // not a flat 100vh, which would push the stage's own bottom edge past
-  // the viewport bottom by exactly the top offset.
-  top: 6.25rem; // 100px
-  height: calc(100vh - 6.25rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden; // guards against any residual sub-pixel overflow, not a scroll escape hatch
-}
-
-// Revision round 1, item 6: full-section-bleed background media layer,
-// BEHIND everything (z-index 0; header/list content below are both
-// explicitly z-index 1+ so stacking order can't drift on positioned vs.
-// static-element paint order). aria-hidden (set on the component itself)
-// + pointer-events: none + user-select: none, so it never intercepts
-// clicks/selection and never reaches the accessibility tree — zero
-// layout impact since position: absolute takes it out of flow entirely.
-.recognitionBackgroundLayer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  user-select: none;
-}
-
-.recognitionBackgroundVisual {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-
-  @media (prefers-reduced-motion: no-preference) {
-    transition: opacity 400ms ease;
-  }
-
-  // Reduced motion: no fade — the active vignette's visual (index 0,
-  // statically, since no scroll listener ever attaches under reduced
-  // motion) simply appears at its resting opacity, consistent with the
-  // all-lit-text reduced-motion fallback.
-  &[data-active="true"] {
-    opacity: 0.08; // max 8%, per spec — the vignettes stay the protagonists
-  }
-}
-
-.recognitionBackgroundVisualImg {
-  object-fit: cover;
 }
 
 .recognitionHeader {
-  position: relative;
-  z-index: 1;
   @include mixins.container;
 }
 
@@ -107,7 +31,7 @@
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's implied bold
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-accent);
@@ -124,277 +48,188 @@
 .recognitionHeading {
   margin: var(--space-4) 0 0;
   color: var(--color-text);
-  font-size: 1.75rem; // 28px, mobile tier per spec
+  font-size: 1.75rem; // 28px, mobile tier
 
   @include mixins.breakpoint-up(lg) {
-    font-size: 2rem; // 32px, desktop tier per spec
+    font-size: 2rem; // 32px, desktop tier
   }
 }
 
 .recognitionBridge {
   margin: var(--space-3) 0 0;
-  max-width: none; // full width on mobile, per spec
+  max-width: none; // full width on mobile
   font-family: var(--font-body);
-  font-size: 1rem; // 16px, per spec
+  font-size: 1rem;
   line-height: 1.7;
   // ink@80% on ivory — 7.68:1, passes AA.
   color: color-mix(in srgb, var(--color-text) 80%, transparent);
 
   @include mixins.breakpoint-up(md) {
-    max-width: 52ch; // per spec
+    max-width: 52ch;
   }
 }
 
-.recognitionListWrap {
+// Mobile-first: a plain single-column stack (anchor-first, then dominant,
+// then peripheral — RecognitionSection.tsx's own sort, not CSS) — the
+// asymmetric per-slot placement below only activates at lg+. No internal
+// scroll container at any width: this is normal document flow, full stop.
+.recognitionConstellation {
   @include shared.grid-12;
-  position: relative; // positioning context for the watermark
-  z-index: 1; // above .recognitionBackgroundLayer (z-index 0)
-  margin-top: var(--space-7); // 48px below the header — unchanged rhythm from v1/v2
-}
+  margin-top: var(--space-7); // 48px below the header
+  row-gap: var(--space-6); // 32px between stacked fragments, mobile/tablet
 
-// Typographic ornament, not a paired mark around the vignette text (the
-// v2 anti-testimonial rule stays in force — verified in QA: exactly one
-// quote-glyph instance renders on the page). aria-hidden + no-select +
-// zero layout impact (absolute, out of flow) — same "standard watermark"
-// treatment as .chiSonoIntroWatermark above, just column- rather than
-// center-positioned.
-.recognitionWatermark {
-  // Revision round 1, item 0b: alignment audit found this section's list
-  // (and this watermark, sharing its track) sitting at cols 3-10 instead
-  // of flush on column 1 — moved to 1-8.
-  @include shared.col(1, 8); // same column track as the list, so "top-left of the list" lines up
-  position: absolute;
-  top: -1.5rem;
-  left: 0;
-  z-index: 0;
-  margin: 0;
-  font-family: var(--font-display);
-  line-height: 1;
-  color: color-mix(in srgb, var(--color-text) 6%, transparent); // ink@6%, same faint value as Chi sono's watermark
-  user-select: none;
-  pointer-events: none;
-  font-size: 6rem; // 96px, mobile tier per spec
-
+  // Anchor pass: tightened from --space-7 (48px) — the original six-slot
+  // spread (48px row-gap PLUS an escalating 16/32px margin-top per slot)
+  // stretched the composition's gaps into holes rather than breathing
+  // room (the exact "void" complaint this pass exists to fix). No
+  // per-slot margin-top anymore, anywhere below — this single, smaller
+  // gap is now the only source of vertical spacing between rows.
   @include mixins.breakpoint-up(lg) {
-    font-size: 12.5rem; // ~200px, desktop tier per spec
-    top: -3rem;
+    row-gap: var(--space-5); // 24px
   }
 }
 
-.recognitionList {
-  @include shared.col(1, 8); // columns 1-8, per revision round 1 item 0b (was 3-10)
-  position: relative;
-  z-index: 1; // above the watermark
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem; // 40px, mobile tier per spec
-
-  @include mixins.breakpoint-up(lg) {
-    gap: 3.5rem; // 56px, desktop tier per spec
-  }
-
-  // Revision round 2, item 4 — HONESTY-RULE FLAG (measured, not silently
-  // shipped): scrolling through the PINNED stage produces an occasional
-  // ~60-110ms long task (production build, PerformanceObserver) that an
-  // equally text-heavy, non-sticky section (Chi sono) never produces.
-  // Eliminated by process of elimination: not React state (already
-  // ref-based), not the CSS color transitions (still occurs with them
-  // disabled), not position: sticky (still occurs with the stage forced
-  // static), not the background visuals or the watermark (still occurs
-  // with both hidden — this list alone, nothing else visible,
-  // reproduces it). `contain` here measurably reduced the duration in
-  // every trial (was up to ~205ms) but did not eliminate it outright.
-  // Re-measured after the round-3 transform rebuild — see this file's
-  // own final report for the re-measurement.
-  contain: layout paint style;
+// Every fragment is an ordinary, normal-flow grid item — no absolute
+// positioning anywhere in this section. That's deliberate: a sentence
+// 30%+ longer than the placeholder just wraps to more lines and grows
+// ITS OWN row's height (grid rows are auto-sized to content); it can
+// never overlap a neighbor, because neighbors live in explicitly
+// different grid rows (see the six numbered slot rules below — each
+// gets its own `grid-row`, not left to auto-placement, specifically so
+// two fragments can never silently end up sharing a row and colliding).
+.recognitionFragment {
+  grid-column: 1 / -1; // mobile/tablet: full width, one per row (auto-flow)
 }
 
-// Revision round 3, item 2: the "drum" — replaces the round-2 stepped
-// (data-lit jump-cut) highlight with a continuous, transform-driven
-// carousel. This viewport is what CLIPS the list (mask-image fades its
-// own top/bottom 60px rather than a hard cut) while the <ul> inside it
-// translates freely — .recognitionList itself keeps its own col(1,8) for
-// the NON-pinned branch (still a direct grid child there, unchanged);
-// here it's nested one level deeper, inside this viewport, which is the
-// ACTUAL col(1,8) grid item in the pinned/drum context — .recognitionList's
-// own col(1,8) is simply inert (harmless no-op) once it's no longer a
-// direct grid child, so no override was needed to suppress it.
-.recognitionDrumViewport {
-  @include shared.col(1, 8);
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    black 3.75rem,
-    // 60px
-    black calc(100% - 3.75rem),
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    black 3.75rem,
-    black calc(100% - 3.75rem),
-    transparent 100%
-  );
-}
-
-// Revision round 3, item 2: the drum's own list needs a real, positioned
-// box to translate within .recognitionDrumViewport (the col(1,8) role
-// moved to the viewport above) — this local override wins over the base
-// .recognitionList rule above via selector specificity (2 classes) with
-// no !important needed. transform is written directly by
-// RecognitionStage.tsx's scroll handler every frame (continuous, not a
-// CSS transition) — "smooth drum, no jumps" comes from that continuous
-// write cadence, not from CSS easing, so no transition is declared here
-// (one would just add lag against the live scroll position).
-.recognitionDrumViewport .recognitionList {
-  grid-column: unset;
-  width: 100%;
-  will-change: transform;
-}
-
-// Revision round 3, item 2: distance-based opacity/scale now does the
-// dimming job that used to belong to color-mix + data-lit (round 1/2) —
-// running BOTH at once would double-dim. Text stays full ink at all
-// times in the drum; RecognitionStage.tsx sets opacity directly on the
-// <li> itself (not here) as a continuous function of distance-from-
-// center, which visually achieves the same "dimmed unless active" read
-// without a second, conflicting color system. Higher specificity (2
-// classes) than the base rule and the [data-lit] rule below, so it wins
-// unconditionally inside the viewport regardless of a li's own data-lit
-// state (which the drum branch doesn't set at all — see
-// RecognitionStage.tsx).
-.recognitionDrumViewport .recognitionItemVignette {
-  color: var(--color-text);
-  transition: none;
-}
-
-.recognitionDrumViewport .recognitionItemLabel {
-  // "Signpost fully visible only on the active item" — opacity (set
-  // directly by RecognitionStage.tsx, binary-ish: ~1 near the center,
-  // 0 elsewhere) does the showing/hiding; the color itself just stays at
-  // the established AA-corrected "lit" strength always, since color
-  // alone never determines visibility here.
-  color: color-mix(in srgb, var(--color-text) 65%, transparent);
-  transition: opacity 200ms ease;
-}
-
-.recognitionItem {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3); // 12px between vignette and label — "12px below" per spec
-}
-
-.recognitionItemVignette {
-  margin: 0;
-  font-family: var(--font-display);
-  line-height: 1.5;
-  max-width: 34ch; // per spec
-  font-size: 1.25rem; // 20px, mobile tier per spec
-  // Dimmed default. color-mix, not the `opacity` CSS property, per this
-  // file's established convention for translucent text (a real opacity
-  // would also fade the watermark/background behind it if this element
-  // ever became a stacking-context participant; color-mix only ever
-  // affects the text color itself).
-  color: color-mix(in srgb, var(--color-text) 30%, transparent);
-  transition: color 400ms ease;
-
-  @include mixins.breakpoint-up(md) {
-    font-size: 1.4375rem; // 23px, tablet tier per spec
-  }
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 1.625rem; // 26px, desktop tier per spec
-  }
-}
-
-.recognitionItem[data-lit="true"] .recognitionItemVignette {
-  color: var(--color-text); // full ink, per spec
-}
-
-.recognitionItemLabel {
+.recognitionFragmentLabel {
+  margin: 0 0 var(--space-2);
   font-family: var(--font-body);
-  font-size: 0.75rem; // 12px, per spec
-  font-weight: var(--font-weight-bold); // 700, per spec
-  letter-spacing: 0.14em; // per spec
+  font-size: 0.5625rem; // 9px, per spec
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  // Dimmed default (ink@20%, per spec).
-  color: color-mix(in srgb, var(--color-text) 20%, transparent);
-  transition: color 400ms ease;
+  color: var(--color-accent);
 }
 
-// Revision round 2, item 4: pinned-stage-only size reductions so all 5
-// vignettes fit within the stage's fixed height without inner scroll —
-// scoped to .recognitionStage specifically (higher specificity than the
-// bare rules above) so the non-pinned branch's type scale stays byte-
-// identical. Measured empirically after implementing (not guessed):
-// unscaled, header + list needed ~106px more than available at 1440px
-// and ~86px more at 768px — closed here, then re-verified.
-.recognitionStage .recognitionListWrap {
-  margin-top: var(--space-5); // was var(--space-7) (48px) — trimmed for the pinned stage's fixed height budget
-  // Revision round 3, item 2: fills the stage's remaining height (below
-  // the header) so .recognitionDrumViewport's own height: 100% has a
-  // real box to fill — .recognitionStage is a flex column, so this flex
-  // child grows to the available space automatically; min-height: 0
-  // overrides flex's default min-height: auto (content-based), which
-  // would otherwise refuse to shrink below the list's natural height and
-  // defeat the clipping viewport entirely. Stays display: grid (from the
-  // base rule's grid-12 include) — grid-template-rows: 1fr forces its
-  // own single implicit row to stretch to fill that height too, so the
-  // viewport's height: 100% has something real to inherit down the
-  // chain (grid's default row sizing is auto/content-based otherwise).
-  flex: 1;
-  min-height: 0;
-  grid-template-rows: 1fr;
+.recognitionFragmentText {
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1.4;
 }
 
-.recognitionStage .recognitionList {
-  gap: 1.25rem; // was 2.5rem (md) / 3.5rem (lg)
+// Anchor tier (exactly one, per spec): the largest fragment, catches the
+// eye first — dominants read next, peripherals are the quiet echo around
+// both. Deliberately a TIGHT max-width: the anchor's whole reason for
+// working is that its sentence stays short (~60 characters or under) —
+// at this size a long sentence would dominate half the section. The
+// narrow measure means a longer-than-placeholder line wraps to more
+// lines rather than stretching wide (verified — see this pass's own
+// long-copy report), same "grows its own row, never collides" guarantee
+// every other tier already has.
+.recognitionFragmentAnchor .recognitionFragmentText {
+  font-size: 2.25rem; // per spec's 2.25-2.5rem range, lower/safer bound
+  line-height: 1.25;
+  color: var(--color-text);
+  max-width: 40ch;
+}
 
-  @include mixins.breakpoint-up(lg) {
-    gap: 1.25rem;
+// Dominant tier: larger, full ink, longer sentences get more room (wider
+// measure). Tier controls typography ONLY — position comes from the
+// per-slot rules below, entirely independent of tier, so the CMS is free
+// to mix tiers across slots however the data actually comes in.
+.recognitionFragmentDominant .recognitionFragmentText {
+  font-size: 1.4rem; // per spec
+  color: var(--color-text);
+  max-width: 30ch;
+}
+
+// Peripheral tier: smaller, the MUTED TOKEN (not opacity) — per spec,
+// peripheral fragments must stay fully readable, just quieter, which an
+// opacity fade would undermine (it dims everything behind it too, not
+// just the ink). Verified via contrast measurement against the section's
+// own ivory background — see this pass's own report for the ratio.
+.recognitionFragmentPeripheral .recognitionFragmentText {
+  font-size: 1rem; // per spec
+  color: var(--color-text-muted);
+  max-width: 26ch;
+}
+
+// Real emphasis technique — EB Garamond italic 400 + --color-accent, the
+// exact recipe documented in /styleguide (same one HeroOverlap.tsx uses).
+.recognitionEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
+}
+
+// --- Desktop asymmetric placement (lg+) -------------------------------
+// Six fixed slots (only as many render as there are fragments — 4-6, per
+// spec). Slot0 is always the anchor's own dedicated position (anchor is
+// always sorted first in RecognitionSection.tsx) — centre-left, directly
+// under slot1 (the first dominant, top-left) and directly above slot4
+// (the second peripheral, bottom-left). That vertical column, rows 2-3,
+// left side, was exactly the "void" the previous version left empty
+// (the right side had content there — slot2/slot3 — the left didn't);
+// the anchor now fills it, and it's the single biggest visual element in
+// the whole composition, so it reads as intentional, not as a patch.
+//
+// Each slot still gets an EXPLICIT grid-row: CSS Grid's default auto-
+// placement would otherwise pack a later slot into an EARLIER row
+// whenever its column range happens not to overlap an already-placed
+// item (the same sparse-packing behavior that had to be fixed with
+// `grid-auto-flow: dense` in the hero's own layout) — here that would
+// mean two fragments silently sharing a row and colliding the moment one
+// of them wraps to an extra line. An explicit row per slot makes that
+// structurally impossible regardless of copy length. No per-slot
+// margin-top anymore (previous pass's escalating 16/32px additions were
+// the other half of the "too much vertical spread" problem) — the
+// constellation's own row-gap above is now the ONLY vertical spacing,
+// which is what actually tightens the gaps back into breathing room.
+@include mixins.breakpoint-up(lg) {
+  .recognitionFragment {
+    grid-column: unset;
+  }
+
+  // Anchor — centre-left, fills the void between slot1 (top-left) and
+  // slot4 (bottom-left). Indented one column from the flush-left slots
+  // (starts at line 2, not line 1) so it reads as "centre-left" rather
+  // than stacking flush under slot1.
+  .recognitionSlot0 {
+    grid-column: 2 / 9;
+    grid-row: 2;
+  }
+
+  .recognitionSlot1 {
+    grid-column: 1 / 8;
+    grid-row: 1;
+  }
+
+  .recognitionSlot2 {
+    grid-column: 8 / 13;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .recognitionSlot3 {
+    grid-column: 8 / 13;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  .recognitionSlot4 {
+    grid-column: 1 / 7;
+    grid-row: 4;
+  }
+
+  .recognitionSlot5 {
+    grid-column: 8 / 13;
+    grid-row: 4;
+    justify-self: end;
   }
 }
 
-.recognitionStage .recognitionItemVignette {
-  font-size: 1.125rem; // was 1.4375rem (md)
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 2rem; // was 1.625rem (lg)
-  }
-}
-
-.recognitionItem[data-lit="true"] .recognitionItemLabel {
-  // "Full" for the label per spec means the AA-corrected 65% value
-  // carried over from v1/v2 (literal spec value ink@55% measures 3.53:1
-  // on ivory, below AA for 12px text; 65% measures 4.75:1, passes) — not
-  // 100% ink, which the label was never spec'd at even at "full".
-  color: color-mix(in srgb, var(--color-text) 65%, transparent);
-}
-
-// "NO scroll driving — all five render fully lit, statically" — and this
-// is also the low-vision safety valve (dimmed is emphasis, not the
-// reading state), per spec. Pure CSS, unconditional on `data-lit`
-// (matching specificity to the `[data-lit="true"]` rules above and placed
-// after them in source order, so it wins for every item regardless of
-// which one the SSR/JS default happened to mark lit) — the correct state
-// renders on first paint with zero dependency on JS ever running, and
-// RecognitionHighlightList.tsx never attaches a scroll listener in this
-// case at all.
 @media (prefers-reduced-motion: reduce) {
-  .recognitionItem .recognitionItemVignette {
-    color: var(--color-text);
-    transition: none;
-  }
-
-  .recognitionItem .recognitionItemLabel {
-    color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  .recognitionFragment {
     transition: none;
   }
 }

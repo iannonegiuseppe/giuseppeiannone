@@ -480,20 +480,33 @@ async function seed() {
       kicker: "Situazioni comuni",
       heading: "Ti riconosci?",
       bridgeLine: "Non serve conoscere il nome di quello che senti. A volte si parte da qui. [segnaposto]",
-      // visualImage deliberately omitted — the built-in line-art SVG
-      // placeholders stay authoritative in code until real photos are
-      // supplied, per homePage.recognition's own schema note.
-      vignettes: [
-        { _key: "vignette-stress", id: "stress", vignette: "Mi sveglio già stanco, e la giornata non è ancora iniziata. Il caffè non aiuta; la lista delle cose da fare, invece, cresce da sola.", area: "Stress", slug: "stress" },
-        { _key: "vignette-ansia-1", id: "ansia-1", vignette: "Il cuore accelera senza un motivo apparente. Controllo che sia tutto a posto — ed è tutto a posto. Ma il corpo non ci crede.", area: "Ansia", slug: "ansia" },
-        { _key: "vignette-ansia-2", id: "ansia-2", vignette: "La testa non si ferma mai, nemmeno la notte. Ripasso conversazioni, anticipo problemi che forse non arriveranno.", area: "Ansia", slug: "ansia" },
-        { _key: "vignette-depressione", id: "depressione", vignette: "Rimando tutto, e poi mi sento in colpa. Le cose che prima mi davano piacere adesso chiedono solo energia.", area: "Depressione", slug: "depressione" },
-        { _key: "vignette-cambiamenti", id: "cambiamenti-di-vita", vignette: "Evito situazioni che prima non mi pesavano. Qualcosa è cambiato, ma non saprei dire esattamente quando.", area: "Cambiamenti di vita", slug: "cambiamenti-di-vita" },
+      // Asymmetric-constellation rebuild: replaces the old vignettes[]
+      // (id/area/slug/visualImage, scroll-highlight + zigzag background
+      // visuals, all removed). [segnaposto] copy written by Aliaksandr's
+      // assistant, not by Giuseppe and not from real patients — the whole
+      // point of this section is that the wording IS the patient's own
+      // language, so these are placeholders only, never to be treated as
+      // approved. See homePage.recognition.fragments' own schema note.
+      // Anchor pass: exactly one "anchor" tier fragment added (label
+      // deliberately blank — see RecognitionSection.tsx's own comment on
+      // why it reads better unlabeled), the single largest/first line.
+      fragments: [
+        { _key: "fragment-anchor", label: "", text: "Da fuori sembra tutto a posto. Dentro, no. [segnaposto]", emphasisWord: "Dentro", tier: "anchor" },
+        { _key: "fragment-stress", label: "Stress", text: "Mi sveglio già stanco, e la giornata non è ancora iniziata. [segnaposto]", emphasisWord: "già stanco", tier: "dominant" },
+        { _key: "fragment-rimuginio", label: "Rimuginio", text: "Rimando le decisioni finché non sono più decisioni, ma urgenze. [segnaposto]", emphasisWord: "urgenze", tier: "dominant" },
+        { _key: "fragment-ansia", label: "Ansia", text: "Il cuore accelera senza un motivo apparente. Ma il corpo non ci crede. [segnaposto]", tier: "peripheral" },
+        { _key: "fragment-relazioni", label: "Relazioni", text: "Dico sempre di sì. Poi non resta niente per me. [segnaposto]", tier: "peripheral" },
       ],
     },
+    // Full-bleed accent-band pass: [segnaposto] copy written by
+    // Aliaksandr's assistant, not by Giuseppe — his real line is still
+    // outstanding ("the message/intent for the Hope section"). Matters
+    // more here than anywhere else on the page: one sentence carries the
+    // entire emotional turn.
     hope: {
-      eyebrow: "[segnaposto]",
-      heading: "[segnaposto — testo di Giuseppe non ancora arrivato]",
+      eyebrow: "Un percorso possibile [segnaposto]",
+      heading: "Non è sempre stato così. E non deve restare così. [segnaposto]",
+      headingEmphasisWord: "non deve restare",
     },
     sedi: {
       kicker: "Dove ricevo",

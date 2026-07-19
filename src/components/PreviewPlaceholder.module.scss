@@ -1,0 +1,35 @@
+@use "../styles/mixins";
+
+// PREVIEW-GATE (temporary) — see PreviewPlaceholder.tsx's own comment.
+.previewPlaceholderSection {
+  background: var(--color-bg); // normal ivory — explicitly NOT the accent band; this isn't a Hope-style moment
+}
+
+.previewPlaceholder {
+  @include mixins.container;
+  max-width: 32rem;
+  margin-inline: auto;
+  text-align: center;
+  // Generous vertical padding on both sides, per spec — reuses the
+  // site's own section-rhythm token rather than a one-off value.
+  padding-block: var(--space-9); // 96px
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10); // 128px
+  }
+}
+
+.previewPlaceholderPrimary {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.75rem; // per spec
+  color: var(--color-text);
+}
+
+.previewPlaceholderSecondary {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}

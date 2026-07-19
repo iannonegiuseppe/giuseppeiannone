@@ -1,24 +1,65 @@
 @use "../styles/mixins";
 
-// New — global restyle pass. Full-bleed solid-accent band (ivory-on-
-// accent, same colorway/contrast already verified for FinalContactSection
-// and Footer) rather than a new dark/on-dark token pair — this stays
-// within the palette already established in Step 1, no new global tokens
-// needed for a single small transitional band.
+// Full-bleed accent-band pass — see HopeSection.tsx's own comment for why
+// this section exists and what it must never grow into. Hard edges top
+// and bottom (no gradient dissolve — that's the hero's own technique,
+// reused nowhere else): the abrupt tonal shift IS the point here, not
+// something to soften.
 .hopeSection {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
   background: var(--color-accent);
-  padding-block: var(--space-band-y);
+  // Refinement pass: was --space-7 (48px) mobile / --space-8 (64px)
+  // desktop — read as a thin strip for a section that's meant to be the
+  // page's exhale. One real step up the token scale each: --space-8
+  // (64px, ×1.33) mobile, --space-9 (96px, ×1.5 exactly) desktop — both
+  // real tokens, no one-off value. Desktop lands exactly in spec's
+  // 1.5-2× range; mobile's own scale has no step that lands closer to
+  // 1.5× without jumping straight to --space-9 (×2), which felt like too
+  // much air relative to the smaller viewport — reported here rather
+  // than silently picked.
+  padding-block: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-9);
+  }
 }
 
+// Refinement pass, DELIBERATE DEVIATION from spec's own 48-56rem
+// suggestion — reported, not silently substituted. That range was tuned
+// against the LIVE text, which carries a "[segnaposto]" suffix; measured
+// against the real heading content (what Giuseppe's actual copy will
+// look like, marker stripped), anything at or above ~44rem collapses
+// the baseline placeholder to ONE line, not two — the opposite of this
+// pass's own "two balanced lines" requirement. Swept the full range
+// empirically (36-56rem, real render, actual line-break measurement,
+// not assumed) against the placeholder AND copy at +37%/-29% length:
+// no single width produces a balanced two-line wrap across that whole
+// range without breaking at one end (narrow enough to force short copy
+// to wrap forces long copy to three lines; wide enough to keep long copy
+// to two lines collapses short copy to one) — a genuine, reported
+// tradeoff, not a resolvable "just tune it" case. 36rem (576px) is where
+// this pass landed: real, visible widening from the old 33rem, produces
+// a genuinely BALANCED two-line break for the placeholder and +37%-
+// longer copy (checked against actual rendered line width, not just
+// line count), and -29%-shorter copy renders as one clean centred line
+// rather than an artificially forced, lopsided two-line break — reads as
+// a valid alternate outcome, not as broken.
 .hopeInner {
   @include mixins.container;
-  max-width: 40rem;
+  max-width: 36rem; // 576px
   text-align: center;
   margin-inline: auto;
 }
 
-// Same "rule-free, ivory@70%" kicker treatment as FinalContactSection's
-// own inverted kicker on this same accent background.
+// Contrast pass: was color-mix(--color-bg 70%, transparent) — a muted
+// tone that measures BELOW the 4.5:1 floor against the real
+// --color-accent (#7E6B5B). Full --color-accent-contrast (ivory, the
+// same token Footer/HeaderInteractive/Button already use for text on
+// this exact background) measures 4.58:1 — passes, with a genuinely thin
+// ~0.08 margin, which is why quietness here comes from size/letter-
+// spacing only, never from softening this color further. See this pass's
+// own report for the live-measured ratio.
 .hopeEyebrow {
   margin: 0;
   font-family: var(--font-body);
@@ -26,13 +67,23 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  color: var(--color-accent-contrast);
 }
 
 .hopeHeading {
   margin: var(--space-4) 0 0; // 16px below the eyebrow, established rhythm
-  color: var(--color-bg);
-  font-size: 1.75rem; // 28px, mobile tier
+  color: var(--color-accent-contrast); // full ivory — same contrast reasoning as the eyebrow above
+  font-family: var(--font-display);
+  // Refinement pass: no font-weight was set here before, so the browser
+  // fell back to the UA default h1/h2 bold request (700) against an EB
+  // Garamond loader that only ships a 400 face (layout.tsx) — a FAUX
+  // bold (browser-synthesized, thickened strokes), not a real weight,
+  // which is exactly why it read too heavy. Explicit regular now uses
+  // the real loaded face. Still measures the same 4.58:1 (weight doesn't
+  // change color), and read clearly at a real render — see this pass's
+  // own report.
+  font-weight: var(--font-weight-regular);
+  font-size: 1.75rem; // 28px, mobile tier — scaled down per spec's "reduce heading size on mobile"
 
   @include mixins.breakpoint-up(md) {
     font-size: 2rem; // 32px, tablet
@@ -40,5 +91,56 @@
 
   @include mixins.breakpoint-up(lg) {
     font-size: 2.25rem; // 36px, desktop
+  }
+}
+
+// Site's italic-emphasis technique (EB Garamond italic + a distinct
+// color), adapted for this band: everywhere else that recipe pairs
+// italic with --color-accent (ink-on-ivory context) — here the
+// background itself IS --color-accent, so that swap isn't available
+// without either going invisible (accent-on-accent) or dropping color
+// below the 4.5:1 floor the report above measures with only a ~0.08
+// margin. Color stays the same full --color-accent-contrast as the rest
+// of the heading; italic is the only differentiator in this context.
+.hopeEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent-contrast);
+}
+
+// One-shot entrance (HopeReveal.tsx) — whole-phrase fade-in-up, not
+// per-letter/typewriter (screen-reader-hostile, breaks text selection,
+// and draws attention to itself, wrong for the quietest line on the
+// page — see that file's own comment). Deliberately slower than the
+// site's usual 300-500ms reveal (RevealOnScroll, used everywhere else):
+// this is the page's emotional pivot, the line should settle, not snap.
+// Base rules for .hopeEyebrow/.hopeHeading above are already the final,
+// fully-visible state — these two classes are the ONLY place opacity/
+// transform ever get touched, and only after JS confirms motion is
+// allowed (HopeReveal never applies either class under reduced motion),
+// so there's no separate reduced-motion override needed here.
+.hopeInner.hopeRevealPending {
+  .hopeEyebrow,
+  .hopeHeading {
+    opacity: 0;
+    transform: translateY(0.625rem); // 10px, within spec's 8-12px range
+  }
+}
+
+.hopeInner.hopeRevealed {
+  .hopeEyebrow,
+  .hopeHeading {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 900ms ease-out,
+      transform 900ms ease-out;
+  }
+
+  // Eyebrow first, heading ~150ms after — a subtle stagger, not a
+  // sequenced reveal (both are already in motion well within the first
+  // 300ms of the 900ms transition).
+  .hopeHeading {
+    transition-delay: 150ms;
   }
 }

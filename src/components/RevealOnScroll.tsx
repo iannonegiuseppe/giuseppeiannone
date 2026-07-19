@@ -10,7 +10,16 @@ import styles from "./FinalContactSection.module.scss";
 // prefers-reduced-motion both see children fully visible immediately;
 // normal motion fades/translates in once, the first time it enters the
 // viewport.
-export function RevealOnScroll({ children }: { children: ReactNode }) {
+export function RevealOnScroll({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  // Optional passthrough for callers that need this wrapper itself to
+  // participate in a layout the child alone can't (e.g. RecognitionSection's
+  // CSS Grid placement — a plain child div wouldn't be a direct grid item).
+  className?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,5 +47,9 @@ export function RevealOnScroll({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, []);
 
-  return <div ref={ref}>{children}</div>;
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
 }

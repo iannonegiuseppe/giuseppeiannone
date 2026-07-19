@@ -2,32 +2,52 @@ import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { ChiSonoOverlap } from "@/components/ChiSonoOverlap";
-import { ConcernsSection } from "@/components/ConcernsSection";
-import { DiplomiSection } from "@/components/DiplomiSection";
-import { FaqSection } from "@/components/FaqSection";
-import { FinalContactSection } from "@/components/FinalContactSection";
-import { FormazioneBand } from "@/components/FormazioneBand";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
-import { PercorsoSection } from "@/components/PercorsoSection";
-import { PricingSection } from "@/components/PricingSection";
+import { PreviewPlaceholderSection } from "@/components/PreviewPlaceholderSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
-import {
-  type RealArticle,
-  ResourcesSection,
-} from "@/components/ResourcesSection";
-import { SedesSection } from "@/components/SedesSection";
-import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import { homePath, type Locale } from "@/sanity/paths";
-import {
-  diplomasQuery,
-  homePageQuery,
-  latestArticlesQuery,
-  sedesQuery,
-} from "@/sanity/queries";
+import { homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+
+// PREVIEW-GATE (temporary) — restoring the real homepage, in full:
+// 1. Restore these imports (uncomment):
+//    ChiSonoOverlap, ConcernsSection, DiplomiSection, FaqSection,
+//    FinalContactSection, FormazioneBand, PercorsoSection,
+//    PricingSection, ResourcesSection (+ RealArticle type), SedesSection,
+//    VideoSection, from "@/components/*"; diplomasQuery,
+//    latestArticlesQuery, sedesQuery from "@/sanity/queries".
+// 2. Remove the PreviewPlaceholderSection import above (no longer used).
+// 3. In Home(), restore the full Promise.all (siteSettings/sedes/
+//    diplomas/realArticles) — see that block's own comment below.
+// 4. In the JSX, delete the two <PreviewPlaceholderSection> calls and
+//    uncomment the real section block below them (PercorsoSection through
+//    ResourcesSection, verbatim, unchanged).
+// Gated sections: Percorso ("Metodo"), Diplomi + FormazioneBand, ChiSono
+// ("Chi sono"), Concerns, Video, Pricing, Faq, FinalContact + Sedes,
+// Resources. Hero, Recognition, and Hope are NOT gated — they stay live.
+// See also headerNavItems.ts's own PREVIEW-GATE block (the nav-href side
+// of this same change).
+// import { ChiSonoOverlap } from "@/components/ChiSonoOverlap";
+// import { ConcernsSection } from "@/components/ConcernsSection";
+// import { DiplomiSection } from "@/components/DiplomiSection";
+// import { FaqSection } from "@/components/FaqSection";
+// import { FinalContactSection } from "@/components/FinalContactSection";
+// import { FormazioneBand } from "@/components/FormazioneBand";
+// import { PercorsoSection } from "@/components/PercorsoSection";
+// import { PricingSection } from "@/components/PricingSection";
+// import {
+//   type RealArticle,
+//   ResourcesSection,
+// } from "@/components/ResourcesSection";
+// import { SedesSection } from "@/components/SedesSection";
+// import { VideoSection } from "@/components/VideoSection";
+// import {
+//   diplomasQuery,
+//   latestArticlesQuery,
+//   sedesQuery,
+// } from "@/sanity/queries";
 
 interface HomePageData {
   title?: string;
@@ -62,7 +82,7 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  hope?: { eyebrow?: string; heading?: string };
+  hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: {
     kicker?: string;
@@ -74,12 +94,11 @@ interface HomePageData {
     kicker?: string;
     heading?: string;
     bridgeLine?: string;
-    vignettes?: {
-      id: string;
-      vignette: string;
-      area: string;
-      slug: string;
-      visualImage?: SanityImage;
+    fragments?: {
+      label: string;
+      text: string;
+      emphasisWord?: string;
+      tier: "dominant" | "peripheral";
     }[];
   };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
@@ -120,26 +139,30 @@ interface HomePageData {
   };
 }
 
-interface SedeData {
-  _id: string;
-  city: string;
-  isOnline?: boolean;
-  onlineLine?: string;
-  addresses?: {
-    centerName?: string;
-    address: string;
-    lat: number;
-    lng: number;
-  }[];
-}
-
-interface DiplomaData {
-  _id: string;
-  image: SanityImage;
-  title: string;
-  institution: string;
-  year: number;
-}
+// PREVIEW-GATE (temporary): only used by the now-commented-out
+// sedesQuery/diplomasQuery fetches below — commented out alongside them
+// (would otherwise be flagged as unused interfaces). Restore as step 3
+// of the reversal described in the import-block comment above.
+// interface SedeData {
+//   _id: string;
+//   city: string;
+//   isOnline?: boolean;
+//   onlineLine?: string;
+//   addresses?: {
+//     centerName?: string;
+//     address: string;
+//     lat: number;
+//     lng: number;
+//   }[];
+// }
+//
+// interface DiplomaData {
+//   _id: string;
+//   image: SanityImage;
+//   title: string;
+//   institution: string;
+//   year: number;
+// }
 
 // TEMPORARY EN GATE: this composition's copy is hardcoded Italian —
 // translations arrive with the content phase, not this promotion pass.
@@ -190,18 +213,28 @@ export default async function Home({
     redirect(homePath("it"));
   }
 
-  const [homePage, siteSettings, sedes, diplomas, realArticles] =
-    await Promise.all([
-      sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
-      getSiteSettings(locale),
-      sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
-      sanityFetch<DiplomaData[]>(diplomasQuery, { locale }, ["diploma"]),
-      // Tagged "article" per the project's type-driven revalidation convention
-      // (src/app/api/revalidate/route.ts revalidates the raw _type string on
-      // every write) — same tag family the webhook already produces for this
-      // document type, no changes needed there.
-      sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
-    ]);
+  // PREVIEW-GATE (temporary): only homePage is fetched while the lower
+  // sections are gated — siteSettings (here; generateMetadata above has
+  // its own separate fetch, untouched)/sedes/diplomas/realArticles only
+  // ever fed the now-gated sections, so fetching them would just be
+  // wasted CMS round-trips until they're back. Restore the full
+  // destructure + Promise.all below (uncomment) as step 3 of the
+  // reversal described in this file's own import-block comment.
+  const [homePage] = await Promise.all([
+    sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+  ]);
+  // const [homePage, siteSettings, sedes, diplomas, realArticles] =
+  //   await Promise.all([
+  //     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+  //     getSiteSettings(locale),
+  //     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
+  //     sanityFetch<DiplomaData[]>(diplomasQuery, { locale }, ["diploma"]),
+  //     // Tagged "article" per the project's type-driven revalidation convention
+  //     // (src/app/api/revalidate/route.ts revalidates the raw _type string on
+  //     // every write) — same tag family the webhook already produces for this
+  //     // document type, no changes needed there.
+  //     sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
+  //   ]);
 
   return (
     <main>
@@ -219,14 +252,28 @@ export default async function Home({
         kicker={homePage?.recognition?.kicker ?? ""}
         heading={homePage?.recognition?.heading ?? ""}
         bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
-        vignettes={homePage?.recognition?.vignettes}
+        fragments={homePage?.recognition?.fragments}
       />
 
       <HopeSection
         eyebrow={homePage?.hope?.eyebrow ?? ""}
         heading={homePage?.hope?.heading ?? ""}
+        headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
+      {/* PREVIEW-GATE (temporary): anchor placeholders for the "Chi sono"
+          and "Metodo" nav links (headerNavItems.ts resolves them to
+          #chi-sono / #metodo for the duration of this gate — see that
+          file's own PREVIEW-GATE comment). Reversal: delete these two
+          PreviewPlaceholderSection calls and uncomment the real section
+          block immediately below (PercorsoSection through
+          ResourcesSection, preserved verbatim, unchanged) — plus the
+          import and Promise.all restorations noted at the top of this
+          file. */}
+      <PreviewPlaceholderSection id="chi-sono" locale={locale} />
+      <PreviewPlaceholderSection id="metodo" locale={locale} />
+
+      {/* PREVIEW-GATE (temporary) — real sections, preserved verbatim:
       <PercorsoSection
         kicker={homePage?.percorso?.kicker ?? ""}
         heading={homePage?.percorso?.heading ?? ""}
@@ -317,6 +364,7 @@ export default async function Home({
         realArticles={realArticles}
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
       />
+      */}
     </main>
   );
 }
