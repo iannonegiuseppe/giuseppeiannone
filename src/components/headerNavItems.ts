@@ -1,4 +1,4 @@
-import { hrefFor, NAV_ROUTE_KEYS, type Locale } from "@/sanity/paths";
+import { homePath, hrefFor, NAV_ROUTE_KEYS, type Locale } from "@/sanity/paths";
 import type { NavLinkData } from "@/sanity/seo";
 
 export type HeaderNavChild = {
@@ -61,6 +61,21 @@ const ROUTE_KEY_MAP = new Map(NAV_ROUTE_KEYS.map((entry) => [entry.key, entry]))
 // yet, so it could never resolve).
 const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "article"]);
 
+// PREVIEW-GATE (temporary): "chi-sono" and "metodo" normally resolve to
+// their own dedicated routes (aboutPath/methodPath — /chi-sono, /metodo,
+// not yet built) via ROUTE_KEY_MAP below. For the duration of this gate
+// they instead scroll to the placeholder sections page.tsx renders at
+// id="chi-sono"/id="metodo" (see that file's own PREVIEW-GATE comment —
+// those are the same two sections ChiSonoOverlap/PercorsoSection
+// normally occupy). Reversal: delete this map and the two lines in
+// resolveHref below that consult it; ROUTE_KEY_MAP's own real-route
+// resolution underneath is completely untouched and takes back over
+// immediately.
+const PREVIEW_GATE_ANCHOR_OVERRIDES = new Map<string, string>([
+  ["chi-sono", "chi-sono"],
+  ["metodo", "metodo"],
+]);
+
 function resolveHref(locale: Locale, link: NavLinkData): string | undefined {
   if (link.linkType === "reference") {
     const page = link.page;
@@ -80,6 +95,10 @@ function resolveHref(locale: Locale, link: NavLinkData): string | undefined {
   // what a fresh Studio document would actually contain).
   const routeKey = link.routeKey;
   if (routeKey) {
+    // PREVIEW-GATE (temporary) — see this file's own comment above.
+    const anchorId = PREVIEW_GATE_ANCHOR_OVERRIDES.get(routeKey);
+    if (anchorId) return `${homePath(locale)}#${anchorId}`;
+
     const entry = ROUTE_KEY_MAP.get(routeKey);
     if (entry) return entry.pathFn(locale);
   }
