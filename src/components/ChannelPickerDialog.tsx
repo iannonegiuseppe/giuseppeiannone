@@ -24,7 +24,7 @@ function channelHref(channel: ContactChannel): string {
   return `mailto:${channel.value}`;
 }
 
-// Part B: the header's "Prenota un primo colloquio" button opens this —
+// Part B: the header's "Inizia il percorso" button opens this —
 // not a form, nothing is collected (no GDPR data processing), just a
 // channel picker. Native <dialog> + showModal() per spec's stated
 // preference: built-in top-layer stacking (no z-index competition with

@@ -948,7 +948,7 @@ async function seed() {
       { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
       { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contatti" },
     ],
-    ctaButtonText: "Prenota un primo colloquio",
+    ctaButtonText: "Inizia il percorso",
   });
 
   await upsertManagedSingleton("headerSettings-en", "headerSettings", {
@@ -974,7 +974,15 @@ async function seed() {
       { _key: "nav-5", _type: "navLink", linkType: "route", routeKey: "faq", customLabel: "FAQ" },
       { _key: "nav-6", _type: "navLink", linkType: "route", routeKey: "contatti", customLabel: "Contact" },
     ],
-    ctaButtonText: "Book a first consultation",
+    // Coordinated with the hero's own EN ctaLabel (homePage-en.hero,
+    // populated in the i18n pass — see scripts/patch-homepage-en.ts) so
+    // the header and hero CTAs don't disagree. Originally seeded here as
+    // "Inizia il percorso" (patch-header-cta.ts) to mirror the hero's
+    // THEN-untranslated state, back when homePage-en was still a
+    // disclosed old-schema leftover (this file's own comment above,
+    // "there is deliberately no homePage-en this run"). Now that real EN
+    // hero copy exists, this matches it instead.
+    ctaButtonText: "Begin the journey",
   });
 
   await client.createOrReplace(
