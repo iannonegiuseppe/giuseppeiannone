@@ -26,7 +26,7 @@ export const headerSettings = defineType({
       title: "CTA button label",
       description: "The header's contact-popup trigger button.",
       type: "string",
-      initialValue: "Prenota un primo colloquio",
+      initialValue: "Inizia il percorso",
       validation: (Rule) => Rule.required().custom(deontologyCheck),
     }),
     languageField(),

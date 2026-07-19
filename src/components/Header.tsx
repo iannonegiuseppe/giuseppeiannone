@@ -29,7 +29,7 @@ export async function Header({
     <HeaderInteractive
       navItems={navItems}
       locale={locale}
-      ctaLabel={headerSettings?.ctaButtonText ?? "Prenota un primo colloquio"}
+      ctaLabel={headerSettings?.ctaButtonText ?? "Inizia il percorso"}
       contactChannels={contactChannels}
     />
   );
