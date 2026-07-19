@@ -171,6 +171,27 @@
     max-width: 47vw;
     aspect-ratio: 0.94;
     align-self: end;
+    // Firefox-only bug fix: this item's own DOM content is just an
+    // absolutely-positioned <Image fill> (out of flow, contributes
+    // nothing to intrinsic sizing), so this box's only intrinsic width
+    // signal is its aspect-ratio-transferred size (from its resolved
+    // height) capped by max-width:47vw above. Firefox counts that
+    // transferred/capped width as this SINGLE-span track's automatic
+    // minimum size during 1fr track-sizing, ballooning column 12 to
+    // exactly 47vw (confirmed via getComputedStyle: gridTemplateColumns
+    // resolved to eleven ~17.75px tracks + one 676.8px track at 1440px,
+    // 1440*0.47 exactly) and starving the other 11 tracks — including the
+    // text column's 6-track span — down to near-zero, which is the actual
+    // cause of the "one word per line" headline wrap. Chrome does not
+    // feed this item's aspect-ratio/max-width size into track sizing (it
+    // only lets the box overflow its own cell at paint time, which is the
+    // intended design per the comment above), so it already renders
+    // correctly. min-width: 0 stops Firefox from using this box's size as
+    // a track-sizing input — the 12 tracks then divide evenly in both
+    // engines, and this item still visually overflows its own track via
+    // width:auto + aspect-ratio + justify-self:end exactly as designed,
+    // since that governs its PAINTED size, not the track's base size.
+    min-width: 0;
   }
 }
 
