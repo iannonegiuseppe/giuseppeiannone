@@ -498,9 +498,15 @@ async function seed() {
         { _key: "fragment-relazioni", label: "Relazioni", text: "Dico sempre di sì. Poi non resta niente per me. [segnaposto]", tier: "peripheral" },
       ],
     },
+    // Full-bleed accent-band pass: [segnaposto] copy written by
+    // Aliaksandr's assistant, not by Giuseppe — his real line is still
+    // outstanding ("the message/intent for the Hope section"). Matters
+    // more here than anywhere else on the page: one sentence carries the
+    // entire emotional turn.
     hope: {
-      eyebrow: "[segnaposto]",
-      heading: "[segnaposto — testo di Giuseppe non ancora arrivato]",
+      eyebrow: "Un percorso possibile [segnaposto]",
+      heading: "Non è sempre stato così. E non deve restare così. [segnaposto]",
+      headingEmphasisWord: "non deve restare",
     },
     sedi: {
       kicker: "Dove ricevo",

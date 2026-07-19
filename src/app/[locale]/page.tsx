@@ -62,7 +62,7 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  hope?: { eyebrow?: string; heading?: string };
+  hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: {
     kicker?: string;
@@ -224,6 +224,7 @@ export default async function Home({
       <HopeSection
         eyebrow={homePage?.hope?.eyebrow ?? ""}
         heading={homePage?.hope?.heading ?? ""}
+        headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
       <PercorsoSection

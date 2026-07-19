@@ -67,7 +67,7 @@ interface HomePageData {
     areas?: { title: string; subItems?: string[] }[];
     photo?: SanityImage;
   };
-  hope?: { eyebrow?: string; heading?: string };
+  hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   diplomi?: { kicker?: string; heading?: string };
   percorso?: { kicker?: string; heading?: string; paragraph?: string; steps?: { title: string; text: string }[] };
   recognition?: {
@@ -164,6 +164,7 @@ export default async function DesignLabPage({
       <HopeSection
         eyebrow={homePage?.hope?.eyebrow ?? ""}
         heading={homePage?.hope?.heading ?? ""}
+        headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
       <PercorsoSection

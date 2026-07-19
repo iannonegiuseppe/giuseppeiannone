@@ -339,11 +339,22 @@ export const homePage = defineType({
       name: "hope",
       title: "Hope",
       description:
-        "A short transitional band between Recognition and How therapy helps — reassurance, not a claim of outcome. Placeholder copy until real text is supplied.",
+        "Full-bleed accent-band pass: the pivot of the patient-centered arc — " +
+        "Recognition, then this, then How therapy helps. One still line, not a " +
+        "claim of outcome; deliberately just eyebrow + heading, nothing else " +
+        "(no photo, no body, no button — a second element kills the effect). " +
+        "The heading matters more here than almost anywhere else on the page: " +
+        "it carries the entire emotional turn, and it must be Giuseppe's own " +
+        "line, not a placeholder treated as final.",
       type: "object",
       fields: [
         stringField("eyebrow", "Eyebrow", { initialValue: "[segnaposto]" }),
         textField("heading", "Heading", { rows: 2, initialValue: "[segnaposto]" }),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word or phrase (optional — must match the heading above exactly, case-sensitive; renders in italic. Color stays the same ivory as the rest of the heading — the accent-color swap used elsewhere doesn't apply on this band, since the background itself IS the accent color.)",
+          { required: false },
+        ),
       ],
     }),
 
