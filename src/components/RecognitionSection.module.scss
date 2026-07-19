@@ -10,13 +10,23 @@
 // kind. Kicker/heading/bridge classes below are unchanged in spirit from
 // the old version (same tokens/sizes); everything from
 // .recognitionConstellation down is new.
+// Vertical-rhythm tightening pass: was --space-8 (64px) base / shared
+// --space-band-y (72px md, 96px lg) — detached from --space-band-y
+// deliberately, since that token is also consumed by six other sections
+// (FinalContactSection, ConcernsSection, PricingSection, PercorsoSection,
+// FormazioneBand, FaqSection, DiplomiSection); tightening it here would
+// have tightened all of those too. Scoped instead, one step down the
+// real token scale each (--space-7 base, --space-8 at lg — matches
+// HopeSection's own base/lg-only breakpoint structure, no separate md
+// tier). HopeSection's own padding-block is explicitly NOT touched by
+// this pass — its neighbouring gap shrinks only on Recognition's side.
 .recognitionSection {
   position: relative;
   background: var(--color-bg);
-  padding-block: var(--space-8); // 64px, mobile tier
+  padding-block: var(--space-7); // 48px, base tier
 
-  @include mixins.breakpoint-up(md) {
-    padding-block: var(--space-band-y); // 72px (md) / 96px (lg)
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-8); // 64px
   }
 }
 
