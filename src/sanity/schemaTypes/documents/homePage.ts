@@ -255,43 +255,76 @@ export const homePage = defineType({
     // 9. RecognitionSection
     defineField({
       name: "recognition",
-      title: "9. Ti riconosci? (vignette)",
+      title: "9. Ti riconosci? (constellation)",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
         textField("bridgeLine", "Bridge line"),
         defineField({
-          name: "vignettes",
-          title: "Vignettes",
+          name: "fragments",
+          title: "Fragments",
           description:
-            "Background visuals stay as the built-in line-art placeholders (matched by Id below) until real photos are supplied — the optional image here overrides the placeholder for that vignette only.",
+            "Rebuild pass: replaces the old scroll-highlight vignette list and its " +
+            "per-vignette background visuals entirely — this section is now a " +
+            "static asymmetric composition of short, patient-voice sentences (no " +
+            "background art at all). 4-6 fragments, three tiers: exactly ONE " +
+            "anchor (largest, catches the eye first — closes the centre-left " +
+            "void the composition otherwise leaves), dominant (2-3, larger), " +
+            "peripheral (2-3, smaller/quieter) — set via each fragment's own " +
+            "Tier field. These sentences ARE the section's whole job: a visitor " +
+            "should recognize themselves in one within a second, so the wording " +
+            "must be the language patients actually use, not a clinical " +
+            "description. Mark placeholder copy with [segnaposto] — real lines " +
+            "are owed by Giuseppe, not written by an assistant.",
           type: "array",
           of: [
             {
               type: "object",
-              name: "recognitionVignette",
+              name: "recognitionFragment",
               fields: [
+                stringField(
+                  "label",
+                  "Category label (e.g. \"Stress\") — leave blank for the anchor tier if it reads better unlabeled",
+                  { required: false },
+                ),
+                textField(
+                  "text",
+                  "Sentence — keep the anchor tier's especially short (~60 characters or less): it renders nearly twice the dominant size, so a long sentence there dominates the whole section",
+                  { rows: 2 },
+                ),
+                stringField(
+                  "emphasisWord",
+                  "Emphasized word or phrase (optional — must match the sentence above exactly, case-sensitive; renders in the site's italic-accent style. One or two words at most — not every fragment needs one.)",
+                  { required: false },
+                ),
                 defineField({
-                  name: "id",
-                  title: "Id",
-                  description: "Matches the built-in placeholder visual (e.g. \"stress\", \"ansia-1\") — leave as-is unless a developer confirms the code-side mapping changed.",
+                  name: "tier",
+                  title: "Tier",
                   type: "string",
+                  options: {
+                    list: [
+                      { title: "Anchor (largest — exactly one)", value: "anchor" },
+                      { title: "Dominant (larger, longer)", value: "dominant" },
+                      { title: "Peripheral (smaller, quieter)", value: "peripheral" },
+                    ],
+                  },
                   validation: (Rule) => Rule.required(),
                 }),
-                textField("vignette", "Vignette text"),
-                stringField("area", "Area"),
-                stringField("slug", "Concern slug"),
-                defineField({
-                  name: "visualImage",
-                  title: "Background visual (optional — overrides the placeholder)",
-                  type: "image",
-                }),
               ],
-              preview: { select: { title: "area", subtitle: "vignette" } },
+              preview: { select: { title: "label", subtitle: "text" } },
             },
           ],
-          validation: (Rule) => Rule.max(6),
+          validation: (Rule) =>
+            Rule.min(4)
+              .max(6)
+              .custom((fragments) => {
+                if (!Array.isArray(fragments)) return true;
+                const anchorCount = fragments.filter(
+                  (f) => f && typeof f === "object" && "tier" in f && f.tier === "anchor",
+                ).length;
+                return anchorCount <= 1 || "Only one fragment may use the Anchor tier — pick the single strongest line.";
+              }),
         }),
       ],
     }),

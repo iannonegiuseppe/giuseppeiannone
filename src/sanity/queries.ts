@@ -142,12 +142,11 @@ export const homePageQuery = defineQuery(`
       kicker,
       heading,
       bridgeLine,
-      vignettes[]{
-        id,
-        vignette,
-        area,
-        slug,
-        visualImage
+      fragments[]{
+        label,
+        text,
+        emphasisWord,
+        tier
       }
     },
     hope,

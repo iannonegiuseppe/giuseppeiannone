@@ -74,7 +74,7 @@ interface HomePageData {
     kicker?: string;
     heading?: string;
     bridgeLine?: string;
-    vignettes?: { id: string; vignette: string; area: string; slug: string; visualImage?: SanityImage }[];
+    fragments?: { label: string; text: string; emphasisWord?: string; tier: "dominant" | "peripheral" }[];
   };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
   prezzi?: {
@@ -158,7 +158,7 @@ export default async function DesignLabPage({
         kicker={homePage?.recognition?.kicker ?? ""}
         heading={homePage?.recognition?.heading ?? ""}
         bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
-        vignettes={homePage?.recognition?.vignettes}
+        fragments={homePage?.recognition?.fragments}
       />
 
       <HopeSection
