@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
+import { JourneySection } from "@/components/JourneySection";
 import { PreviewPlaceholderSection } from "@/components/PreviewPlaceholderSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { sanityFetch } from "@/sanity/client";
@@ -10,31 +11,33 @@ import type { Locale } from "@/sanity/paths";
 import { homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
-// PREVIEW-GATE (temporary) — restoring the real homepage, in full:
+// PREVIEW-GATE (temporary) — restoring the rest of the real homepage:
 // 1. Restore these imports (uncomment):
 //    ChiSonoOverlap, ConcernsSection, DiplomiSection, FaqSection,
-//    FinalContactSection, FormazioneBand, PercorsoSection,
-//    PricingSection, ResourcesSection (+ RealArticle type), SedesSection,
-//    VideoSection, from "@/components/*"; diplomasQuery,
-//    latestArticlesQuery, sedesQuery from "@/sanity/queries".
-// 2. Remove the PreviewPlaceholderSection import above (no longer used).
+//    FinalContactSection, FormazioneBand, PricingSection, ResourcesSection
+//    (+ RealArticle type), SedesSection, VideoSection, from
+//    "@/components/*"; diplomasQuery, latestArticlesQuery, sedesQuery
+//    from "@/sanity/queries".
+// 2. Remove the PreviewPlaceholderSection import above once its one
+//    remaining call site (id="chi-sono") is gone too.
 // 3. In Home(), restore the full Promise.all (siteSettings/sedes/
 //    diplomas/realArticles) — see that block's own comment below.
-// 4. In the JSX, delete the two <PreviewPlaceholderSection> calls and
-//    uncomment the real section block below them (PercorsoSection through
-//    ResourcesSection, verbatim, unchanged).
-// Gated sections: Percorso ("Metodo"), Diplomi + FormazioneBand, ChiSono
-// ("Chi sono"), Concerns, Video, Pricing, Faq, FinalContact + Sedes,
-// Resources. Hero, Recognition, and Hope are NOT gated — they stay live.
-// See also headerNavItems.ts's own PREVIEW-GATE block (the nav-href side
-// of this same change).
+// 4. In the JSX, delete the remaining <PreviewPlaceholderSection> call
+//    and uncomment the real section block below it (DiplomiSection
+//    through ResourcesSection, verbatim, unchanged).
+// Gated sections: Diplomi + FormazioneBand, ChiSono ("Chi sono"),
+// Concerns, Video, Pricing, Faq, FinalContact + Sedes, Resources. Hero,
+// Recognition, Hope, and Journey ("Metodo") are NOT gated — they stay
+// live. See also headerNavItems.ts's own PREVIEW-GATE block (the
+// nav-href side of this same change) — "metodo" already resolves to
+// this page's own #metodo anchor, unaffected by this section's un-gate,
+// so nothing there needs to change.
 // import { ChiSonoOverlap } from "@/components/ChiSonoOverlap";
 // import { ConcernsSection } from "@/components/ConcernsSection";
 // import { DiplomiSection } from "@/components/DiplomiSection";
 // import { FaqSection } from "@/components/FaqSection";
 // import { FinalContactSection } from "@/components/FinalContactSection";
 // import { FormazioneBand } from "@/components/FormazioneBand";
-// import { PercorsoSection } from "@/components/PercorsoSection";
 // import { PricingSection } from "@/components/PricingSection";
 // import {
 //   type RealArticle,
@@ -86,8 +89,9 @@ interface HomePageData {
   percorso?: {
     kicker?: string;
     heading?: string;
+    headingEmphasisWord?: string;
     paragraph?: string;
-    steps?: { title: string; text: string }[];
+    steps?: { title: string; shortLine: string; expandedText: string }[];
   };
   recognition?: {
     kicker?: string;
@@ -244,26 +248,27 @@ export default async function Home({
         headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
-      {/* PREVIEW-GATE (temporary): anchor placeholders for the "Chi sono"
-          and "Metodo" nav links (headerNavItems.ts resolves them to
-          #chi-sono / #metodo for the duration of this gate — see that
-          file's own PREVIEW-GATE comment). Reversal: delete these two
-          PreviewPlaceholderSection calls and uncomment the real section
-          block immediately below (PercorsoSection through
+      <JourneySection
+        kicker={homePage?.percorso?.kicker ?? ""}
+        heading={homePage?.percorso?.heading ?? ""}
+        headingEmphasisWord={homePage?.percorso?.headingEmphasisWord}
+        paragraph={homePage?.percorso?.paragraph}
+        steps={homePage?.percorso?.steps}
+      />
+
+      {/* PREVIEW-GATE (temporary): anchor placeholder for the "Chi sono"
+          nav link (headerNavItems.ts resolves it to #chi-sono for the
+          duration of this gate — see that file's own PREVIEW-GATE
+          comment). "Metodo" is no longer gated — JourneySection above
+          now owns #metodo for real. Reversal: delete this
+          PreviewPlaceholderSection call and uncomment the real section
+          block immediately below (DiplomiSection through
           ResourcesSection, preserved verbatim, unchanged) — plus the
           import and Promise.all restorations noted at the top of this
           file. */}
       <PreviewPlaceholderSection id="chi-sono" locale={locale} />
-      <PreviewPlaceholderSection id="metodo" locale={locale} />
 
       {/* PREVIEW-GATE (temporary) — real sections, preserved verbatim:
-      <PercorsoSection
-        kicker={homePage?.percorso?.kicker ?? ""}
-        heading={homePage?.percorso?.heading ?? ""}
-        paragraph={homePage?.percorso?.paragraph ?? ""}
-        steps={homePage?.percorso?.steps}
-      />
-
       <DiplomiSection
         kicker={homePage?.diplomi?.kicker ?? ""}
         heading={homePage?.diplomi?.heading ?? ""}

@@ -226,7 +226,9 @@ export const homePage = defineType({
       fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading")],
     }),
 
-    // 8. PercorsoSection
+    // 8. JourneySection (interactive rebuild — supersedes the earlier
+    // static staircase pass; steps[].description renamed to shortLine,
+    // expandedText added for the desktop right panel / mobile inline copy)
     defineField({
       name: "percorso",
       title: "8. Come si svolge un percorso",
@@ -234,20 +236,33 @@ export const homePage = defineType({
       fields: [
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match one word from the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
         textField("paragraph", "Paragraph"),
         defineField({
           name: "steps",
           title: "Steps",
+          description: "3-5 steps, rendered 01-04(-05) in order. Numeral is computed from array position, not stored.",
           type: "array",
           of: [
             {
               type: "object",
               name: "percorsoStep",
-              fields: [stringField("title", "Title"), textField("text", "Text")],
-              preview: { select: { title: "title", subtitle: "text" } },
+              fields: [
+                stringField("title", "Title"),
+                stringField("shortLine", "Short line (always visible, next to the numeral)"),
+                textField(
+                  "expandedText",
+                  "Expanded text (desktop: shown in the right panel when this step is active; mobile: shown inline, always visible)",
+                ),
+              ],
+              preview: { select: { title: "title", subtitle: "shortLine" } },
             },
           ],
-          validation: (Rule) => Rule.max(4),
+          validation: (Rule) => Rule.min(3).max(5),
         }),
       ],
     }),

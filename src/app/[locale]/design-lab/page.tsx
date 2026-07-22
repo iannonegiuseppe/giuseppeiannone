@@ -9,7 +9,7 @@ import { FinalContactSection } from "@/components/FinalContactSection";
 import { FormazioneBand } from "@/components/FormazioneBand";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
-import { PercorsoSection } from "@/components/PercorsoSection";
+import { JourneySection } from "@/components/JourneySection";
 import { PricingSection } from "@/components/PricingSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { type RealArticle, ResourcesSection } from "@/components/ResourcesSection";
@@ -69,7 +69,13 @@ interface HomePageData {
   };
   hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   diplomi?: { kicker?: string; heading?: string };
-  percorso?: { kicker?: string; heading?: string; paragraph?: string; steps?: { title: string; text: string }[] };
+  percorso?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    paragraph?: string;
+    steps?: { title: string; shortLine: string; expandedText: string }[];
+  };
   recognition?: {
     kicker?: string;
     heading?: string;
@@ -167,10 +173,11 @@ export default async function DesignLabPage({
         headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
-      <PercorsoSection
+      <JourneySection
         kicker={homePage?.percorso?.kicker ?? ""}
         heading={homePage?.percorso?.heading ?? ""}
-        paragraph={homePage?.percorso?.paragraph ?? ""}
+        headingEmphasisWord={homePage?.percorso?.headingEmphasisWord}
+        paragraph={homePage?.percorso?.paragraph}
         steps={homePage?.percorso?.steps}
       />
 

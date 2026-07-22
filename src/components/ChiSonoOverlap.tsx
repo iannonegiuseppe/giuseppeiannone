@@ -37,7 +37,7 @@ export function ChiSonoOverlap({
   bio,
   // Global restyle pass: MethodsOverlap ("Come funziona") was retired as
   // its own section — its approach/philosophy paragraph moves here as a
-  // second paragraph rather than being dropped, since PercorsoSection now
+  // second paragraph rather than being dropped, since JourneySection now
   // owns the "How therapy helps" slot.
   methodsBody,
   storyLinkLabel,
