@@ -33,6 +33,9 @@
     "closeLabel": "Chiudi",
     "viewDocumentSuffix": "vedi il documento"
   },
+  "ChiSono": {
+    "storyLinkLabel": "Leggi la mia storia"
+  },
   "Footer": {
     "copyright": "© {year} {name} — Tutti i diritti riservati."
   },

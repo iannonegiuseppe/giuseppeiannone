@@ -33,6 +33,9 @@
     "closeLabel": "Close",
     "viewDocumentSuffix": "view the document"
   },
+  "ChiSono": {
+    "storyLinkLabel": "Read my story"
+  },
   "Footer": {
     "copyright": "© {year} {name} — All rights reserved."
   },

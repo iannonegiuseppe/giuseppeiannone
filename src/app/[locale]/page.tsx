@@ -1,6 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { ChiSonoSection } from "@/components/ChiSonoSection";
 import { DiplomiSection } from "@/components/DiplomiSection";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
@@ -9,32 +10,37 @@ import { PreviewPlaceholderSection } from "@/components/PreviewPlaceholderSectio
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { sanityFetch } from "@/sanity/client";
 import type { Locale } from "@/sanity/paths";
-import { homePageQuery } from "@/sanity/queries";
+import { chiSonoSectionQuery, homePageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
 // PREVIEW-GATE (temporary) — restoring the rest of the real homepage:
 // 1. Restore these imports (uncomment):
-//    ChiSonoOverlap, ConcernsSection, FaqSection, FinalContactSection,
-//    FormazioneBand, PricingSection, ResourcesSection (+ RealArticle
-//    type), SedesSection, VideoSection, from "@/components/*";
-//    latestArticlesQuery, sedesQuery from "@/sanity/queries".
+//    ConcernsSection, FaqSection, FinalContactSection, FormazioneBand,
+//    PricingSection, ResourcesSection (+ RealArticle type),
+//    SedesSection, VideoSection, from "@/components/*"; latestArticlesQuery,
+//    sedesQuery from "@/sanity/queries".
 // 2. Remove the PreviewPlaceholderSection import above once its one
-//    remaining call site (id="chi-sono") is gone too.
+//    remaining call site (id="formazione") is gone too.
 // 3. In Home(), restore the full Promise.all (siteSettings/sedes/
 //    realArticles) — see that block's own comment below.
 // 4. In the JSX, delete the remaining <PreviewPlaceholderSection> call
 //    and uncomment the real section block below it (FormazioneBand
 //    through ResourcesSection, verbatim, unchanged).
-// Gated sections: FormazioneBand, ChiSono ("Chi sono"), Concerns, Video,
-// Pricing, Faq, FinalContact + Sedes, Resources. Hero, Recognition, Hope,
-// Journey ("Metodo"), and Diplomi are NOT gated — they stay live
-// (Diplomi un-gated in the homePage-array migration pass — its data now
-// comes straight off the same homePageQuery fetch below, no separate
-// query). See also headerNavItems.ts's own PREVIEW-GATE block (the
-// nav-href side of this same change) — "metodo" already resolves to
-// this page's own #metodo anchor, unaffected by this section's un-gate,
-// so nothing there needs to change.
-// import { ChiSonoOverlap } from "@/components/ChiSonoOverlap";
+// Gated sections: FormazioneBand, Concerns, Video, Pricing, Faq,
+// FinalContact + Sedes, Resources. Hero, Recognition, Hope, Journey
+// ("Metodo"), Diplomi, and Chi sono are NOT gated — they stay live
+// (Diplomi un-gated in the homePage-array migration pass; Chi sono
+// un-gated in the Chi sono section pass — its own new ChiSonoSection
+// component/query, NOT the older homePage.chiSono/ChiSonoOverlap.tsx
+// pairing, which this pass supersedes and leaves orphaned, same
+// precedent as diploma/qualification). ChiSonoSection keeps
+// id="chi-sono" on its own root section — the header's "Chi sono" nav
+// link still anchor-scrolls there rather than routing to the future
+// full /chi-sono page (see headerNavItems.ts's own
+// PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched here,
+// it reverses only once /chi-sono is actually built, a separate,
+// later pass). "Metodo" already resolves to this page's own #metodo
+// anchor, unaffected by any of this.
 // import { ConcernsSection } from "@/components/ConcernsSection";
 // import { FaqSection } from "@/components/FaqSection";
 // import { FinalContactSection } from "@/components/FinalContactSection";
@@ -56,6 +62,18 @@ interface QualificationItemData {
   tier: "titolo" | "formazione_continua";
   document?: SanityImage;
   documentLqip?: string;
+}
+
+interface ChiSonoSectionData {
+  kicker?: string;
+  title?: string;
+  titleEmphasisWord?: string;
+  paragraphs?: string[];
+  pullQuote?: string;
+  portrait?: SanityImage & { alt?: string };
+  portraitLqip?: string;
+  storyLink?: { current?: string };
+  signatureEnabled?: boolean;
 }
 
 interface HomePageData {
@@ -204,21 +222,26 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // PREVIEW-GATE (temporary): only homePage is fetched while the lower
-  // sections are gated — siteSettings (here; generateMetadata above has
-  // its own separate fetch, untouched)/sedes/realArticles only ever fed
-  // the now-gated sections, so fetching them would just be wasted CMS
-  // round-trips until they're back. Diplomi's data (homePage.diplomi.items)
-  // needs nothing extra here — it comes off this same homePage fetch.
-  // Restore the full destructure + Promise.all below (uncomment) as
-  // step 3 of the reversal described in this file's own import-block
-  // comment.
-  const [homePage] = await Promise.all([
+  // PREVIEW-GATE (temporary): only homePage + chiSonoSection are fetched
+  // while the lower sections are gated — siteSettings (here;
+  // generateMetadata above has its own separate fetch, untouched)/sedes/
+  // realArticles only ever fed the now-gated sections, so fetching them
+  // would just be wasted CMS round-trips until they're back. Diplomi's
+  // data (homePage.diplomi.items) needs nothing extra here — it comes off
+  // the same homePage fetch. chiSonoSection is its OWN standalone
+  // singleton (not a homePage field group — see its schema file's own
+  // comment), so it needs its own fetch, tagged "chiSonoSection" for the
+  // revalidation webhook. Restore the full destructure + Promise.all
+  // below (uncomment) as step 3 of the reversal described in this file's
+  // own import-block comment.
+  const [homePage, chiSono] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+    sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
   ]);
-  // const [homePage, siteSettings, sedes, realArticles] =
+  // const [homePage, chiSono, siteSettings, sedes, realArticles] =
   //   await Promise.all([
   //     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+  //     sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
   //     getSiteSettings(locale),
   //     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
   //     // Tagged "article" per the project's type-driven revalidation convention
@@ -261,6 +284,25 @@ export default async function Home({
         steps={homePage?.percorso?.steps}
       />
 
+      {/* Section-reorder pass: Chi sono now comes BEFORE Diplomi (was
+          after) — Metodo -> Chi sono -> Diplomi -> Areas. Un-gated in the
+          Chi sono section pass — data comes from its own chiSonoSection
+          singleton fetch above (chiSono), not homePage. Keeps
+          id="chi-sono" so the header's still-gated "Chi sono" nav anchor
+          (see headerNavItems.ts) continues to land here. */}
+      <ChiSonoSection
+        kicker={chiSono?.kicker ?? ""}
+        title={chiSono?.title ?? ""}
+        titleEmphasisWord={chiSono?.titleEmphasisWord}
+        paragraphs={chiSono?.paragraphs}
+        pullQuote={chiSono?.pullQuote}
+        portrait={chiSono?.portrait}
+        portraitLqip={chiSono?.portraitLqip}
+        storyLink={chiSono?.storyLink}
+        signatureEnabled={chiSono?.signatureEnabled}
+        locale={locale as Locale}
+      />
+
       {/* Un-gated in the homePage-array migration pass — data comes
           straight off homePage.diplomi.items (part of homePageQuery
           above), no separate fetch. Renders whatever is currently in the
@@ -274,35 +316,22 @@ export default async function Home({
         locale={locale as Locale}
       />
 
-      {/* PREVIEW-GATE (temporary): anchor placeholder for the "Chi sono"
-          nav link (headerNavItems.ts resolves it to #chi-sono for the
-          duration of this gate — see that file's own PREVIEW-GATE
-          comment). "Metodo" is no longer gated — JourneySection above
-          now owns #metodo for real. Reversal: delete this
-          PreviewPlaceholderSection call and uncomment the real section
-          block immediately below (FormazioneBand through
-          ResourcesSection, preserved verbatim, unchanged) — plus the
-          import and Promise.all restorations noted at the top of this
-          file. */}
-      <PreviewPlaceholderSection id="chi-sono" locale={locale} />
+      {/* PREVIEW-GATE (temporary): placeholder for everything still
+          gated below (FormazioneBand onward) — no nav anchor depends on
+          this specific id anymore (Chi sono's own anchor now lives on
+          the real ChiSonoSection above), named for the first section it
+          stands in for. Reversal: delete this PreviewPlaceholderSection
+          call and uncomment the real section block immediately below
+          (FormazioneBand through ResourcesSection, preserved verbatim,
+          unchanged) — plus the import and Promise.all restorations noted
+          at the top of this file. */}
+      <PreviewPlaceholderSection id="formazione" locale={locale} />
 
       {/* PREVIEW-GATE (temporary) — real sections, preserved verbatim:
       <FormazioneBand
         kicker={homePage?.formazione?.kicker ?? ""}
         credentials={homePage?.formazione?.credentials}
         counters={homePage?.formazione?.counters}
-      />
-
-      <ChiSonoOverlap
-        introHeading={homePage?.chiSono?.introHeading ?? ""}
-        introLinkLabel={homePage?.chiSono?.introLinkLabel ?? ""}
-        kicker={homePage?.chiSono?.kicker ?? ""}
-        heading={homePage?.chiSono?.heading ?? ""}
-        bio={homePage?.chiSono?.bio ?? ""}
-        methodsBody={homePage?.chiSono?.methodsBody}
-        storyLinkLabel={homePage?.chiSono?.storyLinkLabel ?? ""}
-        watermarkText={homePage?.chiSono?.watermarkText}
-        photo={homePage?.chiSono?.photo}
       />
 
       <ConcernsSection

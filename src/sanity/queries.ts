@@ -122,6 +122,26 @@ export const footerSettingsQuery = defineQuery(`
 // Sanity image object (components resolve them via urlFor, same as
 // siteSettings.author.photo already does) except video, resolved straight
 // to a URL like before — nothing else needs the asset document.
+// Chi sono section pass: standalone singleton (see chiSonoSection.ts's own
+// comment for why this isn't a homePage field group), so it's its own
+// query rather than another projection inside homePageQuery below.
+// "portraitLqip" mirrors qualificationsQuery/homePageQuery's diplomi.items
+// pattern — the lightbox-less blur placeholder for the portrait's own
+// next/image.
+export const chiSonoSectionQuery = defineQuery(`
+  *[_type == "chiSonoSection" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    paragraphs,
+    pullQuote,
+    portrait,
+    "portraitLqip": portrait.asset->metadata.lqip,
+    storyLink,
+    signatureEnabled
+  }
+`);
+
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,

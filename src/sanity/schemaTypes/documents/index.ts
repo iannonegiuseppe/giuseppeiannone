@@ -1,5 +1,6 @@
 import { aboutPage } from "./aboutPage";
 import { article } from "./article";
+import { chiSonoSection } from "./chiSonoSection";
 import { contactPage } from "./contactPage";
 import { diploma } from "./diploma";
 import { faqItem } from "./faqItem";
@@ -30,6 +31,11 @@ export const documentTypes = [
   pricePage,
   faqPage,
   contactPage,
+  // Chi sono section pass: homepage teaser singleton (own structured
+  // fields, not defineSimplePageType) — see its own file's comment for
+  // why it supersedes homePage.chiSono/ChiSonoOverlap.tsx instead of
+  // reusing them.
+  chiSonoSection,
   // Exactly two: Milan, Monza (protected like singletons in Step 7)
   locationPage,
   // Knowledge base / content

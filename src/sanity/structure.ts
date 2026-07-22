@@ -18,6 +18,10 @@ export const SINGLETON_TYPES = new Set([
   "pricePage",
   "faqPage",
   "contactPage",
+  // Chi sono section pass: homepage teaser singleton — see its own
+  // schema file's comment for why it's a standalone type rather than a
+  // homePage field group.
+  "chiSonoSection",
 ]);
 
 // Singletons, plus locationPage: exactly two documents (Milan, Monza) that
@@ -66,6 +70,7 @@ export const structure: StructureResolver = (S) =>
             .title("Pages")
             .items([
               singletonListItem(S, "homePage", "Home page"),
+              singletonListItem(S, "chiSonoSection", "Chi sono section (homepage)"),
               singletonListItem(S, "aboutPage", "About page"),
               singletonListItem(S, "methodPage", "Method page"),
               singletonListItem(S, "pricePage", "Pricing page"),
