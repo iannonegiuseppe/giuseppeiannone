@@ -16,7 +16,7 @@
   @include mixins.focus-ring;
 }
 
-// Subtle scrim so the ivory triangle/pine circle stay legible over any
+// Subtle scrim so the ivory triangle/accent circle stay legible over any
 // photo brightness — same reasoning as VideoPlayer's own play overlay.
 .heroVideoScrim {
   position: absolute;
