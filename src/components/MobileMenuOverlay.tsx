@@ -8,7 +8,7 @@ import type { HeaderNavItem } from "./headerNavItems";
 import { useLenisRef } from "@/components/LenisProvider";
 import styles from "./HeaderInteractive.module.scss";
 
-// Full-screen pine overlay for the burger menu (<=1023px). Focus trap +
+// Full-screen accent-colored overlay for the burger menu (<=1023px). Focus trap +
 // Esc-closes technique originally modeled on the pre-promotion
 // src/components/MobileNav.tsx (since removed — this component replaced
 // it entirely as part of the homepage promotion) — same

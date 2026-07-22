@@ -149,6 +149,13 @@ $z-index: (
   --radius-m: 0.75rem; // 12px — cards
   --radius-l: 1.25rem; // 20px — imagery
 
+  // --- Borders/outlines ----------------------------------------------------
+  // Cleanup pass: extracted from mixins.focus-ring/focus-ring-inset, which
+  // both used to bake this in as a raw 2px. One shared width so an inset
+  // ring (drawn inward, for flush-adjacent or photo-backed elements) stays
+  // the same visual weight as the default outward one.
+  --focus-ring-width: 2px;
+
   // --- Layout ------------------------------------------------------------
   // Widened 1200px -> 1320px as part of the design-lab promotion — this
   // was deliberately kept as a local override in the lab (.labRoot/

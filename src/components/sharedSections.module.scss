@@ -47,7 +47,7 @@
   grid-column: #{$start} / span #{$span};
 }
 
-// --- Buttons: exactly two variants, each with an inverted-on-pine state ---
+// --- Buttons: exactly two variants, each with an inverted-on-accent state ---
 // Local to design-lab (the real Button.tsx/Button.module.scss component is
 // out of scope for this pass — it keeps its current solid/outline
 // variants untouched; this is the refined system the styleguide now
@@ -76,7 +76,7 @@
   @include mixins.focus-ring;
 }
 
-// Secondary: transparent, pine border/text.
+// Secondary: transparent, accent border/text.
 .btnSecondary {
   @include button-base;
   background: transparent;

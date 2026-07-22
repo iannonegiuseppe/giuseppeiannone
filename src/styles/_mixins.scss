@@ -18,8 +18,27 @@
 // but kept as its own token so the two can diverge without a rename.
 @mixin focus-ring {
   &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-width);
+  }
+}
+
+// Inset variant — drawn INSIDE the element's own edge instead of outside
+// it. Two independent reasons an element needs this over the default
+// outward ring, either one is sufficient: (1) it sits flush against a
+// sibling with no gap, where an outward ring would bleed onto the
+// neighbor; (2) it sits over unpredictable photographic content, where
+// --color-focus (a mid taupe-brown) doesn't reliably read — measured
+// directly against real panel photos in the cleanup pass that added this
+// mixin: as low as ~1.15:1 in spots, well under the WCAG 3:1 non-text
+// floor. --color-bg (ivory) measured more reliably visible across the
+// same photos, particularly near the bottom third where a panel's own
+// scrim already darkens things — see ResourcesSection.module.scss's own
+// first user of this mixin for that exact case.
+@mixin focus-ring-inset {
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-bg);
+    outline-offset: calc(-1 * var(--focus-ring-width));
   }
 }
 

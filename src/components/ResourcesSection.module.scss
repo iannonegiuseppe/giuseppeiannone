@@ -235,10 +235,11 @@
   color: inherit;
   text-decoration: none;
 
-  &:focus-visible {
-    outline: 2px solid var(--color-bg); // ivory, per spec ("2px ivory outline")
-    outline-offset: -2px; // inside the panel edge, per spec
-  }
+  // Inset variant, not the shared outward mixins.focus-ring — see that
+  // mixin's own comment for the two independent reasons (flush-adjacent
+  // siblings at desktop, gap:0; unreliable --color-focus contrast against
+  // arbitrary photo content, measured directly for this exact panel).
+  @include mixins.focus-ring-inset;
 
   @include mixins.breakpoint-up(md) {
     flex: unset;

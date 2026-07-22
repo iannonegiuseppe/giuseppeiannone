@@ -56,8 +56,8 @@ interface SedeDoc {
 // authorName/authorCredentials/authorRegistrationNumber/contactChannels/
 // piva/crisisSupportText/googleProfileUrl/socialLinks/logo all stay
 // siteSettings-sourced props from layout.tsx, unchanged. The developer
-// credit is NOT a footerSettings field — hardcoded below, per spec
-// ("must not be editable or deletable via CMS").
+// credit line has been removed entirely (owner decision) — nothing
+// renders it, CMS-editable or otherwise.
 export async function Footer({
   locale,
   authorName,

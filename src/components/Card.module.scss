@@ -20,8 +20,9 @@
 }
 
 .title {
-  // Same reasoning as global h3: below Marcellus's legible floor (24px),
-  // so this stays on the body font rather than shrinking the display font.
+  // Same reasoning as global h3: below the display font's (EB Garamond)
+  // legible floor (24px), so this stays on the body font rather than
+  // shrinking the display font.
   font-family: var(--font-body);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
