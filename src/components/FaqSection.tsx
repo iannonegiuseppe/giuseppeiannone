@@ -12,7 +12,8 @@ interface FaqItemDoc {
 
 // Single-block pass (v2): rebuilds v1's always-open 2x2 grid into a
 // sticky header column + hairline-row accordion — light ivory interlude
-// between the pine CTA band and the pine footer. All four answers stay
+// between the accent-colored CTA band and the accent-colored footer. All
+// four answers stay
 // mounted in the DOM at all times regardless of open/closed state (both
 // for the reader and for AEO: answer engines read rendered text, not
 // content hidden behind a toggle) — see FaqAccordion.tsx for the

@@ -15,14 +15,17 @@
 // section in this file, not a shared import. Section background/padding
 // (.faqSection) is UNCHANGED from v1 — this rebuild only touches the
 // content layout beneath it.
+// Section-rhythm pass: was --space-8 (64px) at mobile specifically
+// (literal spec override, not --space-band-y's own mobile tier of
+// 57.6px), only switching to --space-band-y at md+. Normalized to the
+// shared token at every tier — matches the Diplomi/Chi sono/Aree/Video
+// rhythm this section is now directly adjacent to (Video -> Faq ->
+// Contact), per this pass's own report (verified live: the mobile-tier
+// mismatch was measurably widening the Video->Faq and Faq->Contact gaps
+// past the reference stretch's own rhythm).
 .faqSection {
   background: var(--color-bg);
-  padding-block: var(--space-8); // 64px, mobile tier per spec (literal,
-  // not --space-band-y's own mobile tier of 57.6px)
-
-  @include mixins.breakpoint-up(md) {
-    padding-block: var(--space-band-y); // 72px (md) / 96px (lg), per spec
-  }
+  padding-block: var(--space-band-y);
 }
 
 .faqContainer {
@@ -189,22 +192,40 @@
   font-family: var(--font-display);
   font-size: 1.25rem; // 20px
   line-height: 1;
-  color: var(--color-accent); // pine
+  color: var(--color-accent);
 
   @include mixins.breakpoint-up(md) {
     flex-basis: 3.5rem; // 56px fixed column, desktop/tablet per spec
   }
 }
 
+// Typography-alignment pass: was Source Sans 3 bold (1.0625rem/1.25rem,
+// stepping at md) — every other list-style item title on the site (Aree
+// rows, closest structural match: hairline-divided rows, index column,
+// title + descriptor) sets its title in EB Garamond via --fs-h3/--fs-h2,
+// stepping at lg. Matched exactly, including the lg breakpoint (not the
+// previous md), for real consistency rather than just a matching font.
+// font-weight explicitly regular — EB Garamond ships weight 400 only in
+// this project (see _tokens.scss's own note). Can't just omit the
+// declaration and rely on inheritance the way AreeSection's own title
+// does: THIS element sits inside a real <h3> (.faqRowHeading below), and
+// globals.scss's own h3 rule never resets font-weight, so it was silently
+// inheriting the browser's bold-by-default UA style for h3 — harmless
+// with the old Source Sans 3 (a real 700 exists there) but would have
+// faux-bolded EB Garamond here (caught live: computed font-weight was
+// 700 before this line was added). AreeSection's title isn't h3-nested,
+// which is why it never hit this.
 .faqRowQuestion {
   flex: 1 1 auto;
-  font-family: var(--font-body);
-  font-size: 1.0625rem; // 17px, mobile tier per spec
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--font-weight-regular);
   color: var(--color-text);
 
-  @include mixins.breakpoint-up(md) {
-    font-size: 1.25rem; // 20px, desktop/tablet per spec
+  @include mixins.breakpoint-up(lg) {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
   }
 }
 

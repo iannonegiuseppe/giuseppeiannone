@@ -22,7 +22,7 @@ import sharedStyles from "./sharedSections.module.scss";
 //
 // REVISION 5 — restores a full-bleed-left photo for row 2 (desktop only,
 // >=1024px): the photo now bleeds to the true viewport edge and dissolves
-// into the pine band via a right-side gradient (.finalContactPhotoDissolve,
+// into the accent band via a right-side gradient (.finalContactPhotoDissolve,
 // new this pass), instead of sitting as a contained rounded card. Row 1
 // (the heading block) is untouched — it stays a plain contained row above,
 // never overlapping the photo, which only starts where row 2 begins. Row
