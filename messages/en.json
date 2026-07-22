@@ -27,6 +27,12 @@
   "Header": {
     "menuToggle": "Menu"
   },
+  "Diplomi": {
+    "prevLabel": "Previous qualification",
+    "nextLabel": "Next qualification",
+    "closeLabel": "Close",
+    "viewDocumentSuffix": "view the document"
+  },
   "Footer": {
     "copyright": "© {year} {name} — All rights reserved."
   },

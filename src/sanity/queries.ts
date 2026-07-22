@@ -136,7 +136,20 @@ export const homePageQuery = defineQuery(`
     chiSono,
     formazione,
     diCosa,
-    diplomi,
+    diplomi{
+      kicker,
+      heading,
+      alboLine,
+      items[]{
+        _key,
+        year,
+        title,
+        institution,
+        tier,
+        document,
+        "documentLqip": document.asset->metadata.lqip
+      }
+    },
     percorso,
     recognition{
       kicker,
@@ -186,7 +199,10 @@ export const sedesQuery = defineQuery(`
   }
 `);
 
-// Diplomi section's list — replaces diplomiData.ts.
+// Diplomi section's list — replaces diplomiData.ts. Superseded by
+// qualificationsQuery below for the card-row rebuild; left as-is (still
+// queries the `diploma` type, which is itself a disclosed orphan — see
+// qualification.ts's own comment) since nothing currently calls it.
 export const diplomasQuery = defineQuery(`
   *[_type == "diploma" && language == $locale] | order(order asc) {
     _id,
@@ -194,6 +210,27 @@ export const diplomasQuery = defineQuery(`
     title,
     institution,
     year
+  }
+`);
+
+// Diplomi rebuild — card row + lightbox. Superseded by homePageQuery's own
+// diplomi{items[]} projection above (homePage-array migration pass, owner
+// call — see homePage.ts's own comment); left as-is since nothing
+// currently calls it, same disclosed-orphan precedent as diplomasQuery
+// right above. "document.asset->metadata.lqip" is the lightbox's blur
+// placeholder (a tiny base64 data URI Sanity generates automatically per
+// asset, no extra processing needed); the card thumbnail doesn't need its
+// own separate lqip fetch since next/image's blur-up only matters for the
+// larger lightbox image where load time is actually noticeable.
+export const qualificationsQuery = defineQuery(`
+  *[_type == "qualification" && language == $locale] | order(order asc) {
+    _id,
+    year,
+    title,
+    institution,
+    tier,
+    document,
+    "documentLqip": document.asset->metadata.lqip
   }
 `);
 

@@ -24,7 +24,7 @@ function getReducedMotionServerSnapshot() {
 }
 
 // Cross-component "pause the video" signal — ChannelPickerDialog.tsx and
-// DiplomiViewerModal.tsx each dispatch this on window when they open (see
+// QualificationDialog.tsx each dispatch this on window when they open (see
 // their own `open:` handlers). A plain window Event rather than a new
 // shared state/context layer, since this is the ONLY thing those three
 // otherwise-unrelated components need to coordinate, and a global event

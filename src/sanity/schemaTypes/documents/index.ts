@@ -11,6 +11,7 @@ import { locationPage } from "./locationPage";
 import { methodPage } from "./methodPage";
 import { pillarPage } from "./pillarPage";
 import { pricePage } from "./pricePage";
+import { qualification } from "./qualification";
 import { sede } from "./sede";
 import { service } from "./service";
 import { siteSettings } from "./siteSettings";
@@ -40,4 +41,11 @@ export const documentTypes = [
   // CMS-wiring pass: homepage's shared content, fetched directly by type
   sede,
   diploma,
+  // Diplomi rebuild pass — replaced `diploma` above for the card-row +
+  // lightbox composition; itself now superseded by homePage.diplomi.items
+  // (owner call, homePage-array migration pass) and marked `hidden` in its
+  // own schema file. Left registered for the same reason `diploma` above
+  // is: existing documents are a disclosed orphan, not deleted, and stay
+  // valid/reachable rather than removed from Studio out from under them.
+  qualification,
 ];

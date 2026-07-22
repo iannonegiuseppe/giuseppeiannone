@@ -28,9 +28,11 @@ import styles from "./page.module.scss";
 // Chi sono/bio photo no longer overlapping any text, the hope-band photo
 // swapped from a second portrait to a tonal atmospheric placeholder).
 //
-// Gated exactly like /styleguide and /design-lab: hard 404 in production
-// (never just noindexed), noindex as a redundant second layer for the
-// window while reachable on preview deployments.
+// Gated exactly like /styleguide: hard 404 in production (never just
+// noindexed), noindex as a redundant second layer for the window while
+// reachable on preview deployments. (/design-lab, the former build-time
+// homepage mirror this comment used to also name, was retired in the
+// homePage-array migration pass — see that pass's report.)
 export const metadata: Metadata = {
   title: "Design preview — Taupe (internal)",
   robots: resolveRobots(true),

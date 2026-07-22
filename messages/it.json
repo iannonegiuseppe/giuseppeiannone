@@ -27,6 +27,12 @@
   "Header": {
     "menuToggle": "Menu"
   },
+  "Diplomi": {
+    "prevLabel": "Diploma precedente",
+    "nextLabel": "Diploma successivo",
+    "closeLabel": "Chiudi",
+    "viewDocumentSuffix": "vedi il documento"
+  },
   "Footer": {
     "copyright": "© {year} {name} — Tutti i diritti riservati."
   },

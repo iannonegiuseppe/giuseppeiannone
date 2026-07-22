@@ -39,6 +39,11 @@ export const TRANSLATABLE_TYPES = new Set([
   // still it/en pairs via the same mechanism as article/service.
   "sede",
   "diploma",
+  // Diplomi rebuild pass — replaced diploma's own role for the homepage
+  // card row, itself now superseded by homePage.diplomi.items (owner call,
+  // homePage-array migration pass) and hidden in Studio; kept here only so
+  // its existing (orphaned, not deleted) it/en document pairs stay valid.
+  "qualification",
 ]);
 
 const DEFAULT_LOCALE = "it";
