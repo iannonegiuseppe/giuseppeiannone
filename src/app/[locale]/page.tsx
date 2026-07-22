@@ -1,6 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { AreeSection } from "@/components/AreeSection";
 import { ChiSonoSection } from "@/components/ChiSonoSection";
 import { DiplomiSection } from "@/components/DiplomiSection";
 import { HeroOverlap } from "@/components/HeroOverlap";
@@ -10,15 +11,20 @@ import { PreviewPlaceholderSection } from "@/components/PreviewPlaceholderSectio
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { sanityFetch } from "@/sanity/client";
 import type { Locale } from "@/sanity/paths";
-import { chiSonoSectionQuery, homePageQuery } from "@/sanity/queries";
+import {
+  areasQuery,
+  areeSectionQuery,
+  chiSonoSectionQuery,
+  homePageQuery,
+} from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 
 // PREVIEW-GATE (temporary) — restoring the rest of the real homepage:
 // 1. Restore these imports (uncomment):
-//    ConcernsSection, FaqSection, FinalContactSection, FormazioneBand,
-//    PricingSection, ResourcesSection (+ RealArticle type),
-//    SedesSection, VideoSection, from "@/components/*"; latestArticlesQuery,
-//    sedesQuery from "@/sanity/queries".
+//    FaqSection, FinalContactSection, FormazioneBand, PricingSection,
+//    ResourcesSection (+ RealArticle type), SedesSection, VideoSection,
+//    from "@/components/*"; latestArticlesQuery, sedesQuery from
+//    "@/sanity/queries".
 // 2. Remove the PreviewPlaceholderSection import above once its one
 //    remaining call site (id="formazione") is gone too.
 // 3. In Home(), restore the full Promise.all (siteSettings/sedes/
@@ -26,22 +32,22 @@ import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 // 4. In the JSX, delete the remaining <PreviewPlaceholderSection> call
 //    and uncomment the real section block below it (FormazioneBand
 //    through ResourcesSection, verbatim, unchanged).
-// Gated sections: FormazioneBand, Concerns, Video, Pricing, Faq,
-// FinalContact + Sedes, Resources. Hero, Recognition, Hope, Journey
-// ("Metodo"), Diplomi, and Chi sono are NOT gated — they stay live
-// (Diplomi un-gated in the homePage-array migration pass; Chi sono
-// un-gated in the Chi sono section pass — its own new ChiSonoSection
-// component/query, NOT the older homePage.chiSono/ChiSonoOverlap.tsx
-// pairing, which this pass supersedes and leaves orphaned, same
-// precedent as diploma/qualification). ChiSonoSection keeps
-// id="chi-sono" on its own root section — the header's "Chi sono" nav
-// link still anchor-scrolls there rather than routing to the future
-// full /chi-sono page (see headerNavItems.ts's own
-// PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched here,
-// it reverses only once /chi-sono is actually built, a separate,
+// Gated sections: FormazioneBand, Video, Pricing, Faq, FinalContact +
+// Sedes, Resources. Hero, Recognition, Hope, Journey ("Metodo"), Chi
+// sono, Aree, and Diplomi are NOT gated — they stay live (Diplomi
+// un-gated in the homePage-array migration pass; Chi sono un-gated in
+// the Chi sono section pass; Aree un-gated in the Aree section pass —
+// its own new AreeSection component/query, NOT the older
+// homePage.diCosa/ConcernsSection.tsx pairing, which this pass
+// supersedes and leaves orphaned, same precedent as
+// diploma/qualification and homePage.chiSono/ChiSonoOverlap before it).
+// ChiSonoSection keeps id="chi-sono" on its own root section — the
+// header's "Chi sono" nav link still anchor-scrolls there rather than
+// routing to the future full /chi-sono page (see headerNavItems.ts's
+// own PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched
+// here, it reverses only once /chi-sono is actually built, a separate,
 // later pass). "Metodo" already resolves to this page's own #metodo
 // anchor, unaffected by any of this.
-// import { ConcernsSection } from "@/components/ConcernsSection";
 // import { FaqSection } from "@/components/FaqSection";
 // import { FinalContactSection } from "@/components/FinalContactSection";
 // import { FormazioneBand } from "@/components/FormazioneBand";
@@ -74,6 +80,20 @@ interface ChiSonoSectionData {
   portraitLqip?: string;
   storyLink?: { current?: string };
   signatureEnabled?: boolean;
+}
+
+interface AreeSectionData {
+  kicker?: string;
+  title?: string;
+  intro?: string;
+  previewHover?: boolean;
+}
+
+interface AreaData {
+  _id: string;
+  title: string;
+  descriptor: string;
+  slug?: string;
 }
 
 interface HomePageData {
@@ -222,26 +242,31 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // PREVIEW-GATE (temporary): only homePage + chiSonoSection are fetched
-  // while the lower sections are gated — siteSettings (here;
-  // generateMetadata above has its own separate fetch, untouched)/sedes/
-  // realArticles only ever fed the now-gated sections, so fetching them
-  // would just be wasted CMS round-trips until they're back. Diplomi's
-  // data (homePage.diplomi.items) needs nothing extra here — it comes off
-  // the same homePage fetch. chiSonoSection is its OWN standalone
-  // singleton (not a homePage field group — see its schema file's own
-  // comment), so it needs its own fetch, tagged "chiSonoSection" for the
-  // revalidation webhook. Restore the full destructure + Promise.all
-  // below (uncomment) as step 3 of the reversal described in this file's
-  // own import-block comment.
-  const [homePage, chiSono] = await Promise.all([
+  // PREVIEW-GATE (temporary): only homePage + chiSonoSection + areeSection/
+  // areas are fetched while the lower sections are gated — siteSettings
+  // (here; generateMetadata above has its own separate fetch,
+  // untouched)/sedes/realArticles only ever fed the now-gated sections, so
+  // fetching them would just be wasted CMS round-trips until they're back.
+  // Diplomi's data (homePage.diplomi.items) needs nothing extra here — it
+  // comes off the same homePage fetch. chiSonoSection/areeSection are each
+  // their OWN standalone singleton (not a homePage field group — see each
+  // schema file's own comment), so they need their own fetch, tagged for
+  // the revalidation webhook; areas is a separate plain list type (see
+  // area.ts's own comment), fetched alongside its section's header copy.
+  // Restore the full destructure + Promise.all below (uncomment) as step 3
+  // of the reversal described in this file's own import-block comment.
+  const [homePage, chiSono, aree, areas] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
     sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
+    sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
+    sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
   ]);
-  // const [homePage, chiSono, siteSettings, sedes, realArticles] =
+  // const [homePage, chiSono, aree, areas, siteSettings, sedes, realArticles] =
   //   await Promise.all([
   //     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
   //     sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
+  //     sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
+  //     sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
   //     getSiteSettings(locale),
   //     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
   //     // Tagged "article" per the project's type-driven revalidation convention
@@ -303,6 +328,19 @@ export default async function Home({
         locale={locale as Locale}
       />
 
+      {/* Un-gated in the Aree section pass — data comes from its own
+          areeSection + area fetches above, not homePage.diCosa. Supersedes
+          the still-gated ConcernsSection below (removed from that block —
+          see this file's own import-block comment). */}
+      <AreeSection
+        kicker={aree?.kicker ?? ""}
+        title={aree?.title ?? ""}
+        intro={aree?.intro}
+        areas={areas}
+        previewHover={aree?.previewHover}
+        locale={locale as Locale}
+      />
+
       {/* Un-gated in the homePage-array migration pass — data comes
           straight off homePage.diplomi.items (part of homePageQuery
           above), no separate fetch. Renders whatever is currently in the
@@ -332,14 +370,6 @@ export default async function Home({
         kicker={homePage?.formazione?.kicker ?? ""}
         credentials={homePage?.formazione?.credentials}
         counters={homePage?.formazione?.counters}
-      />
-
-      <ConcernsSection
-        kicker={homePage?.diCosa?.kicker ?? ""}
-        heading={homePage?.diCosa?.heading ?? ""}
-        linkLabel={homePage?.diCosa?.linkLabel ?? ""}
-        areas={homePage?.diCosa?.areas}
-        photo={homePage?.diCosa?.photo}
       />
 
       <VideoSection

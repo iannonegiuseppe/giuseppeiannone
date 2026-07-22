@@ -142,6 +142,28 @@ export const chiSonoSectionQuery = defineQuery(`
   }
 `);
 
+// Aree section pass: header copy (standalone singleton, see
+// areeSection.ts's own comment) and the row list (standalone `area` list
+// type, see its own comment for why rows aren't nested inside the
+// singleton) are two separate queries, fetched together.
+export const areeSectionQuery = defineQuery(`
+  *[_type == "areeSection" && language == $locale][0]{
+    kicker,
+    title,
+    intro,
+    previewHover
+  }
+`);
+
+export const areasQuery = defineQuery(`
+  *[_type == "area" && language == $locale] | order(order asc) {
+    _id,
+    title,
+    descriptor,
+    "slug": slug.current
+  }
+`);
+
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,

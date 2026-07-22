@@ -22,6 +22,9 @@ export const SINGLETON_TYPES = new Set([
   // schema file's comment for why it's a standalone type rather than a
   // homePage field group.
   "chiSonoSection",
+  // Aree section pass: same reasoning, header copy only — the area rows
+  // themselves are the separate `area` list type below.
+  "areeSection",
 ]);
 
 // Singletons, plus locationPage: exactly two documents (Milan, Monza) that
@@ -48,6 +51,8 @@ export const TRANSLATABLE_TYPES = new Set([
   // homePage-array migration pass) and hidden in Studio; kept here only so
   // its existing (orphaned, not deleted) it/en document pairs stay valid.
   "qualification",
+  // Aree section pass: one row per intervention area, plain list type.
+  "area",
 ]);
 
 const DEFAULT_LOCALE = "it";
@@ -71,6 +76,8 @@ export const structure: StructureResolver = (S) =>
             .items([
               singletonListItem(S, "homePage", "Home page"),
               singletonListItem(S, "chiSonoSection", "Chi sono section (homepage)"),
+              singletonListItem(S, "areeSection", "Aree section (homepage)"),
+              S.documentTypeListItem("area").title("Aree (homepage)"),
               singletonListItem(S, "aboutPage", "About page"),
               singletonListItem(S, "methodPage", "Method page"),
               singletonListItem(S, "pricePage", "Pricing page"),
