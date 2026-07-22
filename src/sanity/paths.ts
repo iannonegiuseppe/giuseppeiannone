@@ -31,6 +31,21 @@ export function locationPath(locale: Locale, slug: string): string {
   return locale === "it" ? `/sedi/${slug}` : `/en/locations/${slug}`;
 }
 
+// Aree section pass: same reasoning as locationPath above — namespaced
+// rather than a flat top-level slug like pillarPath, since an area's own
+// slug (e.g. "ansia") could otherwise collide with an existing/future
+// pillarPage slug about the same topic (e.g. "disturbi-d-ansia" already
+// exists as one). No individual area page exists yet — this legalizes
+// the URL shape now, same "decided in code, not content, ahead of the
+// route existing" precedent as articlePath. Deliberately distinct from
+// the "Aree" nav GROUPING label, which has no route of its own and links
+// to pillarPage children instead — see NAV_ROUTE_KEYS's own
+// HONESTY-RULE comment below; this is for an individual area ROW's own
+// future page, not that grouping.
+export function areaPath(locale: Locale, slug: string): string {
+  return locale === "it" ? `/aree/${slug}` : `/en/areas/${slug}`;
+}
+
 // Fixed routes for the singleton pages (about/method/price/faq/contact,
 // plus the legal pages) — these document types have no slug field (see
 // simplePage.ts), so the path is decided in code, not content. None of

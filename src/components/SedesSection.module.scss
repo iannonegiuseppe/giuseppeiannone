@@ -186,7 +186,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   height: 100%;
-  background: var(--color-accent); // pine fill, per spec
+  background: var(--color-accent); // accent fill, per spec
   border-radius: inherit;
 }
 
@@ -395,7 +395,7 @@
   display: none;
 }
 
-// Custom marker (divIcon) — 14px pine circle, 2px ivory ring, subtle
+// Custom marker (divIcon) — 14px accent-colored circle, 2px ivory ring, subtle
 // shadow, per spec. Border-width expressed in rem (0.125rem = 2px) to
 // stay within this file's "no raw px" rule while matching the spec's
 // literal pixel value exactly.
@@ -404,7 +404,7 @@
   width: 0.875rem; // 14px, per spec
   height: 0.875rem; // 14px, per spec
   border-radius: 50%;
-  background: var(--color-accent); // pine, per spec
+  background: var(--color-accent); // accent, per spec
   border: 0.125rem solid var(--color-bg); // 2px ivory ring, per spec
   box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 25%, transparent);
   transition: transform 200ms ease;
@@ -423,19 +423,20 @@
 // box on every call, so that reserved-space math automatically tracks
 // this inset rather than needing a matching manual update here.
 //
-// Polish pass round 3, item 1: fill flipped ivory -> pine (voyager is a
+// Polish pass round 3, item 1: fill flipped ivory -> accent (voyager is a
 // LIGHT basemap now — round 2's dark map is reverted — so a light panel
 // would blend into it exactly the way it blended into the original
-// positron/light_all basemap; a dark pine panel is what actually stands
-// out here). Round 2's left accent bar is REMOVED (not just padded around):
-// it was pine-on-ivory, a deliberate contrast accent; on a now-solid-pine
-// panel it would be pine-on-pine, i.e. invisible — dead decoration, not a
-// broken one, so it's deleted rather than kept inert.
+// positron/light_all basemap; a dark accent-colored panel is what
+// actually stands out here). Round 2's left accent bar is REMOVED (not
+// just padded around): it was accent-on-ivory, a deliberate contrast
+// accent; on a now-solid-accent panel it would be accent-on-accent, i.e.
+// invisible — dead decoration, not a broken one, so it's deleted rather
+// than kept inert.
 //
-// Spec calls the fill "--color-pine" — that token doesn't exist either
-// (see src/styles/_tokens.scss, checked fresh this pass) — the real pine
-// token is --color-accent, same one used for buttons/markers/kicker rules
-// throughout this file.
+// Spec calls the fill "--color-pine" (spec's own vocabulary) — that
+// token doesn't exist in this project (see src/styles/_tokens.scss,
+// checked fresh this pass) — the real token is --color-accent, same one
+// used for buttons/markers/kicker rules throughout this file.
 .sedesPanel {
   position: absolute;
   left: var(--space-5); // 24px, per spec
@@ -447,7 +448,7 @@
   // so the crossfade never jumps the panel's own box between scenes —
   // tuned via screenshot review, see the pass's final report.
   min-height: 14rem;
-  background: var(--color-accent); // pine, solid — see note above
+  background: var(--color-accent); // accent, solid — see note above
   border-radius: var(--radius-m); // "cards" token
   // Polish pass round 2, item 2 CATCH: this `padding` was dead code — its
   // only children (.sedesPanelScene below) are position:absolute, and per
@@ -496,24 +497,26 @@
 // than a modifier on that shared one, specifically so the fallback's
 // typography can't drift when this one changes.
 // Polish pass round 3, item 1: text flipped ink -> ivory to sit on the
-// now-pine panel. --color-accent-contrast is the SAME token this app
-// already uses for text-on-pine everywhere else (buttons, footer — see
-// its own definition/comment in _tokens.scss: "the brief specifically
+// now-solid-accent panel. --color-accent-contrast is the SAME token this
+// app already uses for text-on-accent everywhere else (buttons, footer —
+// see its own definition/comment in _tokens.scss: "the brief specifically
 // calls for 'ivory text'... reuses --color-bg"), not a new pairing.
 // Contrast verified (manual sRGB relative-luminance calc, see final
-// report): full-opacity ivory-on-pine ~10.0:1, the 80%-ivory street tier
+// report): full-opacity ivory-on-accent ~10.0:1, the 80%-ivory street tier
 // ~7.0:1 — both comfortably clear the 4.5:1 AA floor for normal text.
 .sedesPanelSceneCity {
   margin: 0 0 var(--space-4);
   // Deliberate, scoped exception to this app's own "h3 never uses the
-  // display font" rule (see globals.scss's h3 comment — Marcellus loses
-  // legibility below ~24px). 26px clears that threshold, and the spec
-  // explicitly asks for Marcellus here; every OTHER h3 in the app
-  // (including this same section's mobile/static headings, via the
-  // shared .sedesPanelCity/.sedesSliderCity classes) stays on the global
-  // body-font default.
+  // display font" rule (see globals.scss's h3 comment — the display font
+  // loses legibility below ~24px). 26px clears that threshold, and the
+  // spec explicitly asks for the display font here (spec's own vocabulary
+  // predates the EB Garamond migration and named Marcellus, the retired
+  // display font this project's --font-display used before); every OTHER
+  // h3 in the app (including this same section's mobile/static headings,
+  // via the shared .sedesPanelCity/.sedesSliderCity classes) stays on the
+  // global body-font default.
   font-family: var(--font-display);
-  color: var(--color-accent-contrast); // ivory-on-pine
+  color: var(--color-accent-contrast); // ivory-on-accent
   font-size: 1.625rem; // 26px, per spec
 }
 
@@ -530,7 +533,7 @@
   font-family: var(--font-body);
   font-size: 0.9375rem; // 15px, per spec
   font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
-  color: var(--color-accent-contrast); // ivory-on-pine
+  color: var(--color-accent-contrast); // ivory-on-accent
 }
 
 .sedesPanelAddressStreet {
@@ -566,7 +569,7 @@
   font-family: var(--font-display);
   font-size: 1.25rem; // 20px, per spec
   line-height: 1;
-  color: var(--color-accent); // pine, per spec
+  color: var(--color-accent); // accent, per spec
 }
 
 .sedesIndicatorTotal {
@@ -589,6 +592,6 @@
   transition: background-color 300ms ease-out; // same easing family as the Percorso reveals
 
   &[data-filled="true"] {
-    background: var(--color-accent); // fills pine as scenes pass, per spec
+    background: var(--color-accent); // fills accent as scenes pass, per spec
   }
 }

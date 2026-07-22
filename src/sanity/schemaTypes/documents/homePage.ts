@@ -218,15 +218,77 @@ export const homePage = defineType({
       ],
     }),
 
-    // 7. DiplomiSection (list itself is the separate `diploma` document type)
+    // 7. DiplomiSection — items moved in-line here (owner call: array on
+    // homePage, not a standalone document type). Supersedes the
+    // `qualification` document type the same way `qualification` itself
+    // superseded `diploma` before it — see qualification.ts's own comment;
+    // that type stays registered/orphaned, not deleted, same precedent as
+    // `diploma`. Order is the array's own item order (drag-reorder in
+    // Studio), not a stored field — same convention as `percorso.steps[]`
+    // above ("computed from array position, not stored").
     defineField({
       name: "diplomi",
       title: "7. Diplomi e formazione",
       type: "object",
-      fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading")],
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "alboLine",
+          "Albo registration line (shown below the card row)",
+        ),
+        defineField({
+          name: "items",
+          title: "Qualifications",
+          description: "3-8 entries, rendered in array order.",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "qualificationItem",
+              fields: [
+                defineField({
+                  name: "year",
+                  title: "Year",
+                  description: 'Display string, not a number — e.g. "2011" or a future "2019–2020" range.',
+                  type: "string",
+                  validation: (Rule) => Rule.required(),
+                }),
+                stringField("title", "Title"),
+                stringField("institution", "Institution"),
+                defineField({
+                  name: "tier",
+                  title: "Tier",
+                  description: "Stored for future grouping/filtering — this pass renders every tier identically in a single row.",
+                  type: "string",
+                  options: {
+                    list: [
+                      { title: "Titolo (degree/formal qualification)", value: "titolo" },
+                      { title: "Formazione continua (continuing education)", value: "formazione_continua" },
+                    ],
+                  },
+                  initialValue: "titolo",
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "document",
+                  title: "Scanned document",
+                  description: "Optional — leave empty until the redacted scan is ready. Cards without one show a typographic placeholder instead of a broken image.",
+                  type: "image",
+                  options: { hotspot: false },
+                }),
+              ],
+              preview: { select: { title: "title", subtitle: "institution", media: "document" } },
+            },
+          ],
+          validation: (Rule) => Rule.min(3).max(8),
+        }),
+      ],
     }),
 
-    // 8. PercorsoSection
+    // 8. JourneySection (interactive rebuild — supersedes the earlier
+    // static staircase pass; steps[].description renamed to shortLine,
+    // expandedText added for the desktop right panel / mobile inline copy)
     defineField({
       name: "percorso",
       title: "8. Come si svolge un percorso",
@@ -234,20 +296,33 @@ export const homePage = defineType({
       fields: [
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match one word from the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
         textField("paragraph", "Paragraph"),
         defineField({
           name: "steps",
           title: "Steps",
+          description: "3-5 steps, rendered 01-04(-05) in order. Numeral is computed from array position, not stored.",
           type: "array",
           of: [
             {
               type: "object",
               name: "percorsoStep",
-              fields: [stringField("title", "Title"), textField("text", "Text")],
-              preview: { select: { title: "title", subtitle: "text" } },
+              fields: [
+                stringField("title", "Title"),
+                stringField("shortLine", "Short line (always visible, next to the numeral)"),
+                textField(
+                  "expandedText",
+                  "Expanded text (desktop: shown in the right panel when this step is active; mobile: shown inline, always visible)",
+                ),
+              ],
+              preview: { select: { title: "title", subtitle: "shortLine" } },
             },
           ],
-          validation: (Rule) => Rule.max(4),
+          validation: (Rule) => Rule.min(3).max(5),
         }),
       ],
     }),

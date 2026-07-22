@@ -122,6 +122,48 @@ export const footerSettingsQuery = defineQuery(`
 // Sanity image object (components resolve them via urlFor, same as
 // siteSettings.author.photo already does) except video, resolved straight
 // to a URL like before — nothing else needs the asset document.
+// Chi sono section pass: standalone singleton (see chiSonoSection.ts's own
+// comment for why this isn't a homePage field group), so it's its own
+// query rather than another projection inside homePageQuery below.
+// "portraitLqip" mirrors qualificationsQuery/homePageQuery's diplomi.items
+// pattern — the lightbox-less blur placeholder for the portrait's own
+// next/image.
+export const chiSonoSectionQuery = defineQuery(`
+  *[_type == "chiSonoSection" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    paragraphs,
+    pullQuote,
+    portrait,
+    "portraitLqip": portrait.asset->metadata.lqip,
+    storyLink,
+    signatureEnabled
+  }
+`);
+
+// Aree section pass: header copy (standalone singleton, see
+// areeSection.ts's own comment) and the row list (standalone `area` list
+// type, see its own comment for why rows aren't nested inside the
+// singleton) are two separate queries, fetched together.
+export const areeSectionQuery = defineQuery(`
+  *[_type == "areeSection" && language == $locale][0]{
+    kicker,
+    title,
+    intro,
+    previewHover
+  }
+`);
+
+export const areasQuery = defineQuery(`
+  *[_type == "area" && language == $locale] | order(order asc) {
+    _id,
+    title,
+    descriptor,
+    "slug": slug.current
+  }
+`);
+
 export const homePageQuery = defineQuery(`
   *[_type == "homePage" && language == $locale][0]{
     title,
@@ -136,7 +178,20 @@ export const homePageQuery = defineQuery(`
     chiSono,
     formazione,
     diCosa,
-    diplomi,
+    diplomi{
+      kicker,
+      heading,
+      alboLine,
+      items[]{
+        _key,
+        year,
+        title,
+        institution,
+        tier,
+        document,
+        "documentLqip": document.asset->metadata.lqip
+      }
+    },
     percorso,
     recognition{
       kicker,
@@ -186,7 +241,10 @@ export const sedesQuery = defineQuery(`
   }
 `);
 
-// Diplomi section's list — replaces diplomiData.ts.
+// Diplomi section's list — replaces diplomiData.ts. Superseded by
+// qualificationsQuery below for the card-row rebuild; left as-is (still
+// queries the `diploma` type, which is itself a disclosed orphan — see
+// qualification.ts's own comment) since nothing currently calls it.
 export const diplomasQuery = defineQuery(`
   *[_type == "diploma" && language == $locale] | order(order asc) {
     _id,
@@ -194,6 +252,27 @@ export const diplomasQuery = defineQuery(`
     title,
     institution,
     year
+  }
+`);
+
+// Diplomi rebuild — card row + lightbox. Superseded by homePageQuery's own
+// diplomi{items[]} projection above (homePage-array migration pass, owner
+// call — see homePage.ts's own comment); left as-is since nothing
+// currently calls it, same disclosed-orphan precedent as diplomasQuery
+// right above. "document.asset->metadata.lqip" is the lightbox's blur
+// placeholder (a tiny base64 data URI Sanity generates automatically per
+// asset, no extra processing needed); the card thumbnail doesn't need its
+// own separate lqip fetch since next/image's blur-up only matters for the
+// larger lightbox image where load time is actually noticeable.
+export const qualificationsQuery = defineQuery(`
+  *[_type == "qualification" && language == $locale] | order(order asc) {
+    _id,
+    year,
+    title,
+    institution,
+    tier,
+    document,
+    "documentLqip": document.asset->metadata.lqip
   }
 `);
 

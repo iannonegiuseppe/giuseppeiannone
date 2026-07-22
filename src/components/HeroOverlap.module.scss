@@ -32,7 +32,7 @@
   }
 }
 
-// Primary: pine fill, ivory text.
+// Primary: accent fill, ivory text.
 .btnPrimary {
   @include shared.button-base;
   background: var(--color-accent);

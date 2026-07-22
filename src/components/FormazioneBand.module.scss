@@ -16,7 +16,7 @@
   }
 }
 
-// --- "Formazione": pine full-bleed strip with credentials marquee -------
+// --- "Formazione": accent-colored full-bleed strip with credentials marquee -------
 // Single-block ADD (new section, nothing else on the page moves). Facts
 // only, per docs/design-direction.md §9 — no evaluative/promotional
 // wording, no award names/logos/badges/stars, no client counts or
@@ -44,8 +44,8 @@
 
 // Centered, inverted variant of the standard kicker (Chi Sono/Methods):
 // same 12px/700/0.16em typography, but a rule on EACH side instead of one,
-// and ivory-on-pine instead of pine-on-ivory/greige. Spec's literal
-// opacities verified against the solid pine background (not a photo, so
+// and ivory-on-accent instead of accent-on-ivory/greige. Spec's literal
+// opacities verified against the solid accent background (not a photo, so
 // no per-pixel variance to worry about): ivory@70% measures 5.83:1,
 // comfortably passing AA — no substitution needed here, unlike the
 // photo-background cases elsewhere in this file.
@@ -111,7 +111,7 @@
   font-size: 2.75rem; // 44px, mobile tier per spec
   line-height: 1;
   color: var(--color-bg);
-  font-variant-numeric: tabular-nums; // best-effort, per spec — Marcellus has no true tabular cut
+  font-variant-numeric: tabular-nums; // best-effort, per spec — the display font (EB Garamond) has no true tabular cut
 
   @include mixins.breakpoint-up(md) {
     font-size: 3.5rem; // 56px, desktop tier per spec
@@ -134,7 +134,7 @@
   font-weight: var(--font-weight-bold); // 700, per spec
   text-transform: uppercase;
   letter-spacing: 0.14em; // per spec
-  // ivory@70% on pine — 5.83:1, passes AA. Same voice/value as the kicker, per spec.
+  // ivory@70% on accent — 5.83:1, passes AA. Same voice/value as the kicker, per spec.
   color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
@@ -212,7 +212,7 @@
   font-family: var(--font-body);
   font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
   text-transform: uppercase;
-  // ivory@75% measures 6.43:1 against pine — passes AA, no substitution needed.
+  // ivory@75% measures 6.43:1 against accent — passes AA, no substitution needed.
   color: color-mix(in srgb, var(--color-bg) 75%, transparent);
   font-size: 0.8125rem; // 13px, mobile tier per spec
   letter-spacing: 0.1em;

@@ -290,9 +290,9 @@ export default function StyleguidePage() {
         </h2>
         <p className={styles.caption} style={{ marginTop: 0 }}>
           Composizione compatta a scopo dimostrativo — non è uno specchio
-          della homepage reale (quello è <code>/design-lab</code>). / A
-          compact demo composition, not a mirror of the real homepage
-          (that&apos;s <code>/design-lab</code>).
+          della homepage reale (quello è la homepage stessa). / A compact
+          demo composition, not a mirror of the real homepage (that&apos;s
+          the homepage itself).
         </p>
         <MiniPagePreview />
       </section>

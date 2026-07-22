@@ -35,8 +35,9 @@
 // REVISION 5 — "restore the full-bleed photo": builds on REVISION 4's
 // row-1/row-2 split (row 1 = heading, untouched by this pass). Row 2's
 // desktop (>=1024px) treatment changes from a contained two-column card
-// layout back to a full-bleed-left photo that dissolves into the pine via
-// a gradient, form on clean pine at cols 7-12 — effectively reinstating
+// layout back to a full-bleed-left photo that dissolves into the accent
+// color via a gradient, form on the clean accent background at cols
+// 7-12 — effectively reinstating
 // the pre-REVISION-3 bleed technique (see .finalContactGridWrap's own
 // comment below for the scrollbar-safe math) but scoped to row 2 only,
 // so it can never touch row 1's heading. Mobile/tablet (<1024px) are
@@ -48,7 +49,7 @@
 // defined rather than deleted (cheap to revive, and deleting CSS is out
 // of this pass's own scope) — flagged for a follow-up cleanup pass.
 //
-// Primary, on a pine background: ivory fill, pine text.
+// Primary, on an accent background: ivory fill, accent text.
 .btnPrimaryInverted {
   @include shared.button-base;
   background: var(--color-bg);
@@ -107,13 +108,14 @@
   max-width: 40rem;
 }
 
-// "Standard kicker, inverted" — ivory-on-pine colorway (matching
+// "Standard kicker, inverted" — ivory-on-accent colorway (matching
 // Formazione's inverted treatment) but the single-rule-before-text
 // structure (matching Chi Sono/Methods/Concerns/Percorso/Pricing), since
 // this content is left-aligned, not centered like Formazione's band. On
-// solid pine again (row 1 sits directly on the band's own background,
-// not over a photo) — same colorway REVISION 3 used, no scrim-contrast
-// tuning needed here since there's no photo underneath anymore.
+// the solid accent background again (row 1 sits directly on the band's
+// own background, not over a photo) — same colorway REVISION 3 used, no
+// scrim-contrast tuning needed here since there's no photo underneath
+// anymore.
 .finalContactKicker {
   display: inline-flex;
   align-items: center;
@@ -155,8 +157,8 @@
   font-family: var(--font-body);
   font-size: 1.0625rem; // 17px
   line-height: 1.7;
-  // Solid pine background — ivory 85% is comfortably AA (>7:1), same
-  // baseline every other on-pine paragraph in this codebase relies on.
+  // Solid accent background — ivory 85% is comfortably AA (>7:1), same
+  // baseline every other on-accent paragraph in this codebase relies on.
   color: color-mix(in srgb, var(--color-bg) 85%, transparent);
 }
 
@@ -165,7 +167,7 @@
 // no overlap, per REVISION 5's own explicit "leave it" instruction.
 //
 // Desktop (>=1024px) — REVISION 5: reinstates a full-bleed-left photo
-// that dissolves into the pine band (the pre-REVISION-3 version of this
+// that dissolves into the accent band (the pre-REVISION-3 version of this
 // section did the same thing; REVISION 3/4 retired it, this pass brings
 // it back, scoped to row 2 only — row 1's heading stays a plain contained
 // row, see .finalContactHeaderRow above, unaffected). The wrapper itself
@@ -244,7 +246,7 @@
   // silhouette in this specific (reused, not purpose-shot) landscape crop.
 }
 
-// REVISION 5 — the photo's right portion dissolves into the pine band
+// REVISION 5 — the photo's right portion dissolves into the accent band
 // instead of ending at a hard edge (mobile/tablet: not rendered at all,
 // per spec's explicit "no bleed, no dissolve" there). Reaches full solid
 // --color-accent at 85% of the PHOTO LAYER's own width (57vw) — i.e. at
@@ -289,7 +291,7 @@
 }
 
 // Global restyle pass: replaces the removed availability badge. Sits
-// below the form, quiet — same ivory@70%-on-pine treatment as this
+// below the form, quiet — same ivory@70%-on-accent treatment as this
 // section's own kicker, not full-strength like the heading/body.
 .finalContactReassurance {
   margin: var(--space-4) 0 0; // 16px below the form
@@ -298,7 +300,7 @@
   color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
-// On-pine button variant of the shared .btnPrimaryInverted — this class
+// On-accent button variant of the shared .btnPrimaryInverted — this class
 // only adds the spacing this specific placement needs.
 // HONESTY-RULE FLAG (carried over): .finalContactCta/.finalContactCtaTight
 // are UNUSED — the button they styled was replaced by ContactForm.tsx's
@@ -330,9 +332,10 @@
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.8125rem; // 13px, per spec
-  // Spec's own flagged risk point — measured: ivory@65% on solid pine is
-  // 5.27:1, passing AA (needs 4.5:1). No substitution needed; reported as
-  // measured, per spec's explicit instruction either way.
+  // Spec's own flagged risk point — measured: ivory@65% on the solid
+  // accent background is 5.27:1, passing AA (needs 4.5:1). No
+  // substitution needed; reported as measured, per spec's explicit
+  // instruction either way.
   color: color-mix(in srgb, var(--color-bg) 65%, transparent);
 }
 
@@ -341,7 +344,7 @@
 // kicker and row 2's photo, all anchored to the same mixins.container).
 // Deliberately demoted — plain text, underline on hover only, no arrow,
 // no caps, must not compete with the form's submit button.
-// HONESTY-RULE NOTE: ivory@50% on solid pine measures 3.79:1, below
+// HONESTY-RULE NOTE: ivory@50% on the solid accent background measures 3.79:1, below
 // standard AA body-text contrast (4.5:1) — flagged for the record since
 // it's real, if secondary, content, but left at the spec's literal value
 // since low visibility here is stated design intent, not an oversight

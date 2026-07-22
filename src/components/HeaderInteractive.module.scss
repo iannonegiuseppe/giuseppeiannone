@@ -644,7 +644,7 @@
   z-index: mixins.z(overlay);
   display: flex;
   flex-direction: column;
-  background: var(--color-accent); // pine
+  background: var(--color-accent);
   padding: var(--space-6);
   overflow-y: auto;
   opacity: 0;
@@ -771,7 +771,7 @@
   display: block;
   font-family: var(--font-body);
   font-size: 1rem; // 16px, per spec
-  // ivory@85% on pine — verified AA-passing (see the pass's final report).
+  // ivory@85% on accent — verified AA-passing (see the pass's final report).
   color: color-mix(in srgb, var(--color-bg) 85%, transparent);
   text-decoration: none;
 

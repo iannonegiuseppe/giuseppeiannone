@@ -1,12 +1,34 @@
 @use "../styles/mixins";
 
 // Video-section pass: ivory background (the page's own default — no
-// override needed), standard section padding/container, centered header
-// — same device family as Risorse/Formazione/Come si svolge (kicker with
-// a rule on each side, centered column), per this file's own established
-// convention (see ResourcesSection.module.scss's identical structure).
+// override needed), standard container, centered header (kicker with a
+// rule on each side, centered column) — same header DEVICE as Risorse/
+// Formazione/Come si svolge, per this file's own established convention
+// (see ResourcesSection.module.scss's identical header structure).
+//
+// Section-rhythm pass: the SECTION PADDING itself (as opposed to the
+// header device above) no longer follows that same Risorse/Formazione
+// family — this section's actual page-flow neighbors are Diplomi and Faq
+// (Diplomi -> Video -> Faq), part of the Chi sono/Aree/Diplomi stretch
+// that already uses padding-block: var(--space-band-y) uniformly on the
+// outer section for both top AND bottom. Video used to instead pair
+// mixins.section (padding-BOTTOM only, --space-8/9) with a hardcoded
+// 4rem/6rem padding-TOP on .videoHeader below — numerically identical to
+// mixins.section's own values at every tier except mobile (64px vs
+// --space-band-y's own 57.6px mobile tier), which was enough to make the
+// Diplomi->Video and Video->Faq gaps measurably wider than the reference
+// rhythm at mobile specifically (verified live: 121.6px/128px vs the
+// reference stretch's own 115.2px). Normalized to padding-block: var(
+// --space-band-y) here — matching Chi sono/Aree/Diplomi exactly — and
+// .videoHeader no longer sets its own padding-top at all (the outer
+// section now covers it). This does diverge Video from the Risorse/
+// Formazione/Come si svolge family's own top-spacing convention at the
+// mobile tier specifically (57.6px vs their 64px) — flagged in this
+// pass's own report, since Resources itself isn't adjacent to Video in
+// page flow (Contact/FinalCta sits between them), so the two families no
+// longer being pixel-identical has no side-by-side visual impact.
 .videoSection {
-  @include mixins.section;
+  padding-block: var(--space-band-y);
 }
 
 .videoHeader {
@@ -15,11 +37,6 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding-top: 4rem; // 64px, mobile tier — matches Risorse's own established default
-
-  @include mixins.breakpoint-up(lg) {
-    padding-top: 6rem; // 96px, desktop tier
-  }
 }
 
 .videoKicker {
@@ -43,7 +60,7 @@
   background: var(--color-line);
 }
 
-// font-family inherits the global h2 -> Marcellus default (globals.scss)
+// font-family inherits the global h2 -> EB Garamond default (globals.scss)
 // — not restated here, per this file family's own established pattern.
 .videoHeading {
   margin: var(--space-4) 0 0;

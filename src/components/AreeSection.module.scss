@@ -1,0 +1,203 @@
+@use "../styles/mixins";
+
+// --- Aree: full-width typographic list of intervention areas ---------------
+// Supersedes ConcernsSection.tsx/homePage.diCosa (the older "Di cosa mi
+// occupo" card-grid pairing) — see area.ts's own comment. Kicker/heading
+// pattern reuses the exact standard values already established by
+// Recognition/Journey/Diplomi/Chi sono's own copy.
+.areeSection {
+  background: var(--color-bg);
+  padding-block: var(--space-band-y);
+}
+
+.areeHeader {
+  @include mixins.container;
+}
+
+.areeKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.areeKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.areeTitle {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.areeIntro {
+  margin: var(--space-4) 0 0;
+  max-width: 52ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Container-alignment bug, found and fixed during this pass's own
+// verification: this rule used to end with a plain `padding: 0` (meant
+// only to zero out a <ul>'s own default list-indent) — but the shorthand
+// `padding` resets ALL of an element's padding, so it silently wiped out
+// mixins.container's own `padding-inline` set two lines above, at 0
+// specificity cost (same selector, later declaration wins). Measured
+// live: header padding-inline computed to 48px/48px, list computed to
+// 0px/0px — exactly the "rows outdent past the header" bug. Fixed by
+// simply not re-touching padding here at all — the class selector below
+// already outranks the UA stylesheet's own <ul> padding-inline-start
+// default, so no reset was ever actually needed.
+.areeList {
+  @include mixins.container;
+  @include mixins.hairline-divider; // top border, for the list's own top edge
+  list-style: none;
+  margin-top: var(--space-7);
+}
+
+.areeRow {
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+// Shared row layout — link and plain variants only differ in
+// interactivity (cursor/focus-ring/hover), not geometry, so both share
+// this shape via separate classes rather than one class both apply.
+// Row-density pass: padding-block stepped down one token (--space-6 ->
+// --space-5) — see this pass's own report for the measured row height
+// before/after. Title-descriptor gap (.areeRowText's own gap, below) is
+// already --space-1, the smallest rung on the scale — nothing smaller to
+// step down to without a raw px value, so it's untouched; reported as-is.
+.areeRowLink,
+.areeRowPlain,
+.areeRowPreview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding-block: var(--space-5);
+  text-decoration: none;
+  color: inherit;
+}
+
+.areeRowLink {
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+// Preview-hover pass (temporary/demo — see areeSection.ts's own field
+// comment): visually identical hover reaction to a real link row, but
+// deliberately NOT interactive — cursor stays the default arrow, no
+// focus-ring (this element is never focusable in the first place, see
+// AreeSection.tsx: a plain <div>, no href/role/tabindex).
+.areeRowPreview {
+  cursor: default;
+}
+
+.areeRowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+// Mobile-first: one type step down from the desktop size (--fs-h3 base,
+// --fs-h2 at lg+) per this pass's own mobile instruction.
+.areeRowTitle {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+  transition:
+    color 150ms ease,
+    font-style 150ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+  }
+}
+
+.areeRowLink:hover .areeRowTitle,
+.areeRowLink:focus-visible .areeRowTitle {
+  color: var(--color-accent);
+  // font-style: italic;
+  transition:
+    color 150ms ease,
+    font-style 150ms ease;
+}
+
+// Preview-hover pass: same visual reaction as the real link's :hover
+// above, but scoped to (hover: hover) from the start — a touch device has
+// no real ":hover" concept, it simulates one on tap that then gets stuck
+// until the next tap elsewhere; gating on (hover: hover) means touch
+// devices never enter this state at all, per this pass's own instruction.
+@media (hover: hover) {
+  .areeRowPreview:hover .areeRowTitle {
+    color: var(--color-accent);
+    // font-style: italic;
+  }
+}
+
+.areeRowDescriptor {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Hidden by default (opacity + a slight leftward offset), revealed on
+// hover/focus-visible of the row link only — a plain (slug-less) row
+// never renders this element at all (see AreeSection.tsx), so there's
+// nothing to hide there in the first place.
+.areeRowArrow {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  color: var(--color-accent);
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.areeRowLink:hover .areeRowArrow,
+.areeRowLink:focus-visible .areeRowArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (hover: hover) {
+  .areeRowPreview:hover .areeRowArrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// "prefers-reduced-motion: no transition, state still changes" — the
+// color/opacity/transform END STATES above are untouched by this block,
+// only the animated approach to them is removed. Applies equally to the
+// preview-hover rows above (same .areeRowTitle/.areeRowArrow classes).
+@media (prefers-reduced-motion: reduce) {
+  .areeRowTitle,
+  .areeRowArrow {
+    transition: none;
+  }
+}

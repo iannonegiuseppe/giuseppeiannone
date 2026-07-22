@@ -9,23 +9,19 @@
     "label": "Key points"
   },
   "Hero": {
-    "cta": "Book a first consultation",
-    "registrationPrefix": "Professional Register No."
+    "cta": "Book a first consultation"
   },
-  "Home": {
-    "whoIAmHeading": "About me",
-    "concernsGridHeading": "What I help with",
-    "methodsHeading": "Methods",
-    "carePathwayHeading": "How therapy works",
-    "locationsHeading": "Locations",
-    "onlineLocationTitle": "Online",
-    "onlineLocationDescription": "Online psychotherapy sessions, for anyone who prefers the flexibility of remote care.",
-    "latestContentHeading": "Latest resources",
-    "privacyNoteBody": "Your details will be treated with complete confidentiality.",
-    "privacyNoteLinkLabel": "Read the privacy policy"
+  "Diplomi": {
+    "prevLabel": "Previous qualification",
+    "nextLabel": "Next qualification",
+    "closeLabel": "Close",
+    "viewDocumentSuffix": "view the document"
   },
-  "Header": {
-    "menuToggle": "Menu"
+  "ChiSono": {
+    "storyLinkLabel": "Read my story"
+  },
+  "Video": {
+    "wrapperAriaLabel": "Video: {title}"
   },
   "Footer": {
     "copyright": "© {year} {name} — All rights reserved."

@@ -1,0 +1,509 @@
+@use "../styles/mixins";
+
+// Interactive rebuild — supersedes the earlier static staircase pass
+// (dropped entirely: zero horizontal offsets now, an anxious reader
+// should see perfect order, not a cascade). Light background,
+// consistent with the section rhythm around it.
+.journeySection {
+  position: relative;
+  background: var(--color-bg);
+  padding-block: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-8);
+  }
+}
+
+.journeyHeader {
+  @include mixins.container;
+  margin-bottom: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    margin-bottom: var(--space-9);
+  }
+}
+
+// Same kicker recipe as RecognitionSection's own .recognitionKicker —
+// single leading rule, matching this codebase's current design system.
+.journeyKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.journeyKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.journeyHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+// Standard light-background emphasis recipe (EB Garamond italic +
+// --color-accent) — same as HeroOverlap.heroOverlapEmphasis /
+// RecognitionSection.recognitionEmphasis. The task brief for this pass
+// asks for a "--color-accent-text" token for the panel copy below; no
+// such token exists in this codebase (checked src/styles/_tokens.scss —
+// only --color-accent/-hover/-soft/-contrast). --color-accent IS already
+// this codebase's established "accent used as text color" value (this
+// exact rule, reused verbatim for the panel text further down), so it's
+// used directly rather than inventing a new token for one section.
+.journeyEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
+}
+
+.journeyParagraph {
+  margin: var(--space-4) 0 0;
+  max-width: 42ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// --- Layout: steps column (left) + always-filled panel (right) --------
+
+.journeyLayout {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    // 45% / 55% per spec, minus half the gap each side so the two
+    // columns' rendered widths still land on the intended ratio.
+    grid-template-columns: minmax(0, 45%) minmax(0, 55%);
+    // Stepped up one token from --space-8 — the panel was hugging the
+    // steps column with no breathing room.
+    gap: var(--space-9);
+    // stretch (the default — set explicitly for clarity), not center:
+    // .journeyPanel's own content is fully absolutely-positioned (see
+    // its own comment below), so it contributes nothing to this row's
+    // auto-height calculation — the row's height is therefore always
+    // the steps column's own height, full stop, regardless of how long
+    // the active step's expandedText gets. `stretch` lets .journeyPanel
+    // actually SPAN that full height so its internal centering (top:50%)
+    // centers against the real row height, not just its own min-height.
+    align-items: stretch;
+  }
+}
+
+// --- Left column: the journey ------------------------------------------
+
+.journeySteps {
+  position: relative;
+}
+
+// Track — plain hairline, unchanged from the previous pass. No
+// --color-border token exists in this codebase (checked _tokens.scss)
+// so --color-hairline is used, the established name for exactly this
+// kind of thin structural line (see mixins.hairline-divider). Positioned
+// at half the numeral column's own width so it runs through the numeral
+// column's horizontal center; static (no scroll-driven geometry for the
+// TRACK itself — the fill inside it, added this pass, is what's
+// measured) — the numeral column's width never changes per step now
+// that the staircase is gone, so a single fixed `left` value is correct
+// for every step regardless of count (3-5) or copy length. Also now the
+// containing block for .journeyThreadFill below (any positioned element
+// works as one — didn't need to change to position:relative for this).
+.journeyThread {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1.75rem; // half of the 3.5rem mobile numeral column
+  width: 1px;
+  background: var(--color-hairline);
+  transform-origin: top;
+
+  @include mixins.breakpoint-up(lg) {
+    left: 2rem; // half of the 4rem desktop numeral column
+  }
+}
+
+// Progress fill — stepper spine pass. Same x-position/width as the
+// track (its parent), accent-colored, height set inline by
+// JourneyInteractive.tsx from a real measurement (thread top to the
+// active numeral's vertical center) — never a hardcoded per-step
+// percentage. transition:height (not transform:scaleY) deliberately:
+// scaleY reveal already works well for .journeyThread's own ONE-SHOT
+// 0->1 entrance above, but this fill re-targets to a NEW, already
+// nonzero height on every step click — animating that as a scaleY
+// would mean computing an old-height/new-height ratio by hand each
+// time (the same measurement work all over again, for no benefit);
+// letting the browser interpolate `height` directly between two real
+// px values is simpler and exactly as smooth for a 1px-wide bar with
+// no rounded cap to distort. Below lg this never renders visibly
+// (.journeyPanel-style features are desktop-only) — JourneyInteractive
+// itself skips measuring under the lg breakpoint, so height stays 0.
+.journeyThreadFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--color-accent);
+  // Matches the panel cross-fade's own duration/easing
+  // (journeyPanelFadeIn, 200ms ease) — see that keyframe's own comment.
+  transition: height 200ms ease;
+}
+
+// The dot at the end of the thread — "the path has an end." Centered on
+// the thread's own horizontal position, sitting just past the last step.
+.journeyThreadEnd {
+  position: absolute;
+  bottom: -0.625rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.journeyStepsList {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    gap: var(--space-7);
+  }
+}
+
+// position:relative: an absolutely-positioned sibling (.journeyThread)
+// is a POSITIONED element and, per CSS stacking rules, paints above any
+// purely static one regardless of DOM order — without this, the thread
+// (declared first for exactly this reason) would paint OVER the
+// numerals instead of behind them. Giving this element a position value
+// puts it in the same auto stacking level; being later in DOM order
+// than the thread, it then paints on top, as intended.
+.journeyStep {
+  position: relative;
+  z-index: 1;
+}
+
+// Full button reset — this wraps rich content (numeral + title + short
+// line), not a plain text label, so `all: unset` is avoided (it can
+// strip inherited font/color in inconsistent ways across browsers);
+// each relevant property is reset explicitly instead.
+.journeyStepButton {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3) 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.journeyStepRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    gap: var(--space-6);
+  }
+}
+
+// Ghost numeral — the exact formula documented in the styleguide's own
+// .anatomyNumeral ("Real formula, exactly as implemented in
+// ChiSonoOverlap/RecognitionSection"): color-mix 6% of --color-text
+// against transparent, EB Garamond. Smaller here than the earlier
+// staircase pass (3rem/2.5rem, not 5.5rem/3rem) — the giant numeral now
+// lives in the right panel, this one just anchors the row. Fixed-width
+// column so its horizontal center — and therefore the thread's own
+// fixed `left` above — never shifts.
+.journeyStepNumeral {
+  flex: 0 0 3.5rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  line-height: 1;
+  text-align: center;
+  color: color-mix(in srgb, var(--color-text) 6%, transparent);
+  transition: color 200ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    flex-basis: 4rem;
+    font-size: 3rem;
+    // Stepper spine pass, desktop only (the fill/node mechanics don't
+    // port to mobile, per spec — mobile's own thread stays exactly as
+    // it was): numerals sit ON the thread as its nodes here, so each
+    // one needs an opaque patch of the section's own background — the
+    // real --color-bg token, not a new color — wide enough (this box's
+    // own flex-basis, which the thread's `left` is deliberately half
+    // of) and tall enough (padding-block, a real spacing token) to
+    // cleanly interrupt the line/fill behind it rather than let either
+    // slice through the glyph. Belt-and-suspenders with .journeyStep's
+    // own z-index (still true, still does the same job) — an opaque
+    // background masks the line regardless of stacking order, which
+    // reads more intentional than relying on stacking alone.
+    padding-block: var(--space-2);
+    background: var(--color-bg);
+  }
+
+  // Active-node marker: the numeral itself steps up toward
+  // --color-accent (unchanged from the previous pass) rather than
+  // adding a separate dot on the spine. Chosen over a dot because the
+  // numeral IS already the node — a second marker right next to an
+  // already large, already color-shifting glyph would be redundant
+  // clutter, and a color shift (not a new decoration) is exactly the
+  // technique .journeyStepTitle's own active state already uses two
+  // lines down; keeping both on the same technique reads as one
+  // consistent "active" language instead of two competing ones.
+  &[data-active="true"] {
+    color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+}
+
+.journeyStepBody {
+  max-width: 34rem;
+}
+
+// Active step's title gets full --color-text presence; inactive titles
+// sit on --color-text-muted (never opacity — per spec, every step must
+// stay clearly readable regardless of active state).
+.journeyStepTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+  transition: color 200ms ease;
+
+  &[data-active="true"] {
+    color: var(--color-text);
+  }
+}
+
+// max-width caps the measure so each step reads as a compact block
+// (title + ~2-line subtitle) instead of one long line bleeding toward
+// the right block — .journeyStepBody's own 34rem was too wide for this
+// purpose (a single-line fit at every seeded length). No shared
+// measure/width token exists in this codebase (checked _tokens.scss —
+// --fs-body's own comment just documents "max measure 68ch" as a
+// guideline, not a referenceable token); a raw ch value here matches
+// the same established, uncentralized pattern every other section uses
+// for its own measure (.journeyParagraph's 42ch, Recognition's 52ch).
+.journeyStepShortLine {
+  margin: var(--space-2) 0 0;
+  max-width: 34ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Mobile-only inline expanded copy — always visible (no accordion, no
+// tap-to-reveal), same italic/accent treatment as the desktop panel's
+// own .journeyPanelText, just smaller and without the giant numeral.
+// Sits under the button, not inside it (a <button> containing this much
+// static prose reads oddly to assistive tech — it's a sibling <p>, not
+// part of the interactive control).
+.journeyStepExpandedMobile {
+  margin: var(--space-3) 0 0 calc(3.5rem + var(--space-5));
+  max-width: 30rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--color-accent);
+
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+// --- Right panel: the response (desktop only) ---------------------------
+
+// display:none below lg, and at lg+ the item this comment can't set
+// height on directly (grid items don't take a bare "height" the way a
+// block does) — .journeyLayout's own align-items:stretch is what makes
+// this box actually span the grid row's full height. min-height stays
+// as a floor only (relevant if steps content were ever shorter than
+// it — not the normal case with 3-5 stacked steps, but a safe minimum
+// regardless).
+.journeyPanel {
+  display: none;
+  position: relative;
+  min-height: 14rem;
+
+  @include mixins.breakpoint-up(lg) {
+    // grid + place-items:center (not block + absolute-center on the
+    // text child) — see .journeyPanelText's own comment for why: an
+    // absolutely-positioned element's shrink-to-fit width is computed
+    // from its `left` offset to the containing block's far edge, not
+    // the full containing block width, so `left:50%` alone was capping
+    // the text at ~50% of this panel's width regardless of max-width.
+    display: grid;
+    place-items: center;
+  }
+}
+
+// Giant ghost numeral — same color-mix formula as the small step
+// numerals, taken even fainter (4%, vs. 6%) per spec's own "must never
+// compete with the italic text for legibility" instruction (tint itself
+// locked, never adjusted to compensate for size). Bleeds off the right
+// edge (pushed further than the first pass, -1.5rem -> -4rem, once the
+// panel text widened enough that true centering moved it rightward).
+//
+// Scale-up pass: tried 2x (18rem -> 36rem) first, per the requested
+// 1.5-2x range. At 1440 it read fine, but at 1024 (narrower right
+// block, same fixed rem size) the numeral's strokes ran under roughly
+// half the longest expandedText's line count — still technically
+// legible at the locked 4% tint, but visibly more crowded than 1440,
+// not the comfortable margin every other check in this pass had.
+// Stepped down to 1.75x (31.5rem) instead, per this task's own
+// instruction to step down toward 1.5x rather than touch the tint —
+// verified clean at both 1440 and 1024 with the longest seeded
+// expandedText in both locales. Sits behind the text via z-index/DOM
+// order, not opacity-on-a-shared-layer.
+.journeyPanelNumeral {
+  position: absolute;
+  top: 50%;
+  right: -4rem;
+  transform: translateY(-50%);
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  font-size: 31.5rem; // 18rem * 1.75
+  color: color-mix(in srgb, var(--color-text) 4%, transparent);
+  user-select: none;
+  pointer-events: none;
+  animation: journeyPanelFadeIn 200ms ease;
+}
+
+// Centered via the parent's place-items:center (not absolute + translate
+// — that was a real bug: an abs-positioned element's shrink-to-fit width
+// is computed from `left` to the containing block's far edge, so
+// `left:50%` alone capped this at ~50% of the panel's width no matter
+// what max-width said; the 65ch cap was never actually reached).
+// position:relative is not strictly required for z-index on a grid item
+// (grid items establish a stacking context on their own per spec) but
+// is kept explicit rather than relying on that being obvious to a future
+// reader.
+.journeyPanelText {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 65ch;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.4375rem;
+  line-height: 1.6;
+  color: var(--color-accent);
+  animation: journeyPanelFadeIn 200ms ease;
+}
+
+// Content-swap cross-fade — plays whenever JourneyInteractive.tsx
+// remounts these nodes under a new `key` (every step switch, plus the
+// very first mount). A plain opacity TRANSITION won't fire for a swap
+// like this (changing text content doesn't trigger a transition); a
+// fresh keyed mount + `animation` (which always plays on mount) is the
+// reliable way to get a repeatable fade without hand-rolled JS timing.
+@keyframes journeyPanelFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// --- Reveal ---------------------------------------------------------------
+// JourneyInteractive.tsx toggles these two classes on its own root
+// (.journeyLayout) via one IntersectionObserver; the per-step stagger
+// below is expressed purely in CSS via nth-child transition-delay.
+.journeyStepsPending {
+  .journeyThread {
+    transform: scaleY(0);
+  }
+  .journeyStepRow {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  .journeyPanel {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+.journeyStepsRevealed {
+  .journeyThread {
+    transform: scaleY(1);
+    transition: transform 500ms ease;
+  }
+  .journeyStepRow {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 400ms ease,
+      transform 400ms ease;
+  }
+  .journeyPanel {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 400ms ease,
+      transform 400ms ease;
+  }
+
+  @for $i from 1 through 5 {
+    .journeyStepsList > .journeyStep:nth-child(#{$i}) .journeyStepRow {
+      transition-delay: #{($i - 1) * 120}ms;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journeyStepsPending,
+  .journeyStepsRevealed {
+    .journeyThread,
+    .journeyStepRow,
+    .journeyPanel {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  // Instant swap, no cross-fade — the animation is skipped entirely
+  // rather than shortened, per spec.
+  .journeyPanelNumeral,
+  .journeyPanelText {
+    animation: none;
+  }
+
+  // Fill still jumps straight to the active numeral's measured height —
+  // JourneyInteractive.tsx sets that height regardless of motion
+  // preference; only the transition is removed here.
+  .journeyThreadFill {
+    transition: none;
+  }
+}

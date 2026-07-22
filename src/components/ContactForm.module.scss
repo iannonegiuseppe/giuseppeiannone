@@ -3,19 +3,20 @@
 
 // Contact form pass: replaces FinalContactSection's old single CTA
 // button. All colors here reuse existing tokens (--color-bg as this
-// project's --color-ivory substitute, --color-accent as pine,
-// --color-amber for errors) via color-mix() for computed tints, matching
-// this codebase's established convention everywhere else — no new raw
-// hex introduced.
+// project's --color-ivory substitute, --color-accent as this project's
+// --color-pine substitute, --color-amber for errors) via color-mix() for
+// computed tints, matching this codebase's established convention
+// everywhere else — no new raw hex introduced.
 
 // Local custom property (component-scoped, not a global token) — the
-// input's own background is pine darkened 4-6% for affordance against
-// the section's own solid pine, per spec. Reused as the autofill
-// box-shadow inset fill too, so an autofilled field's paint matches a
-// normal field's real background exactly.
+// input's own background is the accent color darkened 4-6% for
+// affordance against the section's own solid accent background, per
+// spec. Reused as the autofill box-shadow inset fill too, so an
+// autofilled field's paint matches a normal field's real background
+// exactly.
 .contactForm {
   --cf-input-bg: color-mix(in srgb, var(--color-accent) 95%, black);
-  // Declutter pass: shared amber-on-pine value — reused by both the
+  // Declutter pass: shared amber-on-accent value — reused by both the
   // error text and the invalid-field border below, same computed color
   // in both places (same reasoning as --cf-input-bg's own reuse).
   --cf-error-color: color-mix(in srgb, var(--color-amber) 65%, var(--color-bg));
@@ -448,8 +449,8 @@
 
 // --- Submit + quiet line -----------------------------------------------------
 // Secondary-on-dark: transparent, ivory border/text — mirrors
-// sharedSections.module.scss's own .btnSecondary (pine border/text on
-// light) inverted for this pine-background context, the same
+// sharedSections.module.scss's own .btnSecondary (accent border/text on
+// light) inverted for this accent-background context, the same
 // relationship .btnPrimaryInverted already has to .btnSecondary's
 // sibling .btnPrimary elsewhere in this codebase.
 .submitButton {

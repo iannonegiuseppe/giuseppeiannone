@@ -98,8 +98,9 @@ function getScrollTop(
 // tint read as murky "military khaki," the wrong mood — back to warm
 // "voyager" with a gentle pine-leaning tint (see the voyager filter rule
 // in SedesSection.module.scss for the retuned values), with the PANEL
-// now made dark/pine instead so it's the element that stands out against
-// the light map, rather than the map being dark and the panel light.
+// now made dark/accent-colored instead so it's the element that stands
+// out against the light map, rather than the map being dark and the
+// panel light.
 const MAP_STYLE = "voyager" as "voyager" | "dark";
 
 const CARTO_TILE_URL =

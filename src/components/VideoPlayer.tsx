@@ -24,7 +24,7 @@ function getReducedMotionServerSnapshot() {
 }
 
 // Cross-component "pause the video" signal — ChannelPickerDialog.tsx and
-// DiplomiViewerModal.tsx each dispatch this on window when they open (see
+// QualificationDialog.tsx each dispatch this on window when they open (see
 // their own `open:` handlers). A plain window Event rather than a new
 // shared state/context layer, since this is the ONLY thing those three
 // otherwise-unrelated components need to coordinate, and a global event
@@ -52,11 +52,13 @@ export function VideoPlayer({
   poster,
   posterAlt,
   captionsSrc,
+  wrapperAriaLabel,
 }: {
   src: string;
   poster: string;
   posterAlt: string;
   captionsSrc?: string;
+  wrapperAriaLabel: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -208,10 +210,16 @@ export function VideoPlayer({
   // Space toggles play "when the player has focus" — guarded to skip
   // BUTTON targets, since a focused button already natively activates on
   // Space via its own click, and handling it again here would toggle
-  // playback twice for anyone tabbed onto e.g. the mute button.
+  // playback twice for anyone tabbed onto e.g. the mute button. Click-
+  // to-toggle pass: also skips the raw <video> element itself — this
+  // element has no `controls` attribute, so Chrome never focuses it or
+  // gives it any built-in Space behavior, but Firefox focuses/toggles ANY
+  // focused media element via Space regardless of `controls`; without
+  // this guard, a build where the video itself gets focus would toggle
+  // twice there (once natively, once here).
   function handleContainerKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     const target = e.target as HTMLElement;
-    if (e.code === "Space" && target.tagName !== "BUTTON") {
+    if (e.code === "Space" && target.tagName !== "BUTTON" && target !== videoRef.current) {
       e.preventDefault();
       togglePlay();
     } else if (e.code === "ArrowRight") {
@@ -223,8 +231,19 @@ export function VideoPlayer({
     }
   }
 
+  // Click-to-toggle pass: same toggle as the control bar's own play/pause
+  // button, plus focusing the wrapper itself so a Space press right after
+  // the click hits handleContainerKeyDown above without an extra Tab —
+  // the overlay this calls from is never itself focusable (see its own
+  // render below), so the wrapper is the only sane thing to focus.
+  function handleOverlayClick() {
+    togglePlay();
+    containerRef.current?.focus({ preventScroll: true });
+  }
+
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
   const showCover = !hasStarted || isEnded;
+  const isActive = hasStarted && !isEnded;
   // "Always visible when paused" (per spec) is a plain derived value, not
   // a setState the effect above pushes — see that effect's own comment.
   const effectiveControlsVisible = !isPlaying || controlsVisible;
@@ -237,6 +256,8 @@ export function VideoPlayer({
       onMouseMove={showControlsTemporarily}
       onFocus={showControlsTemporarily}
       data-fullscreen={isFullscreen || undefined}
+      tabIndex={isActive ? 0 : undefined}
+      aria-label={isActive ? wrapperAriaLabel : undefined}
     >
       <video
         ref={videoRef}
@@ -276,7 +297,16 @@ export function VideoPlayer({
         </>
       ) : null}
 
-      {hasStarted && !isEnded ? (
+      {isActive ? (
+        // Click-to-toggle pass: transparent hit-target over the video
+        // surface. aria-hidden + never focusable — the wrapper above is
+        // what Tab actually lands on; this is a pointer-only affordance,
+        // gated to fine-pointer/hover devices in its own CSS (touch keeps
+        // tapping straight through to whatever's beneath, unaffected).
+        <div className={styles.videoPlayerClickOverlay} aria-hidden="true" onClick={handleOverlayClick} />
+      ) : null}
+
+      {isActive ? (
         <div className={styles.videoPlayerControls} data-visible={effectiveControlsVisible} data-reduced-motion={reducedMotion || undefined}>
           <div
             ref={progressTrackRef}

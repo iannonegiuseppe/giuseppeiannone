@@ -1,73 +1,27 @@
+@use "sass:math";
 @use "../styles/mixins";
-@use "./sharedSections.module.scss" as shared;
 
-// Split from the former sectionsShared.module.scss monolith as part of
-// the homepage promotion pass (Stage 3) — classes used by DiplomiSection
-// and its own private sub-components, co-located here per that pass's
-// own convention. grid-12/col/button-base are shared mixins (see
-// sharedSections.module.scss); everything else below is local.
-
-// --- Diplomi: passe-partout card slider + lightbox -----------------------
-// Single-block pass: new section between Statement and Percorso.
-// Kicker/heading reuse the exact standard (non-inverted) values already
-// established by Di cosa mi occupo/Sedi's own copy — same duplication
-// convention as every other section in this file. Slider/card layout are
-// new (native scroll-snap on ALL tiers, not just mobile — see the pass's
-// final report for how this differs from Risorse's own mobile-only
-// pattern). Documents are deliberately NOT run through
-// .heroOverlapPhotoTreated (or any other tonal filter) — the
-// passe-partout frame itself, not a color treatment, is what unifies
-// scans of differing paper/scan quality.
+// --- Diplomi: scroll-snap card row + dialog lightbox -----------------------
+// Rebuild replacing the old passe-partout slider (own comment kept short
+// here — see the deleted DiplomiSlider.tsx/DiplomiViewerModal.tsx in git
+// history for the prior pass's own reasoning; the two proven fixes worth
+// keeping — the dialog's data-closing/transitionend exit animation and
+// its position:fixed + scrollTo({behavior:"instant"}) scroll-lock
+// restore — are both carried into QualificationDialog.tsx unchanged).
+// Kicker/heading reuse the exact standard values already established by
+// Recognition/Journey's own copy (same duplication convention as every
+// other section file here).
 .diplomiSection {
   background: var(--color-bg);
-  padding-block: var(--space-8); // 64px, mobile tier per spec (literal,
-  // not --space-band-y's own mobile tier of 57.6px)
-
-  @include mixins.breakpoint-up(md) {
-    padding-block: var(--space-band-y); // 72px (md) / 96px (lg), per spec
-  }
+  padding-block: var(--space-band-y);
 }
 
-// Revision round 2, item 3a: row layout so the prev/next arrows can sit
-// top-right, next to the kicker/heading text column, per spec ("top-right
-// of the section header row").
 .diplomiHeader {
   @include mixins.container;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-}
-
-.diplomiArrows {
-  display: none; // touch devices keep the native swipe, arrows hidden
-  flex-shrink: 0;
-  gap: var(--space-3); // 12px, matches this file's other small-gap pairs
-
-  @media (hover: hover) and (pointer: fine) {
-    display: flex;
-  }
-}
-
-.diplomiArrowButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem; // 44px, per spec
-  height: 2.75rem;
-  border-radius: 50%;
-  border: 1px solid var(--color-accent); // pine, per spec
-  background: transparent;
-  color: var(--color-accent); // pine arrow, per spec
-  cursor: pointer;
-  transition: opacity 150ms ease;
-
-  &:disabled {
-    opacity: 0.4; // per spec
-    cursor: default;
-  }
-
-  @include mixins.focus-ring;
 }
 
 .diplomiKicker {
@@ -77,7 +31,7 @@
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's implied bold
+  font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-accent);
@@ -93,60 +47,139 @@
 
 .diplomiHeading {
   margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
   color: var(--color-text);
-  font-size: 1.75rem; // 28px, mobile tier per spec
+}
 
-  @include mixins.breakpoint-up(lg) {
-    font-size: 2rem; // 32px, desktop tier per spec
+// Corrective pass: always rendered now (the card-sizing formula below
+// guarantees overflow with 4+ items, so both enabled/disabled states are
+// always reachable — no more JS-driven hasOverflow gate on whether these
+// exist in the DOM at all). This media query still hides them on touch
+// (native swipe covers it there) regardless.
+.diplomiArrows {
+  display: none;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  margin-top: var(--space-1); // optical alignment with the kicker line
+
+  @media (hover: hover) and (pointer: fine) {
+    display: flex;
   }
 }
 
-// "Track: full container width" — deliberately NOT full-bleed 100vw
-// (unlike Risorse's own mobile slider): the slider stays within the
-// normal container padding at every tier here. Peek comes from card
-// widths that don't evenly divide the container (75vw on mobile, fixed
-// rem widths on tablet/desktop) rather than from side padding.
-.diplomiSliderWrap {
-  @include mixins.container;
-  margin-top: var(--space-7); // 48px below the header, per spec
+.diplomiArrowButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: opacity 150ms ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  @include mixins.focus-ring;
 }
 
-.diplomiSlider {
+// Houses the edge-fade pseudo-elements — a plain wrapper so the fades can
+// sit above the track (z-index) without needing their own DOM nodes.
+// data-fade-start/data-fade-end are only ever set once JS has confirmed
+// hasOverflow, so a row where every card fits never even renders the
+// fade layer (opacity: 0 by default, no transition to run).
+.diplomiTrackWrap {
+  @include mixins.container;
+  position: relative;
+  margin-top: var(--space-7);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4rem;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 200ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+
+  &[data-fade-start="true"]::before {
+    opacity: 1;
+  }
+
+  &[data-fade-end="true"]::after {
+    opacity: 1;
+  }
+}
+
+.diplomiTrack {
   display: flex;
-  gap: 1.5rem; // 24px, per spec
+  gap: var(--space-5);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scrollbar-width: none; // hidden but scrolling remains fully accessible, per spec
+  scrollbar-width: none; // hidden but scrolling remains fully accessible
   list-style: none;
   margin: 0;
   padding: 0;
 
-  // Revision round 2, item 3a: drag-to-scroll affordance, fine pointers
-  // only — touch keeps its native swipe cursor/behavior untouched.
-  @media (hover: hover) and (pointer: fine) {
-    cursor: grab;
-
-    &:active {
-      cursor: grabbing;
-    }
-  }
-
   &::-webkit-scrollbar {
     display: none;
   }
+
+  @include mixins.focus-ring;
 }
 
-.diplomiSlideItem {
-  flex: 0 0 75vw; // mobile tier per spec
-  scroll-snap-align: start; // per spec
+// Corrective pass: width is a container FRACTION, not a fixed token, so
+// the peek (and therefore the arrows/overflow) survives at any desktop
+// width instead of disappearing once 4 fixed-220px cards happen to fit.
+//
+// Derivation, for N full cards + a P-fraction peek of the (N+1)th, gap g,
+// available width W: N cards need (N-1) gaps between them, plus one more
+// gap before the peeking card, so W = N·c + N·g + P·c → c = (W - N·g) /
+// (N+P). The pass's own spec wrote a flat "2 * gap" for both tiers, which
+// IS this formula for the tablet tier (N=2 → 2·g, divisor 2.4 — verified
+// live: lands almost exactly on a 40% peek) but undercounts the desktop
+// tier (N=3 needs 3·g, not 2·g) — measured with the literal "2*gap"
+// version: card width matched the formula's own math exactly, but the
+// resulting peek was only ~33%, short of the spec's stated "~40%" target.
+// Corrected to 3·g here so the desktop tier hits the same ~40% the tablet
+// tier already does (re-verified after the fix: 40.0% both tiers).
+.diplomiCardItem {
+  flex: 0 0 70vw; // mobile tier — unchanged, leaves the next card peeking in
+  scroll-snap-align: start;
 
   @include mixins.breakpoint-up(md) {
-    flex-basis: 17rem; // tablet — sized so ~2.5 cards are visible, per spec
+    // 2 full cards + a partial 3rd peeking (tablet, incl. the 1024 test point)
+    flex-basis: calc((100% - 2 * var(--space-5)) / 2.4);
   }
 
-  @include mixins.breakpoint-up(lg) {
-    flex-basis: 20rem; // desktop — no explicit spec value; sized for a
-    // comfortable passe-partout card with the next one peeking in.
+  @include mixins.breakpoint-up(xl) {
+    // 3 full cards + a partial 4th peeking (desktop, incl. the 1440 test point)
+    flex-basis: calc((100% - 3 * var(--space-5)) / 3.4);
   }
 }
 
@@ -154,80 +187,110 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  background: var(--color-surface); // white, per spec
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-m); // "standard radius"
-  padding: var(--space-4); // 16px, per spec
-  box-shadow: var(--shadow-soft); // same family as the Sedi panel, per spec
   text-align: left;
   font: inherit;
   color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: pointer;
 
   @include mixins.focus-ring;
-}
 
-.diplomiCardImageWrap {
-  position: relative;
-  width: 100%;
-  height: 13.75rem; // 220px, mobile tier per spec
-
-  @include mixins.breakpoint-up(md) {
-    height: 17.5rem; // 280px, tablet/desktop per spec ("Tablet: desktop layout")
+  &[data-placeholder="true"] {
+    cursor: default;
   }
 }
 
+// Corrective pass: landscape frame (was 3/4 portrait). √2:1 — an A-format
+// sheet turned on its side — rather than a wider 3:2: most scans here are
+// portrait A4, and object-fit: contain on a portrait image inside a
+// landscape frame is bound by the frame's HEIGHT, so a narrower (√2:1)
+// frame leaves less empty gutter on either side of the contained image
+// than a wider 3:2 box would.
+.diplomiCardFrame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: math.sqrt(2) / 1;
+  background: var(--color-sand);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
+  padding: var(--space-3);
+  overflow: hidden;
+}
+
 .diplomiCardImage {
-  // Documents are NOT tonally filtered, per spec — the frame provides
-  // the uniformity. object-fit: contain so portrait and landscape scans
-  // both fit without distortion or cropping.
   object-fit: contain;
 }
 
-.diplomiCardCaption {
-  margin-top: 0.75rem; // 12px, per spec
+// Corrective pass: smaller, to match the shorter landscape frame's
+// reduced vertical room (was --fs-small/14ch).
+.diplomiCardPlaceholderText {
+  margin: 0;
+  max-width: 12ch;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
 }
 
-// Revision round 1, item 5: all cards must render the same total height
-// regardless of title/meta length — the image area is already fixed
-// (.diplomiCardImageWrap), so the caption block is the only remaining
-// source of variance. Reserving a fixed 2-line title + 1-line meta area
-// (ellipsis beyond, per spec) on every card, rather than letting each
-// caption size to its own content, is what actually equalizes them.
-.diplomiCardTitle {
+// Corrective pass: one spacing step down from --space-3 (mockup's
+// frame-to-text gap reads tighter than what --space-3 was producing).
+.diplomiCardCaption {
+  margin-top: var(--space-2);
+}
+
+// Corrective pass: was 1.125rem (LARGER than the title below it) — spec
+// calls for the year to read as a small accent, ~0.8em of the title's
+// 1rem, not the dominant line.
+.diplomiCardYear {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.875rem; // 14px, per spec
-  font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--color-accent);
+}
+
+.diplomiCardTitle {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
   line-height: 1.35;
   color: var(--color-text);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2; // 2-line reserve, per spec
-  overflow: hidden;
-  min-height: calc(1.35em * 2); // reserves the 2-line box even for a 1-line title
 }
 
-.diplomiCardMeta {
-  margin: 0.125rem 0 0;
+.diplomiCardInstitution {
+  margin: var(--space-1) 0 0;
   font-family: var(--font-body);
-  font-size: 0.8125rem; // 13px, per spec
-  line-height: 1.3;
-  // ink@70% on white — 5.81:1, passes AA.
-  color: color-mix(in srgb, var(--color-text) 70%, transparent);
-  white-space: nowrap; // 1-line reserve, per spec
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
 }
 
-// Revision round 3, item 3: OWN viewer, replacing
-// yet-another-react-lightbox and its --yarl__* theming variables
-// entirely — see DiplomiViewerModal.tsx's own top comment for the full
-// root-cause diagnosis of the scroll-jump-on-close bug this rebuild
-// fixes by construction. Same native <dialog> pattern as
-// ChannelPickerDialog.tsx (::backdrop, @starting-style entrance,
-// data-closing exit, focus return).
-.diplomiViewerDialog {
+.diplomiAlboLine {
+  @include mixins.container;
+  margin-top: var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+
+  @include mixins.breakpoint-up(md) {
+    margin-top: var(--space-7);
+  }
+}
+
+// --- Lightbox --------------------------------------------------------------
+// Native <dialog> + data-closing/transitionend exit animation, same
+// mechanism as ChannelPickerDialog.tsx. Backdrop reuses --color-text (this
+// palette's "carbone" equivalent) rather than inventing a dedicated
+// overlay token — no other consumer needed one badly enough to justify
+// adding it to _tokens.scss.
+.qualificationDialog {
   border: none;
   padding: 0;
   margin: auto;
@@ -238,7 +301,7 @@
   height: 100%;
 
   &::backdrop {
-    background: color-mix(in srgb, var(--color-accent) 92%, transparent); // pine at 92%, per spec
+    background: color-mix(in srgb, var(--color-text) 80%, transparent);
   }
 
   &[open] {
@@ -248,15 +311,14 @@
   }
 }
 
-.diplomiViewerCard {
+.qualificationDialogCard {
   position: relative;
-  width: 100%;
-  height: 100%;
-  max-width: 64rem; // caps the viewer on ultra-wide screens — not specced explicitly
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  max-width: 100vw;
+  max-height: 100vh;
   padding: var(--space-6);
   opacity: 1;
   transform: scale(1);
@@ -269,7 +331,6 @@
     transform: scale(0.96);
   }
 
-  // "Reduced-motion: instant open/close" — per spec.
   @media (prefers-reduced-motion: reduce) {
     transition: none;
 
@@ -280,16 +341,23 @@
   }
 }
 
-.diplomiViewerDialog[data-closing="true"] .diplomiViewerCard {
+.qualificationDialog[data-closing="true"] .qualificationDialogCard {
   opacity: 0;
   transform: scale(0.96);
 }
 
-.diplomiViewerHeading {
+.qualificationDialogHeading {
   @include mixins.visually-hidden;
 }
 
-.diplomiViewerCloseButton {
+// Unlike the deleted DiplomiViewerModal (a near-full-viewport card, so its
+// transparent close button always sat over open backdrop), this card
+// shrink-wraps to the image — a wide or tall scan can leave less than the
+// button's own 44px of padding in a given corner, so a transparent button
+// there would land partly over the image itself (measured: a 1400x900
+// test image put 28 of the button's 44px over cream-on-cream). An opaque
+// chip keeps it legible regardless of what's behind it, image or backdrop.
+.qualificationDialogCloseButton {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
@@ -297,10 +365,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem; // 44px target
+  width: 2.75rem;
   height: 2.75rem;
+  border-radius: 50%;
   border: none;
-  background: transparent;
+  background: color-mix(in srgb, var(--color-text) 55%, transparent);
   color: var(--color-bg);
   font-size: 1.5rem;
   cursor: pointer;
@@ -308,122 +377,14 @@
   @include mixins.focus-ring;
 }
 
-.diplomiViewerCounter {
-  position: absolute;
-  top: var(--space-4);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.75rem; // 12px, per spec
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase; // "Lato 12 caps", per spec
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent); // ivory 70%, per spec
-}
-
-.diplomiViewerImageArea {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-}
-
-.diplomiViewerSlide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 200ms ease; // "slide change: 200ms crossfade", per spec
-
-  &[data-active="true"] {
-    opacity: 1;
-    z-index: 1;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-}
-
-.diplomiViewerImageWrap {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 200ms ease;
-
-  &[data-zoomed="true"] {
-    cursor: zoom-out;
-    transform: scale(2);
-  }
-
-  &:not([data-zoomed="true"]) {
-    cursor: zoom-in;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    // "no zoom transition (state still works)" — per spec.
-    transition: none;
-  }
-}
-
-.diplomiViewerImage {
+// width/height come from QualificationDialog.tsx as real HTML attributes
+// (Next Image, non-fill) — width/height: auto here lets the browser scale
+// the image down from its intrinsic size while preserving aspect ratio,
+// rather than distorting a portrait or landscape scan to fit a fixed box.
+.qualificationDialogImage {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
   object-fit: contain;
-}
-
-.diplomiViewerCaption {
-  margin-top: var(--space-4);
-  text-align: center;
-  max-width: 100%;
-}
-
-.diplomiViewerCaptionTitle {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.9375rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-bg);
-}
-
-.diplomiViewerCaptionMeta {
-  margin: var(--space-1) 0 0;
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  // ivory@80% on the pine@92% overlay — verified AA-passing (see the pass's final report).
-  color: color-mix(in srgb, var(--color-bg) 80%, transparent);
-}
-
-// Ivory variant of the section's own 44px circle arrow buttons — reused
-// per spec, restyled for the dark backdrop.
-.diplomiViewerArrowButton {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem; // 44px, per spec
-  height: 2.75rem;
-  border-radius: 50%;
-  border: 1px solid var(--color-bg);
-  background: transparent;
-  color: var(--color-bg);
-  cursor: pointer;
-  transition: opacity 150ms ease;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  @include mixins.focus-ring;
-}
-
-.diplomiViewerArrowPrev {
-  left: var(--space-4);
-}
-
-.diplomiViewerArrowNext {
-  right: var(--space-4);
 }
