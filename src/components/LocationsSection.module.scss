@@ -99,8 +99,13 @@
   }
 }
 
+// Partner-centre names pass: margin-bottom moved to 0 (was --space-3) as
+// part of unifying every .locationItem to the same padding-top — see that
+// rule's own comment for why. The visual gap from this label's text down
+// to the first item's text is unchanged (it now comes entirely from the
+// first item's own padding-top instead of partly from this margin).
 .locationsCityLabel {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
@@ -114,11 +119,27 @@
 // the map/pins ever become interactive).
 //
 // No divider between entries (corrections pass — see this pass's own
-// report for the removed rule and why). The FIRST entry within each
-// city's own <ul> still gets padding-top:0 so it sits flush under the
-// city label with no extra gap; every entry after it keeps a full
-// padding-top, preserving the exact same vertical rhythm between items
-// as before — only the hairline ITSELF is gone, spacing is untouched.
+// report for the removed rule and why).
+//
+// Partner-centre names pass — HEIGHT UNIFY: every item, including the
+// first, now gets the identical padding: var(--space-3) on every side —
+// the earlier `li:first-child > & { padding-top: 0; }` override is gone.
+// That override made the first item's own bounding box exactly
+// --space-3 (12px) SHORTER than every other item's (padding-top 0 vs a
+// full --space-3), a real per-item height mismatch, not just a spacing
+// choice — flagged in an earlier audit, confirmed still present, fixed
+// here now that every item has the same shape (no more centre names to
+// vary line count). The visual gap between the city label and the first
+// item's text is preserved exactly: it used to come from the label's own
+// margin-bottom (--space-3) with zero padding-top on the item; now the
+// label has no margin-bottom and the full gap comes from the item's own
+// (now-uniform) padding-top instead — same total distance, but as a
+// property of the item, not a one-off exception for whichever item
+// happens to be first. Side effect, and intentional: hovering/selecting
+// the first item now extends its highlight upward the same --space-3 as
+// every other item already did toward its own predecessor — this makes
+// the first item's interactive highlight behave consistently with every
+// other item, not a new inconsistency.
 //
 // Horizontal padding is matched by an equal negative margin so the
 // highlight background/radius get breathing room from the text without
@@ -139,10 +160,6 @@
   text-align: left;
   cursor: pointer;
   transition: background-color 150ms ease;
-
-  li:first-child > & {
-    padding-top: 0;
-  }
 
   &[data-active="true"] {
     background: color-mix(in srgb, var(--color-accent) 8%, transparent);

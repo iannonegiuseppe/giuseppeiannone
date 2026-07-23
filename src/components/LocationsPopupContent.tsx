@@ -23,10 +23,17 @@ export function LocationsPopupContent({
 }) {
   const [copied, setCopied] = useState(false);
 
+  // Partner-centre names pass: heading is always the street address now
+  // (was `centerName ?? city` — with centerName cleared everywhere, that
+  // fell back to CITY, which isn't the address the brief asked for, and
+  // is also non-unique across Milano's two locations). Secondary line is
+  // district + city (was address + district, redundant now that address
+  // is the heading).
   const fullAddress = location.district
     ? `${location.address}, ${location.district}`
     : location.address;
-  const title = location.centerName ?? location.city;
+  const title = location.address;
+  const secondary = location.district ? `${location.district}, ${location.city}` : location.city;
 
   const googleHref = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
   const appleHref = `https://maps.apple.com/?daddr=${location.lat},${location.lng}`;
@@ -37,7 +44,7 @@ export function LocationsPopupContent({
   const photoDims = location.photo ? imageDimensions(location.photo) : null;
 
   async function handleCopy() {
-    const text = location.centerName ? `${location.centerName}, ${fullAddress}` : fullAddress;
+    const text = fullAddress;
     // Clipboard API isn't available on http:// origins or older browsers —
     // execCommand('copy') via a temporary offscreen textarea is the
     // standard fallback (deprecated but still broadly supported; this is
@@ -98,7 +105,7 @@ export function LocationsPopupContent({
       ) : null}
 
       <p className={styles.popupTitle}>{title}</p>
-      <p className={styles.popupAddress}>{fullAddress}</p>
+      <p className={styles.popupAddress}>{secondary}</p>
 
       <div className={styles.popupActions}>
         <a href={googleHref} target="_blank" rel="noopener noreferrer" className={styles.popupAction}>

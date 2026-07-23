@@ -127,11 +127,20 @@ export default async function LocaleLayout({
   // is left untouched (out of scope) — flattened here instead, one entry
   // per physical address (online-only sedi have no address, excluded;
   // "MedicalBusiness location" means a physical place).
+  //
+  // Partner-centre names pass: was `centerName ? "City — CenterName" :
+  // City` — with centerName cleared everywhere, every entry collapsed to
+  // bare city, and Milano has TWO physical addresses, so both would have
+  // produced the exact same non-unique Place.name. Switched to "City —
+  // Address" instead of bare city for that reason (each entry is unique;
+  // `Place.address` below already carries the plain street address on
+  // its own, so this isn't introducing any new/invented data, just
+  // reusing it for the name too).
   const physicalLocations = sedes
     .filter((sede) => !sede.isOnline)
     .flatMap((sede) =>
       (sede.addresses ?? []).map((addr) => ({
-        title: addr.centerName ? `${sede.city} — ${addr.centerName}` : sede.city,
+        title: `${sede.city} — ${addr.address}`,
         address: addr.address,
       })),
     );

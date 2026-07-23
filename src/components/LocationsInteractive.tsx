@@ -87,11 +87,19 @@ export function LocationsInteractive({
             <p className={styles.locationsCityLabel}>{group.city}</p>
             <ul role="list">
               {group.items.map((loc) => {
-                const subParts: string[] = [];
-                if (loc.centerName) subParts.push(loc.address);
-                if (loc.district) subParts.push(loc.district);
-                const sub = subParts.join(" · ");
-                const accessibleName = loc.centerName ? `${loc.centerName}, ${loc.address}` : loc.address;
+                // Partner-centre names pass: client decision — centerName
+                // must never render, sitewide (see sede.ts's own comment;
+                // the field stays in the schema, unused, in case that
+                // changes — this list no longer reads it at all, rather
+                // than relying on the data being empty). Address is always
+                // the primary line now; district is the only secondary
+                // content. Accessible name adds district (or, lacking one,
+                // city) for disambiguation between same-city addresses —
+                // the group's own city label isn't reliably announced
+                // alongside every individual item by all screen readers.
+                const accessibleName = loc.district
+                  ? `${loc.address}, ${loc.district}`
+                  : `${loc.address}, ${loc.city}`;
 
                 return (
                   <li key={loc.id}>
@@ -102,13 +110,13 @@ export function LocationsInteractive({
                       aria-label={accessibleName}
                       onClick={() => handleSelect(loc.id)}
                     >
-                      <span className={styles.locationItemTitle}>{loc.centerName ?? loc.address}</span>
-                      {/* Always rendered, even empty (e.g. Monza: no centre
-                          name, no district) — reserves the same line height
-                          for every item regardless of content, per this
+                      <span className={styles.locationItemTitle}>{loc.address}</span>
+                      {/* Always rendered, even empty (e.g. Monza: no
+                          district) — reserves the same line height for
+                          every item regardless of content, per this
                           pass's own item-height requirement. Never filled
                           with invented text. */}
-                      <span className={styles.locationItemSub}>{sub}</span>
+                      <span className={styles.locationItemSub}>{loc.district ?? ""}</span>
                     </button>
                   </li>
                 );
