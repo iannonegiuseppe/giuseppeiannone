@@ -115,11 +115,19 @@ export default async function LocaleLayout({
   ]);
 
   const siteUrl = getSiteUrl();
+  // Real contact/legal data pass: phone/email for JSON-LD come from the
+  // same siteSettings.contactChannels array every wa.me/tel/mailto link
+  // elsewhere in the app already derives from — not re-typed here. Raw
+  // digits form (channel.value), not the spaced display label.
+  const phoneChannel = siteSettings?.contactChannels?.find((c) => c.type === "phone");
+  const emailChannel = siteSettings?.contactChannels?.find((c) => c.type === "email");
   const personJsonLd = siteSettings?.author?.name
     ? buildPersonJsonLd({
         author: siteSettings.author,
         siteUrl,
         socialLinks: siteSettings.socialLinks,
+        telephone: phoneChannel?.value,
+        email: emailChannel?.value,
       })
     : undefined;
   // buildMedicalBusinessJsonLd's own shape (LocationFields: flat
@@ -150,6 +158,9 @@ export default async function LocaleLayout({
           name: siteSettings.title,
           siteUrl,
           locations: physicalLocations,
+          telephone: phoneChannel?.value,
+          email: emailChannel?.value,
+          vatID: siteSettings.piva,
         })
       : undefined;
 
