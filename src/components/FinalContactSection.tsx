@@ -1,41 +1,24 @@
-import type { Image as SanityImage } from "sanity";
-import Image from "next/image";
 import { ContactForm } from "./ContactForm";
 import { RevealOnScroll } from "./RevealOnScroll";
-import { urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
 import styles from "./FinalContactSection.module.scss";
-import sharedStyles from "./sharedSections.module.scss";
 
-// REVISION 4 — "fix the broken split": REVISION 3 put the kicker/heading/
-// lead/badge onto the photo's own scrim, absolutely positioned; at some
-// viewports it escaped the container and sat illegibly over the image
-// (owner-reported bug). This revision moves that block OFF the photo
-// entirely — it's now row 1, plain in-flow content sharing the exact same
-// mixins.container every other section's kicker uses (Sedi's included),
-// so its left edge is flush with the rest of the page by construction,
-// not by a tuned offset. Row 2 is a clean two-column grid: photo left
-// (no text, no scrim, its normal tonal treatment — same technique as
-// ConcernsSection's own contained photo), form right. The "Trovami su
-// Google" link moves to the section's own bottom, back to a single
-// flow-positioned instance.
+// VARIANT B — slim inset accent band. Replaces the REVISION 5 full-bleed-
+// photo layout entirely: no photo, no left/right split, no dissolve
+// gradient — a single contained, rounded band (mixins.container's own
+// gutters, not full-bleed like Hope/Formazione/FAQ) with everything
+// centered in one narrow (~35rem/560px) column. Deliberately reads as a
+// DIFFERENT device than Hope's full-bleed band, per this pass's own
+// explicit instruction — Hope is untouched.
 //
-// REVISION 5 — restores a full-bleed-left photo for row 2 (desktop only,
-// >=1024px): the photo now bleeds to the true viewport edge and dissolves
-// into the accent band via a right-side gradient (.finalContactPhotoDissolve,
-// new this pass), instead of sitting as a contained rounded card. Row 1
-// (the heading block) is untouched — it stays a plain contained row above,
-// never overlapping the photo, which only starts where row 2 begins. Row
-// 2's own CSS switches from a two-column grid-with-a-card to a full-bleed
-// host at lg+ (see FinalContactSection.module.scss's own comment on
-// .finalContactGridWrap for the scrollbar-safe bleed math); mobile/tablet
-// (<1024px) keep REVISION 4's exact contained-card stack, unchanged.
-//
-// ART-DIRECTION FLAG (honesty rule): spec calls for "Giuseppe in the
-// studio environment, NOT looking at the camera — a presence, not a
-// salesman." No purpose-shot exists yet; 11.webp (Giuseppe listening
-// attentively to a client, not looking at camera) is the closest existing
-// asset and stands in here. Flagged in the final report.
+// ART-DIRECTION FLAG (carried over, now moot): the REVISION 5 photo
+// (11.webp, a stand-in for a real purpose-shot) is dropped by this pass,
+// not replaced — the asset itself is untouched in the repo/CMS.
+// homePage.finalCta.photo (Sanity schema field) is now orphaned — nothing
+// reads it. Left in the schema rather than removed (a schema cleanup is a
+// separate, unrequested change), same "flag, don't delete" precedent this
+// file already has for ctaLabel/privacyNote (see below) and
+// diploma/qualification elsewhere in this codebase.
 //
 // Spec 2.8 (carried over from the previous version of this section):
 // copyright still does not exist anywhere in the real Footer.tsx, despite
@@ -57,78 +40,69 @@ import sharedStyles from "./sharedSections.module.scss";
 // than removed (a schema cleanup is a separate, unrequested change);
 // flagged here and in this pass's own report for a follow-up pass, same
 // treatment as ctaLabel's own orphaning two passes ago.
+//
+// VARIANT B pass — HONESTY-RULE FLAG: responseNote joins ctaLabel/
+// privacyNote as orphaned. It duplicated the form's own hardcoded
+// "Rispondo entro 24 ore." reassurance line ("Rispondo di persona, in
+// genere entro [segnaposto] giorni.") — spec's explicit "delete the
+// duplicate promise, only one line survives" instruction. Same "flag,
+// don't delete" treatment as its two siblings above; homePage.finalCta.
+// responseNote (Sanity schema field, still populated in the live dataset
+// for both locales) is left in place, just no longer read anywhere.
 export function FinalContactSection({
   kicker,
   heading,
   body,
-  responseNote,
   googleProfileLabel,
   googleProfileUrl,
-  photo,
   locale,
 }: {
   kicker: string;
   heading: string;
   body: string;
-  responseNote: string;
   googleProfileLabel: string;
   googleProfileUrl?: string;
-  photo?: SanityImage;
   locale: string;
 }) {
   const typedLocale = locale as Locale;
-  const photoSrc = photo ? urlFor(photo).url() : "/design-lab/11.webp";
 
   return (
-    <div id="contatto" className={styles.finalContactBand} data-lab-section="final-contact">
-      <div className={styles.finalContactHeaderRow}>
+    <div id="contatto" className={styles.finalContactOuter} data-lab-section="final-contact">
+      <div className={styles.finalContactBand}>
         <RevealOnScroll>
-          <div className={styles.finalContactHeader}>
+          <div className={styles.finalContactColumn}>
             <p className={styles.finalContactKicker}>
               <span className={styles.finalContactKickerRule} aria-hidden="true" />
               {kicker}
+              <span className={styles.finalContactKickerRule} aria-hidden="true" />
             </p>
             <h2 className={styles.finalContactHeading}>{heading}</h2>
             <p className={styles.finalContactBody}>{body}</p>
+            <ContactForm locale={typedLocale} />
+            {/* Global restyle pass: replaces the removed availability
+                indicator — a static, deontology-safe reassurance line
+                (not a specific appointment-time promise unless Giuseppe
+                confirms he can always honor one), not CMS-sourced. The
+                ONLY surviving response-time line, per this pass's own
+                "delete the duplicate promise" instruction — see this
+                file's own top-of-file comment. */}
+            <p className={styles.finalContactReassurance}>Rispondo entro 24 ore.</p>
+            {/* Renders only when a real profile URL exists — currently
+                null for both locales in the live dataset, so nothing
+                renders (no href="#" placeholder link), per this pass's
+                own explicit instruction. */}
+            {googleProfileUrl ? (
+              <a
+                href={googleProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.finalContactGoogle}
+              >
+                {googleProfileLabel}
+              </a>
+            ) : null}
           </div>
         </RevealOnScroll>
-      </div>
-      <div className={styles.finalContactGridWrap}>
-        <div className={styles.finalContactPhotoZone}>
-          <Image
-            src={photoSrc}
-            alt=""
-            fill
-            // REVISION 5: photo bleeds to 57vw at lg+ (was a 45vw-wide
-            // contained card) — matches .finalContactPhotoZone's own
-            // width at that breakpoint.
-            sizes="(min-width: 64rem) 57vw, 100vw"
-            className={`${styles.finalContactPhotoImg} ${sharedStyles.heroOverlapPhotoTreated}`}
-          />
-          <div className={styles.finalContactPhotoDissolve} aria-hidden="true" />
-        </div>
-        <div className={styles.finalContactContent}>
-          <RevealOnScroll>
-            <div>
-              <ContactForm locale={typedLocale} responseNote={responseNote} />
-              {/* Global restyle pass: replaces the removed availability
-                  indicator — a static, deontology-safe reassurance line
-                  (not a specific appointment-time promise unless Giuseppe
-                  confirms he can always honor one), not CMS-sourced. */}
-              <p className={styles.finalContactReassurance}>Rispondo entro 24 ore.</p>
-            </div>
-          </RevealOnScroll>
-        </div>
-      </div>
-      <div className={styles.finalContactGoogleRow}>
-        <a
-          href={googleProfileUrl ?? "#"}
-          target={googleProfileUrl ? "_blank" : undefined}
-          rel="noopener noreferrer"
-          className={styles.finalContactGoogle}
-        >
-          {googleProfileLabel}
-        </a>
       </div>
     </div>
   );

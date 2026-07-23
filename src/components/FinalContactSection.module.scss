@@ -8,40 +8,14 @@
 // sharedSections.module.scss); everything else below is local.
 
 // --- 5. Final CTA band ------------------------------------------------------
-// REVISION 4 — "fix the broken split": REVISION 3 put the kicker/heading/
-// lead/badge onto the photo's own scrim (absolutely positioned) and had
-// the photo bleed to the viewport edge with a multiply-blend "sinks into
-// the pine" overlay + edge-melt gradient. At some viewports the header
-// content escaped the container and sat illegibly over the image — an
-// owner-reported bug, not a tuning problem. This revision retires that
-// whole approach: the header block is now row 1, plain in-flow content on
-// the same mixins.container every other section's kicker uses; the photo
-// is a clean, contained, rounded card (row 2, left column) with no text
-// and no edge-blend treatment, since it no longer touches any bleed edge.
-// The classes below that implemented the retired approach
-// (.finalContactPhotoTextScrim, .finalContactPhotoMelt,
-// .finalContactPhotoContent, .finalContactPhotoOverlay, the
-// .finalContactPhotoGoogle/.finalContactFormGoogle breakpoint-gated pair,
-// the finalcontact-grid-vars bleed-width mixin) are DELETED outright here,
-// not flagged-and-kept — unlike this file's other "flag, don't delete"
-// cases (.btnPrimaryInverted, .finalContactCta/.finalContactCtaTight,
-// .finalContactQuietLines/.finalContactQuietLine below, which stay
-// dormant because a future pass could plausibly revive that exact
-// content), these implemented a structurally rejected layout with no
-// plausible revival path — keeping them would leave misleading, no-longer
-// -true contrast-tuning commentary in the file. Flagged here per the
-// Honesty Rule instead of silently dropped.
-//
-// REVISION 5 — "restore the full-bleed photo": builds on REVISION 4's
-// row-1/row-2 split (row 1 = heading, untouched by this pass). Row 2's
-// desktop (>=1024px) treatment changes from a contained two-column card
-// layout back to a full-bleed-left photo that dissolves into the accent
-// color via a gradient, form on the clean accent background at cols
-// 7-12 — effectively reinstating
-// the pre-REVISION-3 bleed technique (see .finalContactGridWrap's own
-// comment below for the scrollbar-safe math) but scoped to row 2 only,
-// so it can never touch row 1's heading. Mobile/tablet (<1024px) are
-// unchanged from REVISION 4 (contained card stack).
+// VARIANT B — "slim inset accent band". Retires the REVISION 3-5 photo-
+// split lineage entirely (full-bleed photo, dissolve gradient, two-column
+// grid — see git history for that lineage's own reasoning, no longer
+// applicable). Replaced with a single centered, INSET band: contained
+// within the page's own container gutters (side margins visible on both
+// edges — never full-bleed, unlike Hope/Formazione/FAQ, deliberately a
+// different device per this pass's own instruction), rounded corners,
+// everything centered in one narrow column.
 
 // Contact form pass — HONESTY-RULE FLAG: this class (and
 // .finalContactCta/.finalContactCtaTight below) are now UNUSED — the
@@ -85,37 +59,84 @@
   }
 }
 
-.finalContactBand {
-  background: var(--color-accent);
+// Outer wrapper — NOT the colored surface itself (see .finalContactBand
+// below for that). Owns two things: (1) the section-to-section vertical
+// rhythm shared with every adjacent section (Diplomi/Video/Faq/Resources
+// all use this exact padding-block: var(--space-band-y) pattern — see
+// the section-rhythm cleanup pass), unaffected by this pass's own
+// internal redesign; (2) mixins.container, which is what makes the band
+// below read as INSET rather than full-bleed — the band fills 100% of
+// this container's own content box, so the container's own gutters
+// (24px mobile / 48px desktop) are what shows as visible page background
+// on both sides of the band.
+.finalContactOuter {
+  @include mixins.container;
   padding-block: var(--space-band-y);
 }
 
-// ROW 1 — heading block, on the container grid, left-aligned to column 1
-// — the same mixins.container every other section's kicker (Sedi's
-// included) uses, so this edge is flush with the rest of the page by
-// construction, not by a tuned offset value. This is the fix for
-// REVISION 3's escaped-container bug.
-.finalContactHeaderRow {
-  @include mixins.container;
-  margin-bottom: 2rem; // 32px, mobile/tablet tier
+// Refinement pass: the mockup read this band as over-scaled against the
+// site's other surfaces — corner radius stepped down one notch
+// (--radius-l "imagery" -> --radius-m "cards", per _tokens.scss's own
+// category comments) and vertical padding tightened one spacing step
+// (--space-6/-7 -> --space-5/-6) at both tiers. Horizontal padding is
+// untouched — the refinement brief only called out vertical rhythm.
+// Background is now a diagonal gradient (135deg, light corner at the
+// top-left per the 135deg angle's own geometry) instead of the flat
+// --color-accent-deep fill, per the refinement brief's own literal
+// gradient spec — see _tokens.scss for the two new endpoint tokens and
+// their own measured-contrast comment (this is the reason nearly every
+// text role below moved to full-strength ivory: at the LIGHT endpoint,
+// which is the worst case, even 95%-blended ivory falls just short of
+// 4.5:1 — measured, not assumed).
+.finalContactBand {
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-gradient-light) 0%,
+    var(--color-accent-gradient-dark) 100%
+  );
+  border-radius: var(--radius-m);
+  padding-block: var(--space-5); // 24px, mobile tier
+  padding-inline: var(--space-5); // 24px, mobile tier — matches container's own mobile gutter
 
   @include mixins.breakpoint-up(lg) {
-    margin-bottom: 2.75rem; // 44px — spec's "40-48px below this block"
+    padding-block: var(--space-6); // 32px, desktop tier
+    padding-inline: var(--space-8); // 64px, desktop tier — extra breathing room around the narrow column
   }
+
+  // Polish pass 2: light-on-dark text was reading heavy/muddy — subpixel
+  // rendering thickens light text on a dark surface, and that hits EB
+  // Garamond's thin strokes hardest. Scoped to this band only (not global
+  // — every other section on the site is dark-text-on-light, where this
+  // wouldn't help and isn't needed). font-smoothing is inherited, so this
+  // one declaration covers every text role in the band, not just the
+  // title.
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.finalContactHeader {
-  max-width: 40rem;
+// Refinement pass: narrowed from 35rem (560px) to 30rem (480px) and made
+// this the ONLY width declaration for the column — the form used to
+// carry its own separate 29.5rem max-width (see ContactForm.module.scss),
+// which put the header text and the form fields on two different
+// measures and was the root cause of that pass's "mixed alignment axes"
+// bug. The form is width:100% of this column, so every element (header
+// text, field row, message field, picker, consent line, submit button)
+// shares this exact one edge-to-edge — still true after polish pass 2's
+// widening below, since only this one value changed.
+//
+// Polish pass 2: widened one step, 30rem -> 35rem (480px -> 560px) per
+// that pass's own explicit instruction — back to the same 560px measure
+// used before the alignment-fix pass narrowed it, this time as the
+// single deliberate width every element shares (not a leftover mismatch).
+.finalContactColumn {
+  max-width: 35rem;
+  margin-inline: auto;
+  text-align: center;
 }
 
-// "Standard kicker, inverted" — ivory-on-accent colorway (matching
-// Formazione's inverted treatment) but the single-rule-before-text
-// structure (matching Chi Sono/Methods/Concerns/Percorso/Pricing), since
-// this content is left-aligned, not centered like Formazione's band. On
-// the solid accent background again (row 1 sits directly on the band's
-// own background, not over a photo) — same colorway REVISION 3 used, no
-// scrim-contrast tuning needed here since there's no photo underneath
-// anymore.
+// Centered kicker, rule on EACH side — matches Formazione's own centered/
+// inverted kicker device (this section's content is now centered, not
+// left-aligned like the old REVISION 4/5 row-1 heading was).
 .finalContactKicker {
   display: inline-flex;
   align-items: center;
@@ -126,7 +147,14 @@
   font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  // Refinement pass: raised again, 85% -> full-strength var(--color-bg).
+  // Against the new gradient's LIGHT endpoint (the worst case), even 95%-
+  // blended ivory only reaches 4.48:1 — just under 4.5:1 (measured, see
+  // _tokens.scss's own comment on the two gradient tokens). No blended
+  // step clears the floor at this endpoint, so every text role that must
+  // hit AA here is full-strength now; visual hierarchy comes from size/
+  // weight/letter-spacing/italic instead of opacity.
+  color: var(--color-bg);
 }
 
 .finalContactKickerRule {
@@ -137,9 +165,26 @@
   background: color-mix(in srgb, var(--color-bg) 30%, transparent);
 }
 
+// Polish pass 2: measured the ACTUAL cause of the heavy/muddy rendering
+// before touching anything, per the brief's own "report the computed
+// weight" instruction — it was neither an inherited 500 (the guess in the
+// brief) nor this component's own doing. globals.scss's shared `h1, h2`
+// rule (see that file) sets font-family only, no font-weight override, so
+// this <h2> was falling through to the browser's UA-stylesheet default of
+// bold (700) — confirmed live: computed font-weight was "700" before this
+// fix. EB Garamond ships ONLY its 400 cut (see _tokens.scss's own font
+// comment — "never apply font-weight above 400 to it"), so the browser
+// was FAKING that 700 by synthetically fattening the 400 glyph — exactly
+// the "heavy/muddy" symptom, and worse than a normal bold would look
+// because it's synthesized, not a real cut. Fixed at the source: pin this
+// heading to the one real weight this face has. Small positive tracking
+// (--tracking-display) added on top, per the brief, to further open up
+// the light-on-dark strokes.
 .finalContactHeading {
   margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
   color: var(--color-bg);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-display);
   font-size: 1.75rem; // 28px, mobile tier
 
   @include mixins.breakpoint-up(md) {
@@ -152,152 +197,46 @@
 }
 
 .finalContactBody {
-  margin: var(--space-5) 0 0; // 24px below the heading
-  max-width: 52ch; // REVISION 4 — spec's "~52ch" (was 40ch under REVISION 3's photo scrim, tighter since it had to survive a busier background)
+  margin: var(--space-4) 0 0; // 16px below the heading — tightened from the
+  // old 24px now that the column itself is narrow enough to keep body
+  // copy reading as a single short line at most widths, per spec's own
+  // "one-line intro" framing.
   font-family: var(--font-body);
   font-size: 1.0625rem; // 17px
   line-height: 1.7;
-  // Solid accent background — ivory 85% is comfortably AA (>7:1), same
-  // baseline every other on-accent paragraph in this codebase relies on.
-  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  // Refinement pass: full-strength, same reasoning as .finalContactKicker
+  // above — no blended step clears 4.5:1 against the gradient's light
+  // endpoint.
+  color: var(--color-bg);
 }
 
-// ROW 2 — mobile/tablet (<1024px): unchanged from REVISION 4 — plain
-// container-bound stack (photo card, then form), no bleed, no dissolve,
-// no overlap, per REVISION 5's own explicit "leave it" instruction.
-//
-// Desktop (>=1024px) — REVISION 5: reinstates a full-bleed-left photo
-// that dissolves into the accent band (the pre-REVISION-3 version of this
-// section did the same thing; REVISION 3/4 retired it, this pass brings
-// it back, scoped to row 2 only — row 1's heading stays a plain contained
-// row, see .finalContactHeaderRow above, unaffected). The wrapper itself
-// becomes the full-bleed element: width:100vw + margin-inline:
-// calc(50% - 50vw) is the SAME scrollbar-safe formula every other
-// full-bleed element in this codebase uses (ConcernsSection's own photo
-// bleed is the clearest twin) — guarded by the global overflow-x:clip on
-// html/body (globals.scss) against the small overshoot a classic
-// (non-overlay) scrollbar's own reserved width causes between 100vw and
-// the true visible viewport width. Verified zero horizontal overflow at
-// all six spec'd widths with a real classic scrollbar present — see this
-// pass's own report.
-//
-// padding-inline recreates mixins.container's own left/right inset
-// relative to the TRUE viewport edge (rather than a centered max-width
-// box), so grid column 7 below lands at the exact same pixel
-// x-coordinate ROW 1's own mixins.container would place it at — this is
-// what keeps the form grid-consistent with row 1 despite this row's own
-// box now spanning the full viewport instead of the container. The
-// max(0rem, ...) clamp matters for real: without it, any viewport
-// narrower than --container-max-width (1320px) — e.g. 1024px, one of
-// this pass's own six mandated QA widths — computes a NEGATIVE outer
-// gutter and silently breaks the whole alignment; mixins.container
-// itself never has this problem (max-width + margin-inline:auto handle
-// it natively), only this manual recreation needs the explicit clamp.
-.finalContactGridWrap {
-  position: relative;
-  @include mixins.container;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem; // 24px, mobile/tablet stack gap (photo -> form)
-
-  @include mixins.breakpoint-up(lg) {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    column-gap: var(--space-6); // 32px, matches sharedSections.module.scss's own grid-12
-    width: 100vw;
-    max-width: none;
-    margin-inline: calc(50% - 50vw);
-    padding-inline: calc(max(0rem, (100vw - var(--container-max-width)) / 2) + var(--space-7));
-    gap: 0;
-    overflow: hidden; // belt-and-braces against the calc() ever producing
-    // an unexpected value, same reasoning as every other bleed band in
-    // this codebase.
-  }
-}
-
-.finalContactPhotoZone {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-l); // 20px, "imagery" per _tokens.scss's own comment — mobile/tablet only, see below
-  aspect-ratio: 16 / 9; // mobile/tablet, per spec
-
-  @include mixins.breakpoint-up(lg) {
-    position: absolute;
-    inset: 0 auto 0 0; // top:0 right:auto bottom:0 left:0 — bleeds to the
-    // TRUE viewport left edge: this element's containing block
-    // (.finalContactGridWrap) already starts there once it goes
-    // full-bleed above.
-    width: 57vw; // spec's "about 55-60% of the viewport width"
-    aspect-ratio: unset;
-    border-radius: 0; // no rounded corners on a bleed edge, per spec
-  }
-}
-
-// Giuseppe attentively listening (chin resting on hand, pen in hand),
-// looking at the client across the desk, not at the camera — a genuine
-// consultation-room moment, closest match among the existing asset set to
-// "a presence, not a salesman." ART-DIRECTION FLAG for the real shot: a
-// purpose-shot photo of Giuseppe in his own studio, still not looking at
-// the camera, is the eventual target — this is the closest existing
-// stand-in, not a final choice.
-.finalContactPhotoImg {
-  object-fit: cover;
-  object-position: 65% 35%; // favors Giuseppe's figure over the client's
-  // silhouette in this specific (reused, not purpose-shot) landscape crop.
-}
-
-// REVISION 5 — the photo's right portion dissolves into the accent band
-// instead of ending at a hard edge (mobile/tablet: not rendered at all,
-// per spec's explicit "no bleed, no dissolve" there). Reaches full solid
-// --color-accent at 85% of the PHOTO LAYER's own width (57vw) — i.e. at
-// roughly 48vw absolute (pushed later than the original 65% stop, so more
-// of the photo stays visible before the fade starts) — before both the
-// photo layer's own right edge (57vw) and the form's actual left edge
-// (further right still, at grid column 7, ~51vw at 1440px / ~51vw at
-// 1920px, since the container caps at 1320px and the gutter math
-// converges toward ~50% of viewport width). The margin here is real but
-// tight (roughly 16-46px depending on viewport, not the 130-250px the
-// original 65% stop gave) — re-verified via real pixel sampling at the
-// form's own left edge after this stop moved, not assumed — see this
-// pass's own report for the exact measured values proving no form field
-// ever sits over image texture.
-.finalContactPhotoDissolve {
-  display: none;
-
-  @include mixins.breakpoint-up(lg) {
-    display: block;
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      to right,
-      transparent 0%,
-      transparent 30%,
-      var(--color-accent) 85%
-    );
-  }
-}
-
-.finalContactContent {
-  @include mixins.breakpoint-up(lg) {
-    // Stacking context above the absolutely-positioned photo/dissolve
-    // layers above (they precede this in DOM but must never paint over
-    // it) — explicit, not relying on default in-flow-vs-positioned
-    // paint-order ambiguity.
-    position: relative;
-    z-index: 1;
-    @include shared.col(7, 6);
-  }
+// ContactForm itself is rendered directly in the column now (no more
+// photo/grid split to sit beside) and is width:100% of it (see
+// ContactForm.module.scss's own .contactForm — its old separate max-width
+// is gone) — this selector now only needs to flip the column's own
+// centered text-align back to left for the form's own contents.
+.finalContactColumn form {
+  text-align: left; // form fields/labels stay left-aligned within the centered column
 }
 
 // Global restyle pass: replaces the removed availability badge. Sits
 // below the form, quiet — same ivory@70%-on-accent treatment as this
-// section's own kicker, not full-strength like the heading/body.
+// section's own kicker, not full-strength like the heading/body. VARIANT
+// B: italic, per spec's own "single italic line" instruction — the ONE
+// surviving response-time line site-wide for this section (see
+// FinalContactSection.tsx's own top-of-file comment on responseNote's
+// orphaning).
 .finalContactReassurance {
   margin: var(--space-4) 0 0; // 16px below the form
   font-family: var(--font-body);
+  font-style: italic;
   font-size: 0.875rem; // 14px
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  // Refinement pass: full-strength — this is the QA checklist's own
+  // "response line" (the surviving "Rispondo entro 24 ore." text). Stays
+  // visually quiet via size + italic, not opacity (no blended step clears
+  // 4.5:1 against the gradient's light endpoint — see .finalContactKicker
+  // above).
+  color: var(--color-bg);
 }
 
 // On-accent button variant of the shared .btnPrimaryInverted — this class
@@ -339,30 +278,20 @@
   color: color-mix(in srgb, var(--color-bg) 65%, transparent);
 }
 
-// REVISION 4 — revived: moved to the section's own bottom, left-aligned
-// on the grid under the photo column (same container edge as row 1's
-// kicker and row 2's photo, all anchored to the same mixins.container).
-// Deliberately demoted — plain text, underline on hover only, no arrow,
-// no caps, must not compete with the form's submit button.
-// HONESTY-RULE NOTE: ivory@50% on the solid accent background measures 3.79:1, below
-// standard AA body-text contrast (4.5:1) — flagged for the record since
-// it's real, if secondary, content, but left at the spec's literal value
-// since low visibility here is stated design intent, not an oversight
-// (unchanged from every prior pass's own note on this exact value).
-.finalContactGoogleRow {
-  @include mixins.container;
-  margin-top: 2rem; // 32px, mobile/tablet tier
-
-  @include mixins.breakpoint-up(lg) {
-    margin-top: 2.5rem; // 40px
-  }
-}
-
+// VARIANT B: moved into the same centered column as everything else
+// (was its own full-width row at the section's bottom, left-aligned to
+// the grid). Deliberately demoted — plain text, underline on hover only,
+// no arrow, no caps, must not compete with the form's submit button.
+// Conditionally rendered now (see FinalContactSection.tsx) — this class
+// only ever paints when a real googleProfileUrl exists.
 .finalContactGoogle {
   display: inline-block;
+  margin-top: var(--space-5); // 24px below the reassurance line
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec
-  color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+  // Refinement pass: full-strength, same reasoning as every other text
+  // role on this band — see .finalContactKicker above.
+  color: var(--color-bg);
   text-decoration: none;
 
   &:hover {
@@ -370,5 +299,5 @@
     text-underline-offset: 0.15em;
   }
 
-  @include mixins.focus-ring;
+  @include mixins.focus-ring-inset;
 }
