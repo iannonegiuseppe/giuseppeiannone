@@ -346,10 +346,31 @@
 :global(.leaflet-control-zoom-out) {
   .locationsMap & {
     background: var(--color-bg);
-    color: var(--color-text);
+    color: var(--color-accent);
 
     &:hover {
       background: var(--color-sand);
+    }
+
+    &:active {
+      background: var(--color-greige);
+    }
+
+    // Map controls pass: neither shared focus-ring mixin fits exactly —
+    // mixins.focus-ring (outward, --color-focus) would draw its ring over
+    // whatever map TILE happens to sit behind the control at the current
+    // pan/zoom position (unpredictable — could be a light or near-black
+    // basemap, or any tile color between). mixins.focus-ring-inset uses
+    // ivory, meant to show up against a DARKER fill than itself — this
+    // button's own fill IS ivory, so that ring would be invisible against
+    // its own background. What's needed is inward + --color-focus: drawn
+    // INSIDE the button's own guaranteed-ivory fill (independent of the
+    // map/basemap behind it), using the same ring color as everywhere
+    // else. Measured: --color-focus on --color-bg is 5.66:1, comfortably
+    // over the 3:1 floor, verified both basemaps live.
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: calc(-1 * var(--focus-ring-width));
     }
   }
 }

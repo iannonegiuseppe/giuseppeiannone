@@ -169,21 +169,22 @@
 // before touching anything, per the brief's own "report the computed
 // weight" instruction — it was neither an inherited 500 (the guess in the
 // brief) nor this component's own doing. globals.scss's shared `h1, h2`
-// rule (see that file) sets font-family only, no font-weight override, so
-// this <h2> was falling through to the browser's UA-stylesheet default of
-// bold (700) — confirmed live: computed font-weight was "700" before this
+// rule set font-family only at the time, no font-weight, so this <h2>
+// was falling through to the browser's UA-stylesheet default of bold
+// (700) — confirmed live: computed font-weight was "700" before this
 // fix. EB Garamond ships ONLY its 400 cut (see _tokens.scss's own font
 // comment — "never apply font-weight above 400 to it"), so the browser
 // was FAKING that 700 by synthetically fattening the 400 glyph — exactly
 // the "heavy/muddy" symptom, and worse than a normal bold would look
-// because it's synthesized, not a real cut. Fixed at the source: pin this
-// heading to the one real weight this face has. Small positive tracking
-// (--tracking-display) added on top, per the brief, to further open up
+// because it's synthesized, not a real cut. Fixed locally here at the
+// time; the sitewide contrast/font-weight audit later moved the same
+// fix up to globals.scss's own `h1, h2` rule, so the font-weight line
+// that used to sit here is gone as a now-exact duplicate. Small positive
+// tracking (--tracking-display) stays, per the brief, to further open up
 // the light-on-dark strokes.
 .finalContactHeading {
   margin: var(--space-4) 0 0; // 16px below the kicker, established rhythm
   color: var(--color-bg);
-  font-weight: var(--font-weight-regular);
   letter-spacing: var(--tracking-display);
   font-size: 1.75rem; // 28px, mobile tier
 
@@ -271,10 +272,11 @@
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.8125rem; // 13px, per spec
-  // Spec's own flagged risk point — measured: ivory@65% on the solid
-  // accent background is 5.27:1, passing AA (needs 4.5:1). No
-  // substitution needed; reported as measured, per spec's explicit
-  // instruction either way.
+  // UNUSED (see this class's own HONESTY-RULE FLAG above). Contrast
+  // audit: the "5.27:1" was stale even for a flat-accent background —
+  // ivory@65% on the current --color-accent measures ~2.92:1, failing
+  // 4.5:1. Left uncorrected functionally since this rule isn't rendered;
+  // flagged here only so the number is honest if this is ever revived.
   color: color-mix(in srgb, var(--color-bg) 65%, transparent);
 }
 

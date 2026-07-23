@@ -572,6 +572,10 @@
 .miniAccentBandHeading {
   margin: 0.5rem 0 0;
   font-family: var(--font-display);
+  // Faux-bold audit (sitewide pass): real <h4>, display font, no weight —
+  // same UA-stylesheet-bold-synthesizes-against-EB-Garamond-400 bug as the
+  // public h1/h2 cases. Internal reference page only, fixed for consistency.
+  font-weight: var(--font-weight-regular);
   font-size: 1.25rem;
   line-height: 1.3;
   color: var(--color-accent-contrast);

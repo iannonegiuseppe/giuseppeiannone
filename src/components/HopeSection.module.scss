@@ -74,15 +74,13 @@
   margin: var(--space-4) 0 0; // 16px below the eyebrow, established rhythm
   color: var(--color-accent-contrast); // full ivory — same contrast reasoning as the eyebrow above
   font-family: var(--font-display);
-  // Refinement pass: no font-weight was set here before, so the browser
-  // fell back to the UA default h1/h2 bold request (700) against an EB
-  // Garamond loader that only ships a 400 face (layout.tsx) — a FAUX
-  // bold (browser-synthesized, thickened strokes), not a real weight,
-  // which is exactly why it read too heavy. Explicit regular now uses
-  // the real loaded face. Still measures the same 4.58:1 (weight doesn't
-  // change color), and read clearly at a real render — see this pass's
-  // own report.
-  font-weight: var(--font-weight-regular);
+  // Refinement pass found this <h2> was rendering browser-synthesized
+  // (faux) bold — the UA stylesheet's own h1/h2 bold request, against an
+  // EB Garamond loader that only ships a 400 face. Fixed locally here at
+  // the time; the sitewide contrast/font-weight audit later moved the
+  // same fix up to globals.scss's own `h1, h2` rule, so this line is
+  // gone as a now-exact duplicate — still measures the same 4.58:1
+  // (weight doesn't change color).
   font-size: 1.75rem; // 28px, mobile tier — scaled down per spec's "reduce heading size on mobile"
 
   @include mixins.breakpoint-up(md) {
