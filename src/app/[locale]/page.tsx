@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { AreeSection } from "@/components/AreeSection";
 import { ChiSonoSection } from "@/components/ChiSonoSection";
+import { CtaBridgeSection } from "@/components/CtaBridgeSection";
 import { DiplomiSection } from "@/components/DiplomiSection";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
@@ -15,6 +16,7 @@ import {
   type RealArticle,
   ResourcesSection,
 } from "@/components/ResourcesSection";
+import { SignatureBand } from "@/components/SignatureBand";
 import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
 import type { Locale } from "@/sanity/paths";
@@ -22,6 +24,7 @@ import {
   areasQuery,
   areeSectionQuery,
   chiSonoSectionQuery,
+  ctaBridgeSectionQuery,
   homePageQuery,
   latestArticlesQuery,
   sedesQuery,
@@ -102,6 +105,13 @@ interface AreeSectionData {
   title?: string;
   intro?: string;
   previewHover?: boolean;
+}
+
+interface CtaBridgeSectionData {
+  title?: string;
+  titleEmphasis?: string;
+  body?: string;
+  linkLabel?: string;
 }
 
 interface AreaData {
@@ -250,11 +260,12 @@ export default async function Home({
   // sedes (Locations/"Sedi") is the same established pattern — its own
   // plain list type (`sede`), tagged "sede" for the revalidation webhook,
   // live again as of the locations map pass.
-  const [homePage, chiSono, aree, areas, siteSettings, realArticles, sedes] = await Promise.all([
+  const [homePage, chiSono, aree, areas, ctaBridge, siteSettings, realArticles, sedes] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
     sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
     sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
     sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
+    sanityFetch<CtaBridgeSectionData | null>(ctaBridgeSectionQuery, { locale }, ["ctaBridgeSection"]),
     getSiteSettings(locale),
     sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
@@ -323,6 +334,13 @@ export default async function Home({
         areas={areas}
         previewHover={aree?.previewHover}
         locale={locale as Locale}
+      />
+
+      <CtaBridgeSection
+        title={ctaBridge?.title ?? ""}
+        titleEmphasis={ctaBridge?.titleEmphasis}
+        body={ctaBridge?.body ?? ""}
+        linkLabel={ctaBridge?.linkLabel ?? ""}
       />
 
       {/* Un-gated in the homePage-array migration pass — data comes
@@ -443,6 +461,8 @@ export default async function Home({
         realArticles={realArticles}
         allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
       />
+
+      <SignatureBand />
     </main>
   );
 }

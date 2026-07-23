@@ -155,6 +155,15 @@ export const areeSectionQuery = defineQuery(`
   }
 `);
 
+export const ctaBridgeSectionQuery = defineQuery(`
+  *[_type == "ctaBridgeSection" && language == $locale][0]{
+    title,
+    titleEmphasis,
+    body,
+    linkLabel
+  }
+`);
+
 export const areasQuery = defineQuery(`
   *[_type == "area" && language == $locale] | order(order asc) {
     _id,

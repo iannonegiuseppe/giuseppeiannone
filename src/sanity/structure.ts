@@ -25,6 +25,8 @@ export const SINGLETON_TYPES = new Set([
   // Aree section pass: same reasoning, header copy only — the area rows
   // themselves are the separate `area` list type below.
   "areeSection",
+  // CTA bridge pass: quiet mid-page link to the contact section.
+  "ctaBridgeSection",
 ]);
 
 // Singletons, plus locationPage: exactly two documents (Milan, Monza) that
@@ -78,6 +80,7 @@ export const structure: StructureResolver = (S) =>
               singletonListItem(S, "chiSonoSection", "Chi sono section (homepage)"),
               singletonListItem(S, "areeSection", "Aree section (homepage)"),
               S.documentTypeListItem("area").title("Aree (homepage)"),
+              singletonListItem(S, "ctaBridgeSection", "CTA bridge (homepage)"),
               singletonListItem(S, "aboutPage", "About page"),
               singletonListItem(S, "methodPage", "Method page"),
               singletonListItem(S, "pricePage", "Pricing page"),
