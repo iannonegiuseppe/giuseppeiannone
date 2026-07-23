@@ -8,14 +8,27 @@ import type { AuthorFields, SocialLinks } from "./seo";
 // a psychologist-psychotherapist (the closest, "Psychiatric", would
 // misrepresent a distinct professional category) — omitting it is more
 // correct than forcing an inaccurate enum value.
+// telephone/email: added alongside the pre-existing identifier/sameAs —
+// the practitioner personally answers these channels (not a front desk),
+// so they're real on the Person node, not just the business one below.
+// Values come
+// from siteSettings.contactChannels (the same single source every wa.me/
+// tel/mailto link in the app already builds from — see
+// src/sanity/contact.ts), not re-typed here. telephone uses the raw
+// digits form (matches the tel: href value, not the spaced display
+// label) since this is machine-readable data, not on-page text.
 export function buildPersonJsonLd({
   author,
   siteUrl,
   socialLinks,
+  telephone,
+  email,
 }: {
   author: AuthorFields;
   siteUrl: string;
   socialLinks?: SocialLinks;
+  telephone?: string;
+  email?: string;
 }) {
   const sameAs = [
     socialLinks?.instagram,
@@ -29,6 +42,8 @@ export function buildPersonJsonLd({
     name: author.name,
     jobTitle: author.credentials,
     url: siteUrl,
+    telephone,
+    email,
     identifier: author.registrationNumber
       ? {
           "@type": "PropertyValue",
@@ -50,20 +65,35 @@ interface LocationFields {
 // only collects a single free-text address field, and parsing it into
 // street/locality/region/postalCode would risk fabricating structure
 // that isn't actually there.
+//
+// telephone/email/vatID: business-wide (not per-location — there's one
+// phone/email/P.IVA for the whole practice, not one per address), same
+// source values as buildPersonJsonLd's own telephone/email above. vatID
+// only makes sense here, not on Person — schema.org defines it on
+// Organization/LocalBusiness, not Person.
 export function buildMedicalBusinessJsonLd({
   name,
   siteUrl,
   locations,
+  telephone,
+  email,
+  vatID,
 }: {
   name: string;
   siteUrl: string;
   locations: LocationFields[];
+  telephone?: string;
+  email?: string;
+  vatID?: string;
 }) {
   return {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
     name,
     url: siteUrl,
+    telephone,
+    email,
+    vatID,
     location: locations.map((location) => ({
       "@type": "Place",
       name: location.title,

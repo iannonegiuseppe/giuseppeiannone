@@ -32,6 +32,14 @@ const CHANNEL_OPTIONS: { value: ContactChannel; label: string }[] = [
 // never a pop-in.
 const DEFAULT_CHANNEL: ContactChannel = "whatsapp";
 
+// Error-banner fallback only — hardcoded per this form's own established
+// "code-owned, not CMS" copy convention (see this component's own top
+// comment). Same real number as siteSettings.contactChannels' whatsapp
+// entry (the CMS-driven source everywhere else derives from); duplicated
+// here rather than threaded through as a prop because this form has no
+// other CMS wiring today and this is a plain-text fallback, not a link.
+const WHATSAPP_FALLBACK_DISPLAY = "+39 339 190 1474";
+
 const CHANNEL_PHRASES: Record<ContactChannel, string> = {
   whatsapp: "su WhatsApp",
   telefonata: "al telefono",
@@ -172,7 +180,7 @@ export function ContactForm({
       {status === "error" ? (
         <div className={styles.formBanner} role="alert">
           <p className={styles.formBannerText}>
-            Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: [segnaposto]
+            {`Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`}
           </p>
         </div>
       ) : null}
