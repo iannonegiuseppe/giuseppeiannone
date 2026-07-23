@@ -67,6 +67,39 @@ export const sede = defineType({
               type: "number",
               validation: (Rule) => Rule.required(),
             }),
+            // Locations map pass: optional district/neighbourhood label
+            // (e.g. "Citylife", "Bicocca") shown alongside the address in
+            // the list and popup. Plain string, not a special "localized"
+            // field type — this whole document is already one half of an
+            // it/en pair via document-internationalization (see
+            // languageField() below), so a plain string here already gets
+            // its own per-language value the same way centerName/address
+            // already do; no extra i18n plumbing needed at the field level.
+            defineField({
+              name: "district",
+              title: "District (optional)",
+              description: 'Neighbourhood label shown next to the address, e.g. "Citylife", "Bicocca".',
+              type: "string",
+            }),
+            // Locations map pass: optional popup photo — none exist yet
+            // (see the Locations section's own report). alt is required
+            // once an editor actually sets a photo (Rule.required() only
+            // fires when the parent image field itself has a value), same
+            // pattern as author.photo above in siteSettings.ts.
+            defineField({
+              name: "photo",
+              title: "Photo (optional)",
+              type: "image",
+              options: { hotspot: true },
+              fields: [
+                defineField({
+                  name: "alt",
+                  title: "Alternative text",
+                  type: "string",
+                  validation: (Rule) => Rule.required(),
+                }),
+              ],
+            }),
           ],
           preview: { select: { title: "centerName", subtitle: "address" } },
         },

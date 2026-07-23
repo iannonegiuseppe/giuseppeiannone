@@ -113,3 +113,7 @@ h3 {
   line-height: var(--lh-h3);
   color: var(--color-text);
 }
+
+.leaflet-control-attribution, .leaflet-control-zoom {
+  display: none !important;
+}

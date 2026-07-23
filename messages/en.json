@@ -23,6 +23,19 @@
   "Video": {
     "wrapperAriaLabel": "Video: {title}"
   },
+  "Locations": {
+    "mapAriaLabel": "Map of locations",
+    "googleMapsLabel": "Google Maps",
+    "appleMapsLabel": "Apple Maps",
+    "copyAddressLabel": "Copy address",
+    "copiedLabel": "Copied",
+    "closePopupLabel": "Close",
+    "zoomInLabel": "Zoom in",
+    "zoomOutLabel": "Zoom out",
+    "scrollHintDesktopCtrl": "Use Ctrl + scroll to zoom the map",
+    "scrollHintDesktopCmd": "Use ⌘ + scroll to zoom the map",
+    "scrollHintTouch": "Use two fingers to move the map"
+  },
   "Footer": {
     "copyright": "© {year} {name} — All rights reserved."
   },

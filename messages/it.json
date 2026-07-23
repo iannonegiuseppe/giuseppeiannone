@@ -23,6 +23,19 @@
   "Video": {
     "wrapperAriaLabel": "Video: {title}"
   },
+  "Locations": {
+    "mapAriaLabel": "Mappa delle sedi",
+    "googleMapsLabel": "Google Maps",
+    "appleMapsLabel": "Apple Maps",
+    "copyAddressLabel": "Copia indirizzo",
+    "copiedLabel": "Copiato",
+    "closePopupLabel": "Chiudi",
+    "zoomInLabel": "Aumenta lo zoom",
+    "zoomOutLabel": "Riduci lo zoom",
+    "scrollHintDesktopCtrl": "Usa Ctrl + scroll per ingrandire la mappa",
+    "scrollHintDesktopCmd": "Usa ⌘ + scroll per ingrandire la mappa",
+    "scrollHintTouch": "Usa due dita per muovere la mappa"
+  },
   "Footer": {
     "copyright": "© {year} {name} — Tutti i diritti riservati."
   },

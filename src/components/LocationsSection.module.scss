@@ -1,0 +1,472 @@
+@use "../styles/mixins";
+
+// --- Locations section: address list + interactive Leaflet map ------------
+// Replaces the retired SedesSection/SedesStage sticky-scroll implementation
+// entirely — see this pass's own report for exactly what survived (the
+// Leaflet dynamic-import pattern, the tile-error fallback, the divIcon
+// custom-marker technique, the tile filter as a retuning starting point)
+// versus what was rewritten (the whole interaction model: single
+// activeId state, always-visible list, click-driven popups, real map
+// interactivity — the old version disabled every Leaflet interaction and
+// hid the whole stage from assistive tech, which the new spec explicitly
+// does not want).
+.locationsSection {
+  @include mixins.container;
+  padding-block: var(--space-band-y); // same section-rhythm token as FAQ/Contact/Resources
+}
+
+// Left-aligned kicker, single leading rule — same device as
+// AreeSection/ResourcesSection's own left-aligned headers.
+.locationsHeader {
+  max-width: 40rem;
+}
+
+.locationsKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.locationsKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.locationsHeading {
+  margin: var(--space-4) 0 0;
+  font-size: 1.75rem;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2rem;
+  }
+}
+
+.locationsIntro {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}
+
+// Two columns at lg+ (a map needs real horizontal room to be useful next
+// to a list, unlike plain text columns — lg/1024px matches the retired
+// SedesStage's own established breakpoint for this exact section, kept
+// rather than reusing Resources' md/768px). List column is a fixed
+// ~340px measure (spec's own "token or fraction" choice — expressed as a
+// literal rem value, this codebase's established convention for one-off
+// fixed measures with no dedicated named token, e.g. Featured's own
+// 18.75rem image column); map takes the remainder. Gap matches
+// Resources' own inter-column gap token, the closest "standard
+// horizontal spacing" precedent on this page.
+.locationsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  align-items: start;
+  margin-top: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 21.25rem 1fr;
+  }
+}
+
+.locationsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.locationsCityGroup {
+  & + & {
+    margin-top: var(--space-6);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.locationsCityLabel {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+// Real <button> per entry (see LocationsInteractive.tsx's own comment —
+// this is the accessible path, keyboard-operable regardless of whether
+// the map/pins ever become interactive).
+//
+// No divider between entries (corrections pass — see this pass's own
+// report for the removed rule and why). The FIRST entry within each
+// city's own <ul> still gets padding-top:0 so it sits flush under the
+// city label with no extra gap; every entry after it keeps a full
+// padding-top, preserving the exact same vertical rhythm between items
+// as before — only the hairline ITSELF is gone, spacing is untouched.
+//
+// Horizontal padding is matched by an equal negative margin so the
+// highlight background/radius get breathing room from the text without
+// shifting the text itself off the column's left edge (which stays
+// aligned with the city label/heading above, exactly as before this
+// pass). Padding+radius are unconditional (not applied only when
+// data-active) so the item's bounding box is byte-for-byte identical
+// selected vs unselected — reported per the brief's own "report which"
+// instruction on this exact choice.
+.locationItem {
+  display: block;
+  width: 100%;
+  margin: 0 calc(-1 * var(--space-3));
+  padding: var(--space-3);
+  border-radius: var(--radius-s);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  li:first-child > & {
+    padding-top: 0;
+  }
+
+  &[data-active="true"] {
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  @include mixins.focus-ring-inset;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.locationItemTitle {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular); // EB Garamond ships only 400 — never apply above it
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+// min-height reserves this line's space even when empty (Monza: no
+// centre name, no district — see LocationsInteractive.tsx's own comment).
+// HONESTY-RULE CATCH: measured, not assumed — an empty <span> with no text
+// node at all generates no inline content and collapses to 0 height on
+// its own, confirmed live (0px measured vs ~23.8px for a populated one),
+// so display:block alone does NOT reserve the line. --lh-body (1.7) times
+// this element's own font-size, via 1em, matches that measured height
+// exactly and stays correct if the font-size ever changes.
+.locationItemSub {
+  display: block;
+  min-height: calc(1em * var(--lh-body));
+  margin-top: var(--space-1);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+// Last list item: plain text, not a button, not clickable, no pin.
+.locationsOnlineNote {
+  margin-top: var(--space-6);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-hairline);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.locationsMapWrap {
+  position: relative;
+}
+
+// Fixed height on mobile/tablet (no aspect-ratio there — a 4:3 box at
+// full mobile width would run quite tall); 4:3 aspect-ratio takes over at
+// lg+ where the column width is no longer the full viewport.
+.locationsMap {
+  width: 100%;
+  height: 24rem; // mobile/tablet tier — fixed height token, per spec
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--color-greige); // fallback backdrop before tiles paint / if they fail to load
+
+  @include mixins.breakpoint-up(lg) {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+// Gesture-gate hint overlay: NOT styled here. It's built with direct
+// inline element.style properties in LocationsMap.tsx instead of a CSS
+// module class — see that file's own "HONESTY-RULE CATCH" comment for
+// why: a class-based version of this exact overlay (same computed styles,
+// verified via getComputedStyle and the DevTools protocol) never actually
+// painted, reproduced across a dev-server restart with a cleared cache
+// and again against a production build, while the identical values as
+// inline styles rendered correctly every time. Root cause not fully
+// identified; documented here so a future attempt to "clean this up" into
+// a class doesn't silently reintroduce an invisible hint.
+
+// --- Tile colour treatment (basemap corrections pass) --------------------
+// Voyager (the prior basemap) is replaced with CARTO Positron as the
+// default (BASEMAP = "light" in LocationsMap.tsx), with Dark Matter wired
+// in behind the same constant for side-by-side comparison. Both filters
+// below are measured, not guessed: pixel-sampled the ACTUAL rendered tiles
+// (Playwright screenshot + averaged RGB across several land-color patches,
+// away from roads/labels/pins) with the filter fully disabled first, for
+// EACH basemap separately. Values ARE the one documented raw-number
+// exception to this file's own token-only rule.
+//
+// Positron: native land tile averages ~(247, 248, 246) — already almost
+// exactly --color-bg (246, 243, 238), same conclusion as the retired
+// Voyager measurement, but Positron's own native tone leans very slightly
+// COOL (G the highest channel) where the palette is warm (R the highest
+// channel) — confirming your own prediction that only a very slight warm
+// touch was needed. A small sepia() nudges the cast warm without a
+// hue-rotate (no green-era correction needed here at all, unlike the
+// retired filter); brightness/contrast/saturation kept close to identity
+// since Positron needs far less correction than Voyager did.
+:global(.leaflet-tile-pane) {
+  .locationsMap:not(.locationsMapDark) & {
+    filter: sepia(0.06) brightness(0.98) contrast(1.05) saturate(1.02);
+  }
+}
+
+// Dark Matter: native land tile averages ~(9, 9, 9) — genuinely near-
+// black, nothing like the light-basemap case, so this isn't a "retune a
+// cast" situation but a legibility one. Left near-black on purpose (Dark
+// Matter's whole appeal is the deep tone) with a small brightness/contrast
+// lift so it doesn't crush to pure black on lower-quality panels, and a
+// slight warm tint via sepia to stay in the site's warm-neutral family
+// rather than a cool near-black.
+:global(.leaflet-tile-pane) {
+  .locationsMapDark & {
+    filter: sepia(0.15) brightness(1.12) contrast(1.02);
+  }
+}
+
+// Attribution: unconditional ivory chip works fine on light tiles, but on
+// Dark Matter the same ivory-on-near-black chip is even MORE legible (very
+// high contrast either way) — so no separate dark-mode rule is needed,
+// the light-chip treatment already works for both basemaps. Verified via
+// screenshot on both variants rather than assumed.
+:global(.leaflet-control-attribution) {
+  .locationsMap & {
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+  }
+}
+
+// --- Custom marker (divIcon) --------------------------------------------
+// Accent-colored circle, ivory ring, soft shadow — same recipe as the
+// retired SedesStage's own .sedesMarkerDot (that marker already used
+// --color-accent, not a retired token, so nothing there needed retuning),
+// just renamed into this section's own class namespace.
+.locationMarkerIcon {
+  // Leaflet's own default icon shadow/styles reset — divIcon has none by
+  // default, this class exists only as the ::marker wrapper Leaflet
+  // requires, styled via its child span below.
+}
+
+.locationMarkerDot {
+  display: block;
+  width: 1rem; // 16px
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 0.125rem solid var(--color-bg); // 2px ivory ring
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 25%, transparent);
+  transition: transform 150ms ease, background-color 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Active pin: darkened-accent token (not a plain re-use of the resting
+// fill, so it reads as a genuinely distinct state, not just "the same
+// dot again") + scale up.
+.locationMarkerActive .locationMarkerDot {
+  background: var(--color-accent-hover);
+  transform: scale(1.3);
+}
+
+// Dark Matter pin contrast: measured, not guessed — the resting brown
+// (--color-accent) against Dark Matter's near-black land tile
+// (rgb(9,9,9)) computes to ~3.9:1, a borderline number for a 16px dot
+// that also has to compete with light-colored roads/labels on the same
+// tile. --color-bg (ivory) against the same near-black computes to
+// ~18:1, so resting/active roles are INVERTED for this basemap rather
+// than reusing the light-basemap pairing as-is (same two existing
+// tokens, no new colors invented): resting = ivory, active = the accent
+// brown itself. Tried a pale token (--color-accent-soft) for active
+// first — screenshot showed it read as barely different from the
+// resting ivory dot at this size, failing the "clearly distinct state"
+// requirement even though contrast math alone looked fine. The accent
+// brown is a genuinely different hue, still measures ~3.9:1 at 16px,
+// and the active dot renders at 1.3x scale (~21px) besides.
+.locationsMapDark .locationMarkerDot {
+  background: var(--color-bg);
+  border-color: var(--color-accent-hover);
+}
+
+.locationsMapDark .locationMarkerActive .locationMarkerDot {
+  background: var(--color-accent);
+}
+
+// --- Zoom control (Leaflet's own built-in control, real <a> buttons with
+// correct roles/keyboard support already — styled via project tokens
+// rather than replaced with hand-rolled buttons). ------------------------
+:global(.leaflet-control-zoom) {
+  .locationsMap & {
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-s);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+}
+
+:global(.leaflet-control-zoom-in),
+:global(.leaflet-control-zoom-out) {
+  .locationsMap & {
+    background: var(--color-bg);
+    color: var(--color-text);
+
+    &:hover {
+      background: var(--color-sand);
+    }
+  }
+}
+
+// --- Popup ---------------------------------------------------------------
+// Leaflet's own tip/arrow and default white box are fully overridden —
+// className on L.popup({ className: styles.popupWrap }) targets the
+// OUTER wrapper Leaflet generates; :global(.leaflet-popup-tip) is removed
+// entirely rather than restyled (a taupe/ivory diamond tip reads as a
+// rendering artifact at this small size, cleaner without one — reported
+// per the brief's own "report which" instruction).
+:global(.leaflet-popup-content-wrapper) {
+  .popupWrap & {
+    background: var(--color-bg);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-soft);
+    padding: 0;
+  }
+}
+
+:global(.leaflet-popup-content) {
+  .popupWrap & {
+    margin: 0;
+    width: 18rem !important; // Leaflet inlines its own width style attribute; !important is the documented, standard override for this specific Leaflet quirk
+  }
+}
+
+:global(.leaflet-popup-tip-container) {
+  .popupWrap & {
+    display: none;
+  }
+}
+
+.popup {
+  position: relative;
+  padding: var(--space-4);
+}
+
+.popupClose {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.popupPhotoWrap {
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+
+.popupPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popupTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+.popupAddress {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.popupActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.popupAction {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-button);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

@@ -227,16 +227,23 @@ export const homePageQuery = defineQuery(`
   }
 `);
 
-// Sedi section's scene list — replaces sediData.ts. Not locale-scoped by
+// Locations section's data — replaces sediData.ts. Not locale-scoped by
 // the section itself (sede documents are still it/en pairs like everything
-// else, filtered the normal way).
+// else, filtered the normal way). Locations map pass: addresses[] now
+// spreads every existing field (...) plus a computed photoLqip per
+// address — same "asset->metadata.lqip alongside the raw image field"
+// pattern already used by ChiSonoSection's portraitLqip/DiplomiSection's
+// documentLqip above.
 export const sedesQuery = defineQuery(`
   *[_type == "sede" && language == $locale] | order(order asc) {
     _id,
     city,
     isOnline,
     onlineLine,
-    addresses,
+    addresses[]{
+      ...,
+      "photoLqip": photo.asset->metadata.lqip
+    },
     order
   }
 `);
