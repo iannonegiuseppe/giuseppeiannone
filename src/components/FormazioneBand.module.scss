@@ -44,11 +44,14 @@
 
 // Centered, inverted variant of the standard kicker (Chi Sono/Methods):
 // same 12px/700/0.16em typography, but a rule on EACH side instead of one,
-// and ivory-on-accent instead of accent-on-ivory/greige. Spec's literal
-// opacities verified against the solid accent background (not a photo, so
-// no per-pixel variance to worry about): ivory@70% measures 5.83:1,
-// comfortably passing AA — no substitution needed here, unlike the
-// photo-background cases elsewhere in this file.
+// and ivory-on-accent instead of accent-on-ivory/greige.
+// Contrast audit (this component is currently gated/not rendered — see
+// page.tsx's own PREVIEW-GATE comment — so left unfixed, comment only):
+// the "5.83:1" above was computed against the old pine-era accent and is
+// stale. Against the CURRENT --color-accent, ivory@70% measures ~3.13:1,
+// failing 4.5:1 — same root cause as the one Footer.module.scss had (see
+// that file's own comment). If/when this section is un-gated, apply the
+// same fix: full-strength var(--color-bg), no opacity blend.
 .formazioneKicker {
   display: inline-flex;
   align-items: center;
@@ -134,7 +137,9 @@
   font-weight: var(--font-weight-bold); // 700, per spec
   text-transform: uppercase;
   letter-spacing: 0.14em; // per spec
-  // ivory@70% on accent — 5.83:1, passes AA. Same voice/value as the kicker, per spec.
+  // Contrast audit: stale, same as the kicker above (~3.13:1 against the
+  // current accent, not the documented 5.83:1) — gated/not rendered, left
+  // unfixed; apply the same full-strength fix if un-gated.
   color: color-mix(in srgb, var(--color-bg) 70%, transparent);
 }
 
@@ -212,7 +217,10 @@
   font-family: var(--font-body);
   font-weight: var(--font-weight-bold); // 700, nearest real weight to spec's 600
   text-transform: uppercase;
-  // ivory@75% measures 6.43:1 against accent — passes AA, no substitution needed.
+  // Contrast audit: stale — ivory@75% against the CURRENT accent measures
+  // ~3.35:1, not the documented 6.43:1 (same old-palette issue as this
+  // file's other kicker/label colors above). Gated/not rendered, left
+  // unfixed; apply the same full-strength fix if un-gated.
   color: color-mix(in srgb, var(--color-bg) 75%, transparent);
   font-size: 0.8125rem; // 13px, mobile tier per spec
   letter-spacing: 0.1em;

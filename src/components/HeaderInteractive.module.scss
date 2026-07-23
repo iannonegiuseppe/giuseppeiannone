@@ -706,7 +706,11 @@
   color: var(--color-bg);
   text-decoration: none;
 
-  @include mixins.focus-ring;
+  // Contrast audit: the outward ring (mixins.focus-ring, --color-focus
+  // #715c52) measures only ~1.23:1 against this overlay's own accent
+  // background — switched to the inset ivory ring (mixins.focus-ring-inset),
+  // same fix as Footer.module.scss's own links, for the same reason.
+  @include mixins.focus-ring-inset;
 }
 
 .mobileMenuAccordionButton {
@@ -722,7 +726,8 @@
   color: var(--color-bg);
   cursor: pointer;
 
-  @include mixins.focus-ring;
+  // Contrast audit: same inset-ring fix as .mobileMenuLink above.
+  @include mixins.focus-ring-inset;
 }
 
 .mobileMenuChevron {
@@ -771,11 +776,15 @@
   display: block;
   font-family: var(--font-body);
   font-size: 1rem; // 16px, per spec
-  // ivory@85% on accent — verified AA-passing (see the pass's final report).
-  color: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  // Contrast audit: the "verified AA-passing" claim was wrong — ivory@85%
+  // on the current accent measures 3.83:1, not 4.5:1+ (same stale-palette
+  // issue as Footer.module.scss's own links, see that file's own comment
+  // for the full explanation). Full-strength now.
+  color: var(--color-bg);
   text-decoration: none;
 
-  @include mixins.focus-ring;
+  // Contrast audit: same inset-ring fix as .mobileMenuLink above.
+  @include mixins.focus-ring-inset;
 }
 
 .mobileMenuLocalePair {

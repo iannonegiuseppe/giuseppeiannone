@@ -76,7 +76,9 @@ $z-index: (
   // Hover state: darkened further rather than lightened (the old
   // pine-era palette lightened on hover, but the new accent sits close to
   // the AA floor already — lightening it toward the raw #8a7564 anchor
-  // would drop --color-accent-contrast text below 4.5:1). Verified ~5.43:1.
+  // would drop --color-accent-contrast text below 4.5:1). Contrast audit
+  // re-verified: 5.66:1 (was documented ~5.43:1, a minor stale rounding —
+  // both pass with margin, correcting for accuracy).
   --color-accent-hover: #715c52;
   // Contact section pass: a SURFACE use of the same darkened step
   // --color-accent-hover already computes (not a new hue — aliased, not
@@ -149,6 +151,11 @@ $z-index: (
   --lh-display: 1.15;
   --fs-h2: clamp(1.75rem, 3vw, 2.25rem); // EB Garamond 400
   --lh-h2: 1.25;
+  // CTA bridge pass: one real step above --fs-h2 without approaching
+  // --fs-display's hero scale (2.5rem-3.75rem would read as a second hero,
+  // not a quiet pause) — sits in the gap between the two.
+  --fs-h2-lg: clamp(2rem, 3.5vw, 2.625rem); // EB Garamond 400
+  --lh-h2-lg: 1.25;
   --fs-h3: 1.375rem; // Source Sans 3 400 (not EB Garamond — too small at this size)
   --lh-h3: 1.3;
   --fs-body-lg: 1.125rem; // Source Sans 3 400, intro paragraphs

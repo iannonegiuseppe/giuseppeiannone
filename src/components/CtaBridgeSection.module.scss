@@ -1,0 +1,93 @@
+@use "../styles/mixins";
+
+// Quiet mid-page pause between Aree and Diplomi — centered text on the
+// plain page background. No hairline frame, no border, no card, no
+// background tint (a bordered-frame version was tried and reverted —
+// hairlines are already overused sitewide, per this pass's own brief).
+// Anchored by PROXIMITY instead: asymmetric spacing pulls this block
+// close to Aree (it belongs to that block) and pushes it away from
+// Diplomi (which starts a clean new section) — see this pass's own
+// report for the measured before/after gaps and the ratio achieved.
+//
+// Implementation note (the brief's own "report which approach" ask):
+// padding-top is 0, replaced by a NEGATIVE margin-top that pulls this
+// section's box up into Aree's own trailing padding-bottom
+// (var(--space-band-y), unchanged/untouched in AreeSection.module.scss)
+// rather than shrinking Aree's padding directly. Chosen over nesting the
+// bridge inside AreeSection's own render tree: this keeps AreeSection
+// completely untouched and the change fully contained to this one file,
+// for what is fundamentally a spacing concern between two independent,
+// self-contained sections (the same "0px inter-section gap, spacing from
+// each section's own padding" convention every other section pair on
+// this page already follows — this just adds a deliberate negative
+// offset on top of it). The subtraction is token-only (--space-band-y
+// minus --space-6), so the small "above" gap stays a constant
+// --space-6 (32px) at every breakpoint while --space-band-y's own
+// responsive tiers still drive the large "below" gap — reported
+// per-breakpoint ratios in this pass's own QA, since only the lg tier
+// lands exactly at the requested ~1:3.
+.bridge {
+  @include mixins.container;
+  padding-top: 0;
+  padding-bottom: var(--space-band-y);
+  margin-top: calc(-1 * (var(--space-band-y) - var(--space-6)));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.bridgeTitle {
+  max-width: 22ch;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular); // EB Garamond ships only 400
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+  color: var(--color-text);
+}
+
+.bridgeEmphasis {
+  font-style: italic;
+}
+
+.bridgeBody {
+  max-width: 44ch;
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Same link DEVICE as ResourcesSection's own "Tutte le risorse"
+// (@include mixins.link + a translating trailing arrow, same
+// --font-weight-bold already used there — "semibold" in the brief's own
+// words, this type scale's only weight above regular besides the
+// nav-only medium), but sized up from that link's 0.9375rem to
+// --fs-body (1rem): this has to read as the strongest interactive
+// element in the block, not match a smaller in-flow list link.
+.bridgeLink {
+  @include mixins.link;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--font-weight-bold);
+
+  span {
+    transition: transform 150ms ease;
+  }
+
+  &:hover span {
+    transform: translateX(0.25rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    span {
+      transition: none;
+    }
+  }
+}

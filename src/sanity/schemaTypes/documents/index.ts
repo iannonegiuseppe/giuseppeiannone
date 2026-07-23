@@ -4,6 +4,7 @@ import { areeSection } from "./areeSection";
 import { article } from "./article";
 import { chiSonoSection } from "./chiSonoSection";
 import { contactPage } from "./contactPage";
+import { ctaBridgeSection } from "./ctaBridgeSection";
 import { diploma } from "./diploma";
 import { faqItem } from "./faqItem";
 import { faqPage } from "./faqPage";
@@ -42,6 +43,9 @@ export const documentTypes = [
   // list — see its own file's comment for why it supersedes
   // homePage.diCosa/ConcernsSection.tsx instead of reusing them.
   areeSection,
+  // CTA bridge pass: quiet mid-page link to the contact section, between
+  // Aree and Diplomi — see its own file's comment.
+  ctaBridgeSection,
   // Exactly two: Milan, Monza (protected like singletons in Step 7)
   locationPage,
   // Knowledge base / content

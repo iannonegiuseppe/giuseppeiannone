@@ -1,0 +1,61 @@
+@use "../styles/mixins";
+
+// Last section on the homepage, directly before the Footer (which lives
+// one layer up in layout.tsx, as a sibling right after this page's own
+// <main> — there's no literal "between two tags in the same file" to
+// insert into, but rendering this as <main>'s last child achieves the
+// same visual adjacency). A breathing pause, not a content block — no
+// heading, no text, aria-hidden on the section itself.
+.band {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+  display: flex;
+  justify-content: center;
+}
+
+// --reveal (0 → 1) is written directly to this element's inline style by
+// SignatureBand.tsx, driven by scroll position. The mask's hard edge
+// sits at --reveal itself; the following ~4% ramps to fully transparent
+// for a soft trailing edge (a fade, not a hard cut) — closer to a pen
+// lifting off the page than a wipe. #000 here is MASK ALPHA (opaque =
+// shows the signature, transparent = hides it), never a painted colour —
+// not a palette violation, just how mask-image gradients work.
+.mask {
+  --reveal: 0;
+
+  width: min(86%, 900px);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 4%),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 4%),
+    transparent 100%
+  );
+}
+
+// Same ink colour as the header's own signature (HeaderInteractive.module.scss's
+// .labHeaderWordmark), at reduced opacity — a quiet echo of the header
+// mark, not a new brand colour. currentColor (baked into SignatureMark's
+// own path) resolves from THIS element's own `color`.
+.signature {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--color-text);
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mask {
+    --reveal: 1;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}

@@ -292,6 +292,14 @@
 .journeyStepTitle {
   margin: 0;
   font-family: var(--font-display);
+  // Faux-bold audit (sitewide pass): this is a real <h3>, but h3's OWN
+  // global rule (globals.scss) deliberately stays on the body font — this
+  // component opts back into the display font locally, which means it also
+  // needs its own explicit weight pin. Without one, the h3 UA-stylesheet
+  // bold wins here same as it did on h1/h2 before that fix, and EB
+  // Garamond ships no 700 cut to satisfy it — confirmed live via computed
+  // font-weight showing 700 before this fix.
+  font-weight: var(--font-weight-regular);
   font-size: 1.25rem;
   color: var(--color-text-muted);
   transition: color 200ms ease;

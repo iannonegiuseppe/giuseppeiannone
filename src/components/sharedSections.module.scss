@@ -85,8 +85,17 @@
   color: var(--color-accent);
   border: var(--button-border-width) solid var(--color-accent);
 
+  // Contrast audit: text stayed --color-accent on hover while the
+  // background lightened to --color-accent-soft — measured 4.16:1,
+  // under 4.5:1 for this button's 16px/700 text (below the 18.66px bold
+  // large-text floor). Text steps to the darker --color-accent-hover on
+  // hover instead (5.13:1) — the same "hover = one step darker" pattern
+  // already used everywhere else on this site, not a new device. Border
+  // is unaffected (--color-accent on accent-soft already clears the 3:1
+  // non-text floor at 4.16:1, no change needed).
   &:hover {
     background: var(--color-accent-soft);
+    color: var(--color-accent-hover);
   }
 }
 
