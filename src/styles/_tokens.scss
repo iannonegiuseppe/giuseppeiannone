@@ -78,6 +78,37 @@ $z-index: (
   // the AA floor already — lightening it toward the raw #8a7564 anchor
   // would drop --color-accent-contrast text below 4.5:1). Verified ~5.43:1.
   --color-accent-hover: #715c52;
+  // Contact section pass: a SURFACE use of the same darkened step
+  // --color-accent-hover already computes (not a new hue — aliased, not
+  // re-declared, so the two can never drift apart by accident) — kept as
+  // its own token because "hover state" and "darkened band background"
+  // are different semantic roles that could plausibly diverge later.
+  // Rationale for using the darkened step here at all: ivory-on-raw-
+  // --color-accent measures ~4.6:1 (borderline for small/blended-opacity
+  // text), ivory-on-this-step measures ~5.7:1 (verified via this
+  // codebase's own manual sRGB relative-luminance method) — a real,
+  // measured margin, not a stylistic choice.
+  // Contact band refinement pass: NOT currently used — the Contact
+  // section's own band background moved from this flat fill to a
+  // diagonal gradient (see --color-accent-gradient-light/-dark below).
+  // Left defined (same "kept, not deleted" precedent as --color-sand-deep
+  // above) since it's still a valid, independently-reasoned surface
+  // value that could be reused later.
+  --color-accent-deep: var(--color-accent-hover);
+  // Contact band refinement pass — diagonal gradient endpoints (135deg,
+  // light at 0%, dark at 100%), per spec's own literal hex targets.
+  // Verified (this codebase's own manual sRGB relative-luminance method):
+  // full-strength ivory (--color-bg) measures 4.76:1 against the LIGHT
+  // endpoint (the worst case — the dark endpoint alone measures 6.04:1)
+  // — passes 4.5:1 but with very little margin (0.26). Load-bearing for
+  // every text role on this band: at this specific light endpoint, no
+  // blended/reduced-opacity ivory clears 4.5:1 at all (95% only reaches
+  // 4.48:1) — every text role that needs AA on this band uses
+  // full-strength ivory now, not a blend. Flagged in the Contact
+  // section's own report as a tight, near-floor constraint worth
+  // reconsidering if a "quieter" opacity-based text hierarchy is wanted.
+  --color-accent-gradient-light: #7c685a;
+  --color-accent-gradient-dark: #6a594a;
   --color-accent-soft: #e4eae6;
   --color-text: #2e2b28;
   --color-text-muted: #686058;
@@ -130,6 +161,16 @@ $z-index: (
   --font-weight-regular: 400;
   --font-weight-medium: 500; // real Source Sans 3 weight, header nav only
   --font-weight-bold: 700; // real weight, for inline emphasis within body copy only
+
+  // Polish pass: no display-type tracking scale existed yet — h1/h2 rely on
+  // EB Garamond's own natural spacing everywhere else and have never
+  // needed adjustment before. One token added for the one case that does:
+  // FinalContactSection's dark-band title, where slight positive tracking
+  // helps counter light-on-dark thickening on this face's thin strokes.
+  // Matches the value HeaderInteractive.module.scss already uses for its
+  // own display-ish wordmark tracking (see that file's own comment) rather
+  // than inventing an unrelated number.
+  --tracking-display: 0.01em;
 
   // --- Spacing scale (4px base) ----------------------------------------------
   --space-1: 0.25rem; // 4px

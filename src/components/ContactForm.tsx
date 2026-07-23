@@ -54,11 +54,9 @@ const CHANNEL_PHRASES: Record<ContactChannel, string> = {
 export function ContactForm({
   locale,
   tight,
-  responseNote,
 }: {
   locale: Locale;
   tight?: boolean;
-  responseNote?: string;
 }) {
   const [channel, setChannel] = useState<ContactChannel | null>(DEFAULT_CHANNEL);
   const [errors, setErrors] = useState<ContactFormErrors>({});
@@ -179,13 +177,47 @@ export function ContactForm({
         </div>
       ) : null}
 
-      <ContactFormInput
-        label="Nome"
-        name="nome"
-        required
-        ref={nomeRef}
-        error={errors.nome}
-        onBlurValue={(value) => setErrors((prev) => ({ ...prev, nome: validateNome(value) }))}
+      {/* VARIANT B pass — content order per spec: Nome + the dynamic
+          contact field share one row (channel already has a non-null
+          default, so the second field is present from first paint — see
+          DEFAULT_CHANNEL's own comment above), message field below, THEN
+          the channel picker (moved down from directly after Nome). The
+          picker still fully drives the row above it (label/type/
+          validation all key off `channel`) even though it now renders
+          visually later — purely a DOM/visual reorder, no change to which
+          state drives what. */}
+      <div className={styles.fieldRow}>
+        <ContactFormInput
+          label="Nome"
+          name="nome"
+          required
+          ref={nomeRef}
+          error={errors.nome}
+          onBlurValue={(value) => setErrors((prev) => ({ ...prev, nome: validateNome(value) }))}
+        />
+
+        {channel ? (
+          <ContactFormInput
+            key={channel}
+            label={contactLabel}
+            name="contact"
+            required
+            ref={contactRef}
+            error={errors.contact}
+            type={channel === "email" ? "email" : "text"}
+            inputMode={channel === "email" ? "email" : "tel"}
+            autoComplete={channel === "email" ? "email" : "tel"}
+            onBlurValue={(value) =>
+              setErrors((prev) => ({ ...prev, contact: validateContact(channel, value) }))
+            }
+          />
+        ) : null}
+      </div>
+
+      <ContactFormTextarea
+        label="Se vuoi, scrivi due righe — anche solo un saluto"
+        name="messaggio"
+        ref={messaggioRef}
       />
 
       <fieldset className={styles.pillFieldset} aria-describedby={errors.channel ? `${channelGroupId}-error` : undefined}>
@@ -213,29 +245,6 @@ export function ContactForm({
           </p>
         ) : null}
       </fieldset>
-
-      {channel ? (
-        <ContactFormInput
-          key={channel}
-          label={contactLabel}
-          name="contact"
-          required
-          ref={contactRef}
-          error={errors.contact}
-          type={channel === "email" ? "email" : "text"}
-          inputMode={channel === "email" ? "email" : "tel"}
-          autoComplete={channel === "email" ? "email" : "tel"}
-          onBlurValue={(value) =>
-            setErrors((prev) => ({ ...prev, contact: validateContact(channel, value) }))
-          }
-        />
-      ) : null}
-
-      <ContactFormTextarea
-        label="Se vuoi, scrivi due righe — anche solo un saluto"
-        name="messaggio"
-        ref={messaggioRef}
-      />
 
       {/* Declutter pass: the error <p> lives in this wrapping div, not
           inside the <label> itself — <label>'s content model only
@@ -274,7 +283,6 @@ export function ContactForm({
           </p>
         ) : null}
       </div>
-      {responseNote ? <p className={styles.responseLine}>{responseNote}</p> : null}
 
       {/* Honeypot — off-screen (not display:none, so naive bots still
           "see" and fill it), excluded from tab order and screen readers.
@@ -292,11 +300,13 @@ export function ContactForm({
         />
       </div>
 
-      {/* Declutter pass: nothing renders below the submit button anymore
-          — the form's own quiet line is deleted, and the only surviving
-          trust line (responseNote) now sits under the consent row
-          instead, per spec's explicit "below the submit button there is
-          NOTHING." */}
+      {/* VARIANT B pass — HONESTY-RULE FLAG: the responseNote prop/
+          .responseLine trust line under the consent row is gone entirely
+          (was the form's own render of homePage.finalCta.responseNote) —
+          it duplicated FinalContactSection's own "Rispondo entro 24 ore."
+          line below the form, per spec's explicit "delete the duplicate
+          promise" instruction. Nothing renders below the submit button,
+          same as before this pass. */}
       <button type="submit" className={styles.submitButton} disabled={status === "submitting"}>
         {status === "submitting" ? "Invio…" : "Invia il messaggio"}
       </button>

@@ -16,7 +16,9 @@
 
 // across section boundaries (btnSecondary directly; heroOverlapPhotoTreated
 
-// by ArticlePanel.tsx's own photo treatment).
+// by ChiSonoSection.tsx/HeroOverlap.tsx's own photo treatment — Resources'
+// Variant D rebuild dropped its own use of this class entirely, since
+// that pass removed images from the section altogether).
 
 
 

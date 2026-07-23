@@ -427,15 +427,18 @@ export default async function Home({
 
       {/* Un-gated in the FAQ/Contact/Blog-preview pass — data comes off
           the same homePageQuery fetch (homePage.finalCta) plus
-          siteSettings (googleProfileUrl), both already fetched above. */}
+          siteSettings (googleProfileUrl), both already fetched above.
+          VARIANT B pass (slim inset accent band): photo/responseNote are
+          no longer passed — both fields are now orphaned (still fetched
+          as part of the bare `finalCta,` projection, still populated in
+          the dataset, just unread) — see FinalContactSection.tsx's own
+          top-of-file comment for the full HONESTY-RULE flag. */}
       <FinalContactSection
         kicker={homePage?.finalCta?.kicker ?? ""}
         heading={homePage?.finalCta?.heading ?? ""}
         body={homePage?.finalCta?.body ?? ""}
-        responseNote={homePage?.finalCta?.responseNote ?? ""}
         googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
         googleProfileUrl={siteSettings?.googleProfileUrl}
-        photo={homePage?.finalCta?.photo}
         locale={locale}
       />
 
