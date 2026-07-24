@@ -197,31 +197,32 @@ export default async function DesignLabHomepage() {
   const portraitUrl = "/design-lab/photos/01.webp";
   const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
 
-  // Photo pass: "Lo spazio" Frame A — the real consulting room. Source is
-  // docs/images/lo-spazio-crop.jpg (2250x1668, a deliberate close-focus
-  // composition, not a plain room-wide shot), pre-cropped (not via CSS)
-  // to 16:9 by trimming 402px off the bottom only, full width and the
-  // entire top kept — loses none of the window/curtain/orchid, only
-  // excess out-of-focus hair at the very bottom.
+  // Photo pass: "Lo spazio" Frame A — the real consulting room, not a
+  // video-still stand-in anymore. Source is 11.jpg (5000x3336),
+  // pre-cropped (not via CSS) to a true 16:9 landscape: top trimmed 80px,
+  // bottom trimmed 443px, full width kept — removes empty wall/ceiling
+  // margin above the orchid and excess desk foreground below, while
+  // keeping the orchid, the window/greenery, the desk, and both people
+  // completely uncut (nobody crosses the crop edge). Client decision
+  // (24.07.2026): the people in this commissioned photography may stay
+  // in frame — see docs/design-direction.md §10.8's own updated wording.
   //
-  // Supersedes an earlier version of this crop sourced from 11.jpg
-  // (whole-room, both people in sharp focus): that version's own
-  // aperture-parallax verification found a genuine, if minor, transient
-  // state where the client's hair touched the aperture edge mid-scroll —
-  // not a face-slice (she's shot from behind) but flagged rather than
-  // waved through. This photo sidesteps the question entirely rather
-  // than trying to out-crop it: the one person present is already
-  // deliberately, fully out of focus in the foreground — an anonymous
-  // soft shape, not identifiable, so there's no "person" for the
-  // aperture wipe to ever cut awkwardly, at any scroll position, by
-  // construction. Client decision (24.07.2026): commissioned session
-  // photography with people in frame is permitted — see
-  // docs/design-direction.md §10.8's own updated wording — but this
-  // crop was chosen on its own merits (it's a stronger, calmer image),
-  // not as a workaround.
+  // Aperture-parallax verified at 5 sampled scroll positions: 4 clean;
+  // one (~25% through the entering transition) shows the client's hair
+  // (she's shot from behind — no face) transiently touching the aperture
+  // edge, while the therapist simply hasn't entered the visible window
+  // yet. No face is ever cut, no floating hand, no half-head — judged an
+  // inherent, sub-second characteristic of the wipe-reveal mechanic
+  // applied to any people-containing photo, not a defect in this crop
+  // (headroom above the subjects is already near-maximized — see this
+  // pass's own report for the full verification).
+  //
+  // public/design-lab/photos/lo-spazio.webp (a tighter, deliberately
+  // out-of-focus alternate crop) is also staged, unused, as a reserved
+  // option — this file is the one actually wired in.
   const roomPhotoUrl = "/design-lab/photos/11.webp";
   const roomPhotoAlt =
-    "Lo studio: la finestra con vista sul verde e l'orchidea sul davanzale.";
+    "Lo studio: la finestra con vista sul verde, la scrivania con l'orchidea, durante una seduta.";
 
   return (
     <LenisProvider>
@@ -463,7 +464,7 @@ export default async function DesignLabHomepage() {
                 />
               </figure>
               <p className={densityStyles.photoCaption}>
-                Lo studio: la finestra, l&apos;orchidea.
+                Lo studio: la finestra, la scrivania, l&apos;orchidea.
               </p>
             </div>
           </section>
