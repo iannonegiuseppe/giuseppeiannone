@@ -1,0 +1,56 @@
+@use "../../styles/mixins";
+
+// Item 7 — full container width, left-aligned, display scale. No max-
+// width cap on the heading (was 20ch/60ch elsewhere on this page for
+// reading measure — this is one short line, not body copy, so it's
+// allowed to run the container's own full width for scale).
+.heading {
+  margin: 0;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+.emphasis {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.body {
+  margin: var(--space-5) 0 0;
+  max-width: 42ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// Oversized, underlined — was a small text link with a trailing arrow
+// glyph; now a genuine typographic moment of its own, matching the
+// weight the heading above it now carries instead of receding beside it.
+.link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  text-decoration-thickness: 1px;
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+
+  @include mixins.focus-ring;
+}
+
+.linkGlyph {
+  font-family: var(--font-body);
+}

@@ -1,0 +1,229 @@
+@use "../../../styles/mixins";
+
+// Rework pass: the at-a-glance row + horizontal thread (previous pass) is
+// replaced by a full-bleed zigzag — no progress line at all now, the
+// alternating vertical offset carries the sequence instead. Detail panel
+// below is unchanged in mechanics from the previous pass.
+
+.metodoRoot {
+  position: relative;
+}
+
+// --- Full-bleed zigzag -----------------------------------------------------
+// Same viewport-edge technique as Footer.module.scss's .labFooter (width:
+// 100vw + margin-inline: calc(50% - 50vw)) — padding-inline restores the
+// same gutter the rest of the page's container uses, so the zigzag's own
+// text still lines up with the heading above it despite the section
+// itself breaking out to the viewport edge.
+.zigzagBleed {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}
+
+.zigzagRow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-6);
+  }
+}
+
+.zigzagListItem {
+  flex: 1 1 0;
+  min-width: 0;
+
+  // Alternating offset — substantial enough to read as deliberate rhythm,
+  // not a rounding artifact. Off at mobile (stacked list, no zigzag).
+  @include mixins.breakpoint-up(lg) {
+    &[data-offset="low"] {
+      margin-top: 4.5rem;
+    }
+  }
+}
+
+.zigzagItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) 0 0;
+  border: none;
+  border-top: 1px solid var(--color-hairline);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 200ms ease;
+
+  @include mixins.focus-ring;
+
+  &[data-active="true"] {
+    border-color: var(--color-accent);
+  }
+}
+
+// Significantly larger than the previous pass's row numeral — the
+// numeral is now the zigzag's own visual anchor, not a secondary label.
+.zigzagNumeral {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-text) 30%, transparent);
+  transition: color 200ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 4.5rem;
+  }
+
+  .zigzagItem[data-active="true"] & {
+    color: var(--color-accent);
+  }
+}
+
+.zigzagTitle {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+  transition: color 200ms ease;
+
+  .zigzagItem[data-active="true"] & {
+    color: var(--color-text);
+  }
+}
+
+.zigzagShortLine {
+  max-width: 22rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zigzagItem,
+  .zigzagNumeral,
+  .zigzagTitle {
+    transition: none;
+  }
+}
+
+// --- Detail panel (unchanged mechanics from the previous pass) -----------
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-top: var(--space-8);
+  padding: var(--space-6) var(--space-5);
+  overflow: hidden;
+
+  @include mixins.breakpoint-up(lg) {
+    margin-top: var(--space-9);
+    padding: var(--space-8);
+  }
+}
+
+.panelNumeral {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1;
+  font-size: 7rem;
+  color: color-mix(in srgb, var(--color-text) 4%, transparent);
+  animation: panelFadeIn 200ms ease;
+
+  @include mixins.breakpoint-up(md) {
+    font-size: 12rem;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 18rem;
+  }
+}
+
+.panelText {
+  position: relative;
+  max-width: 32rem;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 1.125rem;
+  color: var(--color-accent);
+  animation: panelFadeIn 200ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 1.4375rem;
+  }
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// --- Reveal-on-scroll -------------------------------------------------
+
+.metodoRoot:not([data-revealed="true"]) {
+  .zigzagListItem,
+  .panel {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+.metodoRoot[data-revealed="true"] {
+  .zigzagListItem,
+  .panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 400ms ease,
+      transform 400ms ease;
+  }
+
+  @for $i from 1 through 4 {
+    .zigzagRow > .zigzagListItem:nth-child(#{$i}) {
+      transition-delay: #{($i - 1) * 120}ms;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metodoRoot:not([data-revealed="true"]),
+  .metodoRoot[data-revealed="true"] {
+    .zigzagListItem,
+    .panel {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  .panelNumeral,
+  .panelText {
+    animation: none;
+  }
+}
