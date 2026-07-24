@@ -1,0 +1,119 @@
+@use "../../../styles/mixins";
+
+// Full-bleed — same viewport-edge technique as Footer.module.scss's
+// .labFooter. Sits directly beneath Diplomi (section 06); this section
+// itself is unlabeled chrome (aria-label on the root), not a numbered
+// preview block, since it's presented as part of the Diplomi block
+// rather than its own separate one.
+.marqueeSection {
+  // var(--vw100, 100vw): see ViewportWidthFix.tsx — corrects 100vw's
+  // scrollbar over-measurement on reserved-scrollbar browsers.
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  padding-block: var(--space-6);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+// Edges fade into the page background rather than guillotining an item
+// at the viewport edge.
+.marqueeFade {
+  position: relative;
+  overflow: hidden;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8rem;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+}
+
+.marqueeList {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-6);
+  gap: var(--space-6);
+}
+
+// Muted — sits below the Diplomi cards, deliberately quieter than them
+// rather than competing for attention.
+.marqueeItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 1.25rem;
+  }
+}
+
+.marqueeSeparator {
+  width: 0.25rem;
+  height: 0.25rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+// Reduced motion: no movement at all. The track's inline transform stays
+// at translateX(0px) regardless (CertificatesMarquee.tsx's own measure/
+// animate effects never run under reduced motion, so offsetPx never
+// leaves its initial 0) — the rules below just switch the layout from a
+// clipped horizontal strip to a normal wrapped list so every item stays
+// visible without relying on any motion to reveal it. The aria-hidden
+// duplicate (kept for the moving case's seamless loop) is hidden
+// visually here too, so the static list doesn't repeat every item twice.
+@media (prefers-reduced-motion: reduce) {
+  .marqueeFade {
+    overflow: visible;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  .marqueeTrack {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .marqueeList {
+    flex-wrap: wrap;
+    padding-inline: var(--space-5);
+
+    @include mixins.breakpoint-up(lg) {
+      padding-inline: var(--space-7);
+    }
+
+    &[aria-hidden="true"] {
+      display: none;
+    }
+  }
+}

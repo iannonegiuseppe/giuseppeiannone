@@ -1,0 +1,226 @@
+@use "sass:math";
+@use "../../../styles/mixins";
+
+// Values reused verbatim from the real DiplomiSection.module.scss where
+// this preview's layout matches it (header, track, card, frame,
+// placeholder text, caption typography) — only the two arrow buttons are
+// consolidated onto one shared .iconButton class (see DiplomiBlock.tsx's
+// own comment for why).
+
+.diplomiHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.diplomiKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.diplomiHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.diplomiArrows {
+  display: none;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+
+  @media (hover: hover) and (pointer: fine) {
+    display: flex;
+  }
+}
+
+// Consolidated icon-button treatment — reused by both arrow buttons here
+// and, if a lightbox is ever added once a real scan exists, its close
+// control too. One shared border/size/focus/disabled recipe instead of
+// two separately-maintained circular-chip styles.
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: opacity 150ms ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Item 8: breaks the container on the RIGHT only and bleeds to the true
+// viewport edge — the previously-peeking card becomes a real bleed
+// instead of a hint. Left edge stays anchored to the container's own
+// left content edge (same edge the heading above it aligns to); only
+// the right margin escapes. margin-right: calc(50% - 50vw) on a normal
+// (width: auto) block widens its own available width by exactly the gap
+// between the container's right edge and the viewport's right edge, at
+// any viewport size — same underlying math as the page's other full-
+// bleed elements, just applied to one side only instead of both.
+.diplomiTrackWrap {
+  position: relative;
+  margin-top: var(--space-7);
+  // var(--vw100, 100vw): see ViewportWidthFix.tsx / density.module.scss's
+  // own comment on .videoBlockGrid — corrects 100vw's scrollbar over-
+  // measurement, which on a right-only bleed like this one would
+  // otherwise fall short of the true edge.
+  margin-right: calc(50% - (var(--vw100, 100vw) / 2));
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4rem;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 200ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+
+  &[data-fade-start="true"]::before {
+    opacity: 1;
+  }
+
+  &[data-fade-end="true"]::after {
+    opacity: 1;
+  }
+}
+
+.diplomiTrack {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+}
+
+// Item 8: scaled up — was a 2.4-cards-visible density (matching the real
+// DiplomiSection's own), now 1.8, one consistent size for every card (no
+// masonry/rotation — one collection, one treatment, §10.2).
+.diplomiCardItem {
+  flex: 0 0 78vw;
+  scroll-snap-align: start;
+
+  @include mixins.breakpoint-up(md) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 1.8);
+  }
+
+  @include mixins.breakpoint-up(xl) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 1.8);
+  }
+}
+
+.diplomiCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.diplomiCardFrame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: calc(math.sqrt(2) / 1);
+  background: var(--color-sand);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
+  padding: var(--space-3);
+  overflow: hidden;
+}
+
+.diplomiCardPlaceholderText {
+  margin: 0;
+  max-width: 12ch;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}
+
+.diplomiCardCaption {
+  margin-top: var(--space-2);
+}
+
+.diplomiCardYear {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--color-accent);
+}
+
+.diplomiCardTitle {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.diplomiCardInstitution {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}
+
+.diplomiAlboLine {
+  margin-top: var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}

@@ -85,7 +85,17 @@
 // scroll container at any width: this is normal document flow, full stop.
 .recognitionConstellation {
   @include shared.grid-12;
-  margin-top: var(--space-7); // 48px below the header
+  // Fix pass 1 (§10.6): was --space-7 (48px). This section's own outer
+  // padding is deliberately detached from --space-band-y and tightened
+  // (see this file's own comment above), so the same 48px that reads
+  // fine elsewhere as a header-to-content step sat too close to
+  // Recognition's own (already-tighter) section padding — measured
+  // (real bounding boxes, both neighbors' padding combined, not
+  // recomputed from tokens) at 1.15-3.21x depending on side/viewport,
+  // under the 2.5x floor on 3 of 4 checked sides. --space-4 (16px)
+  // clears the floor on every side at every measured width (worst case
+  // 3.46x, at 375 against Hero).
+  margin-top: var(--space-4); // 16px below the header
   row-gap: var(--space-6); // 32px between stacked fragments, mobile/tablet
 
   // Anchor pass: tightened from --space-7 (48px) — the original six-slot

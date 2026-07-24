@@ -44,11 +44,10 @@
 
 .locationsHeading {
   margin: var(--space-4) 0 0;
-  font-size: 1.75rem;
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 2rem;
-  }
+  // Fix pass 1 (§10.1 token discipline): was a literal 1.75rem/2rem —
+  // below --fs-h2's own ceiling, and not the shared token every other
+  // section's h2 actually uses.
+  font-size: var(--fs-h2);
 }
 
 .locationsIntro {

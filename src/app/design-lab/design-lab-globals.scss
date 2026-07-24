@@ -1,0 +1,93 @@
+@use "../../styles/tokens";
+
+// Minimal reset only — no leaflet rules, no global h1/h2 font-weight
+// pin, no sticky-footer flex column. Those live in [locale]/globals.scss
+// for the real site's own chrome; this route sets typography explicitly
+// per element in density.module.scss instead, since it's a standalone
+// review page, not a full site shell.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// V6 fix: /design-lab now renders the real Sedi/LocationsSection (its
+// real interactive map), which showed its Leaflet attribution chip here
+// even though [locale]/globals.scss already hides it site-wide
+// (unconditionally, marked "TEMPORARY — preview only... MUST be restored
+// before launch" — this route's own globals file is separate from that
+// one, so it never inherited the rule). Same rule, same reasoning,
+// mirrored here rather than in the real file — this route is equally
+// pre-launch/preview, and MUST be restored before launch in lockstep
+// with that one.
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+// Item 1 fix: the real Header CTA button ("Inizia il percorso") has a
+// genuine bug — on hover, background and text both resolve to
+// --color-accent-hover (#715c52), making the label vanish. Root cause,
+// confirmed by reading both files: HeaderInteractive.module.scss's own
+// .labHeaderCta.labHeaderCta:hover sets background only (its OWN
+// comment states the intent explicitly: "--color-accent-contrast text
+// ... on hover" — text was meant to persist, not change); it doesn't
+// re-declare color, so color falls through to whichever OTHER same-
+// specificity (0,2,0) rule compiles later — sharedSections.module.scss's
+// .btnSecondary:hover, which sets color: var(--color-accent-hover) —
+// the exact same token the background now uses. A same-token collision
+// on two different properties, not a false alarm.
+//
+// Can't fix in either real file (both are shared homepage components).
+// Fixed here instead: attribute-substring matching on the class name
+// (:global, no CSS-module hashing applied to this selector) — Next.js's
+// CSS Modules always keep the original class name as a literal
+// substring of the compiled/hashed one, which is what makes this
+// reliable across rebuilds without hardcoding a hash. !important is
+// deliberate and scoped to exactly this known specificity tie — the
+// only way to beat two files' own (0,2,0) rules without editing either.
+// Restores the real file's own stated intent (color: var(--color-
+// accent-contrast) persisting through hover) rather than inventing a
+// new value. Verified: 5.66:1 on hover (vs. 4.58:1 at rest — hover is
+// MORE readable, not less, since the fix keeps the same light text
+// against a now-darker background).
+// The real element is a <button>, not an <a> (verified directly, not
+// assumed) — no tag-name qualifier on the selector, so it matches
+// whichever element actually carries the class. No :global() wrapper —
+// this file is already a plain (non-CSS-Module) global stylesheet
+// (imported directly in design-lab/layout.tsx, not as a `.module.scss`),
+// so :global() here is meaningless CSS-Modules syntax that doesn't
+// apply outside a .module.scss file; a first version of this rule used
+// it and silently never matched anything, which is why the fix didn't
+// take effect on first verification — caught by actually re-testing
+// after the "fix," not assumed to have worked.
+[class*="labHeaderCta"]:hover {
+  color: var(--color-accent-contrast) !important;
+}

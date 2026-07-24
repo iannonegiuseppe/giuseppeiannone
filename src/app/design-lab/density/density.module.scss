@@ -1,0 +1,916 @@
+@use "../../../styles/mixins";
+
+// C1 fix: every full-bleed element on this page (.hopeSection,
+// .credentialsBand, .marqueeSection, .zigzagBleed, .fullBleedFrame,
+// .labFooter) uses `width: 100vw` — on any platform with a
+// space-reserving scrollbar (classic Windows Chrome/Firefox, unlike the
+// overlay scrollbars macOS/most Linux browsers default to), 100vw
+// resolves to the FULL window width INCLUDING the scrollbar's own
+// gutter, which is wider than the actual visible content area
+// (document.documentElement.clientWidth). Every one of those elements
+// was therefore rendering a few pixels wider than the page itself,
+// producing a permanent horizontal scroll — reproducible on Windows,
+// invisible in this environment's own headless Chromium (which uses
+// overlay scrollbars unconditionally, even when a reserved-space
+// scrollbar is forced via CSS — verified directly, see this pass's own
+// report). Fixed here rather than at each individual bleed technique:
+// overflow-x: clip on the page's own root wrapper eliminates horizontal
+// scrollability regardless of how many px any current or future
+// full-bleed child overshoots by. clip (not hidden) specifically because
+// hidden establishes a new scroll container and breaks descendant
+// position: sticky — clip does not.
+.root {
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+// Internal review chrome only — would never ship on the real site.
+.pageHeader {
+  @include mixins.container;
+  padding-block: var(--space-7);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.pageTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.pageNote {
+  margin: var(--space-3) 0 0;
+  max-width: 60ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.section {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.sectionLabel {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+// Section 01/04 header — kicker/heading/paragraph recipe used sitewide
+// (RecognitionSection/JourneySection's own pattern), reused not
+// reinvented. Heading stays at --fs-h2 register (not display-scale) —
+// these sections demonstrate interactive density, not the scale-contrast
+// fix Section 02's headline demonstrates.
+//
+// Rework pass: was a single stacked block (max-width: 42rem) — the
+// narrow-left-column emptiness was the client's actual complaint, so the
+// intro paragraph now sits in a second column beside the heading at
+// md+, reusing FaqSection's own 12-col/4-8 header-column split
+// (FaqSection.module.scss's .faqHeaderColumn/.faqAccordionColumn) rather
+// than inventing a new grid ratio. Stacks back to a single column below
+// md, same as the FAQ section does.
+.metodoHeader {
+  margin-bottom: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    margin-bottom: var(--space-9);
+  }
+
+  @include mixins.breakpoint-up(md) {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: baseline;
+  }
+}
+
+.sectionHeadingCol {
+  @include mixins.breakpoint-up(md) {
+    grid-column: 1 / span 5;
+  }
+}
+
+.sectionIntro {
+  margin-top: var(--space-4);
+
+  @include mixins.breakpoint-up(md) {
+    grid-column: 6 / span 7;
+    margin-top: 0;
+  }
+}
+
+// Assembled-page-only modifier (used on Metodo here, NOT touching
+// /design-lab/density's own Aree usage of the shared .sectionIntro
+// above): right-aligns the intro text against the container's own right
+// edge, the same edge the zigzag row below it already reaches — reads
+// as a deliberate counterweight to the heading's left edge instead of
+// text stranded mid-grid with nothing to anchor it visually.
+.sectionIntroRight {
+  @include mixins.breakpoint-up(md) {
+    text-align: right;
+  }
+}
+
+.metodoKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.metodoHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.metodoParagraph {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Section 02 (Chi sono) demonstration: real display-scale contrast (was --fs-h2 on
+// the live homepage's ChiSono section, 36px max — here it's the full
+// --fs-display token, 60px max at 1440, matching the hero's own H1
+// scale). This is deliberately the ONE display-scale moment besides the
+// hero the §10 audit's revised rule (§10.1) asks for.
+//
+// text-wrap: balance (Step 0.4 fix): without it, "vicino." was stranded
+// alone on its own line at 1440 (a 3-word first line, 1-word second
+// line) — balance distributes the two lines more evenly. Only applied
+// here, not sitewide: it's a headline-specific fix, and the rest of the
+// site's headings don't have this problem.
+.heading {
+  max-width: 20ch;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular); // EB Garamond ships only 400
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+// Site's established italic-emphasis recipe (EB Garamond italic +
+// --color-accent) — same technique used in Hero/Journey/ChiSono, reused
+// verbatim, not a new device.
+.emphasis {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.textBlock {
+  max-width: 60ch;
+  margin-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.paragraph {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text);
+}
+
+// Full-width photo break — deliberately spans the FULL container width
+// (not the 60ch text column above/below it), the one place in this
+// section that breaks the reading measure on purpose. Not full-bleed to
+// the viewport edge (that's a different device, used elsewhere in this
+// plan) — this stays inside the section's own container.
+.photoBreak {
+  margin: var(--space-7) 0;
+}
+
+// Placeholder geometry matches this codebase's own established
+// "imagery not ready yet" convention (ResourcesSection's
+// .featuredImagePlaceholder: hairline border + --color-greige fill, no
+// broken-image icon) — reused, not invented. --radius-l instead of
+// -m since this is a large, full-width frame (imagery gets --radius-l
+// sitewide), and 16:9 per the photo brief.
+.photoPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-l);
+  background: var(--color-greige);
+
+  span {
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    color: var(--color-text-muted);
+  }
+}
+
+// Real-image variant of .photoPlaceholder, same geometry (16:9,
+// --radius-l, full width) — used once a real asset exists instead of the
+// grey placeholder. V1: Chi sono's photo break uses this now, with the
+// existing square portrait cropped to a 16:9 letterbox via object-fit:
+// cover until a genuinely-shot landscape photo replaces it (see
+// page.tsx's own comment for the one-line swap).
+.photoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-l);
+}
+
+.photoFrameImg {
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+.photoCaption {
+  margin: var(--space-3) 0 0;
+  max-width: 60ch;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+// --- Dark surfaces: ONE shared rich treatment ------------------------------
+// Depth pass 3 (third time raised): the previous two passes reported
+// computed values as proof the layers were painting, but "painting" and
+// "visible" turned out to be different questions — screenshot pixel-
+// sampling (with a real, verified bug fixed along the way: a 1px seam
+// from the adjacent section was bleeding into the very first sampled
+// row, reading as a false "lightest point" at pure ivory; excluded a 3px
+// margin on every edge before sampling, see this pass's own report) found
+// the ACTUAL lightest/darkest points of every candidate recipe. Swept
+// sheen opacity on Credentials alone first (8% measured 4.61:1, 10%
+// dropped to 4.41:1) but re-measuring the SAME 8% on Hope and the Footer
+// (much taller/shorter boxes than Credentials — the sheen's radius is a
+// fixed rem size, not proportional to box height, so the same recipe
+// lands at a different point on its own falloff curve depending on the
+// surface's own dimensions) found Footer at only 4.475:1 — under the
+// floor. Backed the sheen off to 7% for real margin across every surface
+// size on the page, not just the one it was tuned on. Vignette opacity
+// (65% at 85rem/60rem, 2.0+ tonal range) was untouched — it only ever
+// darkens, so it doesn't share this sensitivity.
+//
+// Applied identically to every dark surface on the assembled page, not
+// just Credentials: Hope and the Footer are real, shared homepage
+// components (their SCSS can't be touched without touching the real
+// homepage) — both were verified to use --color-accent for their OWN
+// background ONLY, once each, nothing else in either file's subtree
+// reads that token — so a locally-scoped --color-accent override on a
+// wrapping element (see .richDarkWrap below, used in page.tsx) reaches
+// their background without touching either file. Credentials (this
+// component, not shared) uses the exact same mixin directly.
+@mixin rich-dark-surface {
+  --color-accent:
+    radial-gradient(
+      60rem 42rem at 82% 16%,
+      color-mix(in srgb, var(--color-bg) 7%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      85rem 60rem at 8% 92%,
+      color-mix(in srgb, var(--color-text) 65%, transparent) 0%,
+      transparent 65%
+    ),
+    linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
+}
+
+// Fractal-noise grain — CSS-generated (inline SVG data URI, no asset
+// file), pointer-events: none, low opacity. Shared by every dark surface
+// (Credentials directly; Hope/Footer via their own .richDarkGrain
+// instance in page.tsx, since the grain also can't live inside their
+// real markup).
+//
+// z-index: 2, ABOVE the content layer (z-index: 1 below), not below it —
+// deliberate, and the same order on all three surfaces (not just Hope/
+// Footer): Hope's and Footer's own real markup paints its OWN opaque
+// background across its whole box, which would otherwise completely
+// hide a grain layer sitting underneath it (there's no transparent gap
+// for it to show through, unlike Credentials' own text-only foreground).
+// Layering the grain on top of everything, including text, is the only
+// way it's visible at all for the real components — kept identical for
+// Credentials too rather than giving it a different stacking scheme, so
+// all three genuinely share one execution. At 5% opacity + soft-light
+// blend the effect on text legibility is negligible — verified visually.
+@mixin rich-dark-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+// --- Section 03: Credentials band -----------------------------------------
+// Full-bleed, same viewport-edge technique as Footer.module.scss's
+// .labFooter (width: 100vw + margin-inline: calc(50% - 50vw)) —
+// .credentialsInner below restores the normal container padding for the
+// actual content, same split as .labFooter/.labFooterContainer.
+.credentialsBand {
+  @include rich-dark-surface;
+  position: relative;
+  // var(--vw100, 100vw): fix 2's own root cause, see ViewportWidthFix.tsx
+  // — 100vw over-measures on a reserved-scrollbar browser; the JS-set
+  // custom property corrects it, with 100vw itself as the SSR/no-JS
+  // fallback.
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  padding-block: var(--space-band-y);
+  overflow: hidden;
+  color: var(--color-bg);
+  background: var(--color-accent);
+}
+
+.credentialsGrain {
+  @include rich-dark-grain;
+}
+
+.credentialsInner {
+  position: relative;
+  z-index: 1;
+  @include mixins.container;
+}
+
+// --- Shared wrapper for the two REAL components that need this same
+// treatment without their own files being touched (Hope, Footer) -------
+// background here too (not just relying on the real component's own
+// nested background) — verified needed: with only the custom-property
+// override, hiding .richDarkContent to pixel-sample the surface (this
+// pass's own verification method) left nothing painted at all, since the
+// gradient only existed on the hidden subtree. Harmless duplication in
+// normal rendering (identical color, painted twice).
+.richDarkWrap {
+  @include rich-dark-surface;
+  position: relative;
+  background: var(--color-accent);
+}
+
+.richDarkGrain {
+  @include rich-dark-grain;
+}
+
+// The real component renders inside this — position: relative + a
+// z-index establishes its own stacking context above .richDarkGrain
+// (which has no z-index of its own to compete with, i.e. would
+// otherwise paint according to plain DOM order) regardless of whatever
+// stacking Hope's/Footer's own internals set up further down.
+.richDarkContent {
+  position: relative;
+  z-index: 1;
+}
+
+// --- Contact band (differentiation pass, item 4) --------------------------
+// Different technique than Hope/Footer's --color-accent override: the
+// real .finalContactBand builds its background from TWO separate tokens
+// (--color-accent-gradient-light/-dark as the two stops of one linear-
+// gradient), not a single swappable custom property, so there's no one
+// token to redirect into a multi-layer value the way Hope/Footer's
+// background: var(--color-accent) allowed. Instead: two ABSOLUTELY
+// POSITIONED overlay layers (sheen+vignette, then grain), siblings of
+// the real <FinalContactSection>, sized and inset to land exactly on
+// .finalContactBand's own box — replicated from the real file's own
+// known values (mixins.container's padding-inline, --space-band-y,
+// --radius-m), not guessed. pointer-events: none on both so the form
+// underneath stays fully interactive; z-index above the real component's
+// own (non-positioned, so implicitly below) content, with the semi-
+// transparent sheen/vignette compositing over the real opaque gradient
+// underneath — visually identical to sitting BEHIND it, without needing
+// the real component's own background to be transparent.
+// Item 5: now full-bleed — "background edge to edge, inner content still
+// respecting the container's inline padding" (the footer's technique).
+// The real .finalContactBand itself can't be made to bleed (it's 100%
+// width of .finalContactOuter, a container-constrained real element), so
+// this overlay is now the ENTIRE visible surface — including its own
+// base gradient layer (below), not just sheen/vignette on top of the
+// real band's own fill. Real bug caught building this: an earlier
+// version tried nulling the real band's own --color-accent-gradient-
+// light/-dark tokens to transparent (to avoid a "double dark region"
+// where the two would overlap) and relying on the sheen/vignette alone
+// for color — but those are semi-transparent BY DESIGN, meant to
+// modulate an opaque base, not stand in for one; with nothing opaque
+// behind them the surface read as almost pure ivory. Fixed by giving
+// this overlay its own opaque base fill instead (same tokens, listed
+// last so it paints under the radial layers) and simply letting it
+// paint OVER the real (still fully opaque, still narrower) band
+// underneath — z-index above it is enough, no transparency trick
+// needed. Content (the form) is untouched, still sitting at its normal
+// container-width position — this is what makes it read as "inner
+// content still respecting the container's padding" despite the
+// background going edge to edge.
+.richDarkWrapContact {
+  position: relative;
+}
+
+.richDarkOverlayContact {
+  position: absolute;
+  top: var(--space-band-y);
+  bottom: var(--space-band-y);
+  left: calc(50% - (var(--vw100, 100vw) / 2));
+  right: calc(50% - (var(--vw100, 100vw) / 2));
+  z-index: 1;
+  // No border-radius — full-bleed surfaces sitewide (Hope/Credentials/
+  // Footer) don't have one either; a rounded corner touching the
+  // viewport edge would look like a rendering bug, not a design choice.
+  overflow: hidden;
+  pointer-events: none;
+  // Sheen at 5%, not the 7% Hope/Credentials/Footer use — Contact has
+  // one extra text role none of the others do: ContactForm's error text
+  // (--cf-error-text-color, a 4%-amber-tinted ivory, defined in the real
+  // ContactForm.module.scss — can't touch it, "form mechanics untouched"
+  // — and it's fixed at 4.5:1 wiggle room a shade tighter than plain
+  // ivory has). Re-measured after going full-bleed (the wider box shifts
+  // where the percentage-positioned sheen/vignette land in absolute
+  // px) — see this pass's own report for the re-measured ratios.
+  background-image:
+    radial-gradient(
+      60rem 42rem at 82% 16%,
+      color-mix(in srgb, var(--color-bg) 5%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      85rem 60rem at 8% 92%,
+      color-mix(in srgb, var(--color-text) 65%, transparent) 0%,
+      transparent 65%
+    ),
+    linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
+}
+
+// Fix 1: gives the real form an explicit stacking position so it can
+// out-rank the overlay's z-index at all — CSS never lets a non-
+// positioned element beat a positioned one, regardless of DOM order or
+// z-index value, so this wrapper is required, not optional.
+// Item 4: two dark surfaces existed — this section-level overlay AND the
+// real .finalContactBand's own (container-width, rounded) gradient
+// underneath it. Removed the inner one: overriding --color-accent-
+// gradient-light/-dark to transparent HERE (scoped to this wrapper,
+// which contains ONLY the real component, not the sibling overlay
+// itself — the overlay is a SEPARATE element outside this wrapper, so
+// it keeps reading the real, un-overridden token values for its own
+// base-fill layer; overriding on a shared ancestor of both would have
+// blanked the overlay's own fill too) makes the real band's own
+// background genuinely transparent, letting the section-level overlay
+// (gradient + sheen + vignette + grain) show through as the ONE
+// surface. Verified safe the same way as before: these two tokens are
+// used for the real band's background ONLY, nowhere else in its
+// subtree.
+// Real bug caught verifying this fix: overriding the two gradient tokens
+// on THIS wrapper (as an earlier version of this rule did) is too broad
+// — ContactForm.module.scss's own .contactForm ALSO reads these same two
+// tokens (for --cf-input-bg, the fill painted under autofilled fields)
+// and sits nested inside .finalContactBand, so that override silently
+// broke autofill styling too (found by checking every consumer of the
+// two tokens across the real component's whole subtree, not just the
+// one line this fix was written for).
+//
+// Fixed with three rules instead of one: (1) capture the tokens' real,
+// un-overridden values into new custom-property names on this wrapper,
+// before any override happens; (2) null the ORIGINAL two names, scoped
+// (via attribute-substring match — a plain attribute selector, not a
+// class selector, so CSS Modules doesn't hash it and it matches the real
+// hashed className directly, same technique as Item 1's header-CTA fix)
+// to exactly .finalContactBand, the one real element whose OWN
+// background reads them; (3) one level deeper, on .finalContactColumn,
+// restore the two original names from the captured values, so
+// everything below the band's own background — ContactForm included —
+// inherits the true tokens again instead of the override.
+.richDarkContactContent {
+  position: relative;
+  z-index: 2;
+  --contact-gradient-light-original: var(--color-accent-gradient-light);
+  --contact-gradient-dark-original: var(--color-accent-gradient-dark);
+
+  [class*="finalContactBand"] {
+    --color-accent-gradient-light: transparent;
+    --color-accent-gradient-dark: transparent;
+  }
+
+  [class*="finalContactColumn"] {
+    --color-accent-gradient-light: var(--contact-gradient-light-original);
+    --color-accent-gradient-dark: var(--contact-gradient-dark-original);
+  }
+}
+
+.richDarkGrainContact {
+  position: absolute;
+  top: var(--space-band-y);
+  bottom: var(--space-band-y);
+  left: calc(50% - (var(--vw100, 100vw) / 2));
+  right: calc(50% - (var(--vw100, 100vw) / 2));
+  z-index: 3;
+  overflow: hidden;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+// Full-strength --color-bg, not a muted mix — measured at only ~4.1:1
+// against --color-accent at 80% opacity (below the 4.5:1 AA floor for
+// this font-size), so hierarchy here comes from letter-spacing/weight
+// instead of lowering opacity. See the final report for the re-measured
+// ratio.
+.credentialsLabel {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-bg);
+}
+
+.credentialsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-7);
+  }
+}
+
+.credentialsItem {
+  border-top: 1px solid color-mix(in srgb, var(--color-bg) 25%, transparent);
+  padding-top: var(--space-4);
+
+  @include mixins.breakpoint-up(lg) {
+    border-top: none;
+    border-left: 1px solid color-mix(in srgb, var(--color-bg) 25%, transparent);
+    padding-top: 0;
+    padding-left: var(--space-5);
+  }
+}
+
+.credentialsValue {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display-sm);
+  line-height: var(--lh-display-sm);
+  color: var(--color-bg);
+}
+
+.credentialsCaption {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-bg);
+}
+
+// Tabular-ish alignment while scrambling — without this, letters/digits
+// of different intrinsic widths shift the caption below as characters
+// resolve. font-variant-numeric only evens out digit widths (EB Garamond
+// ships no tabular-lining variant of its own), which is enough since the
+// scramble's own random letters are cosmetic and brief (<= 330ms).
+.scrambleWrap {
+  font-variant-numeric: tabular-nums;
+}
+
+.srOnly {
+  @include mixins.visually-hidden;
+}
+
+// --- Section 04: Aree, with weight -----------------------------------------
+// Same hairline-list structure as the real AreeSection — the one addition
+// is a large, quiet numeral per row (Metodo/Diplomi's numeral language),
+// explicitly no topic icons.
+.areeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.areeRow {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: var(--space-5);
+  align-items: baseline;
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-hairline);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 4rem 1fr;
+    padding: var(--space-6) 0;
+  }
+
+  &:last-child {
+    border-bottom: 1px solid var(--color-hairline);
+  }
+}
+
+.areeNumeral {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-text) 12%, transparent);
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2.5rem;
+  }
+}
+
+.areeRowTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+}
+
+.areeRowDetail {
+  margin: var(--space-2) 0 0;
+  max-width: 60ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
+
+// --- Section 05: The space, photo-led --------------------------------------
+
+.spaceBlock {
+  margin-top: var(--space-8);
+
+  &:first-child {
+    margin-top: var(--space-7);
+  }
+}
+
+.spaceText {
+  max-width: 42rem;
+}
+
+.spaceHeading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+}
+
+.spaceParagraph {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// Full-bleed break-out — used by Frame A here and the map frame below.
+// Standard viewport-edge technique: the section itself stays contained
+// (mixins.container caps it), this one child escapes that constraint.
+.fullBleedFrame {
+  width: var(--vw100, 100vw);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-right: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-top: var(--space-6);
+}
+
+// Parallax outer frame — fixed aspect-ratio, clips the oversized inner
+// layer. Border/radius/background live here (not on the inner layer),
+// since the inner layer moves and an edge painted on it would visibly
+// travel with it.
+.parallaxFrame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-l);
+}
+
+// Third attempt: the real mechanic. The frame's own box (above) is
+// unchanged — a normal in-flow, aspect-ratio element occupying real
+// page space. Under reduced motion, the image sits directly inside it
+// (position: absolute, .parallaxFrame's own overflow: hidden crops it
+// to the frame like any normal photo). Once motion is confirmed
+// (ParallaxFrame.tsx's own effect), the image is REPLACED by this fixed
+// layer instead — position: fixed pins it to the viewport itself, not
+// to any scrolling ancestor, so .parallaxFrame's own overflow: hidden
+// has no effect on it either way (a position: fixed element's
+// containing block is the viewport unless an ancestor sets a
+// transform/filter/will-change: transform, none of which exist in this
+// tree — verified, not assumed). var(--vw100, 100vw)/dvh cover the full
+// viewport at all times regardless of scroll position, which is what
+// guarantees there's never an empty gap — the clip-path (inline style,
+// computed from the frame's own live getBoundingClientRect(), already
+// viewport-relative) is the ONLY thing that changes; the image
+// underneath it is completely inert.
+.parallaxFixedLayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--vw100, 100vw);
+  height: 100dvh;
+  pointer-events: none;
+}
+
+// Centered, NOT inside .parallaxLayer — stays put regardless of the
+// layer's translateY. Today this is the placeholder brief; once a real
+// photo exists this label is removed (the external <figcaption> already
+// used by the rest of this section takes over).
+.parallaxLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding-inline: var(--space-5);
+}
+
+// FIX 2: real stand-in image inside .parallaxLayer — object-fit: cover
+// so the oversized layer's own dimensions (125% height) don't distort
+// it; the layer itself, not this image, carries the parallax transform.
+.parallaxImg {
+  object-fit: cover;
+}
+
+.spaceFrameB {
+  margin-top: var(--space-6);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: minmax(0, 40%) minmax(0, 60%);
+    gap: var(--space-7);
+    align-items: end;
+  }
+}
+
+.spaceFrameBPlaceholder {
+  @include mixins.breakpoint-up(lg) {
+    order: 1;
+  }
+}
+
+// Differentiation pass, item 3 (assembled page only — density's own Lo
+// spazio still uses the side-by-side .spaceFrameB/.spaceFrameBPlaceholder
+// pair above, untouched): Frame B no longer pairs with text side by
+// side (that was the same "media box + text beside it" device Video
+// also used) — text sits in its own block above, full width, and this
+// sits below as a narrow, asymmetrically-offset vertical image with its
+// caption directly beneath, not alongside. justify-content: flex-end
+// offsets it to the right with air on the left; the full-bleed Frame A
+// above it already reads as the "wide" half of the contrast, this is
+// deliberately the "narrow, quiet" half.
+.spaceFrameBAsymmetric {
+  margin-top: var(--space-7);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.spaceFrameBFigure {
+  width: 60%;
+
+  @include mixins.breakpoint-up(md) {
+    width: 40%;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    width: 32%;
+  }
+}
+
+// --- Video block (differentiation pass, item 3; corrected again this
+// pass — back to CONTAINED, not full-bleed) ---------------------------
+// Two-column: player left, text right, tops aligned (align-items: start
+// — both columns start at the row's own top edge). Mobile: single
+// column, player first (DOM order), text below — no reordering needed.
+//
+// Item 3 (this pass): the full-bleed version two passes ago never
+// actually read right — reverted to sitting fully INSIDE the container.
+// This grid does NOT include mixins.container itself — its parent
+// <section> (.section, above) already does, so the grid's own content
+// box already IS the container's content box. A second
+// @include mixins.container here (an earlier version of this rule had
+// one) double-applies padding-inline, insetting the grid 48px further
+// on each side than every other section's own content — exactly the
+// bug this fix removes. width: 100% simply fills the section's already-
+// bounded content box. That's what makes "video's left edge = the same
+// edge the section headings above it align to" true automatically, with
+// no separate alignment logic: it's the SAME container edge every other
+// section already aligns to. Text column's own right padding (which
+// existed to keep text off the true viewport edge in the full-bleed
+// version) is gone — the section's own padding-inline is what bounds
+// the whole grid now, so the text column's right edge IS the container's
+// right content edge, exactly. Split: 60/40 (was 65/35 full-bleed,
+// before that 58/42) — gap comes from --space-8, a spacing token, per
+// this pass's own instruction.
+.videoBlockGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    // fr, not %: percentage tracks are sized against the grid container's
+    // full width BEFORE the gap is subtracted, so 60%+40% (=100%) leaves
+    // no room for the gap and the shrink-to-fit that follows lands on
+    // track 1 alone (measured: track 1 lost the entire 64px gap, track 2
+    // stayed at a true 40% — an uneven, unintended skew). fr tracks
+    // distribute the space actually remaining AFTER the gap, giving a
+    // true 60/40 split of the usable width.
+    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+    align-items: start;
+    gap: var(--space-8);
+  }
+}
+
+// No max-width here: item 3 requires the column's own RIGHT edge to
+// land exactly on the container's right content edge. An earlier
+// version capped this at 40ch, which is narrower than the 40%-of-
+// container track at lg+ — the column (a block box, no auto margins)
+// then stopped short of the track's own right edge instead of reaching
+// it, and on mobile constrained it below the required full width too.
+.videoBlockTextCol {
+  @include mixins.breakpoint-up(lg) {
+    padding-top: var(--space-2); // optical alignment: the player's own
+    // chrome-less top edge reads slightly higher than the kicker's cap-
+    // height at the exact same grid row start — a small nudge down.
+  }
+}
+
+// Item 4: the reused real .videoHeading (VideoSection.module.scss) caps
+// at --fs-h2 — a real, un-editable file, and too small for "one of the
+// bigger typographic moments on the page." This is density's own
+// display-scale heading class (.heading, the same one Chi sono's
+// headline uses) reused here instead, NOT the real component's own
+// heading class.
+.videoBlockHeading {
+  margin: var(--space-4) 0 0;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+// --- "Static map frame" (simplified Section 07 for this pass — see the
+// final report for why the real interactive map wasn't reused here) ------
+
+.mapFrame {
+  margin: var(--space-7) 0 0;
+}
+
+.locationsList {
+  list-style: none;
+  margin: var(--space-7) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.locationsName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+.locationsLine {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
