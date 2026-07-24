@@ -51,6 +51,11 @@ next-env.d.ts
 # local review screenshots (visual QA during a stage, never committed)
 /.review/
 
+# local agent/tooling config — machine-specific, not part of the app
+/.agents/
+/.claude/
+/skills-lock.json
+
 # reference/inspiration images (third-party template screenshots) — kept
 # locally for design reference only, never committed
 docs/**/*.webp

@@ -42,8 +42,12 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular); // EB Garamond ships only 400
-  font-size: var(--fs-h2-lg);
-  line-height: var(--lh-h2-lg);
+  // Fix pass 1 (§10.1): was --fs-h2-lg — measured 2.0-2.625x against this
+  // section's own body text, under the 3x floor a punctuation moment
+  // should clear. --fs-display-sm (new token, see _tokens.scss's own
+  // comment) always clears 3x and stays visibly smaller than the hero.
+  font-size: var(--fs-display-sm);
+  line-height: var(--lh-display-sm);
   color: var(--color-text);
 }
 

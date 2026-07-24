@@ -21,11 +21,11 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip /studio (Sanity Studio), /api routes, /design-preview (a
-  // standalone design artifact route living outside the [locale] segment
-  // entirely — see src/app/design-preview/layout.tsx's own comment — so
-  // it must never be rewritten/redirected as if it needed locale
-  // handling), Next.js internals, and any request for a file with an
-  // extension (static assets: favicon.ico, images, etc).
-  matcher: ["/((?!api|studio|design-preview|_next|_vercel|.*\\..*).*)"],
+  // Skip /studio (Sanity Studio), /api routes, /design-preview and
+  // /design-lab (standalone design artifact routes living outside the
+  // [locale] segment entirely — see src/app/design-preview/layout.tsx's
+  // own comment — so they must never be rewritten/redirected as if they
+  // needed locale handling), Next.js internals, and any request for a
+  // file with an extension (static assets: favicon.ico, images, etc).
+  matcher: ["/((?!api|studio|design-preview|design-lab|_next|_vercel|.*\\..*).*)"],
 };

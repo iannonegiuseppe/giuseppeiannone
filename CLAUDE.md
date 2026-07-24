@@ -21,6 +21,13 @@ Work happens in **interactive mode**, stage by stage:
 This has applied since the foundation stage and continues into later stages unless
 told otherwise.
 
+## Design charter
+
+Design work must comply with §10 of `docs/design-direction.md` (the
+design charter). Before finishing any task that changes visual output,
+check the result against §10 and report every rule it violates, by
+number. §9 (deontology) outranks §10 wherever they conflict.
+
 ## Branching & deployment workflow
 
 Starting Stage 2 (SEO/AEO/GEO layer):

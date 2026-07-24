@@ -16,11 +16,14 @@
 
 .journeyHeader {
   @include mixins.container;
-  margin-bottom: var(--space-7);
-
-  @include mixins.breakpoint-up(lg) {
-    margin-bottom: var(--space-9);
-  }
+  // Fix pass 1 (§10.6): was --space-7 (48px) base / --space-9 (96px) at
+  // lg+. Measured (real bounding boxes, both neighbors' padding
+  // combined) at 1.64-2.28x across every checked width — this section's
+  // own outer padding is detached from --space-band-y (--space-7/8, see
+  // .journeySection above), so the standard-looking 48px/96px header
+  // gap was still too big relative to it. Flat --space-5 (24px) at
+  // every tier clears the floor everywhere measured (worst case 4.4x).
+  margin-bottom: var(--space-5);
 }
 
 // Same kicker recipe as RecognitionSection's own .recognitionKicker —

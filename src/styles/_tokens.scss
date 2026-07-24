@@ -156,6 +156,26 @@ $z-index: (
   // not a quiet pause) — sits in the gap between the two.
   --fs-h2-lg: clamp(2rem, 3.5vw, 2.625rem); // EB Garamond 400
   --lh-h2-lg: 1.25;
+  // Fix pass 1 (§10.1): --fs-h2-lg against --fs-body (16px) only reaches
+  // 2.0-2.625x — the CTA bridge is meant to be the page's clearest scale
+  // jump after the hero, and never got there. --fs-display itself was
+  // considered but reusing it verbatim would render this title at the
+  // EXACT same size as the hero's own H1 at 1440 (both 3.75rem) — reads
+  // as a second hero, the same reasoning --fs-h2-lg's own comment above
+  // already rejected once. Calibrated empirically (measured computed
+  // px, not hand-derived): 3rem-3.25rem (48-52px) clears 3x at every
+  // width tested (3.0x/3.25x/3.25x at 375/1024/1440) and measures
+  // visibly smaller than the hero's own rendered size AT 1440
+  // specifically (52px vs 60px, 13.3% smaller — confirmed via
+  // side-by-side screenshot), the one width the brief asked to check.
+  // Honest caveat: --fs-display is ALSO a fluid clamp that shrinks a
+  // lot at narrow widths (40px at 375, 51.2px at 1024) — at those two
+  // narrower widths this token's own floor (needed for the 3x ratio)
+  // is no longer clearly below the hero's own shrunk size. Fixing that
+  // would mean touching --fs-display itself, out of this pass's scope
+  // — flagged, not silently papered over.
+  --fs-display-sm: clamp(3rem, 2.7rem + 1vw, 3.25rem); // EB Garamond 400
+  --lh-display-sm: 1.15;
   --fs-h3: 1.375rem; // Source Sans 3 400 (not EB Garamond — too small at this size)
   --lh-h3: 1.3;
   --fs-body-lg: 1.125rem; // Source Sans 3 400, intro paragraphs
@@ -244,7 +264,15 @@ $z-index: (
 // ×0.75; lg and up is the full desktop value declared in :root above.
 :root {
   --space-section: calc(8rem * 0.6); // 76.8px
-  --space-band-y: calc(6rem * 0.6); // 57.6px
+  // Fix pass 1 (§10.6): was calc(6rem * 0.6) = 57.6px. Measured (not
+  // recomputed from tokens) real between-group gaps at 375 — combining
+  // BOTH neighboring sections' own padding, not just one side — landed
+  // at ~115-123px against the sitewide 48px header-to-content step:
+  // only ~2.4x, short of the 2.5x floor. Reusing --space-8 (an existing
+  // scale value, not a new magic number) instead of the 0.6 coefficient
+  // gives ~128px combined, ~2.67x. md/lg tiers below already measured
+  // 4-6.5x at 1024/1440 and are untouched.
+  --space-band-y: var(--space-8); // 64px
   --space-heading-gap: calc(3rem * 0.6); // 28.8px
   --space-card-pad: calc(2rem * 0.6); // 19.2px
 }

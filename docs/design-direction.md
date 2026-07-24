@@ -180,6 +180,102 @@ Do NOT hardcode tu or Lei into components.
 - No urgency devices, discount styling, or comparison-with-competitors copy
 - No promises of outcomes anywhere in copy or visuals
 
+## 10. Design charter — "not ordinary, and expensive-looking"
+
+These rules are checkable. Every section must pass them before it ships.
+If a rule blocks something we want, we change the rule deliberately —
+not silently.
+
+### 10.1 Scale contrast (revised)
+Measure the ratio between a section's largest heading and its BODY text
+(`--fs-body`). Kickers, eyebrows, captions, meta lines and labels are
+excluded — they are labels, not typographic levels.
+
+- Every section: ratio ≥ 2× against body text.
+- The page as a whole: at least three sections must carry a genuine
+  display-scale element (≥ `--fs-h2-lg`), and they must be spread across
+  the page, not adjacent.
+- List-item titles are content, not headings: they must stay below their
+  own section's heading, and raising them to satisfy a ratio is a
+  violation of this rule, not compliance with it.
+
+### 10.2 One device per job
+
+Each visual device has exactly one meaning sitewide:
+
+- hairline = boundary between items in a list
+- tinted surface (sand) = grouping of related content
+- dark band = tonal punctuation, never decoration
+- card = an item in a collection
+
+No new device may be introduced without retiring one. Reusing a device
+for a second meaning is the fastest way to look ordinary.
+
+### 10.3 Asymmetry by default
+
+Centred layouts are reserved for punctuation moments (pull quotes, the
+CTA bridge, the signature). Maximum two centred sections per page.
+Everything else is asymmetric, with intent.
+
+### 10.4 Dark bands: rhythm, not decoration
+
+Maximum four dark sections per page, never two adjacent, each separated
+by at least two light sections. Every dark band must carry content that
+justifies the emphasis.
+
+### 10.5 Images bleed
+
+Any section built around an image must touch at least one viewport edge,
+or occupy at least 50% of the container width. Small images floating in
+the middle of a container read as filler.
+
+### 10.6 Whitespace is grouped, not uniform
+
+Related elements sit close, unrelated ones far. Target ratio between
+"inside a group" and "between groups" is at least 1:2.5. Equal padding
+everywhere is what makes a page feel empty rather than airy.
+
+### 10.7 Icons carry information or don't exist
+
+An icon is allowed only when it conveys something the text cannot.
+Generic conceptual icons (brain, heart, puzzle, lightbulb, head with
+gears) are forbidden — they read as clip-art and undercut the site's
+seriousness. Abstract geometric marks derived from the site's own
+typography are acceptable.
+
+### 10.8 Photography standard
+
+No stock imagery. No staged sessions with actors. No AI-generated
+likenesses. Photographs are of the real person and the real rooms, and
+every one is graded with the same numeric treatment.
+
+### 10.9 One focal point per section
+
+If a visitor can't say in one second what a section is about, the
+section has two focal points and one must go.
+
+### 10.10 Motion budget
+
+Maximum four motion moments per page. Each must be reversible, respect
+`prefers-reduced-motion`, and last ≤ 400 ms unless scroll-driven.
+Motion that only decorates is removed.
+
+### 10.11 Not everything lives in the container
+
+Full-bleed is a deliberate tool, not an accident. Per page:
+
+- at least two sections must break the container and touch both viewport
+  edges (dark bands, image-led sections, the map);
+- at most four, so the container's rhythm still reads as the default;
+- never two full-bleed sections adjacent — the contained sections
+  between them are what make the bleed legible;
+- a section that bleeds must have a reason: tonal punctuation, an image
+  that needs the width, or a surface that groups several blocks.
+
+Contained content inside a full-bleed surface still respects the
+container's inline padding — bleeding the background does not mean
+bleeding the text.
+
 ## 11. Decisions logged during Stage 3
 
 - **Google profile link:** the client chose a discreet outbound link to his Google
@@ -201,7 +297,7 @@ Do NOT hardcode tu or Lei into components.
 - **Crisis-support line:** required field in siteSettings, seeded with Italian 112 +
   Telefono Amico reference; must be genuinely readable in the footer, not tiny grey.
 
-## 10. Quality floor
+## 12. Quality floor
 
 Responsive to 360px; keyboard focus visible everywhere; WCAG AA contrast; single H1
 per page; landmarks (header/nav/main/footer); prefers-reduced-motion respected;
