@@ -245,9 +245,10 @@ typography are acceptable.
 
 ### 10.8 Photography standard
 
-No stock imagery. No staged sessions with actors. No AI-generated
-likenesses. Photographs are of the real person and the real rooms, and
-every one is graded with the same numeric treatment.
+Real photography only. No stock imagery, no AI-generated likenesses.
+The client's own commissioned session photographs are permitted
+(decision of 24.07.2026, agreed with the client); photographs of
+unrelated models presented as clients are not.
 
 ### 10.9 One focal point per section
 

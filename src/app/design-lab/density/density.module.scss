@@ -225,10 +225,8 @@
 
 // Real-image variant of .photoPlaceholder, same geometry (16:9,
 // --radius-l, full width) — used once a real asset exists instead of the
-// grey placeholder. V1: Chi sono's photo break uses this now, with the
-// existing square portrait cropped to a 16:9 letterbox via object-fit:
-// cover until a genuinely-shot landscape photo replaces it (see
-// page.tsx's own comment for the one-line swap).
+// grey placeholder. Chi sono's photo break uses this (see page.tsx's own
+// comment on portraitUrl for the asset itself).
 .photoFrame {
   position: relative;
   width: 100%;
@@ -237,9 +235,21 @@
   border-radius: var(--radius-l);
 }
 
+// Photo pass: source is 5000x2203 (≈2.27:1), wider than this frame's
+// 16:9 (≈1.78:1) — object-fit: cover only ever crops WIDTH here (the
+// source's full height already equals the frame's own need), so no
+// vertical framing decision exists, only horizontal. Measured (pixel-
+// scanned the source, not eyeballed): the subject spans roughly x=[24%,
+// 100%] of the source width — the crossed arm already touches the
+// photo's own right edge — with empty, uniform background filling the
+// left ~24%. A 16:9 crop needs ~78% of the source width, which leaves
+// only ~1083px of the ~1210px-wide empty margin to give up — anything
+// less than "the full right edge" (object-position-x ≈ 99.9%+) starts
+// clipping the arm. "right" keeps 100% of the subject with a small
+// (~128px) safety margin still visible on its left.
 .photoFrameImg {
   object-fit: cover;
-  object-position: 50% 22%;
+  object-position: right center;
 }
 
 .photoCaption {
