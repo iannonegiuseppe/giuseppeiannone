@@ -1,5 +1,97 @@
 @use "../../../styles/mixins";
 
+// Heading zone — same recipe Diplomi/Video already established: kicker
+// rule geometry reused verbatim from .kickerRule (chiSonoBlock.module.
+// scss), h2 weight 400 explicit + font-synthesis:none (set inline in the
+// .tsx), italic accent word. Surface itself comes from an OUTER wrapper
+// around this whole component's render site in DesignLabHomepage.tsx —
+// every class below reads GENERIC tokens only, so it re-tones with zero
+// edits here.
+//
+// Correction pass: reversed off ivory (tone.light-island-surface) onto
+// --color-surface (tone.tone-mid-surface, .toneMidWrap) — the same token
+// Sedi itself now sits on. The strip is semantically part of the map
+// block (same locations, its photos now drive map selection — see
+// LocationsMarquee's own onClick), so it shares Sedi's surface instead of
+// standing apart as its own tonal moment. The two read as one continuous
+// block now.
+//
+// Bugfix pass: this rule used to carry the internal Sedi -> Strip gap as
+// margin-top. Measured live and found genuinely broken: a child's margin,
+// with nothing in its containing chain (.stripSection had no padding-top/
+// border-top, .toneMidWrap has no padding/border at all) to block CSS
+// margin collapse, collapses straight through both ancestors and becomes
+// space BEFORE the wrapper's own painted box — outside where either
+// Sedi's or the strip's own background fills, exposing the page's raw
+// dark root background as a visible band. Confirmed: both wrappers
+// computed margin:0 individually, yet their edges differed by exactly
+// this value. Moved to .stripSection's own padding-top instead (below) —
+// padding is inside the box and can't collapse — same visual gap, now
+// actually filled by the surface colour.
+.headingZone {
+  margin-top: 0;
+}
+
+// Wrapper for this block's own outer <section> (DesignLabHomepage.tsx) —
+// NOT the shared density.module.scss .section: that class's own
+// padding-block (top AND bottom) would reintroduce the oversized gap an
+// earlier pass cut. Bottom padding + border-bottom (the Strip -> Contact
+// edge, unrelated to this fix) are kept. padding-top carries the internal
+// Sedi -> Strip gap (moved here from .headingZone's own margin-top, see
+// that rule's own comment for why) — real padding, filled by
+// .toneMidWrap's background, not a collapsible margin.
+.stripSection {
+  @include mixins.container;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-band-y);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.headingKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.headingKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  margin-top: -0.0625rem;
+  background: var(--color-line);
+}
+
+.headingH2 {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.headingAccent {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.headingIntro {
+  margin: var(--space-4) 0 0;
+  max-width: 40rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
 // Locations marquee (structure pass) — auto-scrolling photo row under the
 // Locations map. Card-width formula mirrors diplomiSlider.module.scss's
 // own idiom (same "container-relative, calc-based" reasoning, same 2-gap
@@ -97,6 +189,21 @@
   @include mixins.breakpoint-up(lg) {
     flex-basis: calc((100cqw - 2 * var(--space-5)) / 3.5);
   }
+}
+
+// Whole-card real <button> (fly-to-map trigger pass) — same "whole card is
+// a button" device Diplomi's own cards already use. Block, no default
+// button chrome; the photo + caption inside are purely visual.
+.itemButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 
   @include mixins.focus-ring;
 }
@@ -114,6 +221,7 @@
 }
 
 .caption {
+  display: block;
   margin: var(--space-3) 0 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
