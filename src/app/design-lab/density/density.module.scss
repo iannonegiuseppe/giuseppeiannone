@@ -504,6 +504,21 @@
   @include tone.tone-mid-surface;
 }
 
+// Diplomi — light-island pass: replaces .toneMidWrap for this section only.
+// Same mechanism Hope/Metodo/CTA bridge already use (tone.light-island-
+// surface), not a new one — theme-invariant ivory regardless of
+// /design-lab's own dark ambient default, same reasoning as every other
+// light-island consumer on this page. Minimal, like .hopeLightWrap/
+// .ctaBridgeLightWrap: DiplomiSlider's own outer <section> (density.module
+// .scss's shared .section, already used unmodified by the surrounding
+// wrapper before this pass) needs no vw100 full-bleed trick — this route's
+// own top-level sections already render unconstrained, the same reason
+// .toneMidWrap above never needed it either.
+.diplomiLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
 // tone-deep wrapper for CTA bridge / Video specifically — NOT the same
 // class as .richDarkWrap (used by Hope/Footer/Contact): those three real
 // components read var(--color-accent-contrast) (now correctly repinned —
@@ -527,6 +542,44 @@
 .toneDeepContent {
   position: relative;
   z-index: 1;
+}
+
+// CTA bridge light-island pass: .toneDeepSection/.toneDeepGrain/
+// .toneDeepContent above are SHARED with Video and Contact (see this
+// file's own comment further down) — mutating them for CTA bridge alone
+// would retone those two real components too. New, separately-named
+// class instead, same "shared device, one consumer needs to diverge ->
+// split, don't mutate" call already made repeatedly on this page
+// (.credentialsBand/-Light, .section/.metodoLightWrap, .toneMidWrap).
+// Minimal, like .hopeLightWrap: CtaBridgeBlock's own <section> already
+// paints its own full-width background directly (no container constraint
+// on the root itself, same as AreeSection/HopeSection), so no vw100
+// full-bleed trick is needed here either — just the mixin. No grain
+// layer: a flat light interlude has nothing to layer content above.
+.ctaBridgeLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// FAQ — light-island pass: replaces .toneMidWrap for this section only.
+// Same minimal mechanism as .diplomiLightWrap/.ctaBridgeLightWrap —
+// FaqSection's own accordion/dividers/toggle read --color-line/-hairline/
+// -text/-accent/-focus generically (confirmed by reading FaqSection
+// .module.scss directly), so they re-tone with zero edits to that file.
+.faqLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// Signature — light-island pass: the band itself has no wrapper today
+// (sits on the raw root). SignatureBandTuned's own fork
+// (signatureBandTuned.module.scss) repoints .signature's colour to a
+// token this mixin reassigns (--color-accent-hover) — this wrapper is
+// what makes that token resolve to the ivory-pass value in the first
+// place.
+.signatureLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
 }
 
 // Tonal-scale pass cleanup: the old bespoke Contact overlay mechanism
@@ -913,6 +966,74 @@
   object-fit: cover;
 }
 
+// Correction pass — diagnosis: the green showing above/below the reveal
+// was NOT the raw page root (case c) — it was case (a): the shared
+// .section class's own padding-block (var(--space-band-y), 96px measured
+// live) plus .fullBleedFrame's own margin-top (var(--space-6), 32px),
+// both transparent, both letting the root's dark background show through
+// INSIDE what should have been the image's own edge-to-edge band.
+// Confirmed live via getComputedStyle before touching anything: section
+// padding-top/-bottom both 96px, background transparent; fullBleedFrame
+// margin-top 32px. Neither .section nor .fullBleedFrame is edited — both
+// are shared, reused elsewhere on this page (.section by most other
+// sections, .fullBleedFrame by the Sedi map frame too, per its own
+// comment) — this section now uses its own wrapper instead of .section,
+// and its own fullBleedFrame instance gets a zero-margin override via
+// .spaceFrameFlush (a modifier class added alongside .fullBleedFrame in
+// the JSX, not a rewrite of it). Zero padding, zero border, zero margin —
+// the image runs into the sections either side with nothing between.
+.spaceSection {
+  position: relative;
+}
+
+.spaceFrameFlush {
+  margin-top: 0;
+}
+
+// CSS-only reveal (ParallaxFrameStatic.tsx) — "Lo spazio" only. New
+// classes, not a repurposing of .parallaxFrame/.parallaxFixedLayer above
+// (those stay exactly as they are — DensityPage.tsx still renders
+// .parallaxFrame via the original, JS-driven ParallaxFrame.tsx).
+//
+// Correction pass: was a fixed height: 160vh — now aspect-ratio: 10/4,
+// per direct instruction. The fixed image child + clip-path mechanic
+// below is unaffected by this: the frame's HEIGHT changes how much
+// scroll distance the reveal plays out over, not whether it works.
+.spaceParallaxFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 10 / 4;
+  overflow: hidden;
+  // clip-path is the operative property — it clips a position:fixed
+  // descendant to THIS box at paint time, across the containing-block
+  // boundary a fixed element would otherwise escape. overflow:hidden
+  // alone does not do this for a fixed child; kept alongside anyway as
+  // the belt-and-braces the brief itself asked for.
+  clip-path: inset(0);
+
+  @media (prefers-reduced-motion: reduce) {
+    height: auto;
+    aspect-ratio: var(--space-parallax-aspect, 16 / 9);
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+.spaceParallaxImage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  object-fit: cover;
+  pointer-events: none;
+
+  @media (prefers-reduced-motion: reduce) {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .spaceFrameB {
   margin-top: var(--space-6);
   display: grid;
@@ -1062,6 +1183,51 @@
   [class*="videoLead"] {
     color: var(--tone-deep-text);
   }
+}
+
+// Video light-island pass: NEW wrapper, same mechanism as
+// .diplomiLightWrap/.ctaBridgeLightWrap (tone.light-island-surface) —
+// .toneDeepSection/-Grain/-Content above are left untouched, still used
+// by Contact.
+.videoLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.videoLightContent {
+  position: relative;
+
+  // .videoKicker's shared `color: var(--color-accent)` would read the
+  // plain accent (#7e6b5b) — this pass wants the darkened
+  // --color-accent-hover (#715c52) instead, the same treatment Diplomi's
+  // own kicker already uses. .videoKickerRule needs no override: its own
+  // `background: var(--color-line)` already resolves correctly through
+  // light-island-surface's own reassignment of that token.
+  [class*="videoKicker"]:not([class*="videoKickerRule"]) {
+    color: var(--color-accent-hover);
+  }
+
+  // Play-triangle landmine (flagged in this pass's own proposal, measured
+  // before writing this): under light-island, --color-accent-contrast is
+  // repinned to --light-base-text (dark carbone) — correct for Hope/
+  // Credentials' own text-sitting-on-ivory use, wrong for a glyph sitting
+  // on the accent-coloured circle (measured ~2.77:1, below the 3:1 floor
+  // for a graphical UI object). This restores production's own unwrapped-
+  // light-theme pairing instead (--color-accent-contrast: var(--color-bg)
+  // at :root) — ivory on brown, ~4.59:1.
+  [class*="videoPlayerPlayTriangle"] {
+    border-left-color: var(--color-bg);
+  }
+}
+
+// Plate frame: reuses Diplomi's own card-frame recipe (a low-alpha
+// accent-tinted hairline, diplomiSlider.module.scss's own .card border) —
+// not a new device, the same one already living on this exact ivory
+// surface one section up. Radius matches --radius-l (VideoPlayer's own
+// radius) so this reads as one frame around the player, not a second box.
+.videoPlateFrame {
+  border-radius: var(--radius-l);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
 // --- "Static map frame" (simplified Section 07 for this pass — see the

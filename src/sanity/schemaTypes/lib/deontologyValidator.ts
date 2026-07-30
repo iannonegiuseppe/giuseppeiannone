@@ -60,3 +60,22 @@ export function deontologyCheckWithExtraWords(extraWords: string[]) {
     return checkAgainstWords(value, words);
   };
 }
+
+// Tariffe pass: "%" is banned above as a blunt proxy for outcome/comparison
+// claims ("supera il 90% dei casi") — correct for almost every field, but
+// it also catches the ONE genuinely factual, §9-permitted use of a percent
+// sign on the whole site: the 19% tax-deductibility rate for spesa
+// sanitaria (a legal fact, not an outcome claim). Rather than silently
+// bypass the validator for that field, or contort the copy to avoid a
+// percent sign a normal editor would obviously type, this is a narrow,
+// named, disclosed carve-out — same parameterization shape as
+// deontologyCheckWithExtraWords above, just subtracting instead of adding.
+// Every OTHER forbidden word (including the outcome/urgency/discount ones)
+// still applies in full; only the specific symbols passed in are exempted,
+// and only on the one field that opts in.
+export function deontologyCheckAllowingSymbols(exemptSymbols: string[]) {
+  const words = FORBIDDEN_WORDS.filter((word) => !exemptSymbols.includes(word));
+  return function deontologyCheckRelaxed(value: unknown): true | string {
+    return checkAgainstWords(value, words);
+  };
+}

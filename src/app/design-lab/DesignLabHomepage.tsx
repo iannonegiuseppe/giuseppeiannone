@@ -1,23 +1,19 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
-import NextImage from "next/image";
 import { AnimatedDivider } from "@/components/AnimatedDivider";
 import { AreeSection } from "@/components/AreeSection";
 import { FaqSection } from "@/components/FaqSection";
-import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import heroOverlapStyles from "@/components/HeroOverlap.module.scss";
 import { HopeSection } from "@/components/HopeSection";
 import { SignatureMark } from "@/components/Logo";
 import { LenisProvider } from "@/components/LenisProvider";
-import { LocationsSection, type SedeData } from "@/components/LocationsSection";
+import type { SedeData } from "@/components/LocationsSection";
+import { SediBlock } from "./density/SediBlock";
+import { SediMapProvider } from "./density/SediMapContext";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
-import {
-  type RealArticle,
-  ResourcesSection,
-} from "@/components/ResourcesSection";
 import { sanityFetch } from "@/sanity/client";
 import { resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
@@ -26,27 +22,29 @@ import {
   areeSectionQuery,
   ctaBridgeSectionQuery,
   homePageQuery,
-  latestArticlesQuery,
+  latestArticlesLabQuery,
   sedesQuery,
 } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
-import type { ResolvedQualification } from "@/components/DiplomiCardRow";
 import { imageDimensions, urlFor } from "@/sanity/image";
+import { ChiSonoBlock } from "./density/ChiSonoBlock";
 import { ContactBlock } from "./density/ContactBlock";
 import { CtaBridgeBlock } from "./CtaBridgeBlock";
-import { DiplomiSlider } from "./density/DiplomiSlider";
+import { DiplomiSlider, type DiplomiLabItem } from "./density/DiplomiSlider";
+import { FooterLab } from "./density/FooterLab";
 import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
 import { HeroVideoActions } from "./HeroVideoActions";
 import {
-  CHI_SONO,
-  METODO,
   THE_SPACE,
 } from "./density/content";
 import densityStyles from "./density/density.module.scss";
 import metodoStyles from "./density/metodo.module.scss";
 import { LocationsMarquee, type LocationsMarqueeItem } from "./density/LocationsMarquee";
+import marqueeStyles from "./density/locationsMarquee.module.scss";
 import { MetodoInteractive } from "./density/MetodoInteractive";
-import { ParallaxFrame } from "./density/ParallaxFrame";
+import { ParallaxFrameStatic } from "./density/ParallaxFrameStatic";
+import { PricingBlock } from "./density/PricingBlock";
+import { ResourcesLab, type RealArticleLab } from "./density/ResourcesLab";
 import { ScrambleValue } from "./density/ScrambleValue";
 import { SignatureBandTuned } from "./SignatureBandTuned";
 import { VideoBlock } from "./VideoBlock";
@@ -65,6 +63,12 @@ interface QualificationItemData {
   tier: "titolo" | "formazione_continua";
   document?: SanityImage;
   documentLqip?: string;
+  // Privacy-gate pair (see homePage.ts's own comment on these two fields).
+  // `document` above is untouched/unused by the new interactive-card
+  // logic — that logic reads scan/scanRedacted exclusively.
+  scan?: SanityImage;
+  scanRedacted?: boolean;
+  scanLqip?: string;
 }
 
 interface AreeSectionData {
@@ -137,6 +141,40 @@ interface HomePageData {
     alboLine?: string;
     items?: QualificationItemData[];
   };
+  // Copy pass: was hardcoded (content.ts's METODO constant) — now sourced
+  // from Sanity's own "metodo" field group, deliberately separate from
+  // "percorso" (which feeds the real, live JourneySection) — see
+  // homePage.ts's own comment on that field group for why.
+  metodo?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    paragraph?: string;
+    steps?: { title: string; shortLine: string }[];
+  };
+  // New pricing section (design-lab rebuild pass) — deliberately separate
+  // from "prezzi" (the real, still-gated PricingSection's own field group,
+  // whose layout is explicitly an open decision) — see homePage.ts's own
+  // "tariffe" field group comment for the full reasoning.
+  tariffe?: {
+    eyebrow?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    rows?: { mode: string; subline: string; price: string }[];
+    detailsItems?: string[];
+    detrazioneFootnote?: string;
+  };
+  // Full-bleed rebuild pass — was hardcoded (content.ts's CHI_SONO
+  // constant) — now sourced from Sanity's own "profilo" field group,
+  // deliberately separate from "chiSonoSection" (the real, live
+  // production singleton) — see homePage.ts's own comment on that field
+  // group for why.
+  profilo?: {
+    eyebrow?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    paragraphs?: string[];
+  };
   recognition?: {
     kicker?: string;
     heading?: string;
@@ -153,6 +191,19 @@ interface HomePageData {
     }[];
   };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
+  sediLab?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    intro?: string;
+    onlineSubLine?: string;
+  };
+  spaziLab?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    introLine?: string;
+  };
   risorse?: { kicker?: string; heading?: string; allArticlesLabel?: string };
   video?: {
     kicker?: string;
@@ -171,6 +222,12 @@ interface HomePageData {
     responseNote?: string;
     googleProfileLabel?: string;
     photo?: SanityImage;
+  };
+  contactLab?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    photoCaption?: string;
   };
   faq?: {
     kicker?: string;
@@ -209,8 +266,8 @@ export function buildDesignLabMetadata(title: string): Metadata {
 // public/interiors/interior-5.jpg (5 stock photos supplied, only 4
 // physical locations to fill).
 const INTERIOR_STOCK_FALLBACK: Record<string, string> = {
-  "addr-1_sede-milano": "/interiors/interior-1.jpg", // Milano · Citylife
-  "addr-2_sede-milano": "/interiors/interior-2.jpg", // Milano · Bicocca
+  "addr-1_sede-milano": "/interiors/interior-1.jpg", // Milano · Via Buonarroti
+  "addr-2_sede-milano": "/interiors/interior-2.jpg", // Milano · Via Trivulziana
   "addr-1_sede-monza": "/interiors/interior-3.jpg", // Monza
   "addr-2_sede-cernusco": "/interiors/interior-4.jpg", // Cernusco sul Naviglio
 };
@@ -247,15 +304,13 @@ export async function DesignLabHomepage({
         ["ctaBridgeSection"],
       ),
       getSiteSettings(LOCALE),
-      sanityFetch<RealArticle[]>(latestArticlesQuery, { locale: LOCALE }, [
+      sanityFetch<RealArticleLab[]>(latestArticlesLabQuery, { locale: LOCALE }, [
         "article",
       ]),
       sanityFetch<SedeData[]>(sedesQuery, { locale: LOCALE }, ["sede"]),
     ]);
 
-  const metodo = METODO.it;
   const theSpace = THE_SPACE.it;
-  const chiSonoText = CHI_SONO.it;
 
   const portraitUrl = "/design-lab/photos/01.webp";
   const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
@@ -264,26 +319,43 @@ export async function DesignLabHomepage({
   const roomPhotoAlt =
     "Lo studio: la finestra con vista sul verde, la scrivania con l'orchidea, durante una seduta.";
 
-  // Diplomi rebuild — same resolution DiplomiSection.tsx already does
-  // server-side for the real homepage (urlFor/imageDimensions), mirrored
-  // here rather than reinvented: DiplomiSlider (client) never touches
-  // Sanity image objects directly, same boundary the real component keeps.
-  const resolvedQualifications: ResolvedQualification[] = (homePage?.diplomi?.items ?? []).map(
-    (item) => {
-      const dims = item.document ? imageDimensions(item.document) : null;
-      return {
-        id: item._key,
-        year: item.year,
-        title: item.title,
-        institution: item.institution,
-        thumbnailUrl: item.document ? urlFor(item.document).width(440).format("webp").url() : undefined,
-        lightboxUrl: item.document ? urlFor(item.document).width(1400).format("webp").url() : undefined,
-        lightboxLqip: item.documentLqip,
-        width: dims?.width ?? 1400,
-        height: dims?.height ?? 1980,
-      };
-    },
-  );
+  // Privacy-gate pass: interactivity is computed HERE, server-side, from
+  // scan + scanRedacted — never left to the client to infer, and never
+  // read from `document` (the older, separate field this array item type
+  // also carries — untouched, unused by this logic; see homePage.ts's own
+  // comment). lightboxUrl is a URL STRING built with urlFor, which is a
+  // free string construction, not a network request — the actual fetch
+  // only happens once an <Image>/<img> element pointing at it is mounted,
+  // which DiplomiSlider's own lightbox only does after first open (see
+  // that file's own comment) — this is what keeps "not on page load, not
+  // on hover" true despite computing the URL for every interactive item
+  // eagerly here. Capped at 2000px per this pass's own spec (was 1400px
+  // under the old `document`-based resolution) — the source scans run
+  // ~5000px wide, so this is still a real reduction, not just a
+  // width-router formality. scanLqip (a tiny inline base64 data URI from
+  // Sanity's own asset metadata, already present in the page's own JSON
+  // payload — not a discrete network request) is what the hover-crop
+  // reads instead of a real image fetch, satisfying "no scan image
+  // requested … on hover" literally: the browser's network panel shows
+  // nothing for it, because there's nothing to show.
+  const diplomiLabItems: DiplomiLabItem[] = (homePage?.diplomi?.items ?? []).map((item) => {
+    const interactive = Boolean(item.scan) && item.scanRedacted === true;
+    const dims = item.scan ? imageDimensions(item.scan) : null;
+    return {
+      id: item._key,
+      year: item.year,
+      title: item.title,
+      institution: item.institution,
+      interactive,
+      scanLqip: interactive ? item.scanLqip : undefined,
+      lightboxUrl:
+        interactive && item.scan
+          ? urlFor(item.scan).width(2000).quality(82).format("webp").url()
+          : undefined,
+      width: dims?.width ?? 1400,
+      height: dims?.height ?? 1980,
+    };
+  });
 
   // Photo-swap pass: light-background portrait (03, gallery wall) replaces
   // the old dark-background one (04) — Welcome's photo panel only, per
@@ -315,15 +387,36 @@ export async function DesignLabHomepage({
   // map becomes dead weight — safe to delete then, not before. Also
   // registered in docs/pre-launch.md.
   const marqueeItems: LocationsMarqueeItem[] = [];
+  // Photo-strip intro-line gate (this pass): true only once EVERY item
+  // pushed below came from a real addr.photo, not the interim stock
+  // fallback — see LocationsMarquee.tsx's own comment for why. Starts
+  // true, flips to false the first time a stock fallback is actually used;
+  // also forced false below if the strip ends up empty.
+  let allPhotosReal = true;
+  // Correction pass: addr.district on the two Milano addresses holds the
+  // name of the third-party medical centre hosting each studio — dropped
+  // from this caption entirely (matches SediBlock.tsx's own fix to the
+  // list/popup side of the same data). The two Milano captions are given
+  // verbatim by this pass's own brief (street-based, not derived from the
+  // address string — "Piazza della Trivulziana 4/A" reads as "VIA
+  // TRIVULZIANA" in the caption, which a mechanical derivation would get
+  // wrong), so they're a small, explicit lookup rather than a district
+  // fallback. Monza/Cernusco keep their existing city-only caption (no
+  // district either way).
+  const MILANO_STREET_CAPTION: Record<string, string> = {
+    "Via Michelangelo Buonarroti 41": "Milano · Via Buonarroti",
+    "Piazza della Trivulziana 4/A": "Milano · Via Trivulziana",
+  };
   for (const sede of sedes ?? []) {
     if (sede.isOnline) continue; // no physical interior to show
     for (const addr of sede.addresses ?? []) {
-      const name = addr.district ? `${sede.city} · ${addr.district}` : sede.city;
+      const name = MILANO_STREET_CAPTION[addr.address] ?? sede.city;
       const fallbackKey = `${addr._key}_${sede._id}`;
       const photoUrl = addr.photo
         ? urlFor(addr.photo).width(640).format("webp").url()
         : INTERIOR_STOCK_FALLBACK[fallbackKey];
       if (!photoUrl) continue;
+      if (!addr.photo) allPhotosReal = false;
       marqueeItems.push({
         id: `${sede._id}-${addr._key}`,
         name,
@@ -332,6 +425,7 @@ export async function DesignLabHomepage({
       });
     }
   }
+  if (marqueeItems.length === 0) allPhotosReal = false;
 
   return (
     <>
@@ -588,14 +682,39 @@ export async function DesignLabHomepage({
             >
               <p className={metodoStyles.eyebrow}>
                 <span className={metodoStyles.eyebrowRule} aria-hidden="true" />
-                Il percorso
+                {homePage?.metodo?.kicker ?? ""}
               </p>
               <h2 id="metodo-heading" className={metodoStyles.heading}>
-                {renderHeadingEmphasis(metodo.heading, metodo.headingEmphasis, metodoStyles.headingEmphasis!)}
+                {renderHeadingEmphasis(
+                  homePage?.metodo?.heading ?? "",
+                  homePage?.metodo?.headingEmphasisWord ?? "",
+                  metodoStyles.headingEmphasis!,
+                )}
               </h2>
 
-              <MetodoInteractive steps={metodo.steps} />
+              <MetodoInteractive steps={homePage?.metodo?.steps ?? []} />
             </section>
+          </div>
+
+          {/* 7b. Tariffe — tone-mid, the SAME mechanism Aree already uses
+            (tone.tone-mid-surface via .toneMidWrap), reused rather than a
+            new one. Sits between Metodo (light) and CTA bridge (deep) so
+            no two adjacent sections share a tone — see this pass's own
+            report for the full alternation table. PricingBlock is a new,
+            self-painted full-width component (AreeSection's own
+            structural pattern), so — unlike Metodo — needs no extra
+            full-bleed wrapper beyond .toneMidWrap itself. */}
+          <div className={densityStyles.toneMidWrap}>
+            <RevealOnScroll>
+              <PricingBlock
+                eyebrow={homePage?.tariffe?.eyebrow ?? ""}
+                heading={homePage?.tariffe?.heading ?? ""}
+                headingEmphasisWord={homePage?.tariffe?.headingEmphasisWord}
+                rows={homePage?.tariffe?.rows ?? []}
+                detailsItems={homePage?.tariffe?.detailsItems ?? []}
+                detrazioneFootnote={homePage?.tariffe?.detrazioneFootnote ?? ""}
+              />
+            </RevealOnScroll>
           </div>
 
           {/* 8. CTA bridge */}
@@ -605,66 +724,49 @@ export async function DesignLabHomepage({
               titleEmphasis={ctaBridge?.titleEmphasis}
               body={ctaBridge?.body ?? ""}
               linkLabel={ctaBridge?.linkLabel ?? ""}
+              locale={LOCALE}
             />
           </RevealOnScroll>
 
-          {/* 9. Chi sono */}
-          <section
-            className={densityStyles.section}
-            aria-labelledby="chi-sono-heading"
-          >
-            <RevealOnScroll>
-              <h2 id="chi-sono-heading" className={densityStyles.heading}>
-                {chiSonoText.title}{" "}
-                <em className={densityStyles.emphasis}>{chiSonoText.emphasis}</em>
-                {chiSonoText.titleEnd}
-              </h2>
+          {/* 9. Chi sono (Profilo) — full-bleed rebuild, own component:
+            background photo + scrim + mirrored reveal, no tone wrapper
+            (stays on the page's own ambient dark theme). See
+            ChiSonoBlock.tsx's own comment for the reuse-vs-new call and
+            the reveal mechanism. */}
+          <ChiSonoBlock
+            eyebrow={homePage?.profilo?.eyebrow ?? ""}
+            heading={homePage?.profilo?.heading ?? ""}
+            headingEmphasisWord={homePage?.profilo?.headingEmphasisWord}
+            paragraphs={homePage?.profilo?.paragraphs ?? []}
+            photoUrl={portraitUrl}
+            photoAlt={portraitAlt}
+          />
 
-              <div className={densityStyles.chiSonoColumns}>
-                <div className={densityStyles.chiSonoColumn}>
-                  {chiSonoText.paragraphsBeforePhoto.map((p) => (
-                    <p key={p} className={densityStyles.paragraph}>
-                      {p}
-                    </p>
-                  ))}
-                </div>
-                <div className={densityStyles.chiSonoColumn}>
-                  {chiSonoText.paragraphsAfterPhoto.map((p) => (
-                    <p key={p} className={densityStyles.paragraph}>
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              </div>
+          {/* 10. Diplomi (slider) — light-island pass: was tone-mid (a dark-
+            on-dark card row that read as near-invisible against its own
+            surround), now ivory via .diplomiLightWrap (density.module.scss,
+            tone.light-island-surface — same mechanism Hope/Metodo/CTA
+            bridge already use). data-tone="mid" removed — that attribute
+            drove diplomiSlider.module.scss's own [data-tone="mid"]
+            overrides for .frame/.yearWatermark alpha, tuned specifically
+            for tone-mid's warm-tan background; without it, both fall back
+            to their own base values, which were already commented "tuned
+            against tone-base (ivory)" — exactly this surface.
 
-              <figure className={densityStyles.photoBreak}>
-                <div className={densityStyles.photoFrame}>
-                  <NextImage
-                    src={portraitUrl}
-                    alt={portraitAlt}
-                    fill
-                    sizes="(min-width: 82.5rem) 1224px, 100vw"
-                    className={densityStyles.photoFrameImg}
-                  />
-                </div>
-              </figure>
-            </RevealOnScroll>
-          </section>
-
-          {/* 10. Diplomi (slider) — tone-mid. Full-bleed outer (background)
-            + container-width inner (content), same split Hope/Credentials/
-            Aree/FAQ all use — NOT .toneMidWrap directly on the .section
-            element itself, which would only tint the container's own
-            centered box (mixins.container's max-width), not the viewport
-            edges, since .section already includes that constraint.
-            Per-tone watermark/frame alpha handled inside
-            diplomiSlider.module.scss itself via [data-tone] scoping. */}
-          <div className={densityStyles.toneMidWrap} data-tone="mid">
+            Heading-zone pass: kicker/heading/intro/Albo-line copy is now
+            HARDCODED inside DiplomiSlider.tsx itself, not read from
+            homePage.diplomi.kicker/.heading/.alboLine — those three fields
+            DO exist in the schema, but they're the SAME fields the real,
+            production DiplomiSection reads (src/app/[locale]/page.tsx:
+            kicker={homePage?.diplomi?.kicker}, etc.) — patching them to
+            this pass's new draft copy would change what's live on the real
+            site, not just this preview. See DiplomiSlider.tsx's own
+            comment for the full reasoning and the hardcoded strings. */}
+          <div className={densityStyles.diplomiLightWrap}>
             <section className={densityStyles.section} aria-labelledby="diplomi-block-heading">
               <DiplomiSlider
                 headingId="diplomi-block-heading"
-                alboLine={homePage?.diplomi?.alboLine}
-                qualifications={resolvedQualifications}
+                items={diplomiLabItems}
               />
             </section>
           </div>
@@ -682,32 +784,67 @@ export async function DesignLabHomepage({
             />
           </RevealOnScroll>
 
-          {/* 12. Locations (map) */}
-          <RevealOnScroll>
-            <LocationsSection
-              kicker={homePage?.sedi?.kicker ?? ""}
-              heading={homePage?.sedi?.heading ?? ""}
-              paragraph={homePage?.sedi?.paragraph}
-              sedes={sedes}
-              locale={LOCALE}
-            />
-          </RevealOnScroll>
+          {/* 12. Sedi (map) — light-surface pass: mid-tone green
+            (.sediWrap, sediSection.module.scss, tone.tone-mid-surface —
+            the SAME token/mixin the strip already used before this pass).
+            Forked from the shared LocationsSection (SediBlock/
+            SediInteractive/SediMap/SediPopupContent) — see SediBlock.tsx's
+            own comment for why: homePage.sedi/sede documents are read by
+            the real production route too, and this pass's changes (new
+            copy, popup weighting, address-list affordance, restored
+            attribution) would otherwise leak there. SediMapProvider is
+            the shared activeId source for both this block and the photo
+            strip below (part (d) of this pass's own proposal — a strip
+            photo click flies the map to that location, same as clicking
+            its address). */}
+          <SediMapProvider>
+            <RevealOnScroll>
+              <SediBlock
+                kicker={homePage?.sediLab?.kicker ?? ""}
+                heading={homePage?.sediLab?.heading ?? ""}
+                headingEmphasisWord={homePage?.sediLab?.headingEmphasisWord}
+                intro={homePage?.sediLab?.intro}
+                onlineSubLine={homePage?.sediLab?.onlineSubLine}
+                sedes={sedes}
+                locale={LOCALE}
+              />
+            </RevealOnScroll>
 
-          {/* 13. Locations marquee (NEW) — tone-mid. Caption color comes
-            from --color-accent-hover already (locationsMarquee.module.scss),
-            which the tone-mid wrapper reassigns to --tone-mid-accent-small
-            automatically — no edit needed in that file. */}
-          <div className={densityStyles.toneMidWrap}>
-            <section className={densityStyles.section} aria-label="Le sedi in fotografia">
-              <LocationsMarquee items={marqueeItems} />
-            </section>
-          </div>
+            {/* 13. Photo strip — correction pass: reversed off ivory back
+              onto Sedi's own mid-tone surface (.toneMidWrap, the same
+              shared class/token every other tone-mid consumer on this
+              page uses) — the strip is semantically part of the map
+              block, not its own tonal moment; see LocationsMarquee's own
+              top comment. Wrapping <section> uses the new .stripSection
+              (locationsMarquee.module.scss) instead of the shared
+              .section, so no top padding re-introduces the gap this pass
+              cuts. */}
+            <div className={densityStyles.toneMidWrap}>
+              <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
+                <LocationsMarquee
+                  kicker={homePage?.spaziLab?.kicker ?? ""}
+                  heading={homePage?.spaziLab?.heading ?? ""}
+                  headingEmphasisWord={homePage?.spaziLab?.headingEmphasisWord}
+                  introLine={homePage?.spaziLab?.introLine}
+                  allPhotosReal={allPhotosReal}
+                  items={marqueeItems}
+                />
+              </section>
+            </div>
+          </SediMapProvider>
 
-          {/* 14. Contact final — tone-deep */}
+          {/* 14. Contact final — light-surface pass: reversed off tone-deep
+            onto light-island (.contactLightWrap, contactBlock.module.scss),
+            the last dark section on this page per that pass's own brief.
+            contactLab is this block's own independent kicker/heading/
+            caption field group (separate from the shared finalCta above,
+            same reasoning as sediLab/spaziLab) — googleProfileLabel is the
+            one field still read from finalCta, untouched by this pass. */}
           <ContactBlock
-            kicker={homePage?.finalCta?.kicker ?? ""}
-            heading={homePage?.finalCta?.heading ?? ""}
-            body={homePage?.finalCta?.body ?? ""}
+            kicker={homePage?.contactLab?.kicker ?? ""}
+            heading={homePage?.contactLab?.heading ?? ""}
+            headingEmphasisWord={homePage?.contactLab?.headingEmphasisWord}
+            photoCaption={homePage?.contactLab?.photoCaption ?? ""}
             googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
             googleProfileUrl={siteSettings?.googleProfileUrl}
             locale={LOCALE}
@@ -715,57 +852,56 @@ export async function DesignLabHomepage({
             photoAlt={contactPhotoAlt}
           />
 
-          {/* 15. Parallax (Lo spazio) — full-bleed frame keeps its own
-            scroll mechanic untouched; heading/text above it gets the
-            shared reveal. */}
-          <section
-            className={densityStyles.section}
-            aria-labelledby="lo-spazio-heading"
-          >
-            <RevealOnScroll>
-              <p className={densityStyles.metodoKicker} id="lo-spazio-heading">
-                {theSpace.kicker}
-              </p>
-
-              <div className={densityStyles.spaceBlock}>
-                <div className={densityStyles.spaceText}>
-                  <h3 className={densityStyles.spaceHeading}>
-                    {theSpace.blocks[0]?.heading}
-                  </h3>
-                  <p className={densityStyles.spaceParagraph}>
-                    {theSpace.blocks[0]?.paragraph}
-                  </p>
-                </div>
-              </div>
-            </RevealOnScroll>
-            <figure className={densityStyles.fullBleedFrame}>
-              <ParallaxFrame
+          {/* 15. "Lo spazio" — CSS-only reveal pass. Image only, per this
+            pass's own brief: the kicker/heading/paragraph and the photo
+            caption are no longer rendered here. THE_SPACE's own data
+            (content.ts) and roomPhotoUrl/roomPhotoAlt above are untouched —
+            still hardcoded, not CMS, exactly as they were before this
+            pass (see this pass's own report on where they live); this is
+            a presentation-only change, nothing deleted.
+            aria-labelledby dropped along with the heading it pointed
+            to — pointing it at a removed id would be a dangling
+            reference, not a preserved one.
+            Height/edges correction pass: was the shared .section (its own
+            padding-block + .fullBleedFrame's own margin-top were what let
+            the raw root show through above/below — see density.module.
+            scss's own comment). Now .spaceSection (no padding, no
+            border) + .fullBleedFrame with the .spaceFrameFlush modifier
+            (zero margin) — .section and .fullBleedFrame themselves stay
+            exactly as they are for every other consumer. */}
+          <section className={densityStyles.spaceSection}>
+            <figure className={`${densityStyles.fullBleedFrame} ${densityStyles.spaceFrameFlush}`}>
+              <ParallaxFrameStatic
                 aspect={theSpace.blocks[0]?.aspect}
-                label={`Frame A — ${theSpace.blocks[0]?.aspect}`}
                 imageUrl={roomPhotoUrl}
                 imageAlt={roomPhotoAlt}
               />
             </figure>
-            <p className={densityStyles.photoCaption}>
-              Lo studio: la finestra, la scrivania, l&apos;orchidea.
-            </p>
           </section>
 
-          {/* 16. Blog / Risorse */}
-          <RevealOnScroll>
-            <ResourcesSection
-              kicker={homePage?.risorse?.kicker ?? ""}
-              heading={homePage?.risorse?.heading ?? ""}
-              locale={LOCALE}
-              realArticles={realArticles}
-              allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
-            />
-          </RevealOnScroll>
-
-          {/* 17. FAQ — tone-mid. Same wrapper mechanism as Aree: FaqSection's
-            own accordion dividers/expand icons read --color-line/-hairline/
-            -accent generically, so they re-tone with zero edits there. */}
+          {/* 16. Blog / Risorse — overlay-hero pass: light-green surface
+            (tone-mid, the same .toneMidWrap mechanism Aree/FAQ/Sedi use),
+            ResourcesLab is an independent fork (see that file's own top
+            comment) — the real, shared ResourcesSection/ResourceColumn/
+            FeaturedResource are all untouched. */}
           <div className={densityStyles.toneMidWrap}>
+            <RevealOnScroll>
+              <ResourcesLab
+                kicker={homePage?.risorse?.kicker ?? ""}
+                heading={homePage?.risorse?.heading ?? ""}
+                locale={LOCALE}
+                realArticles={realArticles}
+                allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
+              />
+            </RevealOnScroll>
+          </div>
+
+          {/* 17. FAQ — light-island pass: was .toneMidWrap, now
+            .faqLightWrap (see density.module.scss's own comment). Wrapper
+            swap only — FaqSection.tsx/.module.scss/FaqAccordion.tsx are
+            all untouched, every colour they read is generic and already
+            covered by light-island-surface's reassignment list. */}
+          <div className={densityStyles.faqLightWrap}>
             <RevealOnScroll>
               <FaqSection
                 kicker={homePage?.faq?.kicker ?? ""}
@@ -777,31 +913,42 @@ export async function DesignLabHomepage({
             </RevealOnScroll>
           </div>
 
-          {/* 18. Signature */}
-          <RevealOnScroll>
-            <SignatureBandTuned />
-          </RevealOnScroll>
+          {/* 18. Signature — light-island pass: previously unwrapped (raw
+            root). SignatureBandTuned now reads its own fork
+            (signatureBandTuned.module.scss) whose .signature colour
+            depends on this wrapper's retoning. Reveal mechanism itself
+            (the --reveal listener, rAF throttle, ResizeObserver,
+            fallback timeouts) is untouched. */}
+          <div className={densityStyles.signatureLightWrap}>
+            <RevealOnScroll>
+              <SignatureBandTuned />
+            </RevealOnScroll>
+          </div>
         </main>
 
-        {/* 19. Footer */}
-        <div className={densityStyles.richDarkWrap}>
-          <div className={densityStyles.richDarkGrain} aria-hidden="true" />
-          <div className={densityStyles.richDarkContent}>
-            <Footer
-              locale={LOCALE}
-              authorName={siteSettings?.author?.name ?? ""}
-              authorCredentials={siteSettings?.author?.credentials}
-              authorRegistrationNumber={
-                siteSettings?.author?.registrationNumber
-              }
-              contactChannels={siteSettings?.contactChannels}
-              piva={siteSettings?.piva}
-              sedes={sedes}
-              crisisSupportText={siteSettings?.crisisSupportText}
-              googleProfileUrl={siteSettings?.googleProfileUrl}
-              socialLinks={siteSettings?.socialLinks}
-            />
-          </div>
+        {/* 19. Footer — tone-mid pass: dark, on the lighter green
+          (--color-surface via .toneMidWrap, same mechanism Sedi/Spazi/
+          Risorse already use), replacing the old richDarkWrap/
+          richDarkGrain/richDarkContent triad (rich-dark-surface gradient +
+          grain + tone-deep-foreground). FooterLab is an independent fork
+          (see that file's own top comment) — the real, shared Footer.tsx/
+          Footer.module.scss are untouched. */}
+        <div className={densityStyles.toneMidWrap}>
+          <FooterLab
+            locale={LOCALE}
+            authorName={siteSettings?.author?.name ?? ""}
+            authorCredentials={siteSettings?.author?.credentials}
+            authorRegistrationNumber={
+              siteSettings?.author?.registrationNumber
+            }
+            contactChannels={siteSettings?.contactChannels}
+            piva={siteSettings?.piva}
+            sedes={sedes}
+            crisisSupportText={siteSettings?.crisisSupportText}
+            emergencyContacts={siteSettings?.emergencyContacts}
+            googleProfileUrl={siteSettings?.googleProfileUrl}
+            socialLinks={siteSettings?.socialLinks}
+          />
         </div>
       </div>
     </LenisProvider>

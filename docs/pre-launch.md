@@ -7,6 +7,28 @@ that, then delete the line here.
 
 ## Must fix before launch
 
+- **Profilo (Chi sono full-bleed rebuild) copy (homePage-it/-en) is
+  DRAFT, not approved.** `scripts/patch-profilo-copy.ts` — new `profilo`
+  field group (eyebrow, heading, headingEmphasisWord, three paragraphs).
+  Deliberately separate from `chiSonoSection` (the real, live production
+  singleton) — see `homePage.ts`'s own comment on `profilo` for why. Per
+  the client's own explicit request, the personal-experience material
+  (the Siena 2001 panic-attack paragraph, the Amsterdam/own-therapy
+  paragraph, the old "Conosco l'ansia da vicino" heading) is dropped
+  entirely — three professional-fact paragraphs only. §9-checked via the
+  actual `deontologyCheck` validator for IT; EN checked by hand (EN
+  paragraphs reuse `content.ts`'s own existing, already-drafted
+  `paragraphsAfterPhoto` translations verbatim, not retranslated from
+  scratch). Reversal: once Giuseppe reviews and approves (or rewrites)
+  both languages, delete this line.
+- **CTA bridge body copy (ctaBridgeSection-it/-en) is DRAFT, not
+  approved.** `scripts/patch-cta-bridge-body.ts` — replaces the old
+  `[segnaposto]`/`[placeholder]` body text. Title/titleEmphasis/linkLabel
+  are unchanged. "Rispondo entro 24 ore" is a commitment the client
+  explicitly confirmed he can keep. §9-checked via the actual
+  `deontologyCheck` validator for IT; EN checked by hand. Reversal: once
+  Giuseppe reviews and approves (or rewrites) both languages, delete this
+  line.
 - **Hero headline/description copy (homePage-it/-en) is DRAFT, not
   approved.** `scripts/patch-hero-copy-2.ts` — set via that script, not
   written in Studio by Giuseppe. It's real, finished-reading prose (name,
@@ -42,6 +64,35 @@ that, then delete the line here.
   sourced from Sanity. §9-checked via the actual `deontologyCheck`
   validator for IT; EN checked by hand. Reversal: once Giuseppe reviews the
   eyebrow/heading/caption wording, delete this line.
+- **Metodo copy (homePage-it/-en) is DRAFT, not approved.**
+  `scripts/patch-metodo-copy.ts` — new `metodo` field group (kicker,
+  heading, headingEmphasisWord, paragraph, the four step titles +
+  descriptions). Deliberately separate from `percorso` (the real, live
+  JourneySection's own field group) — see `homePage.ts`'s own comment on
+  `metodo` for why reusing `percorso` directly wasn't safe. Step titles
+  are the pre-existing wording, unchanged; only the four step descriptions
+  are new copy replacing the old `[segnaposto]`/`[placeholder]` markers.
+  §9-checked via the actual `deontologyCheck` validator for IT; EN checked
+  by hand. Reversal: once Giuseppe reviews and approves (or rewrites) both
+  languages, delete this line.
+- **Tariffe copy (homePage-it/-en) is DRAFT, not approved.**
+  `scripts/patch-tariffe-copy.ts` + `scripts/patch-tariffe-footnote.ts` +
+  `scripts/patch-tariffe-details-line.ts` — `tariffe` field group
+  (eyebrow, heading, the two pricing rows, `detailsItems` — a single
+  flowing details line, one phrase per practical fact, replacing an
+  earlier 4-column label/value block that itself replaced the original
+  layout — plus `detrazioneFootnote`, unchanged since it was first added:
+  the deduction's traceable-payment condition, always rendered below the
+  details line so the fact is never presented as unconditional).
+  Deliberately separate from `prezzi` (the real, still-gated
+  `PricingSection.tsx`, whose own layout is explicitly an open decision)
+  — see `homePage.ts`'s own comment on `tariffe` for why. The 4th
+  `detailsItems` entry (the 19% deduction fact) is the one item on the
+  whole schema validated with `deontologyCheckAllowingSymbols(["%"])`
+  instead of the plain `deontologyCheck` — see that helper's own comment
+  in `deontologyValidator.ts` for why. §9-checked via the actual
+  validator for IT; EN checked by hand. Reversal: once Giuseppe reviews
+  and approves (or rewrites) both languages, delete this line.
 - **Leaflet map attribution is hidden.** `src/app/[locale]/globals.scss`
   — `.leaflet-control-attribution { display: none !important; }`,
   commented `TEMPORARY — preview only`. Attribution is a licence

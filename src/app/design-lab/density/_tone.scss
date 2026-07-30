@@ -118,6 +118,22 @@
 // -text-muted/-hairline/-line, so this changes nothing for them.
 // First and currently only consumer: Hope (originally), now Metodo too —
 // reusable for any future section, per this mixin's own original intent.
+//
+// Extended AGAIN this pass (CTA bridge): --color-focus. Real gap found
+// live, not assumed — _tokens.scss defines --color-focus as a genuinely
+// per-theme literal (#715c52 light / #c29a5e dark champagne), the SAME
+// shape as --color-bg/-text/etc above, not a self-referential alias of
+// --color-accent — so it was never swept up by any earlier pass here.
+// Went uncaught this long because no earlier light-island consumer
+// (Hope, Credentials, Metodo) has a real focusable interactive element
+// inside its own light-scoped subtree; CTA bridge's new Button is the
+// first. Without this line, :focus-visible on that button rendered the
+// DARK theme's champagne ring on an ivory surface built on /design-lab's
+// dark-theme default — wrong colour, still findable, but not this
+// scope's own accent. --light-base-accent-hover already holds the exact
+// literal light value (#715c52, checked byte-for-byte against
+// --color-focus's own light :root definition) — reused rather than
+// adding a redundant fourth theme-invariant token for the same hex.
 @mixin light-island-surface {
   background: var(--light-base-bg);
   color: var(--light-base-text);
@@ -126,6 +142,7 @@
   --color-text-muted: var(--light-base-muted);
   --color-hairline: var(--light-base-hairline);
   --color-line: var(--light-base-line);
+  --color-focus: var(--light-base-accent-hover);
   --hope-section-bg: var(--light-base-bg);
   --color-accent-contrast: var(--light-base-text);
   --hope-emphasis-color: var(--light-base-accent);

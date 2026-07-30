@@ -147,6 +147,31 @@ $z-index: (
   // buttons) — the brief specifically calls for "ivory text", not plain
   // white, so this reuses --color-bg rather than a separate hardcoded value.
   --color-accent-contrast: var(--color-bg);
+  // CTA bridge light-island pass: --theme-accent/-accent-contrast capture
+  // THIS theme's own --color-accent/-accent-contrast at the theme root,
+  // immune to any later local hijack (tone-mid-surface, tone-deep-
+  // foreground, light-island-surface all reassign --color-accent/
+  // -accent-contrast for their own scopes — none of them touch these two
+  // new names). Declared identically in both theme root blocks (this one
+  // and .themeDark's own, below) so a component that deliberately needs
+  // "the page's ACTUAL active-theme accent, regardless of the local
+  // tonal scope it happens to sit inside" has a correct, theme-aware
+  // escape hatch — not a hardcoded direction, which would break on the
+  // /design-lab/light-mode variant. First consumer: CtaBridgeBlock's own
+  // Button, which needed to match Welcome's Button exactly (Welcome's
+  // own tone-base scope never hijacks --color-accent, so it already
+  // reads the ambient theme's real accent for free; CTA bridge's new
+  // light-island scope does hijack it, so its Button opts back out via
+  // these two tokens instead).
+  --theme-accent: var(--color-accent);
+  --theme-accent-contrast: var(--color-accent-contrast);
+  // --color-focus isn't a simple alias of --color-accent on either theme
+  // (light: equals --color-accent-hover's value; dark: equals
+  // --color-accent's value — the two themes don't share the same
+  // underlying relationship), so --theme-accent can't stand in for it —
+  // needs its own theme-root capture, same reasoning as --theme-accent
+  // itself, just for this token instead.
+  --theme-focus: var(--color-focus);
   // Foreground for an icon/label sitting on a --color-text-tinted overlay
   // (VideoPlayer's control-bar scrim: color-mix(--color-text, 65%)) — a
   // DIFFERENT role from --color-accent-contrast even though they start
@@ -329,6 +354,15 @@ $z-index: (
   // — flagged, not silently papered over.
   --fs-display-sm: clamp(3rem, 2.7rem + 1vw, 3.25rem); // EB Garamond 400
   --lh-display-sm: 1.15;
+  // CTA bridge two-column pass: the heading now carries its own column
+  // alone (no kicker/body directly beside it, per that pass's own brief),
+  // needing one modest step above --fs-display (2.5rem-3.75rem, the
+  // hero's own H1 size) rather than reusing it verbatim — same "one real
+  // step up" reasoning --fs-h2-lg/--fs-display-sm were each added for
+  // earlier, just at the top of the scale instead of the middle. ~7%
+  // larger at every width, not a second hero-sized jump.
+  --fs-display-lg: clamp(2.75rem, 5.25vw, 4rem); // EB Garamond 400
+  --lh-display-lg: 1.15;
   --fs-h3: 1.375rem; // Source Sans 3 400 (not EB Garamond — too small at this size)
   --lh-h3: 1.3;
   --fs-body-lg: 1.125rem; // Source Sans 3 400, intro paragraphs
@@ -618,6 +652,11 @@ $z-index: (
   // different existing values underneath.
   --color-accent-light: var(--color-accent-hover);
   --color-accent-deep: var(--color-accent-hover);
+  // See the light theme's own comment on --theme-accent/-accent-contrast
+  // (base :root, above) — re-declared here so dark theme's OWN accent/
+  // contrast are what gets captured when THIS theme is active.
+  --theme-accent: var(--color-accent);
+  --theme-accent-contrast: var(--color-accent-contrast);
   // Cyprus reconciliation pass: this gradient feeds rich-dark-surface
   // (_tone.scss) — the mixin every REAL tone-deep section (Hope,
   // Credentials, Contact, Footer, CTA bridge, Video) paints its
@@ -643,6 +682,10 @@ $z-index: (
   // Cyprus's own --text-soft role (rgba(239,233,219,0.72)) exactly.
   --color-text-muted: hsla(42, 38%, 90%, 0.72);
   --color-focus: #c29a5e; // champagne — checked 7.17:1 on --color-bg
+  // See the light theme's own comment on --theme-focus (base :root,
+  // above) — re-declared here so dark theme's OWN --color-focus is what
+  // gets captured when THIS theme is active.
+  --theme-focus: var(--color-focus);
   // --color-accent-contrast already aliases var(--color-bg) in :root — once
   // --color-bg flips dark here, solid-gold-fill buttons automatically get
   // DARK text, not light. Checked: seaDeep-on-gold 6.07:1 vs. white-on-gold

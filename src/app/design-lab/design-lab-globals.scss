@@ -85,18 +85,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-// V6 fix: /design-lab now renders the real Sedi/LocationsSection (its
-// real interactive map), which showed its Leaflet attribution chip here
-// even though [locale]/globals.scss already hides it site-wide
-// (unconditionally, marked "TEMPORARY — preview only... MUST be restored
-// before launch" — this route's own globals file is separate from that
-// one, so it never inherited the rule). Same rule, same reasoning,
-// mirrored here rather than in the real file — this route is equally
-// pre-launch/preview, and MUST be restored before launch in lockstep
-// with that one.
-.leaflet-control-attribution {
-  display: none !important;
-}
+// Attribution restored this pass (Sedi light-surface rebuild) — CARTO/OSM
+// tile attribution is a licence requirement, not a style choice; this
+// route's own suppression (mirrored from [locale]/globals.scss's own
+// "TEMPORARY — preview only" rule) is removed here. The PRODUCTION rule in
+// [locale]/globals.scss is a separate, tracked pre-launch item
+// (docs/pre-launch.md) and is deliberately left alone by this pass — this
+// route no longer needs its own copy of the suppression, but reversing the
+// production one is a different decision, out of this pass's scope.
+// sediSection.module.scss now styles the restored chip directly (color/
+// background tuned for the new mid-tone surface).
 
 // Item 1 fix: the real Header CTA button ("Inizia il percorso") has a
 // genuine bug — on hover, background and text both resolve to
