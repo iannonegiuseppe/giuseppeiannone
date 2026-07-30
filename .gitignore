@@ -62,3 +62,12 @@ docs/**/*.webp
 docs/**/*.jpg
 docs/**/*.jpeg
 docs/**/*.png
+
+# raw video source/placeholders — GitHub's 100MB file limit rejects these
+# outright (public/video-placeholder.mov was 755MB and blocked a push);
+# real, web-sized video assets belong in Sanity or a CDN, not git. If a
+# genuinely small, final video needs to ship from /public, add an explicit
+# exception for that one file rather than removing this rule.
+public/**/*.mov
+public/**/*.mp4
+public/**/*.webm
