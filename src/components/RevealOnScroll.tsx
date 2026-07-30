@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import styles from "./FinalContactSection.module.scss";
 
 // Generic version of the reveal mechanism first built for PhilosophyBand
@@ -13,12 +13,21 @@ import styles from "./FinalContactSection.module.scss";
 export function RevealOnScroll({
   children,
   className,
+  style,
 }: {
   children: ReactNode;
   // Optional passthrough for callers that need this wrapper itself to
   // participate in a layout the child alone can't (e.g. RecognitionSection's
   // CSS Grid placement — a plain child div wouldn't be a direct grid item).
   className?: string;
+  // Aree card-grid pass: lets a caller set a per-instance CSS custom
+  // property (e.g. a deterministic --card-delay-index, same pattern
+  // AnimatedDivider's own --divider-delay-index already uses) on the same
+  // div this component's own pendingReveal/revealed classes toggle —
+  // needed for a staggered reveal across several instances without a
+  // second IntersectionObserver. Optional and additive: every existing
+  // caller omits it and is unaffected.
+  style?: CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -48,7 +57,7 @@ export function RevealOnScroll({
   }, []);
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={className} style={style}>
       {children}
     </div>
   );

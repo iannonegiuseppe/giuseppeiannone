@@ -14,9 +14,13 @@
   color: var(--color-text);
 }
 
+// tone-deep: --tone-deep-accent, not --color-accent — this block's own
+// tone-deep wrapper (density.module.scss's .toneDeepSection) deliberately
+// leaves --color-accent alone, since rich-dark-surface already repurposes
+// that name locally for the gradient background itself.
 .emphasis {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--tone-deep-accent);
 }
 
 .body {
@@ -39,13 +43,18 @@
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
-  color: var(--color-accent);
+  // tone-deep: same reasoning as .emphasis above.
+  color: var(--tone-deep-accent);
   text-decoration: underline;
   text-underline-offset: 0.12em;
   text-decoration-thickness: 1px;
 
   &:hover {
-    color: var(--color-accent-hover);
+    // On light theme's tone-deep this equals the rest-state color (both
+    // collapse to ivory, per Phase 1's own finding — no distinct hover
+    // step exists there); on dark theme it's a real, visible shift to
+    // champagne. Flagged, not silently left mismatched.
+    color: var(--tone-deep-accent-small);
   }
 
   @include mixins.focus-ring;

@@ -214,6 +214,8 @@ export const homePageQuery = defineQuery(`
       }
     },
     hope,
+    welcome,
+    credentialsBand,
     sedi,
     prezzi,
     risorse,

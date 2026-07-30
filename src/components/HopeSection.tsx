@@ -1,3 +1,4 @@
+import { AnimatedDivider } from "./AnimatedDivider";
 import { HopeReveal } from "./HopeReveal";
 import styles from "./HopeSection.module.scss";
 
@@ -38,6 +39,7 @@ export function HopeSection({
   eyebrow,
   heading,
   headingEmphasisWord,
+  dividers = false,
 }: {
   eyebrow: string;
   heading: string;
@@ -46,14 +48,21 @@ export function HopeSection({
   // homePage.hero.headlineEmphasisWord and .recognition.fragments'
   // emphasisWord.
   headingEmphasisWord?: string;
+  // Optional framing rules above/below the phrase — added for
+  // /design-lab's light-island height pass (see this pass's own report).
+  // Defaults to false so the real site's own Hope band renders exactly as
+  // before with no call-site change needed there.
+  dividers?: boolean;
 }) {
   return (
     <section className={styles.hopeSection} data-lab-section="hope" aria-labelledby="hope-heading">
       <HopeReveal>
+        {dividers ? <AnimatedDivider className={styles.hopeDividerTop} /> : null}
         <p className={styles.hopeEyebrow}>{eyebrow}</p>
         <h2 id="hope-heading" className={styles.hopeHeading}>
           {renderEmphasis(heading, headingEmphasisWord, styles.hopeEmphasis!)}
         </h2>
+        {dividers ? <AnimatedDivider className={styles.hopeDividerBottom} /> : null}
       </HopeReveal>
     </section>
   );

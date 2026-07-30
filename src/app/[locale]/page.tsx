@@ -104,6 +104,10 @@ interface AreeSectionData {
   kicker?: string;
   title?: string;
   intro?: string;
+  // Card-grid rebuild pass: still fetched (areeSectionQuery), still a real
+  // Sanity field — but no longer read here, see AreeSection.tsx's own
+  // comment for why (previewHover faked clickability on non-interactive
+  // cards, which the rebuild's own brief explicitly forbids).
   previewHover?: boolean;
 }
 
@@ -332,7 +336,6 @@ export default async function Home({
         title={aree?.title ?? ""}
         intro={aree?.intro}
         areas={areas}
-        previewHover={aree?.previewHover}
         locale={locale as Locale}
       />
 

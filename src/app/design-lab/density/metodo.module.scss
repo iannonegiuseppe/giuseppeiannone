@@ -1,181 +1,309 @@
 @use "../../../styles/mixins";
 
-// Rework pass: the at-a-glance row + horizontal thread (previous pass) is
-// replaced by a full-bleed zigzag — no progress line at all now, the
-// alternating vertical offset carries the sequence instead. Detail panel
-// below is unchanged in mechanics from the previous pass.
+// Metodo rebuild (corrective pass): the interactive zigzag/detail-panel
+// design is retired entirely — this is now a static 4-step row with
+// icon-circle + numeral-watermark + connector-draw-on, per an exact,
+// literal spec (numbers below are targets given, not derived). Eyebrow/
+// heading classes here are NEW and scoped to this file only — the
+// previous version reused density.module.scss's shared .metodoKicker/
+// .metodoHeading, which are ALSO the Aree section's heading classes on
+// the /design-lab/density route; touching them would have redesigned a
+// block outside this pass's scope. These two classes are the only ones
+// this component's parent (DesignLabHomepage.tsx) reaches into from
+// outside; everything else below is used only inside MetodoInteractive.tsx.
 
+// Kicker-rule pass (Metodo light-conversion, CHANGE 6): this eyebrow was
+// plain text with no preceding dash, unlike Aree/Recognition/Credentials'
+// own eyebrows — display:inline-flex + gap added so the new
+// .eyebrowRule span (below) sits inline before the text, matching those
+// three exactly in geometry and spacing. No shared mixin exists for this
+// pattern (checked _mixins.scss and all four current implementations —
+// AreeSection's .areeKickerRule, RecognitionSection's
+// .recognitionKickerRule, density.module.scss's own .credentialsKickerRule
+// and .videoKickerRule): all four match on geometry (2.5rem x 1px) but
+// deliberately diverge on COLOR per their own tone context (plain
+// --color-line vs --color-accent-contrast-mix vs --tone-deep-hairline) —
+// not one accidental inconsistency but three intentional ones, so adding
+// a fifth near-duplicate here (rather than extracting a shared mixin
+// unrequested) matches the codebase's own established convention. Flagged
+// in this pass's own report: consolidating into one geometry-only mixin
+// is now genuinely feasible post-light-island-surface's token extension,
+// but is a drive-by outside what this pass was asked to do.
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover); // "small-text accent" #715C52 token
+}
+
+.eyebrowRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+// Existing block-heading scale (--fs-h2, STEP 0 measurement) — matched,
+// not inflated. font-weight set EXPLICITLY: this route's own globals
+// file (design-lab-globals.scss) carries no global h1/h2 weight rule, so
+// an unstyled <h2> falls through to the browser UA default of 700,
+// which EB Garamond (ships only a real 400 cut) can only fake by
+// synthetically fattening the glyph — the exact bug already found and
+// fixed once before on FinalContactSection's own heading.
+.heading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.headingEmphasis {
+  font-style: italic; // EB Garamond ships a real italic cut — genuine, not synthesized
+  color: var(--color-accent);
+}
+
+// Root wrapper — exists only as the IntersectionObserver's ref target and
+// the .numeralsPending/.numeralsRevealed scoping root (see the reveal
+// block near .numeral below); carries no visual styling of its own.
 .metodoRoot {
   position: relative;
 }
 
-// --- Full-bleed zigzag -----------------------------------------------------
-// Same viewport-edge technique as Footer.module.scss's .labFooter (width:
-// 100vw + margin-inline: calc(50% - 50vw)) — padding-inline restores the
-// same gutter the rest of the page's container uses, so the zigzag's own
-// text still lines up with the heading above it despite the section
-// itself breaking out to the viewport edge.
-.zigzagBleed {
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
-  padding-inline: var(--space-5);
-
-  @include mixins.breakpoint-up(lg) {
-    padding-inline: var(--space-7);
-  }
-}
-
-.zigzagRow {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.stepsRow {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-7);
+  margin-top: var(--space-8);
 
-  @include mixins.breakpoint-up(lg) {
+  @include mixins.breakpoint-up(md) {
     flex-direction: row;
     align-items: flex-start;
-    gap: var(--space-6);
+    gap: 0;
   }
 }
 
-.zigzagListItem {
+.step {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
+  overflow: visible;
+  text-align: center;
+}
 
-  // Alternating offset — substantial enough to read as deliberate rhythm,
-  // not a rounding artifact. Off at mobile (stacked list, no zigzag).
-  @include mixins.breakpoint-up(lg) {
-    &[data-offset="low"] {
-      margin-top: 4.5rem;
-    }
+// Visible content (icon + title + text) sits above the numeral watermark
+// (z-index:1 vs. the numeral's 0) — a plain stacking need, not a reveal
+// mechanic.
+.stepContent {
+  position: relative;
+  z-index: 1;
+}
+
+.connector {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    flex: 0 0 2.125rem; // 34px — box left as shipped; widening it was marked
+    // optional in the size-increase spec, and the connector's own draw-on
+    // (this file's own protected, "do not touch" mechanic) is tuned against
+    // this exact viewBox/box ratio, so left alone.
+    margin-top: 2.125rem; // 34px (was 25px) — re-aligns to the enlarged
+    // 84px icon circle's own new centre (84px / 2 = 42px from the step's
+    // content top; 34px lands the connector's own vertical centre — SVG
+    // viewBox 0 0 34 16, so 8px into a 16px-tall box — right on that mark).
   }
 }
 
-.zigzagItem {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-4) 0 0;
-  border: none;
-  border-top: 1px solid var(--color-hairline);
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 200ms ease;
-
-  @include mixins.focus-ring;
-
-  &[data-active="true"] {
-    border-color: var(--color-accent);
-  }
+.connectorPath {
+  stroke: var(--color-accent);
+  stroke-width: 1.25;
+  fill: none;
+  stroke-dasharray: 1;
+  animation: connectorDraw 2.6s ease-in-out infinite;
 }
 
-// Significantly larger than the previous pass's row numeral — the
-// numeral is now the zigzag's own visual anchor, not a secondary label.
-.zigzagNumeral {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 3.5rem;
-  line-height: 1;
-  color: color-mix(in srgb, var(--color-text) 30%, transparent);
-  transition: color 200ms ease;
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 4.5rem;
+@keyframes connectorDraw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
   }
-
-  .zigzagItem[data-active="true"] & {
-    color: var(--color-accent);
+  55% {
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
-}
-
-.zigzagTitle {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-size: 1.25rem;
-  color: var(--color-text-muted);
-  transition: color 200ms ease;
-
-  .zigzagItem[data-active="true"] & {
-    color: var(--color-text);
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
-}
-
-.zigzagShortLine {
-  max-width: 22rem;
-  font-family: var(--font-body);
-  font-size: var(--fs-body);
-  color: var(--color-text-muted);
+  93% {
+    opacity: 0;
+  }
+  94% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .zigzagItem,
-  .zigzagNumeral,
-  .zigzagTitle {
-    transition: none;
+  .connectorPath {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
 }
 
-// --- Detail panel (unchanged mechanics from the previous pass) -----------
-
-.panel {
-  position: relative;
+// 66px circle, transparent fill, thin hairline border — grigio token
+// requested (#CFC7BE) has no exact match in the palette; --color-line
+// (#ddd6c9) is the closest AND the semantically-intended one (tokens.scss
+// describes it as "hairlines on the new neutral scale"), used instead of
+// hardcoding an off-palette hex.
+// Size pass (second corrective pass): 66px -> 84px. margin-bottom target
+// was "~20px" — var(--space-5) (24px) used instead of a raw 20px value,
+// the closest real spacing token (this project's own styling rule: no
+// raw px outside 1px borders/decorative one-off dimensions — margins get
+// a token where one fits).
+.iconCircle {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
-  margin-top: var(--space-8);
-  padding: var(--space-6) var(--space-5);
-  overflow: hidden;
-
-  @include mixins.breakpoint-up(lg) {
-    margin-top: var(--space-9);
-    padding: var(--space-8);
-  }
+  justify-content: center;
+  width: 5.25rem; // 84px
+  height: 5.25rem;
+  margin: 0 auto var(--space-5);
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+  background: transparent;
 }
 
-.panelNumeral {
+// Width only, explicit height dropped in favor of aspect-ratio: the
+// shared 34:30 viewBox is unchanged (same geometric paths, per spec) —
+// aspect-ratio keeps height proportional without a second hand-tuned
+// value. ~44px wide; step 03's own path already draws edge-to-edge
+// within that shared viewBox (x=3 to x=31), so it reads visually wider
+// than 01/02/04 without needing its own separate size.
+.icon {
+  width: 2.75rem; // 44px
+  aspect-ratio: 34 / 30;
+}
+
+.stepTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-medium);
+  font-size: 1.125rem; // 18px
+  color: var(--color-text);
+}
+
+.stepText {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: 0.9375rem; // 15px
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+// Numeral watermark. Transparency comes from color-mix's own alpha
+// compositing (a genuinely transparent color value assigned to `color`),
+// NOT the `opacity` property — opacity would also fade the icon strokes
+// painted on top of it (this component's own stacking has the icon in a
+// LATER paint layer via .stepContent's z-index:1, but opacity on an
+// ancestor would still have washed out anything sharing its stacking
+// context; color-mix avoids the question entirely by making the
+// transparency a property of the numeral's own paint, nothing else's).
+.numeral {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 4.25rem; // 68px (was 60px) — re-centred on the enlarged 84px
+  // icon+title cluster; FIXED, same level regardless of step-text length
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
   margin: 0;
   font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
   line-height: 1;
-  font-size: 7rem;
-  color: color-mix(in srgb, var(--color-text) 4%, transparent);
-  animation: panelFadeIn 200ms ease;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  // Resting alpha lives in the color itself, unchanged by the reveal
+  // below — the reveal animates `opacity` 0->1, which only ever exposes
+  // or hides this already-transparent color, never edits its alpha.
+  // Indirection (Metodo light-conversion pass): --metodo-numeral-alpha
+  // defaults to 5% here (the original, dark-tuned value, unchanged for
+  // every existing render) so ONE new scope (.metodoLightWrap,
+  // density.module.scss) can override just this custom property to
+  // re-tune the watermark for the light surface, without a duplicate
+  // copy of this whole rule — same indirection pattern as Diplomi's own
+  // --diplomi-watermark-alpha.
+  color: color-mix(in srgb, var(--color-accent) var(--metodo-numeral-alpha, 5%), transparent);
+
+  // 140px is a decorative watermark, per spec — but at column widths
+  // narrower than full desktop (md..lg, row layout already active but
+  // each of the 4 columns still fairly narrow) a two-digit numeral at
+  // 140px overflows into the neighbouring step. Reduced ONLY this value
+  // at that one tier, nothing else: 100px keeps every numeral inside its
+  // own column at 768-1023px, verified below.
+  font-size: 6rem; // 96px, mobile (stacked — full column width available)
 
   @include mixins.breakpoint-up(md) {
-    font-size: 12rem;
+    font-size: 6.25rem; // 100px
   }
 
   @include mixins.breakpoint-up(lg) {
-    font-size: 18rem;
+    font-size: 8.75rem; // 140px, per spec
   }
 }
 
-.panelText {
-  position: relative;
-  max-width: 32rem;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 1.125rem;
-  color: var(--color-accent);
-  animation: panelFadeIn 200ms ease;
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: 1.4375rem;
-  }
+// --- Sequential numeral reveal (second corrective pass, change 2) ---------
+// Progressive-enhancement pattern, matching RevealOnScroll.tsx's own
+// (safer) approach rather than the first Metodo pass's own — a bare
+// `:not([data-revealed])` CSS rule with no JS dependency would leave
+// content permanently invisible in a no-JS environment. Here, neither
+// class is present by default (numerals show at their normal resting
+// state — safe fallback); .numeralsPending is added via JS ONLY when
+// motion is allowed (hides them just before the stagger, no flash,
+// useLayoutEffect runs pre-paint); .numeralsRevealed replaces it once,
+// on first viewport intersection, and never returns to .numeralsPending
+// (one-shot: the observer unobserves itself after firing).
+//
+// Per-numeral targeting is via a plain data-step-index attribute on each
+// .step (0-3), not :nth-child — the 4 .step elements are NOT contiguous
+// siblings (this row also has 3 connector <svg> elements interleaved
+// between them as siblings), so counting position among ALL of
+// .stepsRow's children would not reliably map to "1st through 4th step."
+.numeralsPending [data-step-index] .numeral {
+  opacity: 0;
 }
 
-@keyframes panelFadeIn {
+.numeralsRevealed [data-step-index="0"] .numeral {
+  animation: numeralFadeIn 900ms ease-out 0ms both;
+}
+
+.numeralsRevealed [data-step-index="1"] .numeral {
+  animation: numeralFadeIn 900ms ease-out 450ms both;
+}
+
+.numeralsRevealed [data-step-index="2"] .numeral {
+  animation: numeralFadeIn 900ms ease-out 900ms both;
+}
+
+.numeralsRevealed [data-step-index="3"] .numeral {
+  animation: numeralFadeIn 900ms ease-out 1350ms both;
+}
+
+@keyframes numeralFadeIn {
   from {
     opacity: 0;
   }
@@ -184,46 +312,17 @@
   }
 }
 
-// --- Reveal-on-scroll -------------------------------------------------
-
-.metodoRoot:not([data-revealed="true"]) {
-  .zigzagListItem,
-  .panel {
-    opacity: 0;
-    transform: translateY(0.75rem);
-  }
-}
-
-.metodoRoot[data-revealed="true"] {
-  .zigzagListItem,
-  .panel {
-    opacity: 1;
-    transform: translateY(0);
-    transition:
-      opacity 400ms ease,
-      transform 400ms ease;
-  }
-
-  @for $i from 1 through 4 {
-    .zigzagRow > .zigzagListItem:nth-child(#{$i}) {
-      transition-delay: #{($i - 1) * 120}ms;
-    }
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .metodoRoot:not([data-revealed="true"]),
-  .metodoRoot[data-revealed="true"] {
-    .zigzagListItem,
-    .panel {
-      opacity: 1;
-      transform: none;
-      transition: none;
-    }
+  // .numeralsPending is never added under reduced motion (the effect
+  // returns before attaching), so this rule only guards against the
+  // class somehow being present anyway — belt and suspenders, same
+  // reasoning as every other reduced-motion block in this file.
+  .numeralsPending [data-step-index] .numeral {
+    opacity: 1;
   }
 
-  .panelNumeral,
-  .panelText {
+  .numeralsRevealed [data-step-index] .numeral {
     animation: none;
+    opacity: 1;
   }
 }

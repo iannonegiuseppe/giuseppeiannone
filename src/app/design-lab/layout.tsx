@@ -19,7 +19,14 @@ import "./design-lab-globals.scss";
 const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
   subsets: ["latin"],
-  weight: ["400"],
+  // 500 added for Hero's video-heading variant (font-weight: var(--font-
+  // weight-medium) on .heroVideoHeading) — EB Garamond has a real Medium
+  // cut on Google Fonts, this loads the actual font file for it rather
+  // than letting the browser fake-bold the 400 weight, which most
+  // browsers do by synthetically thickening strokes (looks visibly
+  // different/worse than a true medium cut, and is what "not 700"
+  // was ruling out here).
+  weight: ["400", "500"],
   style: ["normal", "italic"],
 });
 

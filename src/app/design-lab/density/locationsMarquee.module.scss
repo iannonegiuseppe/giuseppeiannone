@@ -1,0 +1,124 @@
+@use "../../../styles/mixins";
+
+// Locations marquee (structure pass) — auto-scrolling photo row under the
+// Locations map. Card-width formula mirrors diplomiSlider.module.scss's
+// own idiom (same "container-relative, calc-based" reasoning, same 2-gap
+// constant) so the two blocks feel like one family, not reinvented twice.
+//
+// Container queries, not %: .item's width needs to be a real fraction of
+// .wrap's own (determinate) width. .track's width is max-content (it
+// holds the item list TWICE, deliberately wider than .wrap, so there's
+// something to scroll through) — a flex child's percentage flex-basis
+// resolves against ITS OWN flex container's width, and a max-content
+// container's width is ITSELF derived from its children's sizes, a
+// circular reference browsers resolve by falling back to content-based
+// sizing (i.e. the % is silently ignored). cqw sidesteps this entirely:
+// it's relative to the nearest ancestor with container-type set — .wrap,
+// which has a normal, determinate width regardless of what .track does.
+.wrap {
+  container-type: inline-size;
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--space-7);
+
+  // Reduced-motion fallback: a plain, natively-scrollable static row —
+  // no animation, no duplicated half visible, user can scroll it like
+  // any other overflow list.
+  @media (prefers-reduced-motion: reduce) {
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+// The single moving element — BOTH halves (real + decorative duplicate)
+// are its own direct children, laid out in one continuous flex row, so
+// translateX(-50%) moves the whole thing exactly half its own total
+// width: precisely the point where the (identical) second half starts,
+// which is what makes the loop seamless. The gap here matches the
+// item-level gap below, so the seam between the two halves reads
+// identically to any other item-to-item gap — no visible "joint."
+.track {
+  display: flex;
+  width: max-content;
+  gap: var(--space-5);
+  animation: marqueeScroll 36s linear infinite;
+
+  &:hover,
+  &:focus-within {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    width: auto;
+  }
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.trackHalf {
+  display: flex;
+  gap: var(--space-5);
+}
+
+// The decorative duplicate half (aria-hidden, not tabbable) — hidden
+// entirely under reduced motion, since there's no animation left for it
+// to serve and it would otherwise just double the same 4 photos in the
+// static row.
+.trackHalfDuplicate {
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+// Same visible-count feel as Diplomi's cards (~3.5 desktop / ~2.5 tablet
+// / ~1.2 mobile), same calc formula (2-gap budget divided by the target
+// count), different unit (cqw of .wrap, not % of .track — see .wrap's
+// own comment above for why).
+.item {
+  position: relative;
+  flex: 0 0 calc((100cqw - 2 * var(--space-5)) / 1.2);
+
+  @include mixins.breakpoint-up(md) {
+    flex-basis: calc((100cqw - 2 * var(--space-5)) / 2.5);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    flex-basis: calc((100cqw - 2 * var(--space-5)) / 3.5);
+  }
+
+  @include mixins.focus-ring;
+}
+
+.photoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.photoImg {
+  object-fit: cover;
+}
+
+.caption {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}

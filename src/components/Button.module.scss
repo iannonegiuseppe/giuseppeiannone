@@ -44,3 +44,239 @@
     border-color: var(--color-accent-hover);
   }
 }
+
+// --- New button system (primary/text/glass) -----------------------
+// Additive: .button above (shared box model/focus-ring) still applies to
+// these too, but font-size/letter-spacing/gap are overridden here rather
+// than on .button itself, so solid/outline (the one real existing
+// consumer, the portable-text CTA) render byte-for-byte as before.
+// (".secondary" was a fourth member of this group once — removed along
+// with the dead class itself; see docs/pre-launch.md.)
+
+.primary,
+.text,
+.glass {
+  gap: var(--space-2);
+  font-size: var(--fs-small); // ~14px, per spec
+  letter-spacing: 0.02em;
+}
+
+.size-compact {
+  // 32px + 4px = 36px via existing space tokens, not a bare rem literal.
+  min-height: calc(var(--space-6) + var(--space-1));
+  padding-inline: var(--space-4);
+  padding-block: var(--space-2);
+}
+
+.label {
+  position: relative;
+  display: inline-block;
+}
+
+.arrow {
+  display: inline-flex;
+  transition: transform 200ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.button:hover:not(:disabled) .arrow {
+  transform: translateX(0.25rem); // ~4px, per spec
+}
+
+// PRIMARY — solid fill. On base/mid this already resolves correctly per
+// tone for free (var(--color-accent)/var(--color-accent-contrast) are
+// already reassigned by tone-mid-surface where needed, same cascade every
+// other component in this system relies on) — no [data-tone] branching
+// required for those two.
+.primary {
+  position: relative; // anchor for .glint
+  overflow: hidden; // clips the glint sweep to the button's own rounded box
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: 1px solid var(--color-accent);
+
+  // Hover ALWAYS lightens (absolute rule) — never the existing
+  // --color-accent-hover (which darkens on light theme; see
+  // --color-accent-light's own comment in _tokens.scss for the full
+  // reasoning). Label flips to dark ink here: contrast math ruled out
+  // any ivory-label + lightened-fill combination on light theme (the
+  // rest state itself only has 0.08 of headroom above 4.5:1, so even a
+  // barely-perceptible lighten already fails) — dark ink against the
+  // lightened fill measures 4.96:1, a real margin, confirmed via the
+  // manual sRGB method.
+  &:hover:not(:disabled) {
+    background: var(--color-accent-light);
+    color: var(--color-text);
+    border-color: var(--color-accent-light);
+  }
+
+  // Dark theme: the rest-state label is ALREADY dark ink
+  // (--color-accent-contrast aliases --color-bg, which is dark there) —
+  // hovering only lightens the fill further (--color-accent-light
+  // aliases the theme's own already-correct --color-accent-hover), the
+  // label needs to STAY dark, not flip to ivory like the light-theme
+  // rule above would otherwise do by reusing --color-text (ivory on dark
+  // theme — the wrong direction). Overridden back to the contrast token.
+  :global([data-theme="dark"]) &:hover:not(:disabled),
+  :global(.themeDark) &:hover:not(:disabled) {
+    color: var(--color-accent-contrast);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// One-shot hover glint, PRIMARY only. Pure CSS: the animation rule only
+// EXISTS while :hover matches, so it plays exactly once per hover-enter
+// and is fully reset (back to its pre-animation position) the moment
+// hover ends — no JS state, no risk of it looping ambient. `white` at a
+// translucent alpha (not a token) for the same "no theme-invariant light
+// token" reason as the tone-deep hover fill above — a light sheen needs
+// to read as light on EITHER the taupe fill (light theme) or the gold
+// fill (dark theme), and both --color-bg/--color-surface flip dark on
+// dark theme, which would invert the effect into a dark smudge instead.
+.glint {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 45%;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, white 55%, transparent), transparent);
+    transform: translateX(-150%);
+  }
+}
+
+.primary:hover:not(:disabled) .glint::after {
+  animation: button-glint 0.75s ease-out;
+}
+
+@keyframes button-glint {
+  from {
+    transform: translateX(-150%);
+  }
+
+  to {
+    transform: translateX(280%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary:hover:not(:disabled) .glint::after {
+    animation: none;
+  }
+}
+
+// TEXT — no fill/border, underline draws in from the left on hover.
+.text {
+  min-height: auto;
+  padding-inline: 0;
+  padding-block: var(--space-1);
+  background: transparent;
+  border: none;
+  color: var(--color-accent);
+
+  .label::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.125rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 250ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &:hover:not(:disabled) .label::after {
+    transform: scaleX(1);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.pending {
+  cursor: progress;
+  opacity: 0.85;
+
+  .arrow {
+    opacity: 0.5;
+  }
+}
+
+// GLASS — translucent panel + backdrop blur, for a button sitting over
+// arbitrary imagery/video rather than a flat token surface (currently:
+// Hero's video background). Cyprus's own glass token set
+// (--color-glass-bg/-border/-highlight/-solid, _tokens.scss) — defined
+// identically on both themes, since a glass panel floating over footage
+// reasonably doesn't need to differ by site theme; footage brightness
+// dominates, not page theme. Label uses --tone-deep-text (this system's
+// established "reads light on BOTH themes" token, not --color-accent-
+// contrast — that one tracks --color-bg, which is dark on dark theme,
+// exactly wrong for text over inherently-dark video).
+.glass {
+  position: relative;
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  color: var(--tone-deep-text);
+  // Lightning CSS's own autoprefixer adds -webkit-backdrop-filter for
+  // this project's browserslist target — an explicit, hand-written
+  // -webkit- declaration alongside the unprefixed one was silently
+  // dropping BOTH from the compiled output (confirmed via the actual
+  // served stylesheet, not assumed — see this pass's own report).
+  // HeaderInteractive.module.scss's own backdrop-filter rule already
+  // established this exact pattern (unprefixed only, autoprefixed by the
+  // build) for the same reason.
+  backdrop-filter: blur(0.75rem);
+  box-shadow: inset 0 1px 0 var(--color-glass-highlight);
+
+  // Fallback for browsers without backdrop-filter: swap to a solid, more
+  // opaque background instead of translucent+blur — the label must never
+  // become illegible just because the blur itself isn't supported.
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--color-glass-solid);
+  }
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-glass-bg) 55%, var(--color-glass-highlight) 45%);
+    border-color: var(--color-glass-highlight);
+
+    @supports not (backdrop-filter: blur(1px)) {
+      background: color-mix(in srgb, var(--color-glass-solid) 80%, var(--color-glass-highlight) 20%);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}

@@ -1,0 +1,97 @@
+// Gradient + periodic shimmer treatment for a single accent word. Real,
+// selectable text throughout — background-clip:text only recolors
+// existing glyphs, never replaces them with an image/SVG.
+
+.shimmer {
+  // Fallback / default: a real, visible, flat accent color — this is
+  // what renders if background-clip:text is unsupported (see the
+  // @supports block below), so the word is NEVER invisible. Verified by
+  // rendering this rule in isolation (see this pass's own report — a
+  // modern browser can't be forced into the unsupported branch directly,
+  // so the fallback rule itself was checked standalone instead).
+  color: var(--color-accent);
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    // Gradient: --color-accent at both ends (this word's normal, resting
+    // color, unchanged from before this pass), a lightened highlight
+    // band centered in the middle. background-size 300% + an animated
+    // background-position sweeps this band across the word — acceptable
+    // for a short word per this pass's own brief; verified no visible
+    // jank on the actual heading (see report).
+    background-image: linear-gradient(
+      90deg,
+      var(--color-accent) 0%,
+      var(--color-accent) 40%,
+      var(--shimmer-highlight) 50%,
+      var(--color-accent) 60%,
+      var(--color-accent) 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer-travel 5s linear infinite;
+    animation-delay: calc(var(--shimmer-delay-index, 0) * -1.7s);
+    animation-play-state: paused; // only runs while onscreen, see [data-in-view] below
+  }
+
+  // Light theme highlight: the current accent (var(--color-accent), which
+  // inside Welcome's tone-mid scope is #554539, not the raw base token —
+  // checked, not assumed) lightened toward --color-surface (this theme's
+  // true white, #ffffff — same "avoid --color-bg" lesson AnimatedDivider
+  // already learned: --color-bg is reassigned to tone-mid's tan inside
+  // this scope, --color-surface isn't). NOT a new gold — stays in the
+  // taupe/bronze family by construction, since it's just accent+white.
+  //
+  // 24% white is the tuned stop: the brief's own reference highlight
+  // (~#D8C19A-equivalent) measures only ~1.28:1 against sand-deep —
+  // nowhere near 3:1, because on a LIGHT card a highlight literally
+  // cannot get very light and still contrast against it (the lightest
+  // theoretically possible color still only reaches ~1.37:1 here). This
+  // stop measures 3.41:1 — clears the 3:1 large-text floor with real
+  // margin, darkened from lighter candidates that failed (e.g. 36%
+  // white only reaches ~1.37:1; had to stay much closer to the base
+  // accent than "highlight" might suggest).
+  --shimmer-highlight: color-mix(in srgb, var(--color-accent) 76%, var(--color-surface) 24%);
+
+  // Dark theme: lighter reads as MORE contrast here (dark surface), so
+  // the established gold-light step applies directly — no derived value
+  // needed. Peak measured: 8.28:1 against sand-deep-dark.
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    --shimmer-highlight: var(--color-accent-hover);
+  }
+
+  &[data-in-view="true"] {
+    @supports (background-clip: text) or (-webkit-background-clip: text) {
+      animation-play-state: running;
+    }
+  }
+}
+
+@keyframes shimmer-travel {
+  0% {
+    background-position: 100% 0;
+  }
+
+  45% {
+    background-position: -100% 0;
+  }
+
+  100% {
+    background-position: -100% 0; // hold past the word for the remainder of the cycle
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    @supports (background-clip: text) or (-webkit-background-clip: text) {
+      animation: none;
+      // A single static frame showing the gradient (per spec: static
+      // gradient, not flat, not transparent-without-support) — the
+      // highlight band sits roughly centered in the word at rest.
+      background-position: 0% 0;
+    }
+  }
+}

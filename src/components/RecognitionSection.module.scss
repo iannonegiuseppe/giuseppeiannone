@@ -85,17 +85,30 @@
 // scroll container at any width: this is normal document flow, full stop.
 .recognitionConstellation {
   @include shared.grid-12;
-  // Fix pass 1 (§10.6): was --space-7 (48px). This section's own outer
-  // padding is deliberately detached from --space-band-y and tightened
-  // (see this file's own comment above), so the same 48px that reads
-  // fine elsewhere as a header-to-content step sat too close to
-  // Recognition's own (already-tighter) section padding — measured
-  // (real bounding boxes, both neighbors' padding combined, not
-  // recomputed from tokens) at 1.15-3.21x depending on side/viewport,
-  // under the 2.5x floor on 3 of 4 checked sides. --space-4 (16px)
-  // clears the floor on every side at every measured width (worst case
-  // 3.46x, at 375 against Hero).
-  margin-top: var(--space-4); // 16px below the header
+  // Top-crowding pass: reverses Fix pass 1's own --space-4 (16px) tightening
+  // below (see that comment, kept for history) — real render showed the
+  // opposite problem from what that pass measured: at 16px, the first
+  // fragment (Stress e burnout) read as a continuation of the intro
+  // paragraph above it, not as the start of a separate scattered
+  // composition. §10.6 ("Whitespace is grouped, not uniform") sets the
+  // relevant floor here at 2.5x whatever this gap is being grouped
+  // against — re-measured against this composition's own within-group
+  // gaps (the header's internal kicker/heading/bridge spacing, max 16px;
+  // the fragment grid's own row-gap, 32px) rather than the older check's
+  // reference (Recognition's own section padding). --space-4 is gone from
+  // this rule entirely, not layered under the new value.
+  //
+  // Recalibration pass: the first jump (--space-9/--space-10) cleared the
+  // crowding but overshot into a void of its own — brought down one step
+  // each. Still clears the 2.5x floor with real margin against both
+  // within-group references (see this pass's own report for the exact
+  // ratios) while reading as a clean separation, not a gap.
+  margin-top: var(--space-8); // 64px, base tier
+
+  @include mixins.breakpoint-up(lg) {
+    margin-top: var(--space-9); // 96px
+  }
+
   row-gap: var(--space-6); // 32px between stacked fragments, mobile/tablet
 
   // Anchor pass: tightened from --space-7 (48px) — the original six-slot
@@ -104,8 +117,16 @@
   // room (the exact "void" complaint this pass exists to fix). No
   // per-slot margin-top anymore, anywhere below — this single, smaller
   // gap is now the only source of vertical spacing between rows.
+  //
+  // Widen pass: 24px read as tight once the wider copy filled each row's
+  // content closer to its own row height — most visible in the two
+  // same-column adjacent-row pairs (Stress e burnout -> anchor, Ansia e
+  // disturbi d'ansia -> Attacchi di panico), which shared this exact gap.
+  // Bumped one step to --space-6 (32px, matching mobile/tablet's own
+  // existing row-gap just above, not a new value) — judged against the
+  // real render rather than assumed; see this pass's own report.
   @include mixins.breakpoint-up(lg) {
-    row-gap: var(--space-5); // 24px
+    row-gap: var(--space-6); // 32px
   }
 }
 
@@ -157,10 +178,24 @@
 // measure). Tier controls typography ONLY — position comes from the
 // per-slot rules below, entirely independent of tier, so the CMS is free
 // to mix tiers across slots however the data actually comes in.
+//
+// Widen pass: was 30ch — real copy (~1.5x the placeholder length) wrapped
+// to 3-4 lines at that measure despite both dominant slots' own grid
+// areas having plenty of room to spare (slot1's stretch-sized area is
+// ~700px at 1440px/lg; slot2's own area, measured directly rather than
+// assumed, is ~491px even though its shrunk-to-content box only showed
+// ~322px before this change). 44ch (~473px at this tier's font-size)
+// fits inside BOTH slots' existing grid areas with margin — no
+// grid-column span changes needed, so no new collision risk — and lands
+// the longest dominant sentence (Stress e burnout) at ~3 lines. Still
+// clearly narrower than the anchor's own 40ch measure in actual pixels
+// (40ch at the anchor's larger 2.25rem font renders far wider than 44ch
+// at this tier's 1.4rem font — ch is font-size-relative), so the anchor
+// stays the widest element, per this pass's own brief.
 .recognitionFragmentDominant .recognitionFragmentText {
   font-size: 1.4rem; // per spec
   color: var(--color-text);
-  max-width: 30ch;
+  max-width: 44ch;
 }
 
 // Peripheral tier: smaller, the MUTED TOKEN (not opacity) — per spec,
@@ -168,10 +203,19 @@
 // opacity fade would undermine (it dims everything behind it too, not
 // just the ink). Verified via contrast measurement against the section's
 // own ivory background — see this pass's own report for the ratio.
+//
+// Widen pass: was 26ch — the worst offender at 4-5 lines. Slot3/slot5
+// share the same right-column grid area as the dominant tier's slot2
+// (~491px, ~64ch at this tier's smaller 1rem font) — the binding ceiling
+// among the three peripheral slots, slot4's own area being far roomier.
+// 52ch (~399px) sits comfortably inside that ceiling, landing every
+// peripheral fragment at 2-3 lines, and stays narrower than both the
+// dominant tier's new 44ch (~473px) and the anchor's 40ch (~691px) —
+// preserves the anchor > dominant > peripheral width hierarchy.
 .recognitionFragmentPeripheral .recognitionFragmentText {
   font-size: 1rem; // per spec
   color: var(--color-text-muted);
-  max-width: 26ch;
+  max-width: 52ch;
 }
 
 // Real emphasis technique — EB Garamond italic 400 + --color-accent, the
@@ -200,22 +244,39 @@
 // `grid-auto-flow: dense` in the hero's own layout) — here that would
 // mean two fragments silently sharing a row and colliding the moment one
 // of them wraps to an extra line. An explicit row per slot makes that
-// structurally impossible regardless of copy length. No per-slot
-// margin-top anymore (previous pass's escalating 16/32px additions were
-// the other half of the "too much vertical spread" problem) — the
-// constellation's own row-gap above is now the ONLY vertical spacing,
-// which is what actually tightens the gaps back into breathing room.
+// structurally impossible regardless of copy length.
+//
+// Scatter-restore pass: per-slot margin-top is BACK, reversing the "no
+// per-slot margin-top anymore" decision the comment above used to make —
+// removing the header from this grid (an earlier pass) took away the
+// accidental first-row offset that used to keep same-row fragments from
+// sharing a baseline; once that offset was gone, slot1/slot2 (and,
+// looser, the whole lower group) read as a level 2x3 table instead of a
+// scatter. Reintroduced deliberately this time: only on the SECOND item
+// in a shared row (slot2, slot5) plus one solo row (slot3, so it doesn't
+// read as a flat line between its neighbors either), each a DIFFERENT
+// spacing-scale step so the stagger itself doesn't read as a second,
+// uniform grid. slot0/slot1/slot4 stay at their row's natural top edge —
+// the fixed reference points the offset ones stagger against. Grid's own
+// row auto-sizing absorbs each margin (the row grows to fit whichever
+// item ends up tallest INCLUDING its margin), so this can't bleed into
+// the next row — verified via real collision checks, not assumed; see
+// this pass's own report.
 @include mixins.breakpoint-up(lg) {
   .recognitionFragment {
     grid-column: unset;
   }
 
-  // Anchor — centre-left, fills the void between slot1 (top-left) and
-  // slot4 (bottom-left). Indented one column from the flush-left slots
-  // (starts at line 2, not line 1) so it reads as "centre-left" rather
-  // than stacking flush under slot1.
+  // Anchor — shifted left this pass: was 2 / 9 (indented one column from
+  // the flush-left slots, reading as "centre-left"). Now flush-left at
+  // 1 / 8, matching slot1/slot4's own left edge — still the widest,
+  // largest element in the composition (width/type-scale untouched, see
+  // this pass's own report), just grounded on the same left edge as its
+  // vertical neighbors instead of floating indented between them.
+  // Clearance to slot1 (above) and slot4 (below) verified at 1440/1280/
+  // 1024px — see this pass's own report.
   .recognitionSlot0 {
-    grid-column: 2 / 9;
+    grid-column: 1 / 8;
     grid-row: 2;
   }
 
@@ -224,16 +285,23 @@
     grid-row: 1;
   }
 
+  // Offset against slot1 (same row, left) — 32px keeps it clearly lower
+  // without reading as its own second row.
   .recognitionSlot2 {
     grid-column: 8 / 13;
     grid-row: 1;
     justify-self: end;
+    margin-top: var(--space-6); // 32px
   }
 
+  // Solo in its row (no same-row sibling to offset against) — a smaller,
+  // different nudge than slot2/slot5 so it doesn't read as a flat line
+  // level with either neighboring row.
   .recognitionSlot3 {
     grid-column: 8 / 13;
     grid-row: 3;
     justify-self: end;
+    margin-top: var(--space-4); // 16px
   }
 
   .recognitionSlot4 {
@@ -241,10 +309,14 @@
     grid-row: 4;
   }
 
+  // Offset against slot4 (same row, left) — the largest of the three
+  // stagger amounts, deliberately different from slot2's, so the two
+  // same-row offsets don't read as a matched, tilted second grid.
   .recognitionSlot5 {
     grid-column: 8 / 13;
     grid-row: 4;
     justify-self: end;
+    margin-top: var(--space-8); // 64px
   }
 }
 

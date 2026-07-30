@@ -52,6 +52,20 @@ watch contrast if dark text or buttons overlay a photograph.
 Contrast floor: body text and muted text must pass WCAG AA on `--color-bg` and
 `--color-surface-tint` (the values above do; re-check if adjusted).
 
+**Cyprus dark-theme token guardrails (Phase 2, /design-lab only):** two of the
+tokens added when reconciling the dark theme to Cyprus's own depth/gold system
+measure below the AA floor as text and must stay decorative-only:
+
+- `--color-text-faint` (ivory at 45% alpha) clears the 3:1 large-text floor on
+  every dark depth step but **fails 4.5:1 body-text everywhere** (3.93:1 on
+  `--color-bg`, 3.73:1 on `--color-surface`, 3.56:1 on `--color-surface-raised`).
+  Large/decorative text only — never small captions or labels, however tempting
+  the "faint" naming is for that use.
+- `--color-gold-bronze` (`#8E6B3D`) fails as text everywhere it was measured —
+  3.84:1 on `--color-bg`, 3.19:1 on `--color-surface` (both under the 3:1
+  large-text floor), 2.85:1 on `--color-surface-raised`. Decorative use only
+  (fills, borders, icon washes) — never a text or link role.
+
 ## 3. Typography
 
 CONFIRMED pairing (approved by the client): **Marcellus** (display/headings) +
@@ -62,6 +76,18 @@ Constraints that MUST be encoded:
 - **Marcellus is Regular-only — there is no bold weight.** Never fake-bold it. Heading
   hierarchy is expressed by SIZE, never by weight. Do not apply font-weight >400 to
   Marcellus.
+  - Enforced systemically, not per-component. (Naming note: the display face actually
+    shipped is EB Garamond, per CLAUDE.md's later global restyle pass — this section
+    still says Marcellus/Lato throughout and was never updated after that swap;
+    flagging the staleness rather than rewriting the whole section, which is out of
+    scope here. The constraint itself — no synthesized bold on the display face —
+    applies identically to EB Garamond.) A base `h1, h2 { font-weight: ... }` rule now
+    lives in both `[locale]/globals.scss` (the real site) and
+    `design-lab-globals.scss` (/design-lab, added this pass) — every heading that
+    doesn't explicitly override it inherits 400 automatically. This replaces the prior
+    per-component convention (each block re-declaring the same font-weight line),
+    which silently missed several real/shared components once /design-lab's own
+    globals file turned out not to carry the same rule — see that pass's own report.
 - **Marcellus is a delicate display serif — use it large only (≥24px).** H1 and H2 in
   Marcellus. H3 and anything smaller: use Lato (600) rather than shrinking Marcellus,
   which loses legibility at small sizes.
@@ -263,15 +289,21 @@ Motion that only decorates is removed.
 
 ### 10.11 Not everything lives in the container
 
-Full-bleed is a deliberate tool, not an accident. Per page:
+Full-bleed is a deliberate tool, not an accident. The page runs a
+three-step tonal scale — `--tone-base`, `--tone-mid`, `--tone-deep` — and
+any section on `--tone-mid` or `--tone-deep` breaks the container to
+touch both viewport edges as a tone band. Rules:
 
-- at least two sections must break the container and touch both viewport
-  edges (dark bands, image-led sections, the map);
-- at most four, so the container's rhythm still reads as the default;
-- never two full-bleed sections adjacent — the contained sections
-  between them are what make the bleed legible;
-- a section that bleeds must have a reason: tonal punctuation, an image
-  that needs the width, or a surface that groups several blocks.
+- adjacent sections must alternate tone (no two consecutive sections sit
+  on the same step) — that alternation, not a fixed count of full-bleed
+  sections per page, is what keeps the rhythm legible;
+- there is no cap on how many sections use `--tone-mid`/`--tone-deep` —
+  a page can alternate base/mid/deep for its entire length if the content
+  calls for it;
+- a section can also bleed for a reason unrelated to tone (an image that
+  needs the width, the map, a surface grouping several blocks) — that
+  still uses the same edge-to-edge technique but isn't part of the tonal
+  alternation and doesn't need to alternate with anything.
 
 Contained content inside a full-bleed surface still respects the
 container's inline padding — bleeding the background does not mean

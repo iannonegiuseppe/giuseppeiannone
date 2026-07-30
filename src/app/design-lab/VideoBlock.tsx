@@ -46,28 +46,41 @@ export async function VideoBlock({
   const posterSrc = poster ? urlFor(poster).url() : undefined;
   if (!posterSrc) return null;
 
+  // Tonal-scale pass: moved to tone-deep. Hierarchy check (per that
+  // pass's own instruction): kicker is already small/uppercase/bold
+  // (typographically distinct regardless of color) and the heading is
+  // display-scale against the kicker's 12px and the lead's 17px — both
+  // gaps are carried by size, not color; nothing here depended on a
+  // color difference to read as hierarchy. Three real-component classes
+  // (videoKicker/videoKickerRule/videoLead, from the shared, un-editable
+  // VideoSection.module.scss) needed scoped overrides — see
+  // density.module.scss's own [class*="video..."] rules under
+  // .toneDeepContent for why and what.
   return (
-    <section className={densityStyles.section} aria-labelledby="video-block-heading">
-      <div className={densityStyles.videoBlockGrid}>
-        <div className={densityStyles.videoBlockPlayerCol}>
-          <VideoPlayer
-            src={videoUrl}
-            poster={posterSrc}
-            posterAlt=""
-            captionsSrc={captionsUrl}
-            wrapperAriaLabel={wrapperAriaLabel}
-          />
-        </div>
-        <div className={densityStyles.videoBlockTextCol}>
-          <p className={videoStyles.videoKicker}>
-            <span className={videoStyles.videoKickerRule} aria-hidden="true" />
-            {kicker}
-            <span className={videoStyles.videoKickerRule} aria-hidden="true" />
-          </p>
-          <h2 id="video-block-heading" className={densityStyles.videoBlockHeading}>
-            {heading}
-          </h2>
-          {lead ? <p className={videoStyles.videoLead}>{lead}</p> : null}
+    <section className={densityStyles.toneDeepSection} aria-labelledby="video-block-heading">
+      <div className={densityStyles.toneDeepGrain} aria-hidden="true" />
+      <div className={`${densityStyles.section} ${densityStyles.toneDeepContent}`}>
+        <div className={densityStyles.videoBlockGrid}>
+          <div className={densityStyles.videoBlockPlayerCol}>
+            <VideoPlayer
+              src={videoUrl}
+              poster={posterSrc}
+              posterAlt=""
+              captionsSrc={captionsUrl}
+              wrapperAriaLabel={wrapperAriaLabel}
+            />
+          </div>
+          <div className={densityStyles.videoBlockTextCol}>
+            <p className={videoStyles.videoKicker}>
+              <span className={videoStyles.videoKickerRule} aria-hidden="true" />
+              {kicker}
+              <span className={videoStyles.videoKickerRule} aria-hidden="true" />
+            </p>
+            <h2 id="video-block-heading" className={densityStyles.videoBlockHeading}>
+              {heading}
+            </h2>
+            {lead ? <p className={videoStyles.videoLead}>{lead}</p> : null}
+          </div>
         </div>
       </div>
     </section>

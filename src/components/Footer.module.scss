@@ -114,7 +114,7 @@
   justify-content: center;
   width: 2.75rem; // 44px tap target
   height: 2.75rem;
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
   transition:
     color 200ms ease,
     transform 200ms ease;
@@ -126,7 +126,7 @@
 
   &:hover,
   &:focus-visible {
-    color: color-mix(in srgb, var(--color-amber) 30%, var(--color-bg));
+    color: color-mix(in srgb, var(--color-amber) 30%, var(--color-accent-contrast));
     transform: scale(1.12);
   }
 
@@ -155,7 +155,7 @@
   // ~3.13:1). Full-strength now, same fix already established by the
   // Contact section's own refinement pass for the identical problem —
   // hierarchy comes from size/weight, not opacity.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 // --- Row 2: four columns ----------------------------------------------------
@@ -191,7 +191,7 @@
   text-transform: uppercase;
   // Contrast audit: was 3.13:1 (see .labFooterAlboLine's own comment for
   // the full explanation) — full-strength now.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 .labFooterKickerRule {
@@ -200,7 +200,7 @@
   width: 2.5rem;
   height: 1px;
   // ivory@30%, decorative — per spec ("rule ivory 30%").
-  background: color-mix(in srgb, var(--color-bg) 30%, transparent);
+  background: color-mix(in srgb, var(--color-accent-contrast) 30%, transparent);
 }
 
 .labFooterNavList {
@@ -218,7 +218,7 @@
   // Contrast audit: the documented "7.75:1" was stale (old-palette
   // figure) — recomputes to 3.83:1 against the current accent, below
   // 4.5:1. Full-strength now (see .labFooterAlboLine's own comment).
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
   text-decoration: none;
 
   &:hover {
@@ -261,7 +261,7 @@
   font-size: 0.8125rem; // 13px, matches .labFooterSediAddress
   font-weight: var(--font-weight-bold);
   // Contrast audit: was 3.13:1 (see .labFooterAlboLine's own comment).
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 .labFooterSediAddress {
@@ -270,7 +270,7 @@
   font-size: 0.8125rem; // 13px, per spec
   // Contrast audit: was 3.13:1, not the documented 5.83:1 (see
   // .labFooterAlboLine's own comment) — full-strength now.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 .labFooterContactList {
@@ -285,7 +285,7 @@
   font-size: 0.9375rem; // matches .labFooterLink, same list-item weight
   // Contrast audit: was 3.83:1, not the documented 7.75:1 (see
   // .labFooterAlboLine's own comment) — full-strength now.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 // Same demoted treatment as FinalContactSection.tsx's .finalContactGoogle
@@ -301,7 +301,7 @@
   display: inline-block;
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec
-  color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+  color: color-mix(in srgb, var(--color-accent-contrast) 50%, transparent);
   text-decoration: none;
 
   &:hover {
@@ -320,7 +320,7 @@
   font-size: 0.8125rem; // 13px, matches the Sedi address line's quiet-fact register
   // Contrast audit: was 3.13:1, not the documented 5.83:1 (see
   // .labFooterAlboLine's own comment) — full-strength now.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 // --- Row 3: emergency notice ------------------------------------------------
@@ -332,7 +332,7 @@
 .labFooterEmergency {
   padding-top: var(--space-6);
   // ivory@15% hairline rule, per spec.
-  border-top: 1px solid color-mix(in srgb, var(--color-bg) 15%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-accent-contrast) 15%, transparent);
 }
 
 .labFooterEmergencyText {
@@ -343,7 +343,28 @@
   // Contrast audit: was 3.13:1, not the documented 5.83:1 (see
   // .labFooterAlboLine's own comment) — full-strength now. Especially
   // load-bearing here: this is the site's own crisis-support copy.
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
+
+  // Crisis-text guardrail (dark theme only): --color-accent-contrast is
+  // correctly ivory now, but rich-dark-surface's own radial vignette is
+  // position-dependent — its bright patch can land anywhere behind this
+  // text depending on viewport width/scroll, at one point measuring only
+  // 2.63:1 in-situ despite the text color itself being correct. Rather
+  // than depend on where the vignette happens to fall, a ~92%-opaque
+  // --color-bg panel sits between this text and the gradient, holding
+  // contrast comfortably above 5.5:1 even against a near-white worst-case
+  // patch underneath (checked by calculation, not just observation).
+  // Quiet by design — no border, no accent/warning hue, just a soft
+  // corner-radius panel — reads as a calm aside, not an urgency callout
+  // (see §9). Scoped to dark theme only: light theme was never affected
+  // (its own tone-deep gradient trends toward the same value this text
+  // already reads), so nothing changes there.
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    border-radius: var(--radius-button);
+    padding: var(--space-3) var(--space-4);
+  }
 }
 
 // --- Row 4: bottom bar -------------------------------------------------------
@@ -359,12 +380,30 @@
   align-items: flex-start;
   padding-block: var(--space-5); // 24px, per spec
   // ivory@15% hairline rule, per spec.
-  border-top: 1px solid color-mix(in srgb, var(--color-bg) 15%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-accent-contrast) 15%, transparent);
 
   @include mixins.breakpoint-up(md) {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+
+  // Dark-theme-only guardrail: copyright/locale-switcher both sit in the
+  // same tone-deep vignette family as .labFooterEmergencyText (copyright
+  // measured as low as ~1.76:1 depending on viewport position). Backing
+  // only one of the two siblings would read as "this one item got
+  // highlighted" — backing the WHOLE row instead reads as "this strip is
+  // just a shade darker," matching the existing hairline divider above it
+  // rather than fighting it. Same ~92%-opaque --color-bg treatment as the
+  // emergency panel, same reasoning: guarantees contrast regardless of
+  // where the vignette's bright patch falls, quiet by design (no new
+  // border, no accent hue). Light theme untouched — override lives only
+  // in the dark scope.
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    border-radius: var(--radius-button);
+    padding-inline: var(--space-4);
   }
 }
 
@@ -376,5 +415,18 @@
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem; // 12px, per spec
-  color: color-mix(in srgb, var(--color-bg) 60%, transparent);
+  color: color-mix(in srgb, var(--color-accent-contrast) 60%, transparent);
+
+  // Dark-theme-only fix: same tone-deep vignette family as the emergency
+  // text — .labFooterCopyright measured ~1.76:1 at some viewport
+  // positions on /design-lab dark. Full-strength here, not a lower-alpha
+  // patch, so both siblings move together and stay a matched pair rather
+  // than one going brighter than the other. Light theme's own 60% mix
+  // already reads correctly and is untouched (this override lives only
+  // inside the dark scope, exactly like .labFooterEmergencyText's own
+  // fix above).
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    color: var(--color-accent-contrast);
+  }
 }

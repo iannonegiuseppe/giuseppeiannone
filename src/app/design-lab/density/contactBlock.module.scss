@@ -1,0 +1,122 @@
+@use "../../../styles/mixins";
+
+// Cyprus rebuild, item 16 — Contact rebuilt after the reference's own
+// field-grid-left / portrait-right layout. ContactForm itself (validation,
+// GDPR consent, submit mechanics) is untouched — imported directly, same
+// component, only the surrounding layout differs from FinalContactSection's
+// centered single column.
+
+.contactInner {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+    align-items: start;
+    gap: var(--space-9);
+  }
+}
+
+.contactTextCol {
+  order: 1;
+}
+
+.contactPhotoCol {
+  order: 2;
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: var(--space-3); // optical alignment with the kicker above
+  }
+}
+
+// tone-deep: --tone-deep-accent, not --color-accent — same reasoning as
+// CtaBridgeBlock/VideoBlock's own equivalents (rich-dark-surface already
+// repurposes --color-accent locally for the gradient background). This
+// specific line was a real, pre-existing bug: `color: var(--color-accent)`
+// inside .richDarkWrap silently resolved to an invalid gradient value
+// even before this pass (a `color` property can't hold a gradient), found
+// while auditing this file for the tonal-scale pass.
+.contactKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tone-deep-accent);
+}
+
+.contactHeading {
+  margin: var(--space-4) 0 0;
+  max-width: 20ch;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+.contactBody {
+  margin: var(--space-4) 0 0;
+  max-width: 42rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+.contactForm {
+  margin-top: var(--space-6);
+}
+
+.contactReassurance {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.contactGoogle {
+  display: inline-block;
+  margin-top: var(--space-5);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.contactPhotoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.contactPhotoImg {
+  object-fit: cover;
+}
+
+.contactPhotoCaption {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}

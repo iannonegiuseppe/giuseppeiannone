@@ -35,6 +35,11 @@ export const METODO = {
     label: "01 — Metodo, enhanced",
     kicker: "Come si svolge",
     heading: "Come si svolge un percorso",
+    // Metodo rebuild: the accent word within `heading` above, split out
+    // rather than hand-splitting the string in JSX (same field-based
+    // pattern CHI_SONO already uses for its own <em> word, not a new
+    // convention).
+    headingEmphasis: "un percorso",
     paragraph:
       "Ogni percorso è diverso, ma la struttura è chiara fin dall'inizio: ecco cosa aspettarsi.",
     steps: [
@@ -72,6 +77,7 @@ export const METODO = {
     label: "01 — Metodo, enhanced",
     kicker: "How it works",
     heading: "How a course of therapy works",
+    headingEmphasis: "a course of therapy",
     paragraph:
       "Every course of therapy is different, but the structure is clear from the start: here's what to expect.",
     steps: [
@@ -260,7 +266,11 @@ export const THE_SPACE = {
         heading: "Uno spazio pensato per essere neutro",
         paragraph: "Luce naturale, pochi oggetti, nessuna fretta. [segnaposto]",
         frame: "A",
-        aspect: "16 / 9",
+        // Cyprus rebuild: frame height reduced ~26% per this pass's own
+        // instruction (16/9 = 1.778 -> 12/5 = 2.4, a clean fraction in
+        // range) — re-verified the aperture-parallax travel at the new,
+        // shorter height (see this pass's own report).
+        aspect: "12 / 5",
         caption: "Sala d'attesa o corridoio — luce naturale, senza persone, orizzontale 16:9",
       },
       {
@@ -358,6 +368,20 @@ export const DIPLOMI = {
       institution: "SLOP — Scuola Lombarda di Psicoterapia, Pavia",
     },
   ],
+};
+
+// Section 07 (Cyprus rebuild) — the "Welcome" panel's copy. Moved to the
+// CMS this pass (homePage.welcome, see that field group's own comment) —
+// removed from here rather than left as unused dead code.
+
+// Section 10 (Cyprus rebuild) — "Le sedi" card row header. Card data
+// itself (names/addresses/photos) is derived in page.tsx from the real
+// `sedes` CMS data, not hardcoded here — this is only the section's own
+// kicker/heading, same split as DiplomiBlock's own kicker/heading props.
+export const LE_SEDI = {
+  label: "10 — Le sedi",
+  kicker: "Dove",
+  heading: "Le sedi",
 };
 
 // Section 07 — Certificates marquee, beneath Diplomi. Content verbatim

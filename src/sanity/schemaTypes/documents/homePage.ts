@@ -433,6 +433,88 @@ export const homePage = defineType({
       ],
     }),
 
+    // Welcome (/design-lab copy pass). Was hardcoded (content.ts's WELCOME
+    // constant) — moved through the CMS like every other section's copy,
+    // per this pass's own brief ("all copy goes through the Sanity
+    // pipeline, not hardcoded"). Unnumbered for the same reason as Hope
+    // above (pre-restyle field-group numbering, not yet reordered).
+    defineField({
+      name: "welcome",
+      title: "Welcome",
+      description:
+        "The card-and-portrait introduction directly beneath Hope — kicker, " +
+        "heading (with one emphasized word/phrase), and a short first-person " +
+        "bio paragraph (name, credentials, disorders treated, locations, " +
+        "languages, first-contact process). Area list, CTA button, and " +
+        "signature row are NOT here — they read from siteSettings.author and " +
+        "the areas list directly, same as elsewhere on the page.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("title", "Heading"),
+        stringField(
+          "titleEmphasis",
+          "Heading — emphasized word or phrase (optional — must match the heading above exactly, case-sensitive; renders in the site's italic-accent style)",
+          { required: false },
+        ),
+        textField("paragraph", "Paragraph", { rows: 4 }),
+      ],
+    }),
+
+    // Credentials band (/design-lab rebuild pass). Was entirely hardcoded
+    // (density/content.ts's CREDENTIALS constant) — moved through the CMS
+    // like Welcome. Distinct from `formazione` above (a separate, currently
+    // GATED section not rendered anywhere live — see docs/pre-launch.md —
+    // with its own differently-shaped `counters` array) and from
+    // siteSettings.author.credentials (the short "Psicologo Psicoterapeuta"
+    // credential line shown in header/footer). Four FIXED cells, not a
+    // flexible list: three plain factual counters (years of clinical
+    // practice, years of training, number of locations including online)
+    // and one non-numeric bilingual badge (IT / EN) — named fields rather
+    // than an array since the shape itself is fixed, not editor-configurable.
+    defineField({
+      name: "credentialsBand",
+      title: "Credentials band",
+      description:
+        "Factual credentials only — years and location count, never client " +
+        "counts, percentages, or outcome claims (§9).",
+      type: "object",
+      fields: [
+        stringField("eyebrow", "Eyebrow"),
+        stringField("heading", "Heading"),
+        defineField({
+          name: "clinicalPracticeYears",
+          title: "Clinical practice — years",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("clinicalPracticeCaption", "Clinical practice — caption"),
+        textField("clinicalPracticeDescription", "Clinical practice — description (one short sentence)", { rows: 2 }),
+        defineField({
+          name: "trainingYears",
+          title: "Training — years",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("trainingCaption", "Training — caption"),
+        textField("trainingDescription", "Training — description (one short sentence)", { rows: 2 }),
+        defineField({
+          name: "locationsCount",
+          title: "Locations — count (including online)",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("locationsCaption", "Locations — caption"),
+        textField("locationsDescription", "Locations — description (one short sentence)", { rows: 2 }),
+        stringField(
+          "languagesValue",
+          "Languages — value (e.g. \"IT / EN\") — a compact bilingual badge, not translated per language",
+        ),
+        stringField("languagesCaption", "Languages — caption"),
+        textField("languagesDescription", "Languages — description (one short sentence)", { rows: 2 }),
+      ],
+    }),
+
     // 11. SedesSection (scene list is the separate `sede` document type)
     defineField({
       name: "sedi",

@@ -1,0 +1,337 @@
+@use "../../../styles/mixins";
+
+// Diplomi rebuild (framed-certificate slider). A NEW, dedicated file for
+// /design-lab only — see DiplomiSlider.tsx's own top comment for why the
+// shared density/DiplomiBlock.tsx + diplomi.module.scss (also used by
+// /design-lab/density's own Diplomi section) were left untouched instead
+// of edited in place. Header eyebrow/heading classes below mirror
+// metodo.module.scss's own pattern (same recipe, new scope — not reusing
+// or editing Metodo's classes, same discipline as every prior pass).
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem; // 12px
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.heading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular); // set explicitly — see Metodo's own note on why
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.headingEmphasis {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.arrows {
+  display: none;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+
+  @media (hover: hover) and (pointer: fine) {
+    display: flex;
+  }
+}
+
+// ~42px, per spec — same recipe as diplomi.module.scss's own .iconButton,
+// a new instance rather than a cross-file import (small enough that
+// duplicating it is cheaper than coupling two independent components
+// over one shared class, same call already made for the Sedi/Lightbox
+// pass).
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.625rem; // 42px
+  height: 2.625rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-hairline);
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: opacity 150ms ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.trackWrap {
+  position: relative;
+  margin-top: var(--space-7);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4rem;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 200ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+
+  &[data-fade-start="true"]::before {
+    opacity: 1;
+  }
+
+  &[data-fade-end="true"]::after {
+    opacity: 1;
+  }
+}
+
+.track {
+  display: flex;
+  align-items: stretch; // cards equalize to the tallest item's height
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+
+  // Degrade pass: few enough cards that they don't overflow — centered,
+  // static, no scroll affordance implied.
+  &[data-overflow="false"] {
+    justify-content: center;
+  }
+}
+
+// Card width: same "container-relative, calc-based" formula
+// DiplomiCardRow.tsx's own real card row already uses (2 * var(--space-5)
+// as the fixed gap-budget constant, divided by the target visible
+// count) — mirrored, not reinvented, just a different divisor per tier.
+.cardItem {
+  flex: 0 0 calc((100% - 2 * var(--space-5)) / 1.2); // ~1.2 visible, mobile
+  scroll-snap-align: start;
+
+  @include mixins.breakpoint-up(md) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 2.5); // ~2.5 visible, tablet
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 3.5); // ~3.5 visible, desktop
+  }
+}
+
+// --- Framed certificate card -------------------------------------------
+
+// Tonal-scale pass, real bug found in verification (not assumed): this
+// card's background was --color-surface — on the dark theme, tone-mid's
+// OWN background IS --color-surface (#102826), so the card was
+// identical to its own surround and visually disappeared entirely (the
+// exact "does the card still read as a card" landmine this pass's brief
+// called out). Same fix as WelcomeBlock's own panel: --color-sand-deep,
+// a genuinely lighter step than tone-mid on BOTH themes (light: #e7dad0
+// vs. mid's #c9bca8; dark: #163430 vs. mid's #102826).
+.card {
+  position: relative;
+  height: 100%;
+  overflow: hidden; // clips the year watermark to the card edge
+  background: var(--color-sand-deep);
+  border: 1px solid var(--color-hairline);
+  border-radius: 0.75rem; // 12px
+  padding: 0.5rem; // 8px
+}
+
+.cardButton {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: inherit;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+// Passe-partout inner frame. Border alpha via color-mix (a real
+// transparent color composited from the accent token), not a hardcoded
+// rgba/hex — same technique as the numeral watermark below.
+//
+// Tonal-scale pass: the alpha itself is a custom property
+// (--diplomi-frame-alpha), not a magic number baked into the color-mix
+// call — [data-tone="mid"] below overrides just this one property, so
+// the actual card CSS never needs to branch on tone.
+.frame {
+  --diplomi-frame-alpha: 18%; // tuned against tone-base (ivory)
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 1.5rem 0.875rem 1.25rem; // ~24px 14px 20px
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) var(--diplomi-frame-alpha), transparent);
+  border-radius: 0.4375rem; // 7px
+}
+
+// Tone-mid re-tune: 18% measured only ~1.3:1 visual separation from
+// tone-mid's own tan background (a warmer, more saturated surface than
+// ivory, where the same low alpha reads far fainter) — bumped so the
+// frame edge stays legibly a frame, not a near-invisible outline.
+:global([data-tone="mid"]) .frame {
+  --diplomi-frame-alpha: 35%;
+}
+
+.docIcon {
+  width: 2.125rem; // 34px
+  height: 2.125rem;
+}
+
+// .cardYear/.cardInstitution/.cardTitle/.cardLinkPending are all <span>
+// in the markup (a <button>'s content model is phrasing-only, so a <p>
+// nested inside the interactive card variant would be invalid HTML) —
+// display:block reproduces plain paragraph-like stacking either way.
+.cardYear {
+  display: block;
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.cardInstitution {
+  display: block;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem; // 18px
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.cardTitle {
+  display: block;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.divider {
+  width: 2rem;
+  height: 1px;
+  margin: var(--space-4) 0;
+  background: var(--color-hairline);
+}
+
+.cardLink {
+  display: block;
+  margin-top: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+}
+
+
+// Year watermark. Transparency is the color's own alpha (color-mix,
+// composited from --color-accent), never the `opacity` property — the
+// frame (z-index:1) must stay perfectly crisp on top regardless of this
+// element's own transparency mechanism.
+//
+// Tonal-scale pass: same per-tone custom-property pattern as .frame
+// above — --diplomi-watermark-alpha, overridden per [data-tone], not a
+// magic number re-specified per tone.
+.yearWatermark {
+  --diplomi-watermark-alpha: 8%; // tuned against tone-base (ivory)
+  position: absolute;
+  bottom: -0.5rem;
+  right: -0.25rem;
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 5.5rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-accent) var(--diplomi-watermark-alpha), transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+// Tone-mid re-tune: measured — 8% against tone-mid's own tan background
+// (light theme) computes to ~1.11:1 visual separation, barely perceptible
+// against a background with its own inherent warmth (unlike ivory, a
+// near-neutral where the same low alpha still reads as a clear tint).
+//
+// Corrective pass: 20% overshot — the numerals started competing with the
+// institution names instead of sitting quietly behind them. Brought down
+// to 13%, still meaningfully above the 8% base-tone value (tone-mid's own
+// warmth swallows a flat alpha faster than ivory does, so it can't just
+// reuse 8%), but back to "barely sensed" rather than "read as a second
+// layer of text." Frame border alpha (35%) is untouched — this pass's own
+// brief only asked for the watermark to change.
+:global([data-tone="mid"]) .yearWatermark {
+  --diplomi-watermark-alpha: 13%;
+}
+
+.alboLine {
+  margin-top: var(--space-6);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}

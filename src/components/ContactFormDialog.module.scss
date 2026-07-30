@@ -1,0 +1,151 @@
+@use "../styles/mixins";
+
+// Same visual mechanics as DiplomiSection.module.scss's own
+// .qualificationDialog (backdrop, @starting-style entry, data-closing
+// exit) — not copied wholesale since this dialog's content (a scrollable
+// form, not a single fixed-aspect image) needs its own card sizing.
+.contactDialog {
+  border: none;
+  padding: 0;
+  margin: auto;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100%;
+  height: 100%;
+
+  &::backdrop {
+    background: color-mix(in srgb, var(--color-text) 80%, transparent);
+  }
+
+  &[open] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Real bug found via computed-style check, not assumed correct:
+// ContactForm.module.scss's own fields are built ivory-on-dark-gradient
+// by design (transparent inputs, --color-bg-colored labels/borders, the
+// whole --cf-input-bg tint derived from --color-accent-gradient-light/
+// -dark) — it was authored to sit on FinalContactSection's own dark
+// diagonal-gradient band, never on a plain light card. Mounting it on
+// --color-surface (this file's first draft) made every label/input
+// render ivory-on-white/ivory-on-dark-teal — i.e. text color equal to
+// (or nearly equal to) the card's own background, functionally
+// invisible. Fixed by giving this card the SAME gradient
+// FinalContactSection.module.scss's own .finalContactBand already uses
+// (identical formula, not re-derived) — the one surface this form was
+// actually designed against. Zero changes to ContactForm.tsx/.module.scss
+// itself.
+.contactDialogCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  // Real bug found via mobile screenshot, not assumed correct:
+  // ContactForm's own channel-picker row is 3 EQUAL grid columns with no
+  // minmax(0, 1fr) escape hatch, sized to its real, un-shrinkable content
+  // ("Telefonata" etc.) — that's fine at FinalContactSection's own 30rem
+  // column, but this card's original var(--space-6)-gutter + var(--space-7)
+  // padding left only ~230px of content width at a 390px viewport,
+  // clipping the third pill. Mobile-first: near-full-width with a small
+  // gutter and lighter padding below `sm`; the original centered/capped
+  // card returns at sm+, where there's room to spare either way.
+  width: calc(100% - var(--space-4) * 2);
+  padding: var(--space-5);
+
+  @include mixins.breakpoint-up(sm) {
+    width: min(calc(100% - var(--space-6) * 2), 32rem);
+    padding: var(--space-7);
+  }
+
+  max-height: min(calc(100dvh - var(--space-6) * 2), 42rem);
+  overflow-y: auto;
+  border-radius: var(--radius-l);
+  background: linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
+  // Second real bug, found the same way: ContactForm.module.scss's own
+  // comment calls --color-bg "this project's --color-ivory substitute" —
+  // true only on the real site, which has no dark theme at all. This
+  // preview's dark theme deliberately flips --color-bg to a near-black
+  // page-background value (#081512) as its own legitimate, established
+  // convention — but ContactForm was never built with that flip in mind,
+  // so on dark theme its labels/borders/links resolved to near-black
+  // against this ALSO-dark gradient card (measured: rgb(8,21,18), nearly
+  // identical to the card's own dark stop). Rather than touch
+  // ContactForm itself (explicitly out of scope), --color-bg is
+  // re-pinned here to --tone-deep-text — the one existing token already
+  // established elsewhere on this page to mean "ivory-equivalent
+  // foreground for a dark gradient surface" on BOTH themes (light:
+  // aliases --color-bg there, which IS ivory; dark: aliases --color-text
+  // there, which is ALSO ivory) — so every var(--color-bg) inside
+  // ContactForm now resolves correctly regardless of theme, with zero
+  // edits to that file.
+  --color-bg: var(--tone-deep-text);
+  // Third real bug, same root cause: ContactForm's submit button and
+  // consent-checkbox checkmark both use var(--color-text) as "the dark
+  // ink that contrasts against an ivory fill" (the submit button's own
+  // background IS --color-bg, i.e. now correctly ivory via the pin
+  // above) — on light theme --color-text already IS dark ink, so this
+  // was invisible only on dark theme specifically, where --color-text is
+  // the page's own NORMAL (ivory) reading color, giving ivory-on-ivory.
+  // Pinned to --color-accent-gradient-dark — the same dark, on-brand ink
+  // this task's own Button.tsx primary/[data-tone="deep"] variant already
+  // uses for an identical "dark label on an ivory fill" need.
+  --color-text: var(--color-accent-gradient-dark);
+  box-shadow: var(--shadow-soft);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.contactDialog[data-closing="true"] .contactDialogCard {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.contactDialogHeading {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  // Ivory, matching the same gradient surface every other tone-deep
+  // heading on this page already uses --color-bg for.
+  color: var(--color-bg);
+}
+
+.contactDialogCloseButton {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--color-bg) 20%, transparent);
+  color: var(--color-bg);
+  font-size: 1.5rem;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.contactDialogFormWrap {
+  padding-top: var(--space-2);
+}

@@ -1,0 +1,64 @@
+@use "../../../styles/mixins";
+
+// Shared image lightbox — Sedi cards today; DiplomiBlock's own comment
+// already earmarked this same treatment for itself once a real scan
+// exists (none do yet, see SediCards.tsx's own top comment on why
+// Diplomi stays non-interactive this pass).
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40; // mixins/tokens' own z-index scale: "modal"
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  max-width: 56rem;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.img {
+  object-fit: cover;
+}
+
+.caption {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-small);
+  color: var(--color-bg);
+}
+
+// Same recipe as diplomi.module.scss's own .iconButton (that file's own
+// comment already asks any future lightbox close control to reuse it) —
+// duplicated rather than cross-imported to avoid coupling two otherwise-
+// independent components over one small class.
+.closeButton {
+  position: absolute;
+  top: calc(-1 * var(--space-7));
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-bg);
+  background: transparent;
+  color: var(--color-bg);
+  cursor: pointer;
+
+  @include mixins.focus-ring-inset;
+}
