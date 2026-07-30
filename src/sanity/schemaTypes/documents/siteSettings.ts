@@ -1,4 +1,4 @@
-import { defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType } from "sanity";
 import { deontologyCheck } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
 
@@ -141,6 +141,37 @@ export const siteSettings = defineType({
       type: "text",
       rows: 2,
       validation: (Rule) => Rule.required().custom(deontologyCheck),
+    }),
+    defineField({
+      name: "emergencyContacts",
+      title: "Emergency contacts (structured)",
+      description:
+        "Additive alongside crisisSupportText — does not replace or alter that prose field. Rendered as real tel: links in the footer, separate from the crisis-support paragraph.",
+      type: "array",
+      of: [
+        defineArrayMember({
+          type: "object",
+          name: "emergencyContact",
+          fields: [
+            defineField({
+              name: "label",
+              title: "Label",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "number",
+              title: "Phone number",
+              type: "string",
+              description: "Digits as dialled, e.g. \"112\" or \"02 2327 2327\".",
+              validation: (Rule) => Rule.required(),
+            }),
+          ],
+          preview: {
+            select: { title: "label", subtitle: "number" },
+          },
+        }),
+      ],
     }),
     defineField({
       name: "googleProfileUrl",
