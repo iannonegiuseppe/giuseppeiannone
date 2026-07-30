@@ -78,6 +78,19 @@
   position: relative;
 }
 
+// Copy pass: align-items switched flex-start -> stretch at md+ (real copy
+// pass). With the new, longer step descriptions, step 2's shortLine wraps
+// to 3 lines against 1-2 for the others — under the old flex-start, that
+// made .step's own box height track its own content only, so the row's 4
+// boxes measured unequal (194.6px vs 218.6px, live-verified). stretch
+// makes every .step's box match the row's tallest sibling; .step itself
+// isn't a flex container, so the extra height just becomes empty space
+// BELOW .stepContent — icon circles/titles/text all stay top-aligned at
+// the same row position regardless, only the box outline (invisible, no
+// border/background of its own) grows. .numeral's absolute positioning is
+// unaffected (fixed `top`, ignores the parent's own height either way).
+// .connector explicitly opts back OUT via its own align-self below — this
+// change must never touch its protected draw-on alignment.
 .stepsRow {
   display: flex;
   flex-direction: column;
@@ -86,7 +99,7 @@
 
   @include mixins.breakpoint-up(md) {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 0;
   }
 }
@@ -120,6 +133,12 @@
     // 84px icon circle's own new centre (84px / 2 = 42px from the step's
     // content top; 34px lands the connector's own vertical centre — SVG
     // viewBox 0 0 34 16, so 8px into a 16px-tall box — right on that mark).
+    // Copy pass: .stepsRow switched to align-items:stretch (above) so the
+    // 4 step boxes measure equal height with the new, longer descriptions
+    // — this opts the connector back OUT of that stretch, keeping its own
+    // box at its natural/intrinsic height so the margin-top math above
+    // still lands the arrow at the icon circle's centre, unchanged.
+    align-self: flex-start;
   }
 }
 

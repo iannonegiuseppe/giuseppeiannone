@@ -6,9 +6,7 @@ import styles from "./metodo.module.scss";
 
 type MetodoStep = {
   title: string;
-  atAGlance: string;
   shortLine: string;
-  expandedText: string;
 };
 
 // Metodo rebuild: static 4-step row (no click-to-expand interactivity —
