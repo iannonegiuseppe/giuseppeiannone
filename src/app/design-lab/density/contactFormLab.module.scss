@@ -1,0 +1,577 @@
+@use "../../../styles/mixins";
+
+// Contact light-surface pass — forked from src/components/ContactForm.
+// module.scss (shared with the real, production-serving ContactForm.tsx —
+// see ContactFormLab.tsx's own top comment for why this had to be a fork,
+// not an edit). Same structural class names (ffWrap/ffInput/ffLabel/pill/
+// consentCheckbox/submitButton/...) so ContactFormFieldLab.tsx's own logic
+// carries over unchanged; every color-bearing rule is rebuilt for the new
+// light-island-surface ground, not retinted — the old file colored text/
+// borders with var(--color-bg) throughout, which only worked because
+// --color-bg stayed dark on the old tone-deep band. Under light-island,
+// --color-bg IS the ivory surface itself, so that convention would paint
+// ivory-on-ivory; every rule below reads var(--color-text)/-muted/-line/
+// -hairline/-focus instead, the tokens light-island-surface actually
+// retones for a light ground.
+//
+// Reference (cyprusvipestates.com contact section): bordered boxes with a
+// light fill on a light ground, not the old underline-only treatment —
+// five real states (resting/hover/focus/filled/error), proposed and
+// approved before this file was written.
+
+.contactForm {
+  // Pill fill only now — correction pass moved text-field/textarea fill to
+  // a literal #fff (written directly on field-base below, no token/color-
+  // mix), per explicit instruction. This stays for the three contact-
+  // preference pills, which weren't part of that instruction's scope.
+  --cf-input-bg: color-mix(in srgb, var(--color-text) 4%, var(--color-bg) 96%);
+  // Error text/border: --color-amber alone (whichever theme resolves it —
+  // light-island-surface deliberately doesn't reassign it) isn't dark
+  // enough on its own to clear 4.5:1 against ivory (even at 100% strength
+  // it only reaches ~2.5:1 — the opposite problem the old dark-band
+  // version had), so both are blended toward --color-text instead of
+  // --color-bg, computed from the actual token hex values via the WCAG
+  // relative-luminance formula: text at 50/50 measures ~5.38:1 against
+  // --color-bg (needs 4.5:1); border at 70% amber / 30% text measures
+  // ~3.86:1 (needs only 3:1, so it can stay lighter/more visibly amber).
+  --cf-error-text-color: color-mix(in srgb, var(--color-amber) 50%, var(--color-text) 50%);
+  --cf-error-border-color: color-mix(in srgb, var(--color-amber) 70%, var(--color-text) 30%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+// --- Bordered-box fields (input + textarea share this) --------------------
+// Reference-driven rebuild: real border + fill, not the old underline.
+@mixin field-base {
+  width: 100%;
+  // Correction pass: written directly per explicit instruction — no token
+  // lookup (light-island has no theme-invariant white token to reuse; see
+  // this pass's own report on --color-surface), no color-mix.
+  background: #fff;
+  // Resting border — correction pass: was var(--color-line) (#ddd6c9),
+  // measured live at 1.31:1 against the ivory page, well under the 3:1
+  // non-text floor (WCAG relative-luminance, computed from the resolved
+  // hex, not assumed). --color-accent (#7e6b5b) is the next-darkest
+  // existing token and the lightest one that still clears the floor with
+  // real margin: 4.58:1. Reassigning resting meant hover/filled (which
+  // both used to read var(--color-text-muted), an actual collapse — two
+  // states with an identical border color) needed their own distinct
+  // values too; see the &:hover / [data-floated] rules below for the
+  // resulting four-way assignment and this file's own report for the
+  // full pairwise numbers.
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-m);
+  // Bug fix: was permanently reserving right-side space sized to the
+  // longest possible error string (14rem), so every field permanently
+  // lost that much of its own typed-text width, error or not — confirmed
+  // live: "Aliaksandr"/"+4878651"-length values were visibly clipped even
+  // with no error present. Normal, symmetric padding now; see .ffError
+  // below for how the message avoids colliding with typed text without
+  // reserving anything.
+  padding: 1.5rem 0.875rem 0.5rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text);
+  caret-color: var(--color-text);
+  transition: border-color 150ms ease;
+
+  &:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  // Filled (has a value, not focused) — reuses ContactFormFieldLab's own
+  // data-floated attribute (true whenever the field has content OR is
+  // focused). Correction pass: was var(--color-text-muted), identical to
+  // hover above — a genuine collapse (two states with the same border
+  // color). Now var(--color-text), the darkest of the four tokens in
+  // play, so a field with committed content reads as visibly more settled
+  // than a merely-hovered one, not just "the same value under the
+  // pointer." Explicitly excludes [aria-invalid="true"] — found live:
+  // this selector's own :not(:focus-visible) gives it MORE specificity
+  // (class+attr+pseudo) than the plain &[aria-invalid="true"] rule below
+  // (class+attr), so without this exclusion a filled-but-invalid field
+  // showed the filled border instead of the error color, regardless of
+  // source order. Error must stay the primary signal, per this file's own
+  // "error is primary" convention.
+  &[data-floated="true"]:not(:focus-visible):not([aria-invalid="true"]) {
+    border-color: var(--color-text);
+  }
+
+  // Correction pass: no outline (explicitly removed — was mixins.focus-
+  // ring) and border-width stays 1px always, unchanged. Focus is signalled
+  // by colour only now (border goes to --color-accent-light, the brand
+  // gold, #e0c8a7) — per direct instruction, not this file's own call.
+  // outline: none is required here, not optional — removing the mixin
+  // alone left the browser's own native default focus outline showing
+  // (confirmed live: computed outline-style was "auto", a real visible
+  // ring, until this line was added).
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-accent-light);
+  }
+
+  &[aria-invalid="true"] {
+    border-color: var(--cf-error-border-color);
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--color-text);
+    caret-color: var(--color-text);
+    box-shadow: 0 0 0 62.5rem #fff inset;
+    transition: background-color 999999s ease-in-out 0s;
+  }
+
+  &:autofill,
+  &:autofill:hover {
+    -webkit-text-fill-color: var(--color-text);
+    caret-color: var(--color-text);
+    box-shadow: 0 0 0 62.5rem #fff inset;
+    transition: background-color 999999s ease-in-out 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Nome | Numero (facoltativo) — side by side at md+, stacked below it.
+// Correction pass: was sm (480px) — measured live and found genuinely too
+// narrow once .ffError moved inside the field (issue 2): at sm-600px a
+// paired field is only 208-268px wide, well under the ~224px this file's
+// own --cf-field-right-padding reserves for the longest error string
+// (English email error, 194.44px measured) — the error message would
+// crowd or overlap the field's own left-side content there. md (768px)
+// measured at 352px per paired field, comfortable. Below md, the two
+// fields stack (full container width each, 342px even at 390px) — this
+// is the proposed mobile treatment rather than shipping the overlap.
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  @include mixins.breakpoint-up(md) {
+    flex-direction: row;
+    gap: var(--space-4);
+
+    > * {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+}
+
+.ffWrap {
+  position: relative;
+}
+
+.ffInput {
+  @include field-base;
+  min-height: 3.5rem;
+}
+
+.ffTextarea {
+  @include field-base;
+  min-height: 5.5rem;
+  resize: none;
+  overflow-y: auto;
+}
+
+@keyframes ffAutofillDetector {
+  from {
+  }
+  to {
+  }
+}
+
+.ffInput:-webkit-autofill,
+.ffTextarea:-webkit-autofill {
+  animation-name: ffAutofillDetector;
+  animation-duration: 1ms;
+}
+
+// Real <label htmlFor>, absolutely positioned so its own top/font-size
+// change never affects the input's box model — see ContactFormFieldLab.tsx.
+.ffLabel {
+  position: absolute;
+  left: 0.875rem;
+  top: 1.75rem;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition:
+    top 200ms ease,
+    font-size 200ms ease,
+    color 200ms ease;
+
+  &[data-floated="true"] {
+    top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    // No longer reserves room for the error message (that permanent
+    // reservation was the bug — see field-base's own comment); a generous
+    // static cap instead, so an unusually long label still can't run
+    // edge-to-edge. The label and .ffError now share this same row (see
+    // .ffError's own comment) — for a field with both a long label AND an
+    // error, this label may crowd the error rather than truly overlap it;
+    // see this pass's own report for the one narrow-row case measured.
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.ffHint {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+// Below-group errors (channel fieldset, consent) — unchanged mechanism:
+// hangs below the owning group, in the row-gap space that already exists.
+// Left alone deliberately: neither group is a single-line text input a
+// message could visually collide with (a radio group, a checkbox+
+// sentence), so the collision problem .ffError has below doesn't apply
+// here.
+@mixin hanging-error {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.125rem;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: var(--cf-error-text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupError {
+  @include hanging-error;
+  left: 0;
+  right: 0;
+}
+
+// Per-field errors — correction pass: no longer vertically centered with
+// the typed value (that's what forced the permanent right-padding
+// reservation, since ANY value long enough to reach that row would run
+// under the message). Now aligned to the SAME row as the floated label
+// (top: 0.75rem, matching .ffLabel's own floated position exactly) —
+// the value text renders BELOW this row (field-base's own 1.5rem top
+// padding clears it), so the message and the typed value occupy two
+// different rows entirely, regardless of how long the value is. Still
+// absolutely positioned/out of flow (ffWrap is position:relative), so
+// appearing or disappearing still never reflows anything — no reserved
+// padding needed at all now, permanent or conditional.
+.ffError {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.875rem;
+  left: auto;
+  transform: translateY(-50%);
+  max-width: 60%;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 1;
+  // Re-measured against --cf-input-bg (the field's own fill), not the raw
+  // ivory page — this text now sits ON the field, a different background
+  // than before. See this file's own report for the actual number.
+  color: var(--cf-error-text-color);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+// --- Channel pills ----------------------------------------------------------
+.pillFieldset {
+  position: relative;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pillLegend {
+  padding: 0;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.pillGroup {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.pillInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: var(--space-1) 0.875rem;
+  border-radius: var(--radius-button);
+  // Same correction as field-base's own resting border (see that rule's
+  // comment) — var(--color-line) measured 1.31:1 against ivory here too.
+  border: 1px solid var(--color-accent);
+  background: var(--cf-input-bg);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.25rem;
+  }
+
+  // Hover — correction pass: there wasn't one before (a real gap, not a
+  // deliberate omission). :not([data-selected="true"]) so a plain hover
+  // can't visually downgrade a persistently-selected pill back to the
+  // neutral hover color — selected stays gold regardless of pointer
+  // position. Same token as field-base's own hover, for consistency.
+  &:hover:not([data-selected="true"]) {
+    border-color: var(--color-text-muted);
+  }
+
+  // Correction pass: was border-color: var(--color-text) + an 8%-tinted
+  // fill — measured genuinely low-contrast/hard to spot (the whole point
+  // of this fix). Gold border alone measures only 1.62:1 on white (this
+  // pass's own earlier finding) — not enough on its own — so the FILL now
+  // carries the primary signal too: a real gold tint, not a faint 8%
+  // wash. See this pass's own report for the fill's contrast numbers.
+  &[data-selected="true"] {
+    border-color: var(--color-accent-light);
+    background: color-mix(in srgb, var(--color-accent-light) 55%, #fff);
+  }
+
+  // Correction pass: outline removed (explicit instruction) — colour only,
+  // same --color-accent-light gold as the text fields. Border width was
+  // never touched by focus here (always 1px; the old outline was a
+  // separate, additional cue, not a width change), so nothing else to fix
+  // for the "box never changes" requirement.
+  &:has(.pillInput:focus-visible) {
+    border-color: var(--color-accent-light);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// --- GDPR consent row --------------------------------------------------------
+.consentWrap {
+  position: relative;
+}
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  appearance: none;
+  flex-shrink: 0;
+  width: 0.8125rem;
+  height: 0.8125rem;
+  margin-top: 0.1875rem;
+  // Same correction as field-base's own resting border (see that rule's
+  // comment) — var(--color-line) measured 1.31:1 against ivory here too.
+  border: 1px solid var(--color-accent);
+  border-radius: calc(var(--radius-s) / 3);
+  background: var(--color-bg);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+
+  // Checked: dark fill (--color-text) with a light (--color-bg) checkmark —
+  // inverted from the old dark-band version (ivory fill / dark checkmark),
+  // since the ground this box sits on is now light, not dark.
+  &:checked {
+    background: var(--color-text);
+    border-color: var(--color-text);
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0.2625rem;
+      top: 0.1125rem;
+      width: 0.1875rem;
+      height: 0.375rem;
+      border: solid var(--color-bg);
+      border-width: 0 0.09375rem 0.09375rem 0;
+      transform: rotate(45deg);
+    }
+  }
+
+  // Regular outward ring, not the inset-ivory variant: same reasoning as
+  // .pill above — this sits on flat ivory, not unpredictable dark/
+  // photographic content, so the default mixins.focus-ring (--color-focus,
+  // correctly retoned by light-island-surface) is legible here, and the
+  // inset-ivory sibling would be invisible.
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.consentText {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.consentLink {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  @include mixins.focus-ring;
+}
+
+// --- Honeypot -----------------------------------------------------------------
+.honeypotWrap {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+// --- Submit + reply line ---------------------------------------------------
+// Button treatment pass: the hand-rolled fill/hover/focus above (near-black
+// fill, ivory label, custom hover/active/focus) is GONE — replaced with the
+// real Welcome-block button, reused as a component (@/components/Button,
+// variant="primary"), not approximated from a description or rebuilt as a
+// second version. See this pass's own report for the exact file/class this
+// comes from, and a flagged token-semantics finding in the hover fill that
+// wasn't patched here (out of scope for a CSS-only fix — see report).
+//
+// .submitButton is now LAYOUT ONLY — sizing/alignment concerns that don't
+// exist in Button.module.scss at all, so there's no property overlap/
+// specificity race with its own .primary rule.
+.submitButton {
+  // Correction pass: --color-accent-light was wrong here — that's the
+  // LIGHT-HOVER tone (confirmed: rest and hover became identical, and the
+  // fill read washed-out/disabled). Reference is CtaBridgeBlock.tsx's own
+  // CTA ("Non è necessario sapere da dove cominciare", ctaBridgeBlock.
+  // module.scss's own .ctaButton) — a real, existing light-island .primary
+  // button that already solved exactly this problem, reused verbatim
+  // (same three properties, same tokens): --theme-accent/-accent-contrast/
+  // -focus capture the ACTIVE THEME's own native accent at the theme
+  // root (_tokens.scss), immune to light-island-surface's local hijack —
+  // opting this button back out to the same champagne gold Welcome's own
+  // button and CtaBridgeBlock's own button already show, measured
+  // identical: rest #c29a5e / hover #e0c8a7 / label #081512 (see this
+  // pass's own report). Not approximated — the exact existing mechanism.
+  --color-accent: var(--theme-accent);
+  --color-accent-contrast: var(--theme-accent-contrast);
+  --color-focus: var(--theme-focus);
+  // Intrinsic width, left-aligned with the fields below sm-lg (Button's own
+  // box already sizes to its label + its own padding — no width override
+  // needed). align-self:flex-start is required regardless — .submitRow is
+  // a flex row/column and its default align-items:stretch would otherwise
+  // still force full width with no explicit width property at all.
+  align-self: stretch;
+
+  @include mixins.breakpoint-up(sm) {
+    align-self: flex-start;
+    width: auto;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    align-self: flex-end; // right-aligned within .submitRow at lg+
+  }
+}
+
+// Wraps the button and the reply line together so they can share one row
+// at lg+ (right-aligned button, reply line filling the space to its left)
+// while staying exactly as stacked as the previous pass left them below
+// lg (button, then reply line, both left-aligned) — see ContactFormLab.tsx's
+// own comment for why row-reverse doesn't create a tab-order mismatch.
+.submitRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}
+
+.replyLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+
+  @include mixins.breakpoint-up(lg) {
+    flex: 1 1 auto;
+  }
+}
+
+// --- States -------------------------------------------------------------------
+.successMessage {
+  margin: var(--space-6) 0 0;
+  max-width: 32rem;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.formBanner {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 60%, transparent);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-amber) 15%, var(--color-bg));
+}
+
+.formBannerText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}

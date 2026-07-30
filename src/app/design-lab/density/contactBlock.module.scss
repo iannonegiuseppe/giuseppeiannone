@@ -1,23 +1,46 @@
 @use "../../../styles/mixins";
+@use "./_tone.scss" as tone;
 
-// Cyprus rebuild, item 16 — Contact rebuilt after the reference's own
-// field-grid-left / portrait-right layout. ContactForm itself (validation,
-// GDPR consent, submit mechanics) is untouched — imported directly, same
-// component, only the surrounding layout differs from FinalContactSection's
-// centered single column.
+// Light-surface pass — reversed off tone-deep (dark) onto light-island
+// (flat ivory fill, no grain, matching Metodo/Diplomi/Video's own light
+// sections — see _tone.scss's own comment on why this mixin exists).
+// Deliberately no border-top/border-bottom here: every other tonal change
+// on this page is an undivided flat cut, and a hairline here was
+// specifically rejected as a correction (see ContactBlock.tsx's own
+// comment) — it was also the leading suspect for an earlier, since-fixed
+// dark-seam artefact elsewhere on this page (a border-bottom on
+// .stripSection, LocationsMarquee's own wrapper).
+.contactLightWrap {
+  @include tone.light-island-surface;
+}
 
 .contactInner {
   @include mixins.container;
   padding-block: var(--space-band-y);
 }
 
+// Columns swap pass: DOM order is now photo, then form (ContactBlock.tsx)
+// — matching the new desktop visual (photo left, form right) with zero
+// visual reordering needed at lg+, so Tab/reading order and visual order
+// agree there by construction, not by an order property fighting the DOM.
+// Below lg, .contactTextCol/.contactPhotoCol's own order below restores
+// form-first visually. This doesn't create a Tab-order mismatch at either
+// breakpoint: the photo column has no focusable content at all (a plain
+// image + a caption <p>, no link/button), so Tab visits exactly the
+// form's own fields in exactly their own DOM sequence regardless of where
+// the photo sits — see this pass's own report for the full order.
 .contactGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-8);
 
   @include mixins.breakpoint-up(lg) {
-    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+    // Correction pass: photo column widened from 4fr to 4.5fr (form 6fr ->
+    // 5.5fr) — chosen by eye against the live render: enough to read as a
+    // deliberately larger figure next to the form, not enough to overpower
+    // it (the form column, with all its fields/radios/consent/button, is
+    // still visibly the taller and the wider-reading of the two).
+    grid-template-columns: minmax(0, 4.5fr) minmax(0, 5.5fr);
     align-items: start;
     gap: var(--space-9);
   }
@@ -25,31 +48,61 @@
 
 .contactTextCol {
   order: 1;
+
+  @include mixins.breakpoint-up(lg) {
+    order: 0; // natural DOM position (second) — photo is first, left column
+  }
 }
 
 .contactPhotoCol {
   order: 2;
 
   @include mixins.breakpoint-up(lg) {
-    padding-top: var(--space-3); // optical alignment with the kicker above
+    order: 0; // natural DOM position (first) — left column
+    // Bottom-aligned pass: was padding-top (a top-align optical nudge to
+    // match the kicker) — replaced outright, not kept alongside, since the
+    // figure now grounds against the block's own bottom edge instead of
+    // aligning near the top. align-self:end (not align-items on the grid
+    // itself) so only this column moves — the form column keeps the
+    // grid's own default start-alignment, unaffected.
+    align-self: end;
   }
 }
 
-// tone-deep: --tone-deep-accent, not --color-accent — same reasoning as
-// CtaBridgeBlock/VideoBlock's own equivalents (rich-dark-surface already
-// repurposes --color-accent locally for the gradient background). This
-// specific line was a real, pre-existing bug: `color: var(--color-accent)`
-// inside .richDarkWrap silently resolved to an invalid gradient value
-// even before this pass (a `color` property can't hold a gradient), found
-// while auditing this file for the tonal-scale pass.
+// Light-surface fix: was --tone-deep-accent (a dark-surface-only token,
+// invalid once this section left tone-deep) — now --color-accent-hover,
+// the same token LocationsMarquee's own kicker already reads, correctly
+// retoned by light-island-surface.
+// Correction pass: display/align/gap added — was plain block text, missing
+// the kicker rule every other block's own kicker precedes itself with.
 .contactKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--tone-deep-accent);
+  color: var(--color-accent-hover);
+}
+
+// Correction pass: was missing entirely. Reused verbatim — same geometry
+// AND same var(--color-line) treatment as every other kicker rule on this
+// page (.kickerRule in chiSonoBlock.module.scss, .headingKickerRule in
+// diplomiSlider.module.scss/locationsMarquee.module.scss, .locationsKickerRule
+// in sediSection.module.scss, .pricingKickerRule in pricingBlock.module.scss —
+// all five byte-identical) — not the accent/40%-alpha treatment
+// .contactRule below uses; that's a distinct, already-justified exception
+// for that one full-width rule, not this page's normal kicker-dash
+// language. No second version invented.
+.contactKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
 }
 
 .contactHeading {
@@ -63,25 +116,26 @@
   color: var(--color-text);
 }
 
-.contactBody {
-  margin: var(--space-4) 0 0;
-  max-width: 42rem;
-  font-family: var(--font-body);
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  color: var(--color-text-muted);
+.contactHeadingAccent {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+// Rule spanning the form column's full width, between the heading and the
+// fields — part of the composition (reference), not a section divider.
+// Correction pass: now the project's own real animated-rule component
+// (AnimatedDivider, see ContactBlock.tsx's own comment) instead of a
+// static span — its own .divider class (AnimatedDivider.module.scss)
+// already supplies width/height/background/the sweep, all reading generic
+// tokens (--color-accent, --color-accent-hover) that retone correctly
+// under light-island with zero edits needed here. This class is layout
+// only now: the vertical gap from the heading above it.
+.contactRule {
+  margin-top: var(--space-5);
 }
 
 .contactForm {
   margin-top: var(--space-6);
-}
-
-.contactReassurance {
-  margin: var(--space-4) 0 0;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
 }
 
 .contactGoogle {
@@ -100,21 +154,28 @@
   @include mixins.focus-ring;
 }
 
+// Edge without a drop shadow (§10 rules shadows/glows/blur out): a 1px
+// border — the one raw-px exception CLAUDE.md itself carves out — replaces
+// the old box-shadow: var(--shadow-soft), which was a real drop shadow.
 .contactPhotoFrame {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 5;
   border-radius: var(--radius-l);
   overflow: hidden;
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--color-line);
 }
 
 .contactPhotoImg {
   object-fit: cover;
 }
 
+// Caption moved lower-right (reference's own placement), still beneath the
+// plate rather than overlaid on it — no cut-out subject to place it
+// against directly (see this pass's own proposal, part c).
 .contactPhotoCaption {
   margin: var(--space-3) 0 0;
+  text-align: right;
   font-family: var(--font-body);
   font-style: italic;
   font-size: var(--fs-small);
