@@ -1,30 +1,81 @@
 @use "../../styles/mixins";
 
-// Item 7 — full container width, left-aligned, display scale. No max-
-// width cap on the heading (was 20ch/60ch elsewhere on this page for
-// reading measure — this is one short line, not body copy, so it's
-// allowed to run the container's own full width for scale).
+// Two-column pass: was a single centered/left-aligned stack (full-width
+// display headline, body, an oversized underlined link below both). Now
+// a real two-column layout matching FAQ's own established heading-left/
+// content-right mechanism (FaqSection.module.scss's own .faqContainer/
+// -HeaderColumn/-AccordionColumn — CSS Grid, 12 columns, top-aligned via
+// align-items: start) — reused, not reinvented. Checked Aree's own
+// header too (named alongside FAQ in the brief): it's actually a single
+// stacked column (kicker/title/intro), not a 2-column split — FAQ is the
+// real precedent here, see this pass's own report.
+//
+// Breakpoint: lg (1024px), not md (768px) — checked live at a 900px
+// tablet width first: at md the two columns already fit, but a heading
+// column at ~58% of a 768-900px content box runs noticeably narrower per
+// line than intended, and "heading above, then paragraph/button" reads
+// more honestly as the tablet behaviour this pass's own spec asks to
+// report. Single column (stacked) below lg; 2-column only at genuine
+// desktop widths.
+.layout {
+  display: grid;
+  row-gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+}
+
+// Left, columns 1-7 (~58%) — "roughly balanced, left a little wider than
+// right" per this pass's own spec, not an even 6/6 split.
+.headingColumn {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 1 / span 7;
+  }
+}
+
+// Right, columns 8-12 (~42%) — paragraph, then button below it.
+.contentColumn {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 8 / span 5;
+  }
+}
+
+// Light-island pass: font-size bumped --fs-display -> --fs-display-lg (a
+// new, modest step above the hero's own H1 scale — see _tokens.scss's
+// own comment) since the heading now carries its column alone, with no
+// kicker/body directly beside it to help establish scale.
 .heading {
   margin: 0;
   text-wrap: balance;
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  font-size: var(--fs-display);
-  line-height: var(--lh-display);
+  font-size: var(--fs-display-lg);
+  line-height: var(--lh-display-lg);
   color: var(--color-text);
 }
 
-// tone-deep: --tone-deep-accent, not --color-accent — this block's own
-// tone-deep wrapper (density.module.scss's .toneDeepSection) deliberately
-// leaves --color-accent alone, since rich-dark-surface already repurposes
-// that name locally for the gradient background itself.
+// Light-island pass: was --tone-deep-accent (tone-deep's own dedicated
+// accent role, needed there because rich-dark-surface repurposes the
+// generic --color-accent for the background gradient itself). light-
+// island-surface doesn't touch --color-accent that way (flat fill, no
+// gradient) — the generic, correctly-hijacked token is right here, same
+// as Metodo's own .headingEmphasis.
 .emphasis {
   font-style: italic;
-  color: var(--tone-deep-accent);
+  color: var(--color-accent);
 }
 
+// margin: 0 (was --space-5 top, spacing it from the heading directly
+// above in the old single-column stack) — the heading and body are now
+// in SEPARATE grid columns/rows; .layout's own row-gap handles the
+// mobile-stacked spacing, and at desktop this sits flush at the top of
+// its own column so it lines up with the heading's own top edge
+// (top-aligned per this pass's own spec).
 .body {
-  margin: var(--space-5) 0 0;
+  margin: 0;
   max-width: 42ch;
   font-family: var(--font-body);
   font-size: var(--fs-body-lg);
@@ -32,34 +83,42 @@
   color: var(--color-text-muted);
 }
 
-// Oversized, underlined — was a small text link with a trailing arrow
-// glyph; now a genuine typographic moment of its own, matching the
-// weight the heading above it now carries instead of receding beside it.
-.link {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  margin-top: var(--space-7);
-  font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
-  // tone-deep: same reasoning as .emphasis above.
-  color: var(--tone-deep-accent);
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
-  text-decoration-thickness: 1px;
-
-  &:hover {
-    // On light theme's tone-deep this equals the rest-state color (both
-    // collapse to ivory, per Phase 1's own finding — no distinct hover
-    // step exists there); on dark theme it's a real, visible shift to
-    // champagne. Flagged, not silently left mismatched.
-    color: var(--tone-deep-accent-small);
-  }
-
-  @include mixins.focus-ring;
-}
-
-.linkGlyph {
-  font-family: var(--font-body);
+// Real-button pass: was an oversized underlined <a>; now the shared
+// Button component (variant="primary", see CtaBridgeBlock.tsx's own
+// comment for why) — Button.module.scss owns all of the button's own
+// visual styling, this class only supplies spacing plus one deliberate
+// colour override below.
+//
+// Explicit instruction: this button must match Welcome's own "Scrivimi"
+// button exactly (colour, hover, ...). Welcome's Button sits in a
+// tone-base scope, which never hijacks --color-accent/-accent-contrast —
+// it reads the page's ambient active-theme accent directly (dark theme's
+// champagne, on /design-lab's own default). This button sits in
+// .ctaBridgeLightWrap instead, which DOES hijack those two tokens to the
+// light palette's bronze (correct for every OTHER foreground in this
+// section, per this pass's own light-island conversion) — left as-is,
+// Button.module.scss's .primary would render bronze here, not champagne.
+// Live-verified mismatch before this fix: rest-state fill rgb(126,107,91)
+// here vs. rgb(194,154,94) on Welcome's own button; text rgb(46,43,40)
+// vs. rgb(8,21,18).
+//
+// Fixed by opting this ONE element back out of the local hijack, using
+// --theme-accent/-accent-contrast (_tokens.scss) — tokens that always
+// hold the ACTIVE theme's own real accent, immune to any tonal-scope
+// override, so this matches Welcome's button on both the dark (/design-
+// lab) and light (/design-lab/light-mode) theme variants, not just one.
+// --color-accent-light (the hover fill) needed no override — verified
+// live it ALREADY resolves to the same value on both buttons (dark
+// theme's own gold-light, rgb(224,200,167) on both) — see this pass's
+// own report for why: light-island-surface never reassigns
+// --color-accent-light itself.
+.ctaButton {
+  margin-top: var(--space-6);
+  --color-accent: var(--theme-accent);
+  --color-accent-contrast: var(--theme-accent-contrast);
+  // Focus ring, same reasoning: light-island-surface's own --color-focus
+  // override (bronze, correct for the rest of this section) would
+  // otherwise leak into this button too — --theme-focus opts it back out
+  // to the active theme's real focus colour, matching Welcome's.
+  --color-focus: var(--theme-focus);
 }

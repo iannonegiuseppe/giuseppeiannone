@@ -46,29 +46,42 @@ export async function VideoBlock({
   const posterSrc = poster ? urlFor(poster).url() : undefined;
   if (!posterSrc) return null;
 
-  // Tonal-scale pass: moved to tone-deep. Hierarchy check (per that
-  // pass's own instruction): kicker is already small/uppercase/bold
-  // (typographically distinct regardless of color) and the heading is
-  // display-scale against the kicker's 12px and the lead's 17px — both
-  // gaps are carried by size, not color; nothing here depended on a
-  // color difference to read as hierarchy. Three real-component classes
-  // (videoKicker/videoKickerRule/videoLead, from the shared, un-editable
-  // VideoSection.module.scss) needed scoped overrides — see
-  // density.module.scss's own [class*="video..."] rules under
-  // .toneDeepContent for why and what.
+  // Light-island pass: was tone-deep, now ivory via .videoLightWrap
+  // (density.module.scss, tone.light-island-surface — same mechanism
+  // Hope/Metodo/CTA-bridge/Diplomi already use). .toneDeepSection/-Grain/
+  // -Content are shared with Contact and stay untouched; this is a new,
+  // separately-named wrapper, same "shared device, one consumer diverges
+  // -> split, don't mutate" call made repeatedly on this page. No grain
+  // layer: light-island sections are flat by design (see tone.light-
+  // island-surface's own comment) — Diplomi doesn't have one either.
+  //
+  // Heading: no italic accent word. This pass's brief describes one
+  // ("the italic accent word at heading size"), but unlike Metodo/CTA-
+  // bridge/Welcome, homePage.video has no headingEmphasisWord CMS field —
+  // adding one would mean touching the schema, explicitly off-limits this
+  // pass. Rendering the whole heading in roman rather than guessing which
+  // word to italicize on live, client-approved, §9-reviewed copy. font-
+  // synthesis: none set anyway for consistency with Diplomi's own h2,
+  // even though nothing here is italic.
+  //
+  // Plate: .videoPlateFrame (density.module.scss) wraps the player with a
+  // low-alpha accent hairline, radius-matched to the player's own
+  // --radius-l — see this pass's own proposal for why (light photo on
+  // light ground needs a defined edge; no drop shadow).
   return (
-    <section className={densityStyles.toneDeepSection} aria-labelledby="video-block-heading">
-      <div className={densityStyles.toneDeepGrain} aria-hidden="true" />
-      <div className={`${densityStyles.section} ${densityStyles.toneDeepContent}`}>
+    <section className={densityStyles.videoLightWrap} aria-labelledby="video-block-heading">
+      <div className={`${densityStyles.section} ${densityStyles.videoLightContent}`}>
         <div className={densityStyles.videoBlockGrid}>
           <div className={densityStyles.videoBlockPlayerCol}>
-            <VideoPlayer
-              src={videoUrl}
-              poster={posterSrc}
-              posterAlt=""
-              captionsSrc={captionsUrl}
-              wrapperAriaLabel={wrapperAriaLabel}
-            />
+            <div className={densityStyles.videoPlateFrame}>
+              <VideoPlayer
+                src={videoUrl}
+                poster={posterSrc}
+                posterAlt=""
+                captionsSrc={captionsUrl}
+                wrapperAriaLabel={wrapperAriaLabel}
+              />
+            </div>
           </div>
           <div className={densityStyles.videoBlockTextCol}>
             <p className={videoStyles.videoKicker}>
@@ -76,7 +89,11 @@ export async function VideoBlock({
               {kicker}
               <span className={videoStyles.videoKickerRule} aria-hidden="true" />
             </p>
-            <h2 id="video-block-heading" className={densityStyles.videoBlockHeading}>
+            <h2
+              id="video-block-heading"
+              className={densityStyles.videoBlockHeading}
+              style={{ fontWeight: 400, fontSynthesis: "none" }}
+            >
               {heading}
             </h2>
             {lead ? <p className={videoStyles.videoLead}>{lead}</p> : null}
