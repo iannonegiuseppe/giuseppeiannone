@@ -1,0 +1,181 @@
+@use "../../../styles/mixins";
+
+// --- Tariffe: two-row mode/price list + a four-fact footer -----------------
+// New section (see PricingBlock.tsx's own top comment). Structured like
+// AreeSection.module.scss's .areeSection: a self-painted, full-width root
+// (background from --color-bg) with a container-constrained inner — this
+// root is wrapped in DesignLabHomepage.tsx's own .toneMidWrap (the SAME
+// mechanism Aree already uses, tone.tone-mid-surface, _tone.scss), which
+// retones --color-bg/-text/-text-muted/-hairline/-accent locally, so
+// every rule below that reads those generic tokens re-tones automatically
+// — zero tone-specific overrides needed in this file itself.
+.pricingSection {
+  background: var(--color-bg);
+  padding-block: var(--space-band-y);
+}
+
+.pricingInner {
+  @include mixins.container;
+}
+
+// --- Header: eyebrow + heading, matching Aree/Recognition/Credentials's
+// own pattern exactly (short dash + uppercase label, heading directly
+// below) — no AnimatedDivider, since neither immediate neighbour (Metodo
+// above, CTA bridge below) uses one either; see this pass's own report.
+.pricingHeader {
+  margin-bottom: var(--space-8);
+}
+
+.pricingKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.pricingKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.pricingHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.pricingHeadingEmphasis {
+  font-style: italic; // EB Garamond ships a real italic cut — same pairing every other heading emphasis on this page uses, shimmer is layered on top, not a replacement for it
+}
+
+// --- Rows: mode name (left) / price (right), bottom-aligned ---------------
+// align-items: flex-end (sm+) aligns the price's own bottom edge with
+// .pricingRowMode's bottom edge, i.e. the SUB-LINE's line (the last line
+// of the left column, whichever row it falls on — holds regardless of
+// sub-line length since flex-end always tracks the actual bottom, not a
+// fixed offset). Verified live for both rows (see this pass's own
+// report), not assumed from CSS spec alone.
+//
+// Rules pass: .pricingRowList's own top border and .pricingRow's
+// border-bottom are BOTH gone — replaced by a real <AnimatedDivider>
+// rendered inside each .pricingRowItem (PricingBlock.tsx), reused as-is
+// rather than a CSS-border variant. .pricingRowItem is the actual <li>;
+// .pricingRow is the flex mode/price line INSIDE it, now a sibling of the
+// divider rather than the li itself, so the divider (100% width) spans
+// the same box the row's own content does.
+.pricingRowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pricingRowItem {
+  &:not(:first-child) {
+    padding-top: var(--space-6);
+  }
+}
+
+.pricingRowDivider {
+  margin-top: var(--space-6);
+}
+
+.pricingRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-5);
+
+  // Mobile: price moves below the mode name/sub-line instead of forcing
+  // two columns into a narrow row — align-items only matters on the
+  // row's own cross-axis, which becomes moot once stacked, so the
+  // price's own left-alignment and a small top margin read as a natural
+  // continuation of the block instead of a stray right-aligned line.
+  flex-direction: column;
+  align-items: flex-start;
+
+  @include mixins.breakpoint-up(sm) {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+.pricingRowMode {
+  min-width: 0;
+}
+
+.pricingModeName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+.pricingSubline {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.pricingPrice {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  color: var(--color-accent);
+
+  @include mixins.breakpoint-up(sm) {
+    margin: 0;
+  }
+}
+
+// --- Footer: one flowing details line, middot-separated --------------------
+// Practical-details pass: retires the earlier 4-column label/value block
+// (and the compact-cluster flex layout that replaced it) entirely — one
+// <p>, plain body copy, no uppercase labels ("the line carries
+// everything" per this pass's own brief). Natural text wrapping (no
+// forced nowrap) handles mobile: verified live the line wraps mid-phrase
+// at whatever width, and the separator's own non-breaking space (see
+// PricingBlock.tsx) keeps a middot from ever stranding alone at a new
+// line's start.
+.pricingFooter {
+  margin-top: var(--space-8);
+}
+
+.pricingDetailsLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text);
+}
+
+// Decorative only (aria-hidden in the markup) — dimmer than the details
+// line's own text colour, with margin on both sides for extra visual
+// breathing room beyond the nbsp/space characters already in the text
+// flow (PricingBlock.tsx). Not held to the 4.5:1 text floor (it conveys
+// no information of its own, same treatment as e.g. Aree's numeral
+// watermark), but still measured and reported for this pass's own record.
+.pricingDetailsSeparator {
+  margin-inline: var(--space-1);
+  color: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
+}
+
+// Footnote: smaller than the details line above it, muted — carries the
+// deduction's traceable-payment condition (§9: must stay visible, never
+// silently dropped) without lengthening the details line itself.
+.pricingFootnote {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
