@@ -1,0 +1,473 @@
+@use "../../../styles/mixins";
+
+// Diplomi rebuild (framed-certificate slider). A NEW, dedicated file for
+// /design-lab only — see DiplomiSlider.tsx's own top comment for why the
+// shared density/DiplomiBlock.tsx + diplomi.module.scss (also used by
+// /design-lab/density's own Diplomi section) were left untouched instead
+// of edited in place. Header eyebrow/heading classes below mirror
+// metodo.module.scss's own pattern (same recipe, new scope — not reusing
+// or editing Metodo's classes, same discipline as every prior pass).
+
+// --- Heading zone -----------------------------------------------------
+// Two columns at md+ (density principle: a single narrow column leaving
+// half the container empty is prohibited — see design-direction.md §10).
+// Below md they stack, left column (kicker + h2) first. Replaces the old
+// single-column .header/.eyebrow/.heading/.headingEmphasis set entirely —
+// the Albo line that used to sit under the carousel now lives in the
+// right column instead (see DiplomiSlider.tsx's own JSX).
+.headingZone {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+    align-items: start;
+  }
+}
+
+.headingLeft {
+  display: flex;
+  flex-direction: column;
+}
+
+.headingRight {
+  display: flex;
+  flex-direction: column;
+
+  @include mixins.breakpoint-up(md) {
+    // Optical alignment: the kicker+rule cluster on the left sits at the
+    // top of its own line-box; the right column's own first line (the
+    // intro paragraph) needs to start at the same visual baseline, not
+    // one line lower just because the left column's h2 pushes taller.
+    padding-top: 0.1875rem; // ~3px, matches the kicker's own cap-height inset
+  }
+}
+
+// Kicker rule reused VERBATIM from .kickerRule (chiSonoBlock.module.scss)
+// — same width/thickness/line token, per this pass's own explicit "do not
+// invent new geometry" instruction. Kicker text itself: darkened accent
+// (--color-accent-hover, #715c52 under light-island — this is small text,
+// the plain accent would undershoot 4.5:1, see this pass's own report),
+// ~13px/0.14em tracking as a starting point, adjusted after checking the
+// rendered screenshot (see the value actually used below and this pass's
+// own report for what changed and why).
+.headingKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // ~13px
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em; // started at 0.14em — see this pass's own report
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+// Baseline-alignment pass: a plain flex align-items:center centers the
+// rule against the kicker's own EM-BOX (ascender-to-descender), which
+// reads as sitting slightly LOW against the visual cap-height of all-caps
+// text (there's no descender to balance against). Nudged up with a small
+// negative margin rather than switching to align-items:baseline (which
+// would align to the TEXT baseline, one step further wrong for a rule
+// meant to sit mid-cap-height, not at the foot of the letterforms).
+// Verified optically against the rendered screenshot, not assumed.
+.headingKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  margin-top: -0.0625rem; // ~1px — see this pass's own report
+  background: var(--color-line);
+}
+
+// EB Garamond, font-weight 400 EXPLICITLY (not inherited) — this codebase
+// has been bitten before by EB Garamond's synthesised-bold fallback when
+// a heading's own weight wasn't pinned. font-synthesis: none is set
+// inline on the <h2> itself in the .tsx (a single-property override,
+// doesn't warrant its own class) — deliberate: if the genuine italic face
+// isn't loaded/subset, the accent word should render upright (a visible,
+// reportable bug) rather than a faked skew standing in unnoticed.
+.headingH2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+
+  @include mixins.breakpoint-up(md) {
+    margin-top: var(--space-3);
+  }
+}
+
+.headingAccent {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.headingIntro {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+}
+
+// Moved here from beneath the card row — same darkened-accent treatment
+// as the kicker/card subtitles (--fs-small, 14px, below the ~16px line
+// this pass's own brief draws for accent-coloured text).
+.headingAlboLine {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--color-accent-hover);
+}
+
+.arrows {
+  display: none;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+
+  @media (hover: hover) and (pointer: fine) {
+    display: flex;
+  }
+}
+
+// ~42px, per spec — same recipe as diplomi.module.scss's own .iconButton,
+// a new instance rather than a cross-file import (small enough that
+// duplicating it is cheaper than coupling two independent components
+// over one shared class, same call already made for the Sedi/Lightbox
+// pass).
+// Light-island pass: stroke was --color-accent (warm brown) — restyled to
+// carbone (--color-text) at low alpha instead, same geometry, everything
+// else unchanged. Higher alpha than the decorative watermark/frame-border
+// uses elsewhere in this file — this is a functional, interactive control,
+// not a decorative mark, so it needs to stay legibly a button rather than
+// fade toward invisible.
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.625rem; // 42px
+  height: 2.625rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-hairline);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 62%, transparent);
+  cursor: pointer;
+  transition: opacity 150ms ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.trackWrap {
+  position: relative;
+  margin-top: var(--space-7);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4rem;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 200ms ease;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg), transparent);
+  }
+
+  &[data-fade-start="true"]::before {
+    opacity: 1;
+  }
+
+  &[data-fade-end="true"]::after {
+    opacity: 1;
+  }
+}
+
+.track {
+  display: flex;
+  align-items: stretch; // cards equalize to the tallest item's height
+  gap: var(--space-5);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+
+  // Degrade pass: few enough cards that they don't overflow — centered,
+  // static, no scroll affordance implied.
+  &[data-overflow="false"] {
+    justify-content: center;
+  }
+}
+
+// Card width: same "container-relative, calc-based" formula
+// DiplomiCardRow.tsx's own real card row already uses (2 * var(--space-5)
+// as the fixed gap-budget constant, divided by the target visible
+// count) — mirrored, not reinvented, just a different divisor per tier.
+.cardItem {
+  flex: 0 0 calc((100% - 2 * var(--space-5)) / 1.2); // ~1.2 visible, mobile
+  scroll-snap-align: start;
+
+  @include mixins.breakpoint-up(md) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 2.5); // ~2.5 visible, tablet
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    flex-basis: calc((100% - 2 * var(--space-5)) / 3.5); // ~3.5 visible, desktop
+  }
+}
+
+// --- Framed certificate card -------------------------------------------
+
+// Light-island pass: the section itself is now ivory (--light-base-bg,
+// via .diplomiLightWrap), and --color-sand-deep — this card's own
+// previous fill, from the tone-mid pass before it — is a warm tan
+// (#e7dad0), only a shallow step up from ivory; on the new, more neutral
+// ivory ground the two read close enough that the card still didn't
+// stand out as its own surface (same underlying "card disappears into
+// its own surround" problem the tone-mid pass already found once,
+// recurring here for a different reason). Fixed with a real step: plain
+// `white` — there's no existing theme-invariant "light-island surface"
+// token the way --light-base-bg/-text/-accent exist (light-island-surface
+// reassigns foreground/background ROLES, not a separate elevated-surface
+// role), and inventing one for a single consumer isn't warranted; `white`
+// is a literal CSS keyword, not a hex code, so it doesn't trip the
+// no-hardcoded-hex rule the way a literal `#fff` would. Border switched
+// from --color-hairline (a near-invisible warm-grey line, fine against
+// the OLD tone-mid card, lost entirely against a white one) to the accent
+// at low alpha — same passe-partout language .frame's own inner border
+// already uses one level in, just a lighter touch on the outer edge.
+// Hover pass: .card is now the interactive element itself for cards that
+// pass the privacy gate — a real <button> (see DiplomiSlider.tsx), not a
+// div wrapping a separate inner button. font/text-align/width/height
+// resets below undo the browser's own UA-stylesheet button defaults (a
+// <button> doesn't inherit font-family in every engine, and centers text
+// by default) — everything else (background/border/radius/padding) is
+// the same rule this class already had, now shared by both the
+// interactive <button> and the non-interactive <div> variant.
+//
+// [data-interactive="true"] scopes cursor + the hover/focus response —
+// the non-interactive <div> variant never carries that attribute, so it
+// gets none of this by construction, not by a separate override rule.
+// Transition is opacity/border-color ONLY, ~350ms ease-out, per this
+// pass's own explicit "no transform, no scale, no shadow, no size change"
+// constraint — nothing here can shift layout or overflow the card box.
+.card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; // clips the year watermark to the card edge
+  background: white;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  border-radius: 0.75rem; // 12px
+  padding: 0.5rem; // 8px
+  font: inherit;
+  text-align: inherit;
+  transition: border-color 350ms ease-out;
+
+  &[data-interactive="true"] {
+    cursor: pointer;
+
+    @include mixins.focus-ring;
+  }
+
+  &[data-interactive="true"]:hover,
+  &[data-interactive="true"]:focus-visible {
+    border-color: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Passe-partout inner frame. Border alpha via color-mix (a real
+// transparent color composited from the accent token), not a hardcoded
+// rgba/hex — same technique as the numeral watermark below.
+//
+// Tonal-scale pass (historical): the alpha lived in a custom property,
+// --diplomi-frame-alpha, specifically so a since-removed [data-tone="mid"]
+// override could re-tune it for that tone's own warmer background without
+// branching the base rule. Diplomi is light-island-only now (no more
+// tone-mid instance of this component), so that override is gone — the
+// indirection stays anyway, it costs nothing and documents the value's own
+// history/intent better than a bare literal would.
+.frame {
+  --diplomi-frame-alpha: 18%; // tuned against tone-base (ivory)
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 1.5rem 0.875rem 1.25rem; // ~24px 14px 20px
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) var(--diplomi-frame-alpha), transparent);
+  border-radius: 0.4375rem; // 7px
+}
+
+.docIcon {
+  width: 2.125rem; // 34px
+  height: 2.125rem;
+}
+
+// .cardYear/.cardInstitution/.cardTitle/.cardLinkPending are all <span>
+// in the markup (a <button>'s content model is phrasing-only, so a <p>
+// nested inside the interactive card variant would be invalid HTML) —
+// display:block reproduces plain paragraph-like stacking either way.
+// color-accent-hover, not color-accent: 12px is below the ~16px line this
+// pass's brief draws for accent-coloured text — see this pass's own report
+// for the measured contrast pair.
+.cardYear {
+  display: block;
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.cardInstitution {
+  display: block;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem; // 18px
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.cardTitle {
+  display: block;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // 13px
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+// Hover crop — a low-opacity slice of the scan behind the card text.
+// Reads scanLqip only (a tiny inline base64 data URI, not a network image
+// request — see DiplomiSlider.tsx's own comment), same z-index tier as
+// .yearWatermark (0, behind .frame's 1) and same transition contract:
+// opacity only, ~350ms ease-out, no transform/scale/shadow/size change.
+// 0.15 (15%) is the value actually used — judged live against the ivory
+// surface (see this pass's own report for the screenshot it was picked
+// from), inside the 12-18% range this pass's own brief asked for.
+.hoverCrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 350ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.card[data-interactive="true"]:hover .hoverCrop,
+.card[data-interactive="true"]:focus-visible .hoverCrop {
+  opacity: 0.15;
+}
+
+// Year watermark. Transparency is the color's own alpha (color-mix,
+// composited from --color-accent), never the `opacity` property for its
+// OWN colour — but opacity IS what the hover state below animates, since
+// fading the color-mix alpha itself would require transitioning a custom
+// property (not reliably animatable across browsers the way a plain
+// opacity transition is).
+//
+// Containment pass (earlier): this used to sit at bottom:-0.5rem/
+// right:-0.25rem — negative offsets, deliberately pushed PAST the card's
+// own padding box. .card's own overflow:hidden did clip it at the outer
+// rounded corner (that part always worked), but the negative offset also
+// drove the glyph straight across .frame's own inner border line one
+// level in, so the numeral read as cut by two DIFFERENT edges at once.
+// Pulled to small POSITIVE offsets instead: the glyph now sits entirely
+// inside .frame's own border, so there's exactly one boundary.
+.yearWatermark {
+  --diplomi-watermark-alpha: 8%; // tuned against tone-base (ivory), judged live this pass — see report
+  position: absolute;
+  bottom: 0.375rem;
+  right: 0.625rem;
+  z-index: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 5.5rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-accent) var(--diplomi-watermark-alpha), transparent);
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 350ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.card[data-interactive="true"]:hover .yearWatermark,
+.card[data-interactive="true"]:focus-visible .yearWatermark {
+  opacity: 0;
+}
+
+// Persistent affordance — NOT hover-only, per this pass's own brief: this
+// is what tells a touch user (no hover state at all) that the card is
+// tappable. margin-top: auto pins it to the bottom of .frame's own flex
+// column, same technique the now-removed .cardLink used for the same
+// purpose.
+.cardAffordance {
+  display: block;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.8125rem; // ~13px
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-hover);
+}

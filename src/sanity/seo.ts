@@ -40,6 +40,14 @@ export interface PathwayStep {
   description: string;
 }
 
+// Additive alongside crisisSupportText (see siteSettings.ts's own comment)
+// — structured so the footer can render real tel: links without parsing
+// phone numbers out of free text.
+export interface EmergencyContact {
+  label: string;
+  number: string;
+}
+
 // CMS-wiring pass: replaces the flat contactEmail/contactPhone/
 // whatsappNumber scalars — see siteSettings.ts schema's own comment.
 export interface ContactChannel {
@@ -61,6 +69,7 @@ interface SiteSettingsData {
   // the field existed. Treated as optional here so old data can't crash a
   // render; the footer simply omits the line if it's genuinely missing.
   crisisSupportText?: string;
+  emergencyContacts?: EmergencyContact[];
   googleProfileUrl?: string;
   carePathway?: PathwayStep[];
 }

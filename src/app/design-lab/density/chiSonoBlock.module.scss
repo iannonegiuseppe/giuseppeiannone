@@ -1,0 +1,296 @@
+@use "../../../styles/mixins";
+
+// --- Profilo: full-bleed photo background, text over a right-side scrim ---
+// Full-bleed rebuild pass. No tone wrapper (tone-mid/tone-deep/light-
+// island) — this section stays on the page's own ambient dark theme,
+// same as it already was un-wrapped before this pass; the scrim/text
+// colours below read the GENERIC tokens directly for that reason,
+// deliberately not opting into any of the tonal-scale mixins.
+//
+// Mobile-first throughout: below md, a full-bleed photo behind text
+// simply doesn't work (no room for a "left third stays photo, right
+// two-thirds text" split) — the section stacks to a plain photo block in
+// normal flow, then the text below it, scrim switched off entirely
+// (nothing to protect text FROM once nothing overlaps). From md up, the
+// desktop layout (photo background, scrim, text pinned right) applies.
+//
+// Height: clamp(43.75rem, 75vh, 50rem) — 700px to 800px at typical
+// desktop viewport heights, noticeably taller than both neighbours
+// (CTA bridge measures ~358px, Diplomi ~601px, live-measured before this
+// pass) without going to a full 100vh hero. Only applied from md up —
+// below that the section's own height is just whatever its stacked
+// content needs.
+.section {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @include mixins.breakpoint-up(md) {
+    flex-direction: row;
+    align-items: center;
+    min-height: clamp(43.75rem, 75vh, 50rem);
+  }
+}
+
+// Stacking order, md+ (bottom to top): .photoLayer (0) -> .scrim (1) ->
+// .seamRule (2) -> .grain (4) -> .inner (5). z-index 3 is a deliberate gap,
+// not a typo — the two masked bottom-seam overlay elements that used to
+// occupy it were deleted outright (Diplomi below is now a light surface,
+// see .grain's own comment); the surviving layers' own z-index values were
+// left exactly as they were rather than renumbered, per this pass's own
+// "z-order: unchanged" instruction. The photo itself carries NO mask/filter/tint of
+// any kind — every transition lives on the surfaces around it instead
+// (see each layer's own comment).
+.photoLayer {
+  position: relative;
+  z-index: 0;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+
+  @include mixins.breakpoint-up(md) {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+  }
+
+  // Reveal, layer 1 — left-to-right (the mirror of Welcome's own right-
+  // to-left mask): starts fully clipped from the RIGHT (inset's own 2nd
+  // value, the right offset, at 100%), travels to fully open. Same
+  // duration/easing as Welcome's own mask.
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.1s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.section[data-revealed="true"] .photoLayer {
+  clip-path: inset(0 0 0 0);
+}
+
+// Object-position pass: this portrait (the SAME asset Welcome already
+// uses, at object-position 82% 38% there) has its subject composed in
+// the RIGHT portion of the source frame, with a plain neutral backdrop
+// filling the left ~55% — verified by looking at the actual file, not
+// assumed. A literal mirror (flipping to an 18%-ish object-position)
+// would crop the subject OUT of frame entirely at this section's own
+// wide/tall aspect (the left portion is empty wall, no subject exists
+// there to reveal) — exactly the "doesn't work, don't force it" case
+// this pass's own brief anticipated. Solved instead with a horizontal
+// flip (scaleX(-1)) on top of the SAME object-position Welcome already
+// uses: the crop/zoom characteristics stay identical (known-good), the
+// whole frame mirrors, so the subject lands in the LEFT portion and the
+// empty backdrop lands on the right — under the scrim, where it belongs.
+// Safe specifically BECAUSE the backdrop is a plain, texture-free neutral
+// wall (no asymmetric detail a flip would visibly betray).
+.photoImg {
+  object-fit: cover;
+  object-position: 82% 38%;
+
+  // Reveal, layer 2 — unchanged timing/easing from Welcome's own (1.4s,
+  // same cubic-bezier), scaleX(-1) held constant across both states so
+  // only the trailing scale() interpolates. No mask, no filter, no
+  // opacity of any kind on this element — see this file's own top comment
+  // for why every transition moved off the photo and onto the
+  // surrounding layers instead.
+  transform: scaleX(-1) scale(1.12);
+  transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.section[data-revealed="true"] .photoImg {
+  transform: scaleX(-1) scale(1);
+}
+
+// Scrim — final correction. The previous two passes were chasing the wrong
+// cause: an overlay on top of the photo does NOT inherently have a
+// "leading edge" (that was the original misdiagnosis), and lengthening a
+// gradient ramp does NOT fix a Mach band (that was the second one) — a
+// long ramp between the photo's ~#D6D7D4 backdrop and --color-bg's own
+// near-black just smears the drop across more of the frame, it doesn't
+// remove the perceptual edge. What actually reads as an edge is a Mach
+// band: the visual system exaggerates contrast wherever a gradient's own
+// rate-of-change is discontinuous, and EVERY earlier ramp here — however
+// long, however many stops — still had non-zero slope right at its own
+// opaque/transparent endpoint.
+//
+// This is a hard cut, not a gradient, because 51% is a LAYOUT boundary
+// (photo vs. text panel), not a photographic one — there's no photographic
+// content straddling it to blend, so there's nothing for a soft edge to
+// buy. background is flat, opaque var(--color-bg); mask-image does the
+// split with a single hard step at 51%, matching the text column's own
+// leftmost edge (51.8% at 1024px, its tightest). .seamRule below is what
+// makes this read as a deliberate line rather than a clipped one.
+.scrim {
+  display: none;
+  z-index: 1;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg);
+    mask-image: linear-gradient(to right, transparent 51%, black 51%);
+    -webkit-mask-image: linear-gradient(to right, transparent 51%, black 51%);
+  }
+}
+
+// Seam rule — a hairline exactly on .scrim's own 51% cut, same accent-rule
+// language .kickerRule already establishes elsewhere in this file (a
+// var(--color-line)-on-var(--color-accent) short rule reading as an
+// intentional mark, not a stray line) — not a new idea, just applied here.
+// Fades in from both the top and bottom edges (transparent -> accent at
+// 14% -> accent at 86% -> transparent) so it reads as a discrete mark
+// floating on the seam, not a rule that got clipped by the section's own
+// bounds.
+.seamRule {
+  display: none;
+  z-index: 2;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    left: 51%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-accent) 55%, transparent) 14%,
+      color-mix(in srgb, var(--color-accent) 55%, transparent) 86%,
+      transparent
+    );
+  }
+}
+
+// Bottom edge — deliberately nothing here. Diplomi (DesignLabHomepage.tsx,
+// "10. Diplomi") used to sit immediately below with a dark --tone-mid-bg
+// background, which meant this section's own dark-on-dark bottom (right
+// of 51%) needed a ramp to hide a dark-meets-dark seam. Diplomi is a light
+// (ivory) surface now — that boundary no longer exists. Left of 51% the
+// photo meets ivory directly; right of 51% --color-bg (#081512) meets
+// ivory directly. Both are LAYOUT boundaries (this section simply ends),
+// not photographic ones, and there's no longer a colour-matching problem
+// for a gradient to solve — a fade here would be manufacturing a
+// transition nobody asked for. The two masked, smootherstep-curved
+// elements that used to live here are deleted outright, not shortened or
+// retuned — see this pass's own report for the grep confirming no trace
+// of either one remains anywhere in this file.
+//
+// Grain — uniform coverage over the WHOLE section, no gradient, no mask.
+// Precisely BECAUSE it's uniform, it can't introduce an edge of its own
+// (there's nothing for a Mach band to form across). Its job is different
+// from .scrim: that fixes a MACRO gradient shape; this fixes the 8-bit
+// banding stops themselves are incapable of touching — a smooth
+// mathematical gradient still quantizes to a limited number of distinct
+// integer sRGB steps across the dark end of the ramp, and that
+// quantization can itself read as faint contour lines. A few percent of
+// noise breaks up any such contour without being visible as noise itself.
+// Inline feTurbulence, not a bitmap asset — no new dependency, no network
+// request, tileable via stitchTiles="stitch" at its own declared 200x200
+// (those are SVG user-unit attributes inside a data URI, not CSS px
+// values). feColorMatrix desaturates the turbulence to monochrome first —
+// raw feTurbulence noise is colour, which would tint rather than just
+// roughen. mix-blend-mode: overlay so it lightens light pixels and darkens
+// dark ones instead of flatly tinting everything grey.
+.grain {
+  display: none;
+  z-index: 4;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0.045;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+.inner {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  @include mixins.container;
+  padding-block: var(--space-7) var(--space-8);
+  display: flex;
+  justify-content: flex-end;
+
+  @include mixins.breakpoint-up(md) {
+    padding-block: 0;
+    height: 100%;
+  }
+}
+
+// Reverted (photo/text-proportions correction pass): the previous pass
+// narrowed this to 19% to fit inside a scrim that only reached full
+// opacity at 75% — correct on its own terms, but it broke line wraps
+// (the heading ran to four lines, body paragraphs to ~30 characters per
+// line) and read as the photo suddenly dominating the section. Restored
+// to 48%, its value from before the scrim pass — the scrim's own ramp
+// was re-tuned instead (see .scrim's own comment) to reach full opacity
+// sooner, so THIS width fits without re-narrowing.
+.textBlock {
+  width: 100%;
+
+  @include mixins.breakpoint-up(md) {
+    max-width: 32rem;
+    width: 48%;
+  }
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.heading {
+  margin: var(--space-4) 0 0;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.emphasis {
+  font-style: italic;
+}
+
+.paragraph {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoLayer {
+    clip-path: inset(0 0 0 0);
+    transition: none;
+  }
+
+  .photoImg {
+    transform: scaleX(-1) scale(1);
+    transition: none;
+  }
+}

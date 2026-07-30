@@ -1,0 +1,601 @@
+@use "../../../styles/mixins";
+@use "./_tone" as tone;
+
+// Sedi (/design-lab light-surface rebuild) — forked from
+// src/components/LocationsSection.module.scss, which is SHARED with the
+// real, live production route (src/app/[locale]/page.tsx renders the same
+// LocationsSection/LocationsInteractive/LocationsMap/LocationsPopupContent
+// against the same homePage.sedi/sede documents). This pass's changes
+// (mid-tone surface, new address-list affordance, popup weighting, the
+// online entry as a real list item, restored attribution) would all leak
+// onto production if made in that shared file — same "shared component
+// diverges -> new, separately-named one, don't mutate" call this whole
+// route makes repeatedly. Map BEHAVIOUR itself (SediMap.tsx) is copied
+// near-verbatim from LocationsMap.tsx — only the CSS import path and which
+// popup-content component it renders differ; every interaction (pin click,
+// flyTo, recentre, popup open/close, gesture gate, keyboard) is untouched.
+//
+// Surface: .sediWrap below applies tone.tone-mid-surface — the SAME token
+// (--color-surface, #16261F) the photo strip already sat on before this
+// pass. Every class in this file that used to read a generic token
+// directly (--color-bg/-text/-accent/etc.) still does; the wrapper is what
+// makes those resolve to the mid-tone step instead of the page's own
+// darker default, exactly like AreeSection/FaqSection's own toneMidWrap
+// consumption — zero per-class retoning needed beyond what's written here.
+.sediWrap {
+  @include tone.tone-mid-surface;
+  position: relative;
+}
+
+.locationsSection {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+}
+
+.locationsHeader {
+  max-width: 40rem;
+}
+
+// Kicker rule geometry reused VERBATIM from .kickerRule (chiSonoBlock.
+// module.scss) / .headingKickerRule (diplomiSlider.module.scss) — same
+// width/thickness/line token, per this pass's own "do not invent a second
+// rule language" instruction.
+.locationsKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.locationsKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+// EB Garamond, font-weight 400 EXPLICITLY + font-synthesis:none set inline
+// on the <h2> in SediBlock.tsx — same discipline as Diplomi/Video's own
+// headings (this codebase has been bitten before by EB Garamond's
+// synthesised-bold/-italic fallback when a heading's own weight wasn't
+// pinned).
+.locationsHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.locationsHeadingAccent {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.locationsIntro {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}
+
+.locationsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  align-items: start;
+  margin-top: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 21.25rem 1fr;
+  }
+}
+
+.locationsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.locationsCityGroup {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+// Equal-rhythm pass: the group itself no longer carries its own
+// margin-top (that was the source of the uneven gap — a city boundary
+// used to get item-padding + group-margin + label-height, roughly triple
+// a same-city item-to-item gap). Every inter-entry gap is now built from
+// exactly two contributions that always sum to the same total, regardless
+// of what's on either side: an item's own padding (--space-3 top AND
+// bottom, unchanged) and the label's own margin (--space-3 top AND
+// bottom, new). Same-city gap: item pad-bottom + item pad-top = 2×
+// --space-3. Cross-city gap: item pad-bottom + label margin-top = 2×
+// --space-3. Label-to-first-item gap: label margin-bottom + item
+// pad-top = 2× --space-3. Gap before Online: last item pad-bottom +
+// Online's own pad-top (.locationsOnlineItem, unchanged --space-3) = 2×
+// --space-3. All four cases now measure identically — verified live, see
+// this pass's own report for the pixel numbers.
+.locationsCityLabel {
+  margin: var(--space-3) 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+// Address-list affordance pass: at rest, .locationItemArrow is ALWAYS
+// visible (not hover-only — half the traffic is touch, per this pass's
+// own brief) at a muted low alpha, same device Diplomi's cards already use
+// for "Vedi il titolo →". Selected state keeps the existing tinted
+// background AND strengthens the arrow to full accent — two mechanisms
+// now carry the distinction (background + arrow colour), not one alone.
+.locationItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0 calc(-1 * var(--space-3));
+  padding: var(--space-3);
+  border-radius: var(--radius-s);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &[data-active="true"] {
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  @include mixins.focus-ring-inset;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.locationItemText {
+  min-width: 0;
+}
+
+.locationItemTitle {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+.locationItemSub {
+  display: block;
+  min-height: calc(1em * var(--lh-body));
+  margin-top: var(--space-1);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+// Persistent arrow — muted at rest, full accent when the item is active.
+// Correction pass: was a single "→" glyph, align-self:center — centered
+// across the FULL two-line (title+sub) box height, which read as sitting
+// low against the title's own cap-height. Rebuilt as two independently-
+// transformable pieces (shaft + head) so a hover state can lengthen the
+// shaft and carry the head outward using transform alone (scaleX/
+// translateX — no width/margin change, so the entry never reflows and
+// neighbours never shift). align-self: flex-start now (matching the
+// parent's own align-items) + a small optical nudge below, verified live
+// against the title's cap-height at all three widths, not assumed.
+.locationItemArrow {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  // Optical nudge: flex-start alone aligns to the title line-box's own
+  // top edge (ascender space above the cap-height), sitting a hair high;
+  // this pulls it down to the title's own cap-height instead. Chosen by
+  // eye against the rendered title at 1.125rem/var(--font-display) — see
+  // this pass's own report for the exact value and cross-width check.
+  margin-top: 0.3125rem;
+  color: color-mix(in srgb, var(--color-accent) 85%, transparent);
+  transition: color 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.arrowShaft {
+  display: inline-block;
+  width: 0.75rem; // 12px, chosen by eye — long enough to read as a shaft, short enough not to crowd the title
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform 250ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.arrowHead {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-left: -0.25rem; // overlaps the shaft's own end so the two read as one continuous glyph, not two separate marks
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  transform: translateX(0) rotate(45deg);
+  transition: transform 250ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.locationItem[data-active="true"] .locationItemArrow {
+  color: var(--color-accent-hover);
+}
+
+// Hover response (item 1's own second half): shaft lengthens via scaleX,
+// head travels the same distance via translateX — chosen by eye, 250ms
+// ease-out (already set above, shared with the at-rest transition so
+// hover-in and hover-out feel symmetric). Desktop-only (half of Diplomi's
+// own traffic split is touch, where hover can't fire at all — same
+// reasoning already established for this whole page's hover affordances).
+@media (hover: hover) {
+  .locationItem:hover .arrowShaft {
+    transform: scaleX(1.7);
+  }
+
+  .locationItem:hover .arrowHead {
+    transform: translateX(0.5rem) rotate(45deg);
+  }
+
+  // Same convention VideoPlayer's own play-circle hover already uses:
+  // under reduced motion the hover effect is fully disabled (resting
+  // transform reasserted), not just de-animated.
+  @media (prefers-reduced-motion: reduce) {
+    .locationItem:hover .arrowShaft {
+      transform: scaleX(1);
+    }
+
+    .locationItem:hover .arrowHead {
+      transform: translateX(0) rotate(45deg);
+    }
+  }
+}
+
+// Online entry — same visual family as a real address item (title + sub-
+// line, same padding/radius), but a plain, non-interactive block: no
+// button, no arrow, no data-active, no pin. Replaces the old detached
+// italic line + its orphan divider rule entirely.
+.locationsOnlineItem {
+  display: block;
+  width: 100%;
+  margin: 0 calc(-1 * var(--space-3));
+  padding: var(--space-3);
+}
+
+.locationsMapWrap {
+  position: relative;
+}
+
+.locationsMap {
+  width: 100%;
+  height: 24rem;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--color-greige);
+
+  // Correction pass, item 7: at lg+ (where .locationsGrid actually
+  // becomes two columns), height now tracks the address list's own
+  // measured height (--list-height, set by SediInteractive.tsx's own
+  // ResizeObserver) instead of a fixed aspect-ratio — so the map and list
+  // columns always end on the same line, even with a fifth address or a
+  // longer label. The var()'s own fallback (4:3 against a typical column
+  // width, ~340px * 0.75 ≈ 21.25rem) only matters for the brief instant
+  // before the first ResizeObserver callback fires.
+  @include mixins.breakpoint-up(lg) {
+    height: var(--list-height, 21.25rem);
+  }
+}
+
+// --- Tile colour treatment (unchanged from the shared file's own recipe —
+// see LocationsSection.module.scss for the measured reasoning) -----------
+:global(.leaflet-tile-pane) {
+  .locationsMap:not(.locationsMapDark) & {
+    filter: sepia(0.06) brightness(0.98) contrast(1.05) saturate(1.02);
+  }
+}
+
+:global(.leaflet-tile-pane) {
+  .locationsMapDark & {
+    filter: sepia(0.15) brightness(1.12) contrast(1.02);
+  }
+}
+
+// Attribution: restored this pass (design-lab-globals.scss's own
+// suppression removed) — styled to sit quietly on the new mid-tone
+// surface. Ivory chip still reads clearly on both basemaps at this alpha.
+:global(.leaflet-control-attribution) {
+  .locationsMap & {
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+
+    a {
+      color: var(--color-text-muted);
+    }
+  }
+}
+
+// --- Custom marker (divIcon) ---------------------------------------------
+.locationMarkerIcon {
+}
+
+.locationMarkerDot {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 0.125rem solid var(--color-bg);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text) 25%, transparent);
+  transition: transform 150ms ease, background-color 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.locationMarkerActive .locationMarkerDot {
+  background: var(--color-accent-hover);
+  transform: scale(1.3);
+}
+
+.locationsMapDark .locationMarkerDot {
+  background: var(--color-bg);
+  border-color: var(--color-accent-hover);
+}
+
+.locationsMapDark .locationMarkerActive .locationMarkerDot {
+  background: var(--color-accent);
+}
+
+// --- Zoom control ---------------------------------------------------------
+:global(.leaflet-control-zoom) {
+  .locationsMap & {
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-s);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+}
+
+:global(.leaflet-control-zoom-in),
+:global(.leaflet-control-zoom-out) {
+  .locationsMap & {
+    background: var(--color-bg);
+    color: var(--color-accent);
+
+    &:hover {
+      background: var(--color-sand);
+    }
+
+    &:active {
+      background: var(--color-greige);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--color-focus);
+      outline-offset: calc(-1 * var(--focus-ring-width));
+    }
+  }
+}
+
+// --- Popup ------------------------------------------------------------
+:global(.leaflet-popup-content-wrapper) {
+  .popupWrap & {
+    background: var(--color-bg);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-soft);
+    padding: 0;
+  }
+}
+
+:global(.leaflet-popup-content) {
+  .popupWrap & {
+    margin: 0;
+    width: 18rem !important;
+  }
+}
+
+:global(.leaflet-popup-tip-container) {
+  .popupWrap & {
+    display: none;
+  }
+}
+
+.popup {
+  position: relative;
+  padding: var(--space-4);
+}
+
+.popupClose {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.popupPhotoWrap {
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+
+.popupPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popupTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+.popupAddress {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+// Popup weighting pass: was three equally-weighted pills. Google Maps
+// directions is now the one primary action (.popupActionPrimary, filled —
+// matches this project's existing filled-button language). Apple Maps +
+// "copia indirizzo" are demoted to plain text links (.popupActionSecondary,
+// no pill chrome), side by side beneath — one clear primary, two clearly
+// tertiary, not three competing.
+.popupActions {
+  margin-top: var(--space-4);
+}
+
+.popupActionPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--color-accent);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  // Correction pass: no bold anywhere in the popup — capped at
+  // --font-weight-medium (500), the same cap applied to every other text
+  // element in here (.popupTitle already read --font-weight-regular/400,
+  // unchanged). See this pass's own report for the computed weight of
+  // every popup text element after this change.
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-contrast);
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// HONESTY-RULE CATCH: leaflet.css ships `.leaflet-container a { color: ...
+// }` (specificity 0,1,1) — measured live, not assumed: without this,
+// .popupActionPrimary/-Secondary's own `color` (a single class, 0,1,0)
+// loses to Leaflet's rule for any element that's an <a> specifically
+// (confirmed: the "Copia indirizzo" BUTTON already showed the correct
+// token; only the two <a> actions — Google Maps, Apple Maps — didn't).
+// :global(.leaflet-container) raises this to 0,2,0, which wins regardless
+// of stylesheet load order. The shared LocationsPopupContent.tsx/
+// LocationsSection.module.scss (.popupAction) has this exact same
+// vulnerability today — out of scope to fix there (shared with
+// production), flagged in this pass's own report instead.
+:global(.leaflet-container) {
+  a.popupActionPrimary {
+    color: var(--color-accent-contrast);
+  }
+}
+
+.popupActionsSecondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.popupActionSecondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  // Correction pass: no bold anywhere in the popup — capped at
+  // --font-weight-medium (500), the same cap applied to every other text
+  // element in here (.popupTitle already read --font-weight-regular/400,
+  // unchanged). See this pass's own report for the computed weight of
+  // every popup text element after this change.
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.1875rem;
+  cursor: pointer;
+  transition: color 150ms ease;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Same leaflet.css `.leaflet-container a` specificity fix as
+// .popupActionPrimary above — only the Apple Maps <a> needs it ("Copia
+// indirizzo" is a <button>, already unaffected, already measured correct).
+:global(.leaflet-container) {
+  a.popupActionSecondary {
+    color: var(--color-accent-hover);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+}

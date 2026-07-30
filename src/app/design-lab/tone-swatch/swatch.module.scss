@@ -1,0 +1,294 @@
+@use "../../../styles/mixins";
+
+// TEMPORARY — Phase 1 proof artifact only, see page.tsx's own comment.
+
+.page {
+  padding: var(--space-7);
+  background: var(--color-bg);
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text);
+  margin: 0 0 var(--space-7);
+}
+
+.sectionHeading {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: var(--fs-small);
+  color: var(--color-text);
+  margin: 0 0 var(--space-5);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-9);
+}
+
+.card {
+  padding: var(--space-6);
+  border-radius: var(--radius-m);
+  min-height: 12rem;
+
+  &[data-tone="base"] {
+    background: var(--tone-base-bg);
+    color: var(--tone-base-text);
+
+    .muted {
+      color: var(--tone-base-muted);
+    }
+    .hairline {
+      background: var(--tone-base-hairline);
+    }
+    .accent {
+      color: var(--tone-base-accent);
+    }
+    .accentSmall {
+      color: var(--tone-base-accent-small);
+    }
+  }
+
+  &[data-tone="mid"] {
+    background: var(--tone-mid-bg);
+    color: var(--tone-mid-text);
+
+    .muted {
+      color: var(--tone-mid-muted);
+    }
+    .hairline {
+      background: var(--tone-mid-hairline);
+    }
+    .accent {
+      color: var(--tone-mid-accent);
+    }
+    .accentSmall {
+      color: var(--tone-mid-accent-small);
+    }
+  }
+
+  &[data-tone="deep"] {
+    background: var(--tone-deep-bg);
+    color: var(--tone-deep-text);
+
+    .muted {
+      color: var(--tone-deep-muted);
+    }
+    .hairline {
+      background: var(--tone-deep-hairline);
+    }
+    .accent {
+      color: var(--tone-deep-accent);
+    }
+    .accentSmall {
+      color: var(--tone-deep-accent-small);
+    }
+  }
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  margin: 0 0 var(--space-4);
+}
+
+.text {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  margin: 0 0 var(--space-3);
+}
+
+.muted {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  margin: 0 0 var(--space-4);
+}
+
+.hairline {
+  height: 1px;
+  margin-bottom: var(--space-4);
+}
+
+.accent {
+  font-family: var(--font-display);
+  font-style: italic;
+  margin: 0 0 var(--space-2);
+}
+
+.accentSmall {
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+// The dark section needs its own explicit background (.themeDark only
+// reassigns the custom properties, same mechanism/limitation as the real
+// route — see _tokens.scss's own canvas-background comment).
+:global(.themeDark) {
+  background: var(--color-bg);
+  padding: var(--space-7);
+  border-radius: var(--radius-l);
+}
+
+// --- Phase 1 proof: Cyprus depth/gold/text/glow/glass foundation ---------
+// Dark-theme only (this whole pass is dark-layer-only) — no light-theme
+// counterpart needed.
+.depthRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-9);
+}
+
+.depthCard {
+  padding: var(--space-6);
+  border-radius: var(--radius-m);
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.depthCardBg {
+  background: var(--color-bg);
+  border: 1px solid var(--color-hairline);
+}
+
+.depthCardSurface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+}
+
+.depthCardRaised {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-hairline-strong);
+}
+
+.swatchIvory {
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  margin: 0;
+}
+
+.swatchSoft {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  margin: 0;
+}
+
+.swatchFaint {
+  color: var(--color-text-faint);
+  font-family: var(--font-body);
+  font-size: var(--fs-h3);
+  margin: 0;
+}
+
+.swatchChampagne {
+  color: var(--color-accent);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.swatchBronze {
+  color: var(--color-gold-bronze);
+  font-family: var(--font-body);
+  font-size: var(--fs-h3);
+  margin: 0;
+}
+
+.swatchGoldLight {
+  color: var(--color-accent-hover);
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+.goldRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-9);
+}
+
+.goldSwatch {
+  border-radius: var(--radius-m);
+  padding: var(--space-6);
+  min-height: 6rem;
+  display: flex;
+  align-items: flex-end;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-bg);
+}
+
+.goldBronze {
+  background: var(--color-gold-bronze);
+}
+
+.goldChampagne {
+  background: var(--color-accent);
+}
+
+.goldLight {
+  background: var(--color-accent-hover);
+}
+
+.glowGlassRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.glowCard {
+  border-radius: var(--radius-button); // now 16px on dark — proves the radius change too
+  padding: var(--space-7);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    0 0 2rem var(--color-glow),
+    0 0 0.75rem var(--color-glow-strong);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  text-align: center;
+}
+
+.glassCard {
+  position: relative;
+  border-radius: var(--radius-button);
+  padding: var(--space-7);
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  text-align: center;
+  // Sits on a solid dark backdrop already (this section's own
+  // .themeDark background), so the translucency reads against
+  // --color-bg here — a real glass panel would also sit over imagery.
+}
+
+.foundationHeading {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-3);
+}

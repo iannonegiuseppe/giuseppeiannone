@@ -1,10 +1,42 @@
 @use "../../styles/tokens";
 
-// Minimal reset only — no leaflet rules, no global h1/h2 font-weight
-// pin, no sticky-footer flex column. Those live in [locale]/globals.scss
-// for the real site's own chrome; this route sets typography explicitly
-// per element in density.module.scss instead, since it's a standalone
-// review page, not a full site shell.
+// Minimal reset — no leaflet rules, no sticky-footer flex column; those
+// live in [locale]/globals.scss for the real site's own chrome, and this
+// route still sets its own per-element type SIZE in density.module.scss
+// (a standalone review page, not a full site shell).
+//
+// Font-weight pass: the ONE exception to "no global rule" above. This
+// comment used to say design-lab has "no global h1/h2 font-weight pin...
+// sets typography explicitly per element instead" — that claim was
+// falsified in practice: Hope's heading (a real, shared component) had
+// its own explicit weight fix deleted on the assumption the "sitewide"
+// h1/h2 rule would cover it, but that rule only exists in
+// [locale]/globals.scss, which /design-lab never loads. Audit (this
+// pass's own report) found the same gap in five OTHER real/shared
+// components — Recognition, Aree, Locations, Resources, FAQ — all
+// silently rendering browser-synthesized bold (and, for Recognition/
+// Locations/Resources/FAQ specifically, also falling back to the body
+// font entirely, since they never set font-family either). Design-lab-
+// OWNED components (Welcome, Metodo, CTA bridge, Chi sono, Diplomi,
+// Video, Contact) were unaffected — they each set font-weight explicitly
+// per-element already, following this file's OWN stated convention
+// faithfully; it was only the shared/real components (which reasonably
+// assume the real site's global rule applies) that fell through.
+// Fixed at the systemic level instead of patching each component
+// individually — mirrors [locale]/globals.scss's own h1/h2 rule
+// (weight/family/line-height/color; NOT font-size, so every component's
+// own explicit size — including ones set as a bare property this rule
+// doesn't touch — still wins via higher class-selector specificity).
+// Future blocks that don't set their own weight now inherit 400
+// automatically, the same guarantee the real site's chrome already has.
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
 *,
 *::before,
 *::after {
@@ -18,6 +50,20 @@
 html,
 body {
   height: 100%;
+}
+
+// Canvas/overscroll-gutter fix: per the CSS spec's root-background
+// propagation rule, the browser paints the CANVAS (including the
+// rubber-band/overscroll area on engines that show one) from <html>'s
+// own background if it has one, falling back to <body>'s only when
+// <html> doesn't set one at all. Previously nothing set html's — body's
+// background alone happened to cover ordinary content correctly, but not
+// reliably the overscroll case. Explicit now, same var(--color-bg) body
+// already uses — resolves to the light value normally, the dark value
+// once <html> carries data-theme="dark" (see _tokens.scss's own
+// :root[data-theme="dark"] block).
+html {
+  background-color: var(--color-bg);
 }
 
 img,
@@ -39,18 +85,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-// V6 fix: /design-lab now renders the real Sedi/LocationsSection (its
-// real interactive map), which showed its Leaflet attribution chip here
-// even though [locale]/globals.scss already hides it site-wide
-// (unconditionally, marked "TEMPORARY — preview only... MUST be restored
-// before launch" — this route's own globals file is separate from that
-// one, so it never inherited the rule). Same rule, same reasoning,
-// mirrored here rather than in the real file — this route is equally
-// pre-launch/preview, and MUST be restored before launch in lockstep
-// with that one.
-.leaflet-control-attribution {
-  display: none !important;
-}
+// Attribution restored this pass (Sedi light-surface rebuild) — CARTO/OSM
+// tile attribution is a licence requirement, not a style choice; this
+// route's own suppression (mirrored from [locale]/globals.scss's own
+// "TEMPORARY — preview only" rule) is removed here. The PRODUCTION rule in
+// [locale]/globals.scss is a separate, tracked pre-launch item
+// (docs/pre-launch.md) and is deliberately left alone by this pass — this
+// route no longer needs its own copy of the suppression, but reversing the
+// production one is a different decision, out of this pass's scope.
+// sediSection.module.scss now styles the restored chip directly (color/
+// background tuned for the new mid-tone surface).
 
 // Item 1 fix: the real Header CTA button ("Inizia il percorso") has a
 // genuine bug — on hover, background and text both resolve to

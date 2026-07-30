@@ -32,6 +32,21 @@
   }
 }
 
+// Opacity-only variant, video hero's heading only (see .heroVideoHeading
+// below and this pass's own report). Investigated a reported blur on the
+// heading; couldn't reproduce a persistent bug via accurate zoom
+// emulation, but this removes the one mechanism the hypothesis pointed
+// to (a transform lingering on the element via animation-fill-mode)
+// at zero visual cost — same fade, no vertical slide.
+@keyframes heroStaggerInFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 // Primary: accent fill, ivory text.
 .btnPrimary {
   @include shared.button-base;
@@ -328,4 +343,291 @@
   .heroOverlapCta {
     animation-delay: 240ms;
   }
+
+  // Higher-specificity-by-source-order override: .heroVideoHeading is
+  // always paired with .heroOverlapName on the same element (video hero
+  // only), declared later in this file — this wins the animation-name
+  // for that element without touching the classic hero's own heading.
+  .heroVideoHeading {
+    animation-name: heroStaggerInFade;
+  }
+}
+
+// --- Hero — video-background variant (design-lab only) --------------------
+// A second, PARALLEL set of classes for when HeroOverlap.tsx receives a
+// `backgroundMedia` prop — currently only DesignLabHomepage.tsx passes
+// one. Nothing above this point is touched or reused for sizing/layout
+// (only .heroOverlapSection as the shared outer shell, plus
+// .heroOverlapName/.heroOverlapEmphasis/.heroOverlapSubtitle/.btnPrimary/
+// .heroOverlapCta for the actual heading/CTA content, unchanged). The
+// real production site never passes backgroundMedia, so none of this
+// can ever affect it.
+.heroVideoSection {
+  overflow: hidden;
+}
+
+.heroVideoMediaWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+// Legibility scrim over the video, token-driven (--color-bg direction,
+// same as the classic hero's own .heroOverlapGradient above) — this one
+// has to guarantee text contrast against ARBITRARY footage brightness
+// rather than just mask a photo crop edge. First attempt tapered to
+// transparent starting at 45% height, tuned assuming bottom-anchored
+// text — but .heroVideoTextInner is vertically CENTERED (justify-
+// content: center), so the eyebrow (the topmost line) sits well above
+// that 45% mark and measured only 4.11:1 in-situ against a real rendered
+// frame (verified via this pass's own report — not guessed). Widened the
+// strong band to cover 0–82% of the height near-uniformly, tapering to
+// transparent only in the top 18% (near the header, where no text ever
+// sits) — re-verified afterward, see the report for the corrected ratios.
+//
+// Corrective pass: on DARK theme, --color-bg (#081512) is a dark GREEN,
+// not neutral, so the whole video read tinted green regardless of the
+// footage's own colors — the complaint this pass fixes. But the base
+// rule below stays --color-bg-driven, not a blanket swap to neutral
+// black: on LIGHT theme --color-bg is light cream, correctly pairing
+// with the heading's own light-theme text color (--color-text, dark ink
+// there) — a blanket black scrim was tried first and got caught by this
+// pass's own light-theme render check: dark ink text on an
+// always-black-regardless-of-theme scrim is nearly invisible on light
+// theme (verified via screenshot, not assumed). So: base stays
+// --color-bg (correct on light), dark-theme override below uses the
+// literal `black` keyword instead (this system has no theme-invariant
+// neutral-black token — same "no token exists, use the literal keyword"
+// situation Button.module.scss's own hover-glint/tone-deep-hover fills
+// already documented for `white`). Percentages unchanged from the tuning
+// above in both branches — only the hue changes.
+// Lightened pass: 80% read as too strong — the footage itself (the whole
+// point of a video hero) was barely visible through it. Dropped to 45%,
+// re-measured against a real rendered frame at three playback points
+// (see this pass's own report for the table) rather than assumed.
+.heroVideoScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-bg) 45%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 45%, transparent) 82%,
+    transparent 100%
+  );
+
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, black 45%, transparent) 0%,
+      color-mix(in srgb, black 45%, transparent) 82%,
+      transparent 100%
+    );
+  }
+}
+
+// Seam fade: Hero used to end in a hard horizontal cut where the video
+// simply stopped, at the boundary with Recognition below (now tone-mid —
+// see this pass's own report). This dissolves the last ~26% of Hero's own
+// height into that exact surface instead. --tone-mid-bg, not --color-
+// surface directly: this is the token whatever-currently-means-tone-mid
+// (Recognition's own toneMidWrap reassigns --color-bg to this same token
+// inside its own scope) — Hero isn't wrapped in any tone-mid scope
+// itself, so reading --tone-mid-bg directly is what keeps this correct
+// if either section's tone assignment changes later, per the brief.
+// Sits above the scrim (z-index: 1, same layer group) and below the text
+// (z-index: 2) — verified via computed stacking, not assumed.
+//
+// Corrective pass: a plain two-stop gradient (tone-mid-bg -> transparent)
+// only reaches FULL opacity at the very last pixel row, so the ~10-15px
+// immediately above the boundary still let video/scrim colour bleed
+// through — confirmed by pixel-sampling a deliberately bright, constant-
+// colour test clip (see this pass's own report): at 40px above the
+// boundary the sampled pixel still carried a clear tint of the video's
+// colour, not tone-mid-bg, even though the literal last-Hero-row vs.
+// first-Recognition-row pixels matched exactly. The mismatch reads as a
+// visible band a little above the seam, not as a 1px hard edge at it.
+// Fix: hold solid tone-mid-bg for the first 30% of the fade's own height
+// (bottom-up), then ease toward transparent across the remaining 70% via
+// intermediate color-mix stops (approximates an ease-out alpha curve —
+// perceived brightness against a bright background is more sensitive at
+// high opacity than a plain linear ramp accounts for), instead of one
+// straight ramp from solid to transparent.
+.heroVideoBottomFade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 26%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--tone-mid-bg) 0%,
+    var(--tone-mid-bg) 30%,
+    color-mix(in srgb, var(--tone-mid-bg) 88%, transparent) 50%,
+    color-mix(in srgb, var(--tone-mid-bg) 60%, transparent) 70%,
+    color-mix(in srgb, var(--tone-mid-bg) 28%, transparent) 85%,
+    transparent 100%
+  );
+}
+
+// Full-bleed at EVERY breakpoint — unlike .heroOverlapTextInner above
+// (which splits into a side-by-side grid item at lg+), there is no
+// separate breakpoint behavior here: the video always sits behind, text
+// always overlays it, at every viewport width — matching "full-bleed
+// video background" literally rather than reintroducing a grid split.
+//
+// Corrective pass: was a flat padding-inline (--space-5/--space-8) with
+// no centering — at 1440px that put the text's left edge at 64px from
+// the viewport, while the header's own content (mixins.container: 1320px
+// max-width, centered, --space-7 padding at lg+) starts at 108px. Real,
+// measured 44px misalignment, not a guess — see this pass's own report.
+// Now uses the SAME mixin the header does, so the two always line up.
+// Corrective pass: was justify-content: center — read as "text floating
+// in the middle" with almost no footage visible above it. Shifted to
+// flex-end + a generous padding-bottom, landing the block in the lower
+// third instead of dead-center. Smaller padding-bottom below lg — the
+// larger --space-10 value was tested against short mobile viewports
+// (iPhone SE, 667px tall) and pushed the CTA row close to the fold
+// there; --space-8 keeps it clear at every checked breakpoint (see this
+// pass's own report).
+.heroVideoTextInner {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: var(--space-8);
+  @include mixins.container;
+
+  @include mixins.breakpoint-up(lg) {
+    padding-bottom: var(--space-10);
+  }
+}
+
+// The actual text/rule/CTA column, nested inside .heroVideoTextInner —
+// no margin-inline:auto here deliberately, so this stays flush against
+// the container's own left (padded) edge rather than centering itself.
+//
+// Corrective pass: was max-width: 46rem — read as "a narrow slice" of
+// the container, and the AnimatedDivider (100% of THIS box) stopped well
+// short of the container's own edges the header uses. Cap removed
+// entirely: the column (and the divider) now span the full content
+// container. The subtitle keeps its own, separate max-width: 42ch
+// (further down this file, untouched) so paragraph text still reads at
+// a comfortable measure even though the column around it is wider.
+.heroVideoContent {
+  max-width: 100%;
+}
+
+// Corrective pass: was text ("PSICOLOGO PSICOTERAPEUTA", sourced from
+// siteSettings.author.credentials) — now holds the signature-only logo
+// mark instead (<SignatureMark>, components/Logo.tsx), passed in by the
+// caller same as backgroundMedia/actions. The SVG uses fill="currentColor"
+// exclusively (confirmed in Logo.tsx, no hardcoded fill), so `color` here
+// is what tints it — kept the exact same --color-accent the old text
+// eyebrow used, so this stays the same gold-ish read against the scrim.
+// Sized present-but-quiet against the much larger heading below: ~150px
+// mobile / ~190px desktop, smaller than the header's own 130/170px rest
+// state since this sits alone rather than next to nav chrome — width
+// only, height:auto preserves the mark's own 2049:346 (~5.9:1) ratio.
+.heroVideoEyebrow {
+  display: block;
+  width: 9.375rem; // 150px, mobile tier
+  height: auto;
+  color: var(--color-accent);
+  margin: 0 0 var(--space-4);
+
+  @include mixins.breakpoint-up(lg) {
+    width: 11.875rem; // 190px
+  }
+}
+
+// Corrective pass: dominant hero scale, closer to the Cyprus reference.
+// --fs-display tops out at 3.75rem (60px) and is reused site-wide by
+// every other real H1 — extending IT would move every other page's
+// heading too, out of scope ("do not touch other blocks"). This is a
+// scoped, local clamp instead, same unit/shape as the shared scale (rem
+// bounds + a vw-driven middle term, not a hardcoded px value), just with
+// a taller ceiling — only ever applied via this second class alongside
+// .heroOverlapName, so nothing else is affected. Rendered size reported
+// in this pass's own report (before/after, at 1440px).
+// Corrective pass: not a blur — at 76px, EB Garamond's own glyphs sit
+// close enough that serif pairs ("sp", "ri", "tro") visually merge
+// against busy footage, reading as "heavy/cramped." A tracking problem,
+// not a rendering one (confirmed: zero filter/transform on the element,
+// see this pass's own report). --tracking-display (0.01em) already
+// exists for exactly this — EB Garamond display type needing slight
+// positive tracking to counter thickening/crowding — previously used
+// for FinalContactSection's dark-band title. Reused here rather than a
+// new token, at the SAME value: judged against the actual video
+// background at 1440px, 0.01em was enough to let the glyphs breathe
+// without reading as loose (screenshot in this pass's own report).
+// em-based, so it scales down proportionally at the smaller clamp sizes
+// automatically — checked at 1024px and mobile, still reads correctly
+// there too, no separate responsive handling needed (see report).
+//
+// font-weight: reverted back to 400 (Regular) this pass — the prior pass's
+// 500 (Medium) is out. EB Garamond's loader (design-lab/layout.tsx) still
+// requests both 400 and 500 (the 500 font file itself is harmless to keep
+// loaded even though nothing uses it now; removing it isn't part of what
+// was asked here).
+.heroVideoHeading {
+  font-size: clamp(2.75rem, 2rem + 3.5vw, 4.75rem);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-display);
+}
+
+// Italic checked separately, per instruction — EB Garamond's italic cut
+// already has more natural inter-letter openness than roman (the slant
+// and connecting strokes do some of the "breathing room" work on their
+// own), so stacking the SAME positive tracking on top read slightly
+// loose in a side-by-side check at 1440px. Half the roman value: enough
+// to stay consistent with the roman text's rhythm without the italic
+// word visually drifting apart from itself.
+.heroVideoHeading .heroOverlapEmphasis {
+  letter-spacing: calc(var(--tracking-display) / 2);
+}
+
+// Corrective pass: the subtitle read small against the rest of the
+// composition. One step up the existing type scale (--fs-body →
+// --fs-body-lg, already used site-wide for "intro paragraphs" per its
+// own token comment — an exact semantic match for this element) rather
+// than a one-off value. Same specificity trick as .heroVideoHeading:
+// paired with .heroOverlapSubtitle on the same element, only in the
+// video variant.
+// Corrective pass: --fs-body-lg (18px) still read small against the now
+// much larger heading and wider column. One more step up the scale —
+// --fs-h3 (22px) is the next real token above --fs-body-lg (no --fs-lead
+// token exists) — paired with its own --lh-h3, same token-pairing
+// convention as --fs-body-lg/--lh-body-lg above.
+//
+// Width: was capped at the base rule's own max-width: 42ch (a
+// deliberately narrow measure for the OLD, dead-center layout) — read as
+// a narrow column under a full-width heading now. Roughly doubled to
+// 80ch, short of the ~85ch upper comfortable-reading bound rather than
+// running the full container width (which would overshoot it at this
+// column's actual pixel width) — see this pass's own report for the
+// rendered line count.
+.heroVideoSubtitle {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  max-width: 80ch;
+}
+
+// Corrective pass: was a bespoke <hr> with its own gradient — replaced
+// with the SAME AnimatedDivider component Welcome's signature row uses
+// (same sweep/glow, same viewport-gated animation, same reduced-motion
+// behavior), per explicit instruction not to fork a second divider.
+// AnimatedDivider is already width:100% of its own parent by default —
+// nested inside .heroVideoContent (now full container width, see that
+// class's own comment above), it spans the CONTENT CONTAINER's width,
+// matching the header's own edges. Only spacing lives in this class,
+// same as Welcome's own
+// .welcomeSignatureRule.
+.heroVideoRule {
+  margin: var(--space-4) 0 0;
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { SignatureMark } from "@/components/Logo";
-import styles from "@/components/SignatureBand.module.scss";
+import styles from "./signatureBandTuned.module.scss";
 
 // V5: standalone reproduction of the real SignatureBand.tsx — same
 // reasoning as every other "real component needs different behavior on
@@ -10,8 +10,11 @@ import styles from "@/components/SignatureBand.module.scss";
 // REVEAL_END_VH are hardcoded module constants in the real file, not
 // props or a CSS custom property, so there's no way to retune them from
 // outside without touching SignatureBand.tsx itself (off-limits — real
-// homepage). Every class (.band/.mask/.signature) is imported straight
-// from the real SignatureBand.module.scss, unchanged.
+// homepage). .band/.mask and the reveal mechanism are copied verbatim
+// from the real SignatureBand.module.scss into a design-lab-only fork
+// (signatureBandTuned.module.scss) — only .signature's colour differs,
+// see that pass's own report on why the shared file couldn't be edited
+// directly.
 //
 // Item 6: was 0.62 / 0.48 (a 0.14-of-viewport-height scroll window —
 // fixed the "too early" problem from before, but the window itself was

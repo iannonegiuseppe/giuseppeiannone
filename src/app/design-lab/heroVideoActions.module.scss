@@ -1,0 +1,8 @@
+// Layout only — each button's own visual style comes entirely from the
+// shared Button component's "glass" variant (Button.module.scss).
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-6); // 32px below the subtitle, matches the classic hero's own .heroOverlapCta spacing
+}

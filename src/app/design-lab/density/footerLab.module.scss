@@ -1,0 +1,408 @@
+@use "../../../styles/mixins";
+
+// Fork of src/components/Footer.module.scss for the "Footer — dark, on
+// the lighter green" pass — the real file is shared with production and
+// stays untouched (see this pass's own report: git diff on it is empty).
+// Structural DOM (columns/emergency/bottom bar) mirrors the original;
+// every color rule is rewritten to read the generic tokens
+// (--color-bg/-text/-text-muted/-line/-accent/-focus) that tone.tone-mid-
+// surface reassigns — the same convention Sedi/FAQ/Risorse already use —
+// instead of the original's --color-accent/--color-accent-contrast pair,
+// which only made sense under the old tone-deep-foreground wrapper.
+
+// --- Footer shell ------------------------------------------------------
+.footer {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  // Self-painted from the generic token rather than inheriting the
+  // wrapping .toneMidWrap div's own background — this full-bleed trick
+  // escapes any container, so the footer needs to be able to paint its
+  // own correct surface regardless of what wraps it. Under tone-mid,
+  // --color-bg resolves to --tone-mid-bg (--color-surface, #16261F) —
+  // the same green Sedi/Spazi/Risorse already sit on.
+  background: var(--color-bg);
+  padding-top: 4rem; // 64px, mobile tier — unchanged from the real file
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: 6rem; // 96px, desktop tier — unchanged
+  }
+}
+
+.container {
+  @include mixins.container;
+}
+
+// --- Row 1: brand block --------------------------------------------------
+.brand {
+  margin-bottom: var(--space-7); // 48px, unchanged
+}
+
+.brandRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--space-4);
+  row-gap: var(--space-2);
+}
+
+.wordmark {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.logoImage {
+  display: block;
+  width: 10.625rem;
+
+  @include mixins.breakpoint-up(lg) {
+    width: 13.75rem;
+  }
+}
+
+.socialRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-text);
+  transition:
+    color 200ms ease,
+    transform 200ms ease;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: color-mix(in srgb, var(--color-amber) 30%, var(--color-text));
+    transform: scale(1.12);
+  }
+
+  // Flat, predictable tone-mid surface (not an unpredictable gradient/
+  // photo) — the outward ring is legible here, so this switches from the
+  // original's inset ring back to the standard outward one, matching the
+  // convention already used once every other block on this page moved
+  // onto a flat surface (see this pass's own report).
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: color 200ms ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+  }
+}
+
+.alboLine {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+// --- Row 2: four columns, weighted by role (not by size alone) -----------
+// Esplora = navigation, Sedi = reference, Contatti = primary ("what
+// someone came for"), Legale = obligation. Weighting is carried by three
+// levers together: body colour (full text / accent / muted), Contatti's
+// link treatment + type bump, and a modest span asymmetry — see this
+// pass's own report for the exact reasoning.
+.columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+.columnEsplora {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: span 3;
+  }
+}
+
+.columnSedi {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: span 3;
+  }
+}
+
+.columnContatti {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: span 4;
+  }
+}
+
+.columnLegale {
+  @include mixins.breakpoint-up(lg) {
+    grid-column: span 2;
+  }
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  // Uniform across all four columns — the hierarchy statement lives in
+  // the body content beneath each kicker, not in the labels themselves.
+  color: var(--color-accent);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  // Matches the flat --color-line rule geometry already used by every
+  // other kicker on this page (FAQ, Risorse, etc.) rather than the
+  // original's bespoke ivory-alpha mix.
+  background: var(--color-line);
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// Esplora: standard nav weight — full text colour, no elevation.
+.link {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+// Legale: obligation tier — quietest nav treatment.
+.linkMuted {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.sediList {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+}
+
+.sedeGroup {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25rem;
+}
+
+// Sedi: reference tier — muted, still fully legible.
+.sedeCityName {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+}
+
+.sediAddress {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.contactList {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-3);
+}
+
+// Contatti: primary tier — accent colour (reads as actionable, matching
+// the site's own link-affordance convention) plus a modest type bump
+// (0.9375rem -> 1rem, by eye) — colour and size together, not size alone.
+.contactLine {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.googleLink {
+  margin-top: 1rem;
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.pivaLine {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+// --- Row 3: merged emergency + bottom bar --------------------------------
+// The original had two separate rows (emergency notice, then bottom bar)
+// with a large empty gap to the right of the notice on wide viewports.
+// Merged into one row: the notice (now the loudest element in the
+// footer) on the left, copyright + locale switcher (already-existing
+// content, not decoration) on the right — closing the gap by
+// repositioning real content rather than filling it or shrinking the
+// notice. Stacks on narrow viewports, same as the original's two rows did.
+.lowerBand {
+  @include mixins.container;
+  // Largest top margin of any element in the footer — space is the
+  // second signal (alongside colour/size) that this is the most
+  // important block on the page.
+  margin-top: var(--space-8); // 64px, was 48px
+}
+
+.lowerBandInner {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-6);
+  // Single consolidated divider for the merged row (the original had two
+  // — one above the notice, one above the bottom bar).
+  border-top: 1px solid var(--color-line);
+  padding-top: var(--space-7); // 48px — more than any other footer element gets
+  padding-bottom: var(--space-6);
+
+  @include mixins.breakpoint-up(md) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    column-gap: var(--space-6);
+  }
+}
+
+.emergency {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-4);
+  max-width: 46rem; // ~72ch at this type size, unchanged measure
+}
+
+// The single loudest text in the footer — full-strength colour, the
+// largest running (non-heading) type size in the block. No red, no
+// icon, no background panel: prominence comes from contrast, size and
+// the space around it, not alarm treatment.
+.emergencyText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.125rem; // 18px, was 13px
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.emergencyContacts {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-6);
+  row-gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// Whole label+number phrase is one tappable link (larger touch target
+// than the bare digits alone) — same colour/weight tier as the prose
+// above it, no button/pill chrome.
+.emergencyContactLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.emergencyContactLabel {
+  color: var(--color-text-muted);
+}
+
+.emergencyContactNumber {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+
+.bottomBar {
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--space-3);
+  align-items: flex-start;
+
+  @include mixins.breakpoint-up(md) {
+    align-items: flex-end;
+  }
+}
+
+.copyright,
+.localeSwitcher {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

@@ -1,5 +1,5 @@
 import { defineField, defineType } from "sanity";
-import { deontologyCheck } from "../lib/deontologyValidator";
+import { deontologyCheck, deontologyCheckAllowingSymbols } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
 
 // One field group per rendered <main> section on the promoted homepage
@@ -277,6 +277,35 @@ export const homePage = defineType({
                   type: "image",
                   options: { hotspot: false },
                 }),
+                // Privacy-gate pair, added for the /design-lab interactive-
+                // card + lightbox pass — deliberately separate from
+                // `document` above (left untouched: unused by that pass's
+                // own interactivity check, still here for whatever it was
+                // already doing). A card is interactive if and only if
+                // `scan` is present AND `scanRedacted` is true — enforced
+                // in the component that reads this field, not here; this
+                // schema only captures the two facts an editor confirms.
+                // No initialValue: true on scanRedacted — defaulting a
+                // privacy confirmation to true would make it a rubber
+                // stamp, not a check. Always rendered in the Studio (no
+                // hidden/optional framing) so an editor can't upload a
+                // scan without being asked to confirm redaction in the
+                // same breath.
+                defineField({
+                  name: "scan",
+                  title: "Scan",
+                  description: "Scansione del titolo. Il file caricato deve essere già oscurato: codice fiscale, data e luogo di nascita.",
+                  type: "image",
+                  options: { hotspot: false },
+                }),
+                defineField({
+                  name: "scanRedacted",
+                  title: "Scan redacted",
+                  description: "Confermo che nel file caricato sono oscurati codice fiscale, data e luogo di nascita.",
+                  type: "boolean",
+                  initialValue: false,
+                  validation: (Rule) => Rule.required(),
+                }),
               ],
               preview: { select: { title: "title", subtitle: "institution", media: "document" } },
             },
@@ -323,6 +352,61 @@ export const homePage = defineType({
             },
           ],
           validation: (Rule) => Rule.min(3).max(5),
+        }),
+      ],
+    }),
+
+    // Metodo (/design-lab copy pass) — deliberately a SEPARATE field group
+    // from "percorso" (field 8, above), not a reuse of it, even though the
+    // two are the same underlying content shape (kicker/heading/steps) and
+    // MetodoInteractive.tsx visually supersedes JourneySection/percorso's
+    // own render. Reusing "percorso" directly would mean any edit made for
+    // /design-lab's own preview (different wording: "Il percorso" vs.
+    // percorso's live "Come funziona", etc.) silently rewrites the REAL,
+    // currently-live production homepage's JourneySection content — the
+    // same "shared component/content, divergent behavior needed for one
+    // consumer -> split, don't mutate" call already made repeatedly this
+    // session (credentialsBand/credentialsBandLight, .section/
+    // .metodoLightWrap). Only title + shortLine are kept per step (the
+    // fields MetodoInteractive.tsx actually renders) — percorso's own
+    // atAGlance/expandedText fields exist for JourneySection's click-to-
+    // expand panel, a mechanic Metodo's own static rebuild retired; not
+    // carried over since nothing would read them.
+    defineField({
+      name: "metodo",
+      title: "8b. Metodo (design-lab light-section rebuild)",
+      description:
+        "Independent from field 8 (percorso) above, which still feeds the " +
+        "real, live JourneySection on the production homepage — this one is " +
+        "/design-lab's own visual rebuild of the same idea, with its own " +
+        "wording, so editing one never silently changes the other.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Eyebrow"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word or phrase (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField("paragraph", "Paragraph / intro", { required: false }),
+        defineField({
+          name: "steps",
+          title: "Steps",
+          description: "Exactly 4, rendered 01-04 in order. Numeral is computed from array position, not stored.",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "metodoStep",
+              fields: [
+                stringField("title", "Title"),
+                stringField("shortLine", "Description (shown next to the numeral)"),
+              ],
+              preview: { select: { title: "title", subtitle: "shortLine" } },
+            },
+          ],
+          validation: (Rule) => Rule.length(4),
         }),
       ],
     }),
@@ -433,12 +517,150 @@ export const homePage = defineType({
       ],
     }),
 
+    // Welcome (/design-lab copy pass). Was hardcoded (content.ts's WELCOME
+    // constant) — moved through the CMS like every other section's copy,
+    // per this pass's own brief ("all copy goes through the Sanity
+    // pipeline, not hardcoded"). Unnumbered for the same reason as Hope
+    // above (pre-restyle field-group numbering, not yet reordered).
+    defineField({
+      name: "welcome",
+      title: "Welcome",
+      description:
+        "The card-and-portrait introduction directly beneath Hope — kicker, " +
+        "heading (with one emphasized word/phrase), and a short first-person " +
+        "bio paragraph (name, credentials, disorders treated, locations, " +
+        "languages, first-contact process). Area list, CTA button, and " +
+        "signature row are NOT here — they read from siteSettings.author and " +
+        "the areas list directly, same as elsewhere on the page.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("title", "Heading"),
+        stringField(
+          "titleEmphasis",
+          "Heading — emphasized word or phrase (optional — must match the heading above exactly, case-sensitive; renders in the site's italic-accent style)",
+          { required: false },
+        ),
+        textField("paragraph", "Paragraph", { rows: 4 }),
+      ],
+    }),
+
+    // Credentials band (/design-lab rebuild pass). Was entirely hardcoded
+    // (density/content.ts's CREDENTIALS constant) — moved through the CMS
+    // like Welcome. Distinct from `formazione` above (a separate, currently
+    // GATED section not rendered anywhere live — see docs/pre-launch.md —
+    // with its own differently-shaped `counters` array) and from
+    // siteSettings.author.credentials (the short "Psicologo Psicoterapeuta"
+    // credential line shown in header/footer). Four FIXED cells, not a
+    // flexible list: three plain factual counters (years of clinical
+    // practice, years of training, number of locations including online)
+    // and one non-numeric bilingual badge (IT / EN) — named fields rather
+    // than an array since the shape itself is fixed, not editor-configurable.
+    defineField({
+      name: "credentialsBand",
+      title: "Credentials band",
+      description:
+        "Factual credentials only — years and location count, never client " +
+        "counts, percentages, or outcome claims (§9).",
+      type: "object",
+      fields: [
+        stringField("eyebrow", "Eyebrow"),
+        stringField("heading", "Heading"),
+        defineField({
+          name: "clinicalPracticeYears",
+          title: "Clinical practice — years",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("clinicalPracticeCaption", "Clinical practice — caption"),
+        textField("clinicalPracticeDescription", "Clinical practice — description (one short sentence)", { rows: 2 }),
+        defineField({
+          name: "trainingYears",
+          title: "Training — years",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("trainingCaption", "Training — caption"),
+        textField("trainingDescription", "Training — description (one short sentence)", { rows: 2 }),
+        defineField({
+          name: "locationsCount",
+          title: "Locations — count (including online)",
+          type: "number",
+          validation: (Rule) => Rule.required(),
+        }),
+        stringField("locationsCaption", "Locations — caption"),
+        textField("locationsDescription", "Locations — description (one short sentence)", { rows: 2 }),
+        stringField(
+          "languagesValue",
+          "Languages — value (e.g. \"IT / EN\") — a compact bilingual badge, not translated per language",
+        ),
+        stringField("languagesCaption", "Languages — caption"),
+        textField("languagesDescription", "Languages — description (one short sentence)", { rows: 2 }),
+      ],
+    }),
+
     // 11. SedesSection (scene list is the separate `sede` document type)
     defineField({
       name: "sedi",
       title: "11. Sedi",
       type: "object",
       fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("paragraph", "Paragraph")],
+    }),
+
+    // Sedi (/design-lab light-surface rebuild) — deliberately a SEPARATE
+    // field group from "sedi" above (the real, live production one,
+    // src/app/[locale]/page.tsx), same reuse-vs-new call as profilo/
+    // chiSonoSection: this pass's copy/heading-emphasis shape (an italic
+    // accent word inside the heading, an online-entry sub-line) doesn't
+    // exist on the shared group, and patching it there would change
+    // production immediately. headingEmphasisWord follows the same
+    // contract as profilo's own field (must match the heading text
+    // exactly, case-sensitive).
+    defineField({
+      name: "sediLab",
+      title: "11b. Sedi (design-lab light-surface rebuild)",
+      description:
+        "Independent from \"sedi\" above (the real, live production field group) — " +
+        "/design-lab's own light-surface rebuild, with its own copy.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField("intro", "Intro paragraph"),
+        stringField("onlineSubLine", "Online entry — sub-line (e.g. \"Stessa durata, stesso costo.\")"),
+      ],
+    }),
+
+    // Photo strip (/design-lab only — LocationsMarquee.tsx has no
+    // production counterpart, so this is a plain addition, not a fork of
+    // anything shared). Same headingEmphasisWord contract as sediLab/
+    // profilo above. "introLine" renders only when every strip photo is a
+    // real client-supplied one (see LocationsMarquee.tsx's own comment) —
+    // it asserts real/own photography, so it must never render against
+    // the temporary interior stock fallback.
+    defineField({
+      name: "spaziLab",
+      title: "11c. Gli spazi (design-lab photo strip)",
+      description: "/design-lab only — the photo-strip heading zone below Sedi.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField(
+          "introLine",
+          "Intro line (renders ONLY once every strip photo is real — see LocationsMarquee.tsx)",
+        ),
+      ],
     }),
 
     // 12. PricingSection
@@ -473,6 +695,154 @@ export const homePage = defineType({
         }),
         textField("footnote", "Footnote (shown when price list is on)"),
         textField("noPricesSentence", "Sentence (shown when price list is off)"),
+      ],
+    }),
+
+    // Tariffe (/design-lab new pricing section) — deliberately a SEPARATE
+    // field group from "prezzi" (field 12, above), not a reuse of it.
+    // prezzi/PricingSection.tsx is a real, still-gated component whose own
+    // eventual design is explicitly an "open client decision, not
+    // something [any prior] pass settles" (see that component's own
+    // comment) — a single-column kicker/heading/body/button layout with a
+    // dead "#" CTA link, structurally unlike this section's two-row mode/
+    // price + four-fact-footer layout. Reusing prezzi would both force this
+    // new layout into a shape it doesn't fit AND presume an answer to a
+    // decision the real component itself says is still open. New,
+    // independent group instead — same reuse-vs-new call as metodo/percorso
+    // above, and see this pass's own report for the full reasoning.
+    //
+    // §9 traps specific to pricing (all four checked live against the
+    // deontologyCheck validator, not just eyeballed): state the fee as a
+    // plain fact — no "a partire da", no packages/tiers/discounts/bundle
+    // pricing, no comparison against other professionals, no urgency. The
+    // 19% tax deduction is a permitted, factual claim (spesa sanitaria) —
+    // must be stated neutrally, never framed as a saving, and its
+    // traceable-payment condition must be honest, not omitted. No session
+    // count, course duration, or total path cost — those are outcome/
+    // duration promises, not facts about a single session's price.
+    defineField({
+      name: "tariffe",
+      title: "12b. Tariffe (design-lab pricing rebuild)",
+      description:
+        "Independent from field 12 (prezzi) above, whose own component " +
+        "comment marks its layout as still an open decision — this is " +
+        "/design-lab's own two-row mode/price layout with its own copy.",
+      type: "object",
+      fields: [
+        stringField("eyebrow", "Eyebrow"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word or phrase (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        defineField({
+          name: "rows",
+          title: "Pricing rows",
+          description: "Exactly 2 — In studio, Online.",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "tariffeRow",
+              fields: [
+                stringField("mode", "Mode name"),
+                stringField("subline", "Sub-line"),
+                stringField("price", "Price (formatted as it should display, e.g. \"100 €\")"),
+              ],
+              preview: { select: { title: "mode", subtitle: "price" } },
+            },
+          ],
+          validation: (Rule) => Rule.length(2),
+        }),
+        // Layout pass: the four-column label/value block (durataLabel/
+        // -Value, pagamentoLabel/-Value, ricevutaLabel/-Value,
+        // detrazioneLabel/-Value — 8 fields) is retired in favour of a
+        // single flowing details line, one phrase per practical fact, the
+        // old label folded into each phrase itself ("Ricevuta sempre
+        // rilasciata" instead of a separate "Ricevuta" caption above
+        // "Sempre rilasciata"). The middot separators between phrases are
+        // rendered decoratively by PricingBlock.tsx itself, NOT stored in
+        // this copy — each array item is one clean phrase.
+        defineField({
+          name: "detailsItems",
+          title: "Practical details (one flowing line, joined by a decorative middot — do not type separators into the copy itself)",
+          description: "Exactly 4 short phrases, e.g. \"45 minuti\", \"Ricevuta sempre rilasciata\".",
+          type: "array",
+          of: [
+            {
+              type: "string",
+              // The one item that legitimately needs a literal "%" (the
+              // 19% deduction fact) shares this relaxed validator with
+              // the other three, which don't contain "%" anyway — same
+              // narrow, disclosed carve-out as the old detrazioneValue
+              // field used, just applied at the array-item level now. See
+              // deontologyCheckAllowingSymbols's own comment.
+              validation: (Rule) => Rule.required().custom(deontologyCheckAllowingSymbols(["%"])),
+            },
+          ],
+          validation: (Rule) => Rule.length(4),
+        }),
+        // Kept from the previous pass, unchanged: the deduction's
+        // traceable-payment condition, always rendered below the details
+        // line (§9: the deduction must never read as unconditional).
+        textField("detrazioneFootnote", "Footnote below the details line (the deduction's traceable-payment condition — must never be empty; see this field's own §9 note above)", { rows: 2 }),
+      ],
+    }),
+
+    // Profilo (/design-lab full-bleed Chi sono rebuild) — deliberately a
+    // SEPARATE document from "chiSonoSection" (the real, live production
+    // singleton — see that document's own schema file), not a reuse of
+    // it, same reuse-vs-new call as metodo/percorso and tariffe/prezzi.
+    // chiSonoSection's own shape (kicker/title/titleEmphasisWord/
+    // paragraphs[3-5]/pullQuote/portrait/storyLink/signatureEnabled) is
+    // built for the real site's own sticky-portrait/pull-quote layout;
+    // this pass's brief is a different register entirely (full-bleed
+    // background photo, exactly 3 paragraphs, no pull-quote, no story
+    // link) — reusing chiSonoSection would either force this new layout
+    // to fit that shape or silently rewrite the real production page's
+    // own content. Photo itself stays a plain static asset reference
+    // (ChiSonoBlock.tsx's own portraitUrl constant, same pattern Metodo/
+    // CTA bridge already use for their own /design-lab imagery), not a
+    // new Sanity image field — this pass's brief says "use the EXISTING
+    // Chi sono portrait", not upload a new one.
+    //
+    // §9: professional facts only — no personal-recovery claim, no
+    // outcome promise. The client asked for the personal-experience
+    // angle (own panic attack, own therapy) to come out entirely; this
+    // group's own fields have no room for it structurally (three plain
+    // paragraphs, all professional-fact register).
+    defineField({
+      name: "profilo",
+      title: "9b. Profilo (design-lab full-bleed rebuild)",
+      description:
+        "Independent from chiSonoSection (the real, live production " +
+        "singleton) — this is /design-lab's own full-bleed rebuild with " +
+        "its own, shorter copy (professional facts only, no personal-" +
+        "experience narrative).",
+      type: "object",
+      fields: [
+        stringField("eyebrow", "Eyebrow"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized phrase (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        defineField({
+          name: "paragraphs",
+          title: "Paragraphs",
+          description: "Exactly 3.",
+          type: "array",
+          of: [
+            {
+              type: "text",
+              rows: 3,
+              validation: (Rule) => Rule.required().custom(deontologyCheck),
+            },
+          ],
+          validation: (Rule) => Rule.length(3),
+        }),
       ],
     }),
 
@@ -567,6 +937,30 @@ export const homePage = defineType({
           options: { hotspot: true },
           fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
         }),
+      ],
+    }),
+
+    // 15b. Contact (design-lab light-surface rebuild) — independent from
+    // "finalCta" above (the real, live production field group), same
+    // reasoning as sediLab/spaziLab: /design-lab's own copy, own kicker/
+    // heading with an emphasized word and a photo caption, never touching
+    // what production reads.
+    defineField({
+      name: "contactLab",
+      title: "15b. Contatto (design-lab light-surface rebuild)",
+      description:
+        "Independent from \"finalCta\" above (the real, live production field group) — " +
+        "/design-lab's own light-surface rebuild, with its own copy.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        stringField("photoCaption", "Photo caption"),
       ],
     }),
 

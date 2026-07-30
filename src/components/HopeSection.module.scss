@@ -8,7 +8,10 @@
 .hopeSection {
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  background: var(--color-accent);
+  // Reads the --hope-section-bg indirection, not --color-accent directly
+  // (Hope height/dividers pass) — see tone.light-island-surface's own
+  // comment (_tone.scss) for why the two roles needed separating.
+  background: var(--hope-section-bg);
   // Refinement pass: was --space-7 (48px) mobile / --space-8 (64px)
   // desktop — read as a thin strip for a section that's meant to be the
   // page's exhale. One real step up the token scale each: --space-8
@@ -18,10 +21,18 @@
   // 1.5× without jumping straight to --space-9 (×2), which felt like too
   // much air relative to the smaller viewport — reported here rather
   // than silently picked.
-  padding-block: var(--space-8);
+  //
+  // Now reads --hope-section-padding-block(-lg) indirections rather than
+  // the literal tokens directly (Hope height pass) — defaulted to the
+  // EXACT same --space-8/--space-9 values above everywhere except
+  // /design-lab's light-island scope, which steps both up one further
+  // (--space-9/--space-10) for more vertical presence — see this pass's
+  // own report for the before/after numbers. The real site's own Hope
+  // band is unaffected either way.
+  padding-block: var(--hope-section-padding-block);
 
   @include mixins.breakpoint-up(lg) {
-    padding-block: var(--space-9);
+    padding-block: var(--hope-section-padding-block-lg);
   }
 }
 
@@ -98,12 +109,36 @@
 // background itself IS --color-accent, so that swap isn't available
 // without either going invisible (accent-on-accent) or dropping color
 // below the 4.5:1 floor the report above measures with only a ~0.08
-// margin. Color stays the same full --color-accent-contrast as the rest
-// of the heading; italic is the only differentiator in this context.
+// margin. Color reads --hope-emphasis-color rather than
+// --color-accent-contrast directly — an indirection (_tokens.scss),
+// defaulted to the exact same value everywhere so this stays byte-
+// identical on every existing render, that exists solely so a light-
+// island scope (Hope-as-light-section, /design-lab) can give this one
+// word real accent color without touching the eyebrow/heading, which
+// must stay ink. Everywhere else, italic alone remains the only
+// differentiator, as before.
 .hopeEmphasis {
   font-style: italic;
   font-weight: var(--font-weight-regular);
-  color: var(--color-accent-contrast);
+  color: var(--hope-emphasis-color);
+}
+
+// Framing rules — Hope height/dividers pass. Optional (HopeSection.tsx's
+// `dividers` prop, default false — real site's Hope band is unaffected).
+// Restrained width (not full-container: this is a centred composition,
+// a full-width rule would compete with the phrase rather than frame it)
+// — .hopeInner compound selector for specificity, not to fight
+// AnimatedDivider's own width:100% rule via source order (unreliable
+// across separately-bundled stylesheets); this simply wins outright via
+// two classes vs. one, regardless of load order.
+.hopeInner .hopeDividerTop {
+  width: 28%;
+  margin: 0 auto var(--space-6);
+}
+
+.hopeInner .hopeDividerBottom {
+  width: 28%;
+  margin: var(--space-6) auto 0;
 }
 
 // One-shot entrance (HopeReveal.tsx) — whole-phrase fade-in-up, not

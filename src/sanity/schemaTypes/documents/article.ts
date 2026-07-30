@@ -30,6 +30,15 @@ export const article = defineType({
       initialValue: () => new Date().toISOString(),
     }),
     defineField({
+      name: "cover",
+      title: "Cover image",
+      description:
+        "Used on the homepage resources index and the article listing. Giuseppe's existing blog articles already have cover photos — this is where they get migrated to.",
+      type: "image",
+      options: { hotspot: true },
+      fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+    }),
+    defineField({
       name: "body",
       title: "Body",
       type: "portableText",

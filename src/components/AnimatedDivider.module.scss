@@ -1,0 +1,110 @@
+// Decorative accent divider: a 1px rule, brightest at one end, with a
+// periodic light sweep. Deliberately NOT built on top of
+// styles/_mixins.scss's own `hairline-divider` mixin (a plain static
+// utility for structural hairlines elsewhere on the site) — this is a
+// separate, opt-in, accent-only device.
+
+.divider {
+  position: relative;
+  overflow: hidden; // clips the sweep at both ends
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-accent) 55%, transparent) 0%,
+    color-mix(in srgb, var(--color-accent) 16%, transparent) 55%,
+    color-mix(in srgb, var(--color-accent) 5%, transparent) 100%
+  );
+
+  // Mirrors the whole element (base gradient + sweep travel together) —
+  // a future "right-bright" placement gets a bright-to-faint fade running
+  // the other way, with the sweep still traveling from the bright anchor
+  // toward the faint one, not re-authoring the gradient stops twice.
+  &[data-direction="right-bright"] {
+    transform: scaleX(-1);
+  }
+
+  // The sweep overlay. Color is theme-aware (see the two custom-property
+  // declarations below): a near-white ivory lift on light surfaces, a
+  // light-gold/champagne lift on dark surfaces — chosen per-theme rather
+  // than reusing one alpha across both, since the same alpha reads very
+  // differently against a warm-tan card than a near-black-green one (a
+  // neutral near-white vs. an inherently more saturated warm gold).
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 30%;
+    background: linear-gradient(90deg, transparent, var(--divider-sweep-color), transparent);
+    animation: divider-sweep 5s linear infinite;
+    animation-delay: calc(var(--divider-delay-index, 0) * -1.7s);
+    animation-play-state: paused; // default: only runs while in view (see [data-in-view] below)
+  }
+
+  // Light theme: --color-surface (pure #ffffff on light theme) at 36%,
+  // per spec's own reference alpha. Deliberately NOT --color-bg: real bug
+  // found via computed-style check — this component can be nested inside
+  // a tone-mid scope (as it is in Welcome), and the tonal-scale system's
+  // own tone-mid-surface mixin reassigns --color-bg to tone-mid's tan
+  // (#c9bca8) for an unrelated reason (fixing AreeSection/FaqSection's
+  // own background in an earlier pass) — using --color-bg here would have
+  // silently swept a muted tan instead of white. --color-surface isn't
+  // touched by that reassignment and stays the site's true white/near-
+  // white value regardless of tone scope.
+  --divider-sweep-color: color-mix(in srgb, var(--color-surface) 36%, transparent);
+
+  // Dark theme: gold-light/champagne (--color-accent-hover, which this
+  // card's tone-mid scope already resolves to the "light-gold" step —
+  // #e0c8a7) — NOT the same 36%. Gold is inherently more saturated than
+  // near-white ivory, so the same alpha reads far louder here; tuned down
+  // to 16%, confirmed by rendering both themes side by side rather than
+  // by a luminance formula alone (two different numeric proxies —
+  // matching relative-luminance ratio and matching WCAG contrast ratio —
+  // disagreed by an order of magnitude once the base surfaces are this
+  // far apart in absolute brightness, so this was settled empirically).
+  :global([data-theme="dark"]) &,
+  :global(.themeDark) & {
+    --divider-sweep-color: color-mix(in srgb, var(--color-accent-hover) 16%, transparent);
+    // Phase 2 — ambient gold glow, dark theme only, mirroring Cyprus's own
+    // .sg__stripe. --divider-glow is defined exclusively inside the dark
+    // token block (_tokens.scss) — no light-theme equivalent exists, so
+    // this rule only ever applies here, not a separate "off" state to
+    // maintain on the light side.
+    box-shadow: var(--divider-glow);
+  }
+
+  &[data-in-view="true"]::after {
+    animation-play-state: running;
+  }
+}
+
+@keyframes divider-sweep {
+  0% {
+    transform: translateX(-130%);
+    opacity: 0;
+  }
+
+  3% {
+    opacity: 1;
+  }
+
+  19% {
+    opacity: 1;
+  }
+
+  23% {
+    transform: translateX(430%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(430%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .divider::after {
+    display: none;
+  }
+}

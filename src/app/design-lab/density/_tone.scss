@@ -1,0 +1,206 @@
+@use "sass:map";
+
+// Tonal scale mixins (design-lab only) — kept as a dedicated partial,
+// not added to the sitewide src/styles/_mixins.scss, so this stays scoped
+// to /design-lab and never touches the real site's shared file.
+//
+// rich-dark-surface / rich-dark-grain: MOVED here from density.module.scss
+// verbatim (same rules, same values) — this is the single place tone-deep's
+// actual paint now lives, per the explicit "keep it in one place" brief.
+// Every tone-deep section (Hope/Credentials/Contact/Footer/CTA
+// bridge/Video) includes rich-dark-surface and paints background from the
+// SAME two gradient-stop tokens (--color-accent-gradient-light/-dark) —
+// darkening those two tokens in _tokens.scss is the one edit that moves
+// every deep section at once; nothing here re-specifies the color.
+
+@mixin rich-dark-surface {
+  --color-accent:
+    radial-gradient(
+      60rem 42rem at 82% 16%,
+      color-mix(in srgb, var(--color-bg) 7%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      85rem 60rem at 8% 92%,
+      color-mix(in srgb, var(--color-text) 65%, transparent) 0%,
+      transparent 65%
+    ),
+    linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
+}
+
+@mixin rich-dark-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+// tone-deep: background is rich-dark-surface's own gradient (--tone-deep-bg
+// aliases the SAME two gradient-stop tokens, see _tokens.scss) — this
+// mixin only reassigns the FOREGROUND custom properties a nested
+// component reads. Deliberately does NOT touch --color-accent/
+// --color-accent-hover: rich-dark-surface already repurposes --color-accent
+// locally for the gradient background itself, so any component that needs
+// accent-COLORED TEXT inside a tone-deep section must reference
+// --tone-deep-accent directly (see each component's own comment for where
+// this applies — CtaBridgeBlock's .emphasis/.link, VideoBlock's kicker).
+@mixin tone-deep-foreground {
+  color: var(--tone-deep-text);
+  --color-text: var(--tone-deep-text);
+  --color-text-muted: var(--tone-deep-muted);
+  --color-hairline: var(--tone-deep-hairline);
+  --color-line: var(--tone-deep-hairline);
+  // Phase 2 bugfix: --color-accent-contrast is pinned to the theme's
+  // global --color-bg (see _tokens.scss), correct only against the real,
+  // unrepurposed --color-accent (e.g. solid gold-fill buttons). Inside a
+  // tone-deep scope --color-accent has been hijacked by rich-dark-surface
+  // for the background gradient instead, so any component still reading
+  // --color-accent-contrast for text (Hope/Footer/Credentials) was
+  // resolving dark-theme near-black text against a near-black-derived
+  // gradient. Repinning it here, alongside the other foreground roles,
+  // fixes those without touching Hope/Footer's own (real, shared) files.
+  --color-accent-contrast: var(--tone-deep-text);
+  // Housekeeping fix: --color-scrim-icon is a SEPARATE role from
+  // --color-accent-contrast above, even though they're equal outside this
+  // mixin — VideoPlayer's control icon/timestamp sit on the video scrim
+  // (color-mix of --color-text, which THIS mixin already retones to
+  // --tone-deep-text/ivory-family), not directly on the tone-deep
+  // background. Pointing --color-scrim-icon at --tone-deep-text (like
+  // --color-accent-contrast above) would make the icon match the scrim's
+  // own tint — invisible, not fixed. It needs the OPPOSITE: dark, so it
+  // contrasts against the now-light-tinted scrim — --color-accent-gradient-
+  // dark is exactly that (rich-dark-surface's own dark gradient stop,
+  // deliberately never retoned here, still genuinely dark on both
+  // themes — the same pairing Button.module.scss's own [data-tone="deep"]
+  // override already established for the identical "foreground on a
+  // --tone-deep-text-tinted surface" situation).
+  --color-scrim-icon: var(--color-accent-gradient-dark);
+}
+
+// Light island: the opposite operation from tone-mid/tone-deep above
+// (which shift a section along the ACTIVE theme's own dark scale) — this
+// drops in the PARKED LIGHT theme's own literal values regardless of
+// which theme is active, so one section can render as a genuine light
+// interlude inside an otherwise-dark page (Cyprus's own reference does
+// the same: a full light section inside a dark page). --light-base-bg/
+// -text/-accent/-accent-hover (_tokens.scss) are theme-invariant for
+// exactly this reason. Deliberately does NOT include rich-dark-surface or
+// tone-deep-foreground — no vignette, no grain, flat opaque fill only.
+//
+// --hope-section-bg / --color-accent-contrast / --hope-emphasis-color are
+// hijacked the same way rich-dark-surface/tone-deep-foreground already
+// hijack --color-accent/--color-accent-contrast (a component whose own
+// CSS paints from one of these — HopeSection.tsx — needs no edits to pick
+// up a flat light surface instead). --color-accent/--color-accent-hover
+// are ALSO overridden here, but for a DIFFERENT reason: AnimatedDivider
+// (Hope height/dividers pass) reads those two directly, expecting real
+// accent colors, not a hijacked "section fill" value — that's exactly why
+// the section's own fill uses the SEPARATE --hope-section-bg indirection
+// instead of reusing --color-accent for both roles, which would collide.
+// --divider-glow is dark-theme-only in _tokens.scss (no light equivalent)
+// — silenced here since the divider's own dark-branch selector still
+// matches (nested under the surrounding page's real .themeDark ancestor;
+// a local scope can't un-match an ancestor selector), so without this its
+// gold ambient glow would still apply to an otherwise light-palette rule.
+//
+// Extended this pass (Metodo): --color-bg/-text/-text-muted/-hairline/
+// -line are NOW also reassigned — Metodo's real, shared CSS
+// (metodo.module.scss) reads these GENERIC tokens directly (its heading,
+// step title/text, icon-circle border), unlike Hope/Credentials, which
+// only ever route foreground color through --color-accent-contrast. This
+// mirrors tone-mid-surface's own equally-comprehensive reassignment
+// (_tone.scss, above) — light-island-surface was simply narrower than it
+// needed to be until a consumer that reads the generic tokens showed up.
+// Purely additive for Hope/Credentials: neither reads --color-bg/-text/
+// -text-muted/-hairline/-line, so this changes nothing for them.
+// First and currently only consumer: Hope (originally), now Metodo too —
+// reusable for any future section, per this mixin's own original intent.
+//
+// Extended AGAIN this pass (CTA bridge): --color-focus. Real gap found
+// live, not assumed — _tokens.scss defines --color-focus as a genuinely
+// per-theme literal (#715c52 light / #c29a5e dark champagne), the SAME
+// shape as --color-bg/-text/etc above, not a self-referential alias of
+// --color-accent — so it was never swept up by any earlier pass here.
+// Went uncaught this long because no earlier light-island consumer
+// (Hope, Credentials, Metodo) has a real focusable interactive element
+// inside its own light-scoped subtree; CTA bridge's new Button is the
+// first. Without this line, :focus-visible on that button rendered the
+// DARK theme's champagne ring on an ivory surface built on /design-lab's
+// dark-theme default — wrong colour, still findable, but not this
+// scope's own accent. --light-base-accent-hover already holds the exact
+// literal light value (#715c52, checked byte-for-byte against
+// --color-focus's own light :root definition) — reused rather than
+// adding a redundant fourth theme-invariant token for the same hex.
+@mixin light-island-surface {
+  background: var(--light-base-bg);
+  color: var(--light-base-text);
+  --color-bg: var(--light-base-bg);
+  --color-text: var(--light-base-text);
+  --color-text-muted: var(--light-base-muted);
+  --color-hairline: var(--light-base-hairline);
+  --color-line: var(--light-base-line);
+  --color-focus: var(--light-base-accent-hover);
+  --hope-section-bg: var(--light-base-bg);
+  --color-accent-contrast: var(--light-base-text);
+  --hope-emphasis-color: var(--light-base-accent);
+  --color-accent: var(--light-base-accent);
+  --color-accent-hover: var(--light-base-accent-hover);
+  --divider-glow: none;
+  --hope-section-padding-block: var(--space-9);
+  --hope-section-padding-block-lg: var(--space-10);
+}
+
+// tone-mid: no background-painting conflict (mid is a flat color, not a
+// gradient reusing --color-accent), so this can safely reassign every
+// foreground role at once — any real, shared component nested inside
+// (AreeSection, FaqSection) that already sources color from
+// var(--color-text)/var(--color-accent)/etc. re-tones automatically, zero
+// edits to that component's own file.
+//
+// Corrective pass: --color-bg is ALSO reassigned here now. Real miss found
+// by computed-style check — AreeSection.module.scss/FaqSection.module.scss
+// each paint their OWN section root with `background: var(--color-bg)`
+// (their normal, real-homepage behavior). That's a nested opaque layer
+// sitting on top of this wrapper's own background, so without this line
+// their root repainted plain ivory (var(--color-bg) unreassigned),
+// completely hiding the tan tint applied here one level up — confirmed via
+// getComputedStyle on both roots before this fix. Grepped both files first:
+// --color-bg appears exactly once in each, on this exact rule, so
+// reassigning it here can't collide with any other use in either file.
+@mixin tone-mid-surface {
+  background: var(--tone-mid-bg);
+  color: var(--tone-mid-text);
+  --color-bg: var(--tone-mid-bg);
+  --color-text: var(--tone-mid-text);
+  --color-text-muted: var(--tone-mid-muted);
+  --color-hairline: var(--tone-mid-hairline);
+  --color-line: var(--tone-mid-hairline);
+  --color-accent: var(--tone-mid-accent);
+  --color-accent-hover: var(--tone-mid-accent-small);
+}
+
+// tone-base: Welcome's own move off tone-mid (see this pass's own
+// report) — deliberately NOT tone-deep, whose rich-dark-surface vignette
+// produces the washed-out light patches still being worked around
+// elsewhere on this page. --tone-base-* literally alias the plain
+// --color-bg/-text/etc tokens (same value, no change) — reassigning them
+// here is mostly a no-op today (WelcomeBlock.tsx is fully self-contained,
+// no nested real/shared component reads these expecting a retone the way
+// AreeSection/FaqSection do under tone-mid), but written out in full
+// anyway, mirroring tone-mid-surface's own structure exactly, so a
+// section using base reads as a stated choice rather than "no tone
+// wrapper applied" being mistaken for an oversight.
+@mixin tone-base-surface {
+  background: var(--tone-base-bg);
+  color: var(--tone-base-text);
+  --color-bg: var(--tone-base-bg);
+  --color-text: var(--tone-base-text);
+  --color-text-muted: var(--tone-base-muted);
+  --color-hairline: var(--tone-base-hairline);
+  --color-line: var(--tone-base-hairline);
+  --color-accent: var(--tone-base-accent);
+  --color-accent-hover: var(--tone-base-accent-small);
+}

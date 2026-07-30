@@ -1,4 +1,5 @@
 @use "../../../styles/mixins";
+@use "./tone";
 
 // C1 fix: every full-bleed element on this page (.hopeSection,
 // .credentialsBand, .marqueeSection, .zigzagBleed, .fullBleedFrame,
@@ -183,6 +184,32 @@
   gap: var(--space-4);
 }
 
+// Cyprus rebuild, item 5: "Who we are"'s two-column text device, ported
+// to Chi sono — the 5 real paragraphs split 2/3 (paragraphsBeforePhoto/
+// paragraphsAfterPhoto, same split CHI_SONO's own content already uses)
+// into side-by-side columns instead of one stacked measure. No max-width
+// cap here (unlike .textBlock) — each column's own width IS its measure
+// at this grid track size, roughly 28-30ch at 1320px, comfortably under
+// the 65ch reading-width guideline.
+.chiSonoColumns {
+  margin-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(md) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: var(--space-7);
+  }
+}
+
+.chiSonoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
 .paragraph {
   margin: 0;
   font-family: var(--font-body);
@@ -262,24 +289,11 @@
 }
 
 // --- Dark surfaces: ONE shared rich treatment ------------------------------
-// Depth pass 3 (third time raised): the previous two passes reported
-// computed values as proof the layers were painting, but "painting" and
-// "visible" turned out to be different questions — screenshot pixel-
-// sampling (with a real, verified bug fixed along the way: a 1px seam
-// from the adjacent section was bleeding into the very first sampled
-// row, reading as a false "lightest point" at pure ivory; excluded a 3px
-// margin on every edge before sampling, see this pass's own report) found
-// the ACTUAL lightest/darkest points of every candidate recipe. Swept
-// sheen opacity on Credentials alone first (8% measured 4.61:1, 10%
-// dropped to 4.41:1) but re-measuring the SAME 8% on Hope and the Footer
-// (much taller/shorter boxes than Credentials — the sheen's radius is a
-// fixed rem size, not proportional to box height, so the same recipe
-// lands at a different point on its own falloff curve depending on the
-// surface's own dimensions) found Footer at only 4.475:1 — under the
-// floor. Backed the sheen off to 7% for real margin across every surface
-// size on the page, not just the one it was tuned on. Vignette opacity
-// (65% at 85rem/60rem, 2.0+ tonal range) was untouched — it only ever
-// darkens, so it doesn't share this sensitivity.
+// Tonal-scale pass: rich-dark-surface/rich-dark-grain MOVED to
+// ./tone.scss (a dedicated design-lab-only partial) — this is now the
+// ONE place tone-deep's actual paint lives, per that pass's explicit
+// "keep it in one place" requirement. Everything below still applies the
+// exact same mixins, just via `tone.` instead of a local definition.
 //
 // Applied identically to every dark surface on the assembled page, not
 // just Credentials: Hope and the Footer are real, shared homepage
@@ -290,55 +304,27 @@
 // wrapping element (see .richDarkWrap below, used in page.tsx) reaches
 // their background without touching either file. Credentials (this
 // component, not shared) uses the exact same mixin directly.
-@mixin rich-dark-surface {
-  --color-accent:
-    radial-gradient(
-      60rem 42rem at 82% 16%,
-      color-mix(in srgb, var(--color-bg) 7%, transparent) 0%,
-      transparent 55%
-    ),
-    radial-gradient(
-      85rem 60rem at 8% 92%,
-      color-mix(in srgb, var(--color-text) 65%, transparent) 0%,
-      transparent 65%
-    ),
-    linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
-}
-
-// Fractal-noise grain — CSS-generated (inline SVG data URI, no asset
-// file), pointer-events: none, low opacity. Shared by every dark surface
-// (Credentials directly; Hope/Footer via their own .richDarkGrain
-// instance in page.tsx, since the grain also can't live inside their
-// real markup).
-//
-// z-index: 2, ABOVE the content layer (z-index: 1 below), not below it —
-// deliberate, and the same order on all three surfaces (not just Hope/
-// Footer): Hope's and Footer's own real markup paints its OWN opaque
-// background across its whole box, which would otherwise completely
-// hide a grain layer sitting underneath it (there's no transparent gap
-// for it to show through, unlike Credentials' own text-only foreground).
-// Layering the grain on top of everything, including text, is the only
-// way it's visible at all for the real components — kept identical for
-// Credentials too rather than giving it a different stacking scheme, so
-// all three genuinely share one execution. At 5% opacity + soft-light
-// blend the effect on text legibility is negligible — verified visually.
-@mixin rich-dark-grain {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  opacity: 0.05;
-  mix-blend-mode: soft-light;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
 
 // --- Section 03: Credentials band -----------------------------------------
 // Full-bleed, same viewport-edge technique as Footer.module.scss's
 // .labFooter (width: 100vw + margin-inline: calc(50% - 50vw)) —
 // .credentialsInner below restores the normal container padding for the
 // actual content, same split as .labFooter/.labFooterContainer.
+//
+// .credentialsBand itself is SHARED with DensityPage.tsx (a separate, still-
+// live preview route, /design-lab/density — confirmed via grep, not
+// assumed) — its own Credentials block still wants the original dark
+// tone-deep treatment, so this class is left exactly as it was rather than
+// converted in place. .credentialsBandLight below is the new, DesignLabHomepage-
+// only wrapper for this pass's light-island rebuild; .credentialsInner/
+// -List/-Item/-Value/-Caption/-Label stay shared and untouched — they
+// already read the generic, correctly-hijackable tokens (--color-accent-
+// contrast etc.), so they re-tone automatically under WHICHEVER of the two
+// band wrappers is their actual ancestor, same "wrap once" pattern used
+// everywhere else on this page.
 .credentialsBand {
-  @include rich-dark-surface;
+  @include tone.rich-dark-surface;
+  @include tone.tone-deep-foreground;
   position: relative;
   // var(--vw100, 100vw): fix 2's own root cause, see ViewportWidthFix.tsx
   // — 100vw over-measures on a reserved-scrollbar browser; the JS-set
@@ -348,12 +334,114 @@
   margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
   padding-block: var(--space-band-y);
   overflow: hidden;
-  color: var(--color-bg);
   background: var(--color-accent);
 }
 
 .credentialsGrain {
-  @include rich-dark-grain;
+  @include tone.rich-dark-grain;
+}
+
+// Light-island pass (/design-lab's own Credentials band only — see the
+// shared-class note above): the EXACT same mechanism Hope uses
+// (tone.light-island-surface, _tone.scss), not a second one. No grain
+// layer, same reasoning as Hope: a flat light surface has nothing to layer
+// above. No explicit `background:` here: the mixin's own `background:
+// var(--light-base-bg)` line handles it — --color-accent itself is
+// hijacked by this mixin to mean "the real light accent" (needed below for
+// the new AnimatedDivider), so this band's fill deliberately does NOT
+// reuse that token the way the dark .credentialsBand above does.
+.credentialsBandLight {
+  @include tone.light-island-surface;
+  position: relative;
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  padding-block: var(--space-band-y);
+  overflow: hidden;
+}
+
+// Metodo-as-light-island wrapper. Metodo's own <section> (density.module
+// .scss's shared .section, used unchanged by Chi Sono/Lo Spazio too) is
+// NOT a full-width root the way AreeSection.tsx is — .section applies
+// @include mixins.container DIRECTLY to the <section> tag (width: 100%,
+// max-width: var(--container-max-width), margin-inline: auto), so it has
+// no background of its own today: it just shows the surrounding page
+// background through its full-bleed body, with the container only
+// constraining the CONTENT'S width. Painting a background on .section
+// itself would therefore fill only the container box, leaving dark page
+// background visible in the gutters on wide viewports — an inset
+// rectangle, not a section. Needs the SAME full 100vw band treatment
+// .credentialsBandLight above already uses (this route's own real
+// precedent for "a plain, container-constrained block becoming a true
+// full-bleed light band"), not just the bare mixin .toneMidWrap/
+// .hopeLightWrap use — those two wrap components that ALREADY paint
+// their own full-width background (AreeSection.module.scss's
+// .areeSection, HopeSection.module.scss's own root), so no extra
+// geometry was needed there. Wraps the existing, untouched .section as a
+// child — .metodoLightWrap supplies the bleed + retoned tokens, .section
+// keeps its own container/padding/border-bottom exactly as before.
+// --metodo-numeral-alpha override: the numeral watermark's resting alpha
+// (metodo.module.scss's own indirection token, defaults to 5% for the
+// existing dark-theme render) needed re-tuning for the new ivory ground —
+// 5% measured functionally invisible against --light-base-bg at this
+// component's font weight/size; 12% was the value settled on: present
+// enough to read as a deliberate watermark digit, not competing with
+// stepTitle/stepText's own real content (see this pass's own report for
+// the live-sampled comparison this value was picked from).
+.metodoLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  overflow: hidden;
+  --metodo-numeral-alpha: 12%;
+}
+
+// Rebuild pass: eyebrow + heading + divider, added above the four cells —
+// same kicker/rule/heading pattern Recognition's own header group uses,
+// re-pointed to this scope's correctly-hijacked tokens (--color-accent /
+// --color-accent-contrast) rather than the generic --color-text/
+// --color-line, matching this component's own original design (it never
+// read those generic tokens to begin with). Note: light-island-surface
+// was later extended (Metodo pass) to ALSO hijack --color-text/-line/etc
+// for a different consumer — harmless here since these two rules were
+// never wired to them, just don't assume the "not touched" framing below
+// still describes the mixin itself, only this component's own choice.
+.credentialsKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.credentialsKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-accent-contrast) 40%, transparent);
+}
+
+.credentialsHeading {
+  margin: var(--space-4) 0 0;
+  color: var(--color-accent-contrast);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+// AnimatedDivider, reused as-is (no rebuild) — spans this container's full
+// width (its own default: width:100% of parent), unlike Hope's narrow
+// centred usage. Its own CSS reads --color-accent/--color-accent-hover/
+// --divider-glow directly, all three correctly re-pointed to the light
+// palette by light-island-surface already — verified live, see this
+// pass's own report, not assumed from Hope's precedent alone.
+.credentialsRule {
+  margin: var(--space-6) 0 var(--space-8);
 }
 
 .credentialsInner {
@@ -370,14 +458,20 @@
 // pass's own verification method) left nothing painted at all, since the
 // gradient only existed on the hidden subtree. Harmless duplication in
 // normal rendering (identical color, painted twice).
+//
+// Phase 2 bugfix: also includes tone-deep-foreground now — Hope/Footer's
+// own text reads --color-accent-contrast, which this mixin repins (see
+// its own comment in _tone.scss). Still zero edits to Hope/Footer's real,
+// shared files: this only reassigns custom properties they already read.
 .richDarkWrap {
-  @include rich-dark-surface;
+  @include tone.rich-dark-surface;
+  @include tone.tone-deep-foreground;
   position: relative;
   background: var(--color-accent);
 }
 
 .richDarkGrain {
-  @include rich-dark-grain;
+  @include tone.rich-dark-grain;
 }
 
 // The real component renders inside this — position: relative + a
@@ -390,156 +484,124 @@
   z-index: 1;
 }
 
-// --- Contact band (differentiation pass, item 4) --------------------------
-// Different technique than Hope/Footer's --color-accent override: the
-// real .finalContactBand builds its background from TWO separate tokens
-// (--color-accent-gradient-light/-dark as the two stops of one linear-
-// gradient), not a single swappable custom property, so there's no one
-// token to redirect into a multi-layer value the way Hope/Footer's
-// background: var(--color-accent) allowed. Instead: two ABSOLUTELY
-// POSITIONED overlay layers (sheen+vignette, then grain), siblings of
-// the real <FinalContactSection>, sized and inset to land exactly on
-// .finalContactBand's own box — replicated from the real file's own
-// known values (mixins.container's padding-inline, --space-band-y,
-// --radius-m), not guessed. pointer-events: none on both so the form
-// underneath stays fully interactive; z-index above the real component's
-// own (non-positioned, so implicitly below) content, with the semi-
-// transparent sheen/vignette compositing over the real opaque gradient
-// underneath — visually identical to sitting BEHIND it, without needing
-// the real component's own background to be transparent.
-// Item 5: now full-bleed — "background edge to edge, inner content still
-// respecting the container's inline padding" (the footer's technique).
-// The real .finalContactBand itself can't be made to bleed (it's 100%
-// width of .finalContactOuter, a container-constrained real element), so
-// this overlay is now the ENTIRE visible surface — including its own
-// base gradient layer (below), not just sheen/vignette on top of the
-// real band's own fill. Real bug caught building this: an earlier
-// version tried nulling the real band's own --color-accent-gradient-
-// light/-dark tokens to transparent (to avoid a "double dark region"
-// where the two would overlap) and relying on the sheen/vignette alone
-// for color — but those are semi-transparent BY DESIGN, meant to
-// modulate an opaque base, not stand in for one; with nothing opaque
-// behind them the surface read as almost pure ivory. Fixed by giving
-// this overlay its own opaque base fill instead (same tokens, listed
-// last so it paints under the radial layers) and simply letting it
-// paint OVER the real (still fully opaque, still narrower) band
-// underneath — z-index above it is enough, no transparency trick
-// needed. Content (the form) is untouched, still sitting at its normal
-// container-width position — this is what makes it read as "inner
-// content still respecting the container's padding" despite the
-// background going edge to edge.
-.richDarkWrapContact {
+// Hope-as-light-island wrapper — replaces .richDarkWrap/.richDarkGrain/
+// .richDarkContent for Hope specifically (see tone.light-island-surface's
+// own comment for the mechanism). No grain layer: a clean light interlude
+// has no vignette/noise to layer content above, so no z-index-stacking
+// child wrapper is needed either — HopeSection renders directly inside.
+.hopeLightWrap {
+  @include tone.light-island-surface;
   position: relative;
 }
 
-.richDarkOverlayContact {
-  position: absolute;
-  top: var(--space-band-y);
-  bottom: var(--space-band-y);
-  left: calc(50% - (var(--vw100, 100vw) / 2));
-  right: calc(50% - (var(--vw100, 100vw) / 2));
+// --- Tonal scale, Phase 2 --------------------------------------------------
+
+// tone-mid wrapper: used by any section (real component or density-owned)
+// moving to tone-mid. Reassigns every foreground role, including
+// --color-accent (safe here — unlike tone-deep, mid's background isn't
+// built from that token, see tone.scss's own comment on why).
+.toneMidWrap {
+  @include tone.tone-mid-surface;
+}
+
+// Diplomi — light-island pass: replaces .toneMidWrap for this section only.
+// Same mechanism Hope/Metodo/CTA bridge already use (tone.light-island-
+// surface), not a new one — theme-invariant ivory regardless of
+// /design-lab's own dark ambient default, same reasoning as every other
+// light-island consumer on this page. Minimal, like .hopeLightWrap/
+// .ctaBridgeLightWrap: DiplomiSlider's own outer <section> (density.module
+// .scss's shared .section, already used unmodified by the surrounding
+// wrapper before this pass) needs no vw100 full-bleed trick — this route's
+// own top-level sections already render unconstrained, the same reason
+// .toneMidWrap above never needed it either.
+.diplomiLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// tone-deep wrapper for CTA bridge / Video specifically — NOT the same
+// class as .richDarkWrap (used by Hope/Footer/Contact): those three real
+// components read var(--color-accent-contrast) (now correctly repinned —
+// see tone-deep-foreground below and this pass's own report) rather than
+// var(--color-text)/-muted/-hairline. CTA bridge and Video (density-owned
+// files) DO read the generic tokens (heading/body/videoLead etc.), so
+// moving them to deep needs tone.tone-deep-foreground on top of the same background
+// mechanism — a new, separate class rather than risking a change to the
+// three already-shipped real-component wrappers.
+.toneDeepSection {
+  @include tone.rich-dark-surface;
+  @include tone.tone-deep-foreground;
+  position: relative;
+  background: var(--color-accent);
+}
+
+.toneDeepGrain {
+  @include tone.rich-dark-grain;
+}
+
+.toneDeepContent {
+  position: relative;
   z-index: 1;
-  // No border-radius — full-bleed surfaces sitewide (Hope/Credentials/
-  // Footer) don't have one either; a rounded corner touching the
-  // viewport edge would look like a rendering bug, not a design choice.
-  overflow: hidden;
-  pointer-events: none;
-  // Sheen at 5%, not the 7% Hope/Credentials/Footer use — Contact has
-  // one extra text role none of the others do: ContactForm's error text
-  // (--cf-error-text-color, a 4%-amber-tinted ivory, defined in the real
-  // ContactForm.module.scss — can't touch it, "form mechanics untouched"
-  // — and it's fixed at 4.5:1 wiggle room a shade tighter than plain
-  // ivory has). Re-measured after going full-bleed (the wider box shifts
-  // where the percentage-positioned sheen/vignette land in absolute
-  // px) — see this pass's own report for the re-measured ratios.
-  background-image:
-    radial-gradient(
-      60rem 42rem at 82% 16%,
-      color-mix(in srgb, var(--color-bg) 5%, transparent) 0%,
-      transparent 55%
-    ),
-    radial-gradient(
-      85rem 60rem at 8% 92%,
-      color-mix(in srgb, var(--color-text) 65%, transparent) 0%,
-      transparent 65%
-    ),
-    linear-gradient(135deg, var(--color-accent-gradient-light) 0%, var(--color-accent-gradient-dark) 100%);
 }
 
-// Fix 1: gives the real form an explicit stacking position so it can
-// out-rank the overlay's z-index at all — CSS never lets a non-
-// positioned element beat a positioned one, regardless of DOM order or
-// z-index value, so this wrapper is required, not optional.
-// Item 4: two dark surfaces existed — this section-level overlay AND the
-// real .finalContactBand's own (container-width, rounded) gradient
-// underneath it. Removed the inner one: overriding --color-accent-
-// gradient-light/-dark to transparent HERE (scoped to this wrapper,
-// which contains ONLY the real component, not the sibling overlay
-// itself — the overlay is a SEPARATE element outside this wrapper, so
-// it keeps reading the real, un-overridden token values for its own
-// base-fill layer; overriding on a shared ancestor of both would have
-// blanked the overlay's own fill too) makes the real band's own
-// background genuinely transparent, letting the section-level overlay
-// (gradient + sheen + vignette + grain) show through as the ONE
-// surface. Verified safe the same way as before: these two tokens are
-// used for the real band's background ONLY, nowhere else in its
-// subtree.
-// Real bug caught verifying this fix: overriding the two gradient tokens
-// on THIS wrapper (as an earlier version of this rule did) is too broad
-// — ContactForm.module.scss's own .contactForm ALSO reads these same two
-// tokens (for --cf-input-bg, the fill painted under autofilled fields)
-// and sits nested inside .finalContactBand, so that override silently
-// broke autofill styling too (found by checking every consumer of the
-// two tokens across the real component's whole subtree, not just the
-// one line this fix was written for).
-//
-// Fixed with three rules instead of one: (1) capture the tokens' real,
-// un-overridden values into new custom-property names on this wrapper,
-// before any override happens; (2) null the ORIGINAL two names, scoped
-// (via attribute-substring match — a plain attribute selector, not a
-// class selector, so CSS Modules doesn't hash it and it matches the real
-// hashed className directly, same technique as Item 1's header-CTA fix)
-// to exactly .finalContactBand, the one real element whose OWN
-// background reads them; (3) one level deeper, on .finalContactColumn,
-// restore the two original names from the captured values, so
-// everything below the band's own background — ContactForm included —
-// inherits the true tokens again instead of the override.
-.richDarkContactContent {
+// CTA bridge light-island pass: .toneDeepSection/.toneDeepGrain/
+// .toneDeepContent above are SHARED with Video and Contact (see this
+// file's own comment further down) — mutating them for CTA bridge alone
+// would retone those two real components too. New, separately-named
+// class instead, same "shared device, one consumer needs to diverge ->
+// split, don't mutate" call already made repeatedly on this page
+// (.credentialsBand/-Light, .section/.metodoLightWrap, .toneMidWrap).
+// Minimal, like .hopeLightWrap: CtaBridgeBlock's own <section> already
+// paints its own full-width background directly (no container constraint
+// on the root itself, same as AreeSection/HopeSection), so no vw100
+// full-bleed trick is needed here either — just the mixin. No grain
+// layer: a flat light interlude has nothing to layer content above.
+.ctaBridgeLightWrap {
+  @include tone.light-island-surface;
   position: relative;
-  z-index: 2;
-  --contact-gradient-light-original: var(--color-accent-gradient-light);
-  --contact-gradient-dark-original: var(--color-accent-gradient-dark);
-
-  [class*="finalContactBand"] {
-    --color-accent-gradient-light: transparent;
-    --color-accent-gradient-dark: transparent;
-  }
-
-  [class*="finalContactColumn"] {
-    --color-accent-gradient-light: var(--contact-gradient-light-original);
-    --color-accent-gradient-dark: var(--contact-gradient-dark-original);
-  }
 }
 
-.richDarkGrainContact {
-  position: absolute;
-  top: var(--space-band-y);
-  bottom: var(--space-band-y);
-  left: calc(50% - (var(--vw100, 100vw) / 2));
-  right: calc(50% - (var(--vw100, 100vw) / 2));
-  z-index: 3;
-  overflow: hidden;
-  opacity: 0.05;
-  mix-blend-mode: soft-light;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+// FAQ — light-island pass: replaces .toneMidWrap for this section only.
+// Same minimal mechanism as .diplomiLightWrap/.ctaBridgeLightWrap —
+// FaqSection's own accordion/dividers/toggle read --color-line/-hairline/
+// -text/-accent/-focus generically (confirmed by reading FaqSection
+// .module.scss directly), so they re-tone with zero edits to that file.
+.faqLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
 }
 
-// Full-strength --color-bg, not a muted mix — measured at only ~4.1:1
-// against --color-accent at 80% opacity (below the 4.5:1 AA floor for
-// this font-size), so hierarchy here comes from letter-spacing/weight
-// instead of lowering opacity. See the final report for the re-measured
-// ratio.
+// Signature — light-island pass: the band itself has no wrapper today
+// (sits on the raw root). SignatureBandTuned's own fork
+// (signatureBandTuned.module.scss) repoints .signature's colour to a
+// token this mixin reassigns (--color-accent-hover) — this wrapper is
+// what makes that token resolve to the ivory-pass value in the first
+// place.
+.signatureLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// Tonal-scale pass cleanup: the old bespoke Contact overlay mechanism
+// (.richDarkWrapContact/.richDarkOverlayContact/.richDarkContactContent/
+// .richDarkGrainContact — a second, independent place that read
+// --color-accent-gradient-light/-dark) was already dead code before this
+// pass: ContactBlock.tsx stopped rendering the real FinalContactSection
+// several passes ago, and grep confirms zero remaining references to any
+// of these four classes from any .tsx file. Removed while auditing this
+// exact file for "does tone-deep's value live in one place" — it
+// technically didn't, even though the second place was inert. Contact
+// now uses .toneDeepSection/.toneDeepGrain/.toneDeepContent, the same
+// single mechanism as CTA bridge and Video.
+
+// Phase 2 bugfix: was color: var(--color-bg) directly — same near-
+// invisible-on-dark failure as Hope/Footer, just via a literal --color-bg
+// reference instead of --color-accent-contrast. Switched to
+// --color-accent-contrast (now repinned to --tone-deep-text by
+// .credentialsBand's own tone-deep-foreground include) to converge onto
+// the same token/mechanism Hope and Footer use, rather than maintaining
+// a second parallel fix. Full-strength, not a muted mix — hierarchy here
+// comes from letter-spacing/weight instead of lowering opacity.
 .credentialsLabel {
   margin: 0 0 var(--space-6);
   font-family: var(--font-body);
@@ -547,7 +609,7 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 .credentialsList {
@@ -565,12 +627,12 @@
 }
 
 .credentialsItem {
-  border-top: 1px solid color-mix(in srgb, var(--color-bg) 25%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-accent-contrast) 25%, transparent);
   padding-top: var(--space-4);
 
   @include mixins.breakpoint-up(lg) {
     border-top: none;
-    border-left: 1px solid color-mix(in srgb, var(--color-bg) 25%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--color-accent-contrast) 25%, transparent);
     padding-top: 0;
     padding-left: var(--space-5);
   }
@@ -582,14 +644,150 @@
   font-weight: var(--font-weight-regular);
   font-size: var(--fs-display-sm);
   line-height: var(--lh-display-sm);
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
 }
 
 .credentialsCaption {
   margin: var(--space-2) 0 0;
   font-family: var(--font-body);
   font-size: var(--fs-body);
-  color: var(--color-bg);
+  color: var(--color-accent-contrast);
+}
+
+// --- Three-level pass (/design-lab's Credentials band only) --------------
+// *Light-suffixed parallel classes — see this pass's own JSX comment for
+// why: .credentialsList/-Item/-Value/-Caption above are shared with
+// DensityPage.tsx's own (2-level, left-aligned, dark, divided) Credentials
+// render, and this pass's changes (3 levels, centred, no dividers, gold
+// numeral) are specific to the rebuilt /design-lab version only.
+.credentialsListLight {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+
+  // Divider-removal pass: the vertical rules used to carry the "these are
+  // four separate things" signal on their own; gone now, so the gap does
+  // that job instead. --space-7 (this class's previous, shared value) read
+  // as four items floating once the dividers were removed — measured
+  // against the real render, not assumed. --space-8 restores a clearly
+  // deliberate separation without the rules.
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+// No divider (removed entirely, not hidden) and centred — the three-level
+// stack (number/subtitle/description) reads as one composed unit rather
+// than a left-aligned column once there's no rule to anchor it to an edge.
+.credentialsItemLight {
+  text-align: center;
+}
+
+// Gold numeral pass: --color-accent, not --color-accent-contrast — within
+// this scope (tone.light-island-surface) that's the light palette's real
+// accent (#7e6b5b), already correctly hijacked here for the same reason
+// the AnimatedDivider above needs it. NOT --color-gold-bronze (#8e6b3d):
+// that token is dark-theme-only and its own comment (_tokens.scss)
+// explicitly flags it as unsafe for text (3.19-3.84:1 against DARK
+// surfaces, never measured against light ones, and there is no light-theme
+// equivalent of that specific token) — see this pass's own report for the
+// measured ratio against this band's real ivory background.
+//
+// Size-up pass: --fs-display-sm -> --fs-display, one real step up (the
+// same H1 token, not a one-off) — --lh-display-sm and --lh-display are
+// both 1.15, so no line-height change was actually needed here.
+.credentialsValueLight {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-accent);
+}
+
+// Subtitle — unchanged in principle from the shared .credentialsCaption,
+// just centred and under its own class name (see the parallel-class note
+// above). Forced-capital first letter (::first-letter, not
+// text-transform: capitalize, which would upper-case every word — e.g.
+// "Anni Di Pratica Clinica") so the Sanity copy itself can stay natural
+// sentence case and this is purely a display rule, consistent regardless
+// of what an editor types.
+//
+// Size-up pass: --fs-body -> --fs-body-lg, one real step up — now with an
+// explicit line-height (--lh-body-lg) rather than relying on inherited
+// body line-height, since this rule previously never set one of its own.
+// Weight pass: --font-weight-bold (700) -> --font-weight-medium (500),
+// per explicit instruction — real Source Sans 3 weight (loaded at 400/
+// 500/700 in layout.tsx, not synthesised), same token the header nav
+// already uses. Reads lighter than the bold version — see this pass's
+// own report for the visual comparison.
+.credentialsCaptionLight {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-contrast);
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+// Third level, new this pass: one short sentence, small and muted.
+// color-mix against --color-accent-contrast (not --color-text-muted) —
+// light-island-surface does not touch --color-text-muted at all, so
+// reading it directly here would silently resolve to the surrounding DARK
+// theme's own muted ivory rather than a muted light ink. Percentage
+// checked against the real render — see this pass's own report.
+//
+// Size-up pass: --fs-small -> --fs-body, one real step up (with its
+// paired --lh-body line-height).
+.credentialsDescription {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: color-mix(in srgb, var(--color-accent-contrast) 75%, transparent);
+}
+
+// §9 fix: "5 titoli e specializzazioni" as a big scrambled number read as
+// an achievement count, the same register §9 already bans for testimonial
+// stats. There is also no real, itemized list of exactly 5 anywhere in
+// the current dataset (DIPLOMI has 3 real degree-level qualifications;
+// the marquee below has 6, a mix of degrees AND non-degree
+// specializations) — rather than invent a 5th item to match the old
+// number, this cell drops the numeral entirely and lists the 3 real,
+// verifiable degree titles instead. Reported as an intentional 3, not a
+// silently-forced 5.
+.credentialsQualLabel {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-accent-contrast);
+}
+
+.credentialsQualList {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.credentialsQualItem {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: color-mix(in srgb, var(--color-accent-contrast) 85%, transparent);
 }
 
 // Tabular-ish alignment while scrambling — without this, letters/digits
@@ -768,6 +966,74 @@
   object-fit: cover;
 }
 
+// Correction pass — diagnosis: the green showing above/below the reveal
+// was NOT the raw page root (case c) — it was case (a): the shared
+// .section class's own padding-block (var(--space-band-y), 96px measured
+// live) plus .fullBleedFrame's own margin-top (var(--space-6), 32px),
+// both transparent, both letting the root's dark background show through
+// INSIDE what should have been the image's own edge-to-edge band.
+// Confirmed live via getComputedStyle before touching anything: section
+// padding-top/-bottom both 96px, background transparent; fullBleedFrame
+// margin-top 32px. Neither .section nor .fullBleedFrame is edited — both
+// are shared, reused elsewhere on this page (.section by most other
+// sections, .fullBleedFrame by the Sedi map frame too, per its own
+// comment) — this section now uses its own wrapper instead of .section,
+// and its own fullBleedFrame instance gets a zero-margin override via
+// .spaceFrameFlush (a modifier class added alongside .fullBleedFrame in
+// the JSX, not a rewrite of it). Zero padding, zero border, zero margin —
+// the image runs into the sections either side with nothing between.
+.spaceSection {
+  position: relative;
+}
+
+.spaceFrameFlush {
+  margin-top: 0;
+}
+
+// CSS-only reveal (ParallaxFrameStatic.tsx) — "Lo spazio" only. New
+// classes, not a repurposing of .parallaxFrame/.parallaxFixedLayer above
+// (those stay exactly as they are — DensityPage.tsx still renders
+// .parallaxFrame via the original, JS-driven ParallaxFrame.tsx).
+//
+// Correction pass: was a fixed height: 160vh — now aspect-ratio: 10/4,
+// per direct instruction. The fixed image child + clip-path mechanic
+// below is unaffected by this: the frame's HEIGHT changes how much
+// scroll distance the reveal plays out over, not whether it works.
+.spaceParallaxFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 10 / 4;
+  overflow: hidden;
+  // clip-path is the operative property — it clips a position:fixed
+  // descendant to THIS box at paint time, across the containing-block
+  // boundary a fixed element would otherwise escape. overflow:hidden
+  // alone does not do this for a fixed child; kept alongside anyway as
+  // the belt-and-braces the brief itself asked for.
+  clip-path: inset(0);
+
+  @media (prefers-reduced-motion: reduce) {
+    height: auto;
+    aspect-ratio: var(--space-parallax-aspect, 16 / 9);
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+.spaceParallaxImage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  object-fit: cover;
+  pointer-events: none;
+
+  @media (prefers-reduced-motion: reduce) {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .spaceFrameB {
   margin-top: var(--space-6);
   display: grid;
@@ -888,6 +1154,80 @@
   font-size: var(--fs-display);
   line-height: var(--lh-display);
   color: var(--color-text);
+}
+
+// Tonal-scale pass: three scoped overrides for real, un-editable classes
+// from VideoSection.module.scss, all landmines this pass's own brief
+// explicitly called out — checked, not assumed:
+// - .videoKicker reads --color-accent directly, which .toneDeepSection
+//   deliberately leaves alone (rich-dark-surface owns that name for the
+//   gradient background) — needs --tone-deep-accent instead.
+// - .videoKickerRule paints its little divider from --color-line, which
+//   IS reassigned by tone.tone-deep-foreground, but to a value meant for
+//   1px borders, not a 1px "background" rule — same value, restated as
+//   background here since that's the property this rule actually uses.
+// - .videoLead blends ink at a flat 85% (color-mix against --color-text)
+//   — verified against real cyprusvipestates-derived tokens, this
+//   codebase's own PRIOR finding on the Contact band's own gradient
+//   applies identically here: no blended ivory clears 4.5:1 on tone-
+//   deep's tight background. Forced to full-strength tone-deep-text.
+.toneDeepContent {
+  [class*="videoKicker"]:not([class*="videoKickerRule"]) {
+    color: var(--tone-deep-accent);
+  }
+
+  [class*="videoKickerRule"] {
+    background: var(--tone-deep-hairline);
+  }
+
+  [class*="videoLead"] {
+    color: var(--tone-deep-text);
+  }
+}
+
+// Video light-island pass: NEW wrapper, same mechanism as
+// .diplomiLightWrap/.ctaBridgeLightWrap (tone.light-island-surface) —
+// .toneDeepSection/-Grain/-Content above are left untouched, still used
+// by Contact.
+.videoLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.videoLightContent {
+  position: relative;
+
+  // .videoKicker's shared `color: var(--color-accent)` would read the
+  // plain accent (#7e6b5b) — this pass wants the darkened
+  // --color-accent-hover (#715c52) instead, the same treatment Diplomi's
+  // own kicker already uses. .videoKickerRule needs no override: its own
+  // `background: var(--color-line)` already resolves correctly through
+  // light-island-surface's own reassignment of that token.
+  [class*="videoKicker"]:not([class*="videoKickerRule"]) {
+    color: var(--color-accent-hover);
+  }
+
+  // Play-triangle landmine (flagged in this pass's own proposal, measured
+  // before writing this): under light-island, --color-accent-contrast is
+  // repinned to --light-base-text (dark carbone) — correct for Hope/
+  // Credentials' own text-sitting-on-ivory use, wrong for a glyph sitting
+  // on the accent-coloured circle (measured ~2.77:1, below the 3:1 floor
+  // for a graphical UI object). This restores production's own unwrapped-
+  // light-theme pairing instead (--color-accent-contrast: var(--color-bg)
+  // at :root) — ivory on brown, ~4.59:1.
+  [class*="videoPlayerPlayTriangle"] {
+    border-left-color: var(--color-bg);
+  }
+}
+
+// Plate frame: reuses Diplomi's own card-frame recipe (a low-alpha
+// accent-tinted hairline, diplomiSlider.module.scss's own .card border) —
+// not a new device, the same one already living on this exact ivory
+// surface one section up. Radius matches --radius-l (VideoPlayer's own
+// radius) so this reads as one frame around the player, not a second box.
+.videoPlateFrame {
+  border-radius: var(--radius-l);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
 // --- "Static map frame" (simplified Section 07 for this pass — see the

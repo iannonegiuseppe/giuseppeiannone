@@ -1,0 +1,232 @@
+@use "../../../styles/mixins";
+
+// Heading zone — same recipe Diplomi/Video already established: kicker
+// rule geometry reused verbatim from .kickerRule (chiSonoBlock.module.
+// scss), h2 weight 400 explicit + font-synthesis:none (set inline in the
+// .tsx), italic accent word. Surface itself comes from an OUTER wrapper
+// around this whole component's render site in DesignLabHomepage.tsx —
+// every class below reads GENERIC tokens only, so it re-tones with zero
+// edits here.
+//
+// Correction pass: reversed off ivory (tone.light-island-surface) onto
+// --color-surface (tone.tone-mid-surface, .toneMidWrap) — the same token
+// Sedi itself now sits on. The strip is semantically part of the map
+// block (same locations, its photos now drive map selection — see
+// LocationsMarquee's own onClick), so it shares Sedi's surface instead of
+// standing apart as its own tonal moment. The two read as one continuous
+// block now.
+//
+// Bugfix pass: this rule used to carry the internal Sedi -> Strip gap as
+// margin-top. Measured live and found genuinely broken: a child's margin,
+// with nothing in its containing chain (.stripSection had no padding-top/
+// border-top, .toneMidWrap has no padding/border at all) to block CSS
+// margin collapse, collapses straight through both ancestors and becomes
+// space BEFORE the wrapper's own painted box — outside where either
+// Sedi's or the strip's own background fills, exposing the page's raw
+// dark root background as a visible band. Confirmed: both wrappers
+// computed margin:0 individually, yet their edges differed by exactly
+// this value. Moved to .stripSection's own padding-top instead (below) —
+// padding is inside the box and can't collapse — same visual gap, now
+// actually filled by the surface colour.
+.headingZone {
+  margin-top: 0;
+}
+
+// Wrapper for this block's own outer <section> (DesignLabHomepage.tsx) —
+// NOT the shared density.module.scss .section: that class's own
+// padding-block (top AND bottom) would reintroduce the oversized gap an
+// earlier pass cut. Bottom padding + border-bottom (the Strip -> Contact
+// edge, unrelated to this fix) are kept. padding-top carries the internal
+// Sedi -> Strip gap (moved here from .headingZone's own margin-top, see
+// that rule's own comment for why) — real padding, filled by
+// .toneMidWrap's background, not a collapsible margin.
+.stripSection {
+  @include mixins.container;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-band-y);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.headingKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.headingKickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  margin-top: -0.0625rem;
+  background: var(--color-line);
+}
+
+.headingH2 {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.headingAccent {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.headingIntro {
+  margin: var(--space-4) 0 0;
+  max-width: 40rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// Locations marquee (structure pass) — auto-scrolling photo row under the
+// Locations map. Card-width formula mirrors diplomiSlider.module.scss's
+// own idiom (same "container-relative, calc-based" reasoning, same 2-gap
+// constant) so the two blocks feel like one family, not reinvented twice.
+//
+// Container queries, not %: .item's width needs to be a real fraction of
+// .wrap's own (determinate) width. .track's width is max-content (it
+// holds the item list TWICE, deliberately wider than .wrap, so there's
+// something to scroll through) — a flex child's percentage flex-basis
+// resolves against ITS OWN flex container's width, and a max-content
+// container's width is ITSELF derived from its children's sizes, a
+// circular reference browsers resolve by falling back to content-based
+// sizing (i.e. the % is silently ignored). cqw sidesteps this entirely:
+// it's relative to the nearest ancestor with container-type set — .wrap,
+// which has a normal, determinate width regardless of what .track does.
+.wrap {
+  container-type: inline-size;
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--space-7);
+
+  // Reduced-motion fallback: a plain, natively-scrollable static row —
+  // no animation, no duplicated half visible, user can scroll it like
+  // any other overflow list.
+  @media (prefers-reduced-motion: reduce) {
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+// The single moving element — BOTH halves (real + decorative duplicate)
+// are its own direct children, laid out in one continuous flex row, so
+// translateX(-50%) moves the whole thing exactly half its own total
+// width: precisely the point where the (identical) second half starts,
+// which is what makes the loop seamless. The gap here matches the
+// item-level gap below, so the seam between the two halves reads
+// identically to any other item-to-item gap — no visible "joint."
+.track {
+  display: flex;
+  width: max-content;
+  gap: var(--space-5);
+  animation: marqueeScroll 36s linear infinite;
+
+  &:hover,
+  &:focus-within {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    width: auto;
+  }
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.trackHalf {
+  display: flex;
+  gap: var(--space-5);
+}
+
+// The decorative duplicate half (aria-hidden, not tabbable) — hidden
+// entirely under reduced motion, since there's no animation left for it
+// to serve and it would otherwise just double the same 4 photos in the
+// static row.
+.trackHalfDuplicate {
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+// Same visible-count feel as Diplomi's cards (~3.5 desktop / ~2.5 tablet
+// / ~1.2 mobile), same calc formula (2-gap budget divided by the target
+// count), different unit (cqw of .wrap, not % of .track — see .wrap's
+// own comment above for why).
+.item {
+  position: relative;
+  flex: 0 0 calc((100cqw - 2 * var(--space-5)) / 1.2);
+
+  @include mixins.breakpoint-up(md) {
+    flex-basis: calc((100cqw - 2 * var(--space-5)) / 2.5);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    flex-basis: calc((100cqw - 2 * var(--space-5)) / 3.5);
+  }
+}
+
+// Whole-card real <button> (fly-to-map trigger pass) — same "whole card is
+// a button" device Diplomi's own cards already use. Block, no default
+// button chrome; the photo + caption inside are purely visual.
+.itemButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  @include mixins.focus-ring;
+}
+
+.photoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.photoImg {
+  object-fit: cover;
+}
+
+.caption {
+  display: block;
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}

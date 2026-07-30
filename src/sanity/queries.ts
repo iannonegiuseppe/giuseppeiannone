@@ -50,6 +50,7 @@ export const siteSettingsQuery = defineQuery(`
     contactChannels,
     piva,
     crisisSupportText,
+    emergencyContacts,
     googleProfileUrl,
     carePathway
   }
@@ -198,10 +199,16 @@ export const homePageQuery = defineQuery(`
         institution,
         tier,
         document,
-        "documentLqip": document.asset->metadata.lqip
+        "documentLqip": document.asset->metadata.lqip,
+        scan,
+        scanRedacted,
+        "scanLqip": scan.asset->metadata.lqip
       }
     },
     percorso,
+    metodo,
+    tariffe,
+    profilo,
     recognition{
       kicker,
       heading,
@@ -214,7 +221,11 @@ export const homePageQuery = defineQuery(`
       }
     },
     hope,
+    welcome,
+    credentialsBand,
     sedi,
+    sediLab,
+    spaziLab,
     prezzi,
     risorse,
     video{
@@ -226,6 +237,7 @@ export const homePageQuery = defineQuery(`
       "captionsUrl": captions.asset->url
     },
     finalCta,
+    contactLab,
     faq{
       kicker,
       heading,
@@ -336,6 +348,25 @@ export const latestArticlesQuery = defineQuery(`
     title,
     "slug": slug.current,
     publishedAt
+  }
+`);
+
+// Risorse overlay-hero pass (design-lab only) — a SEPARATE query, not an
+// extension of latestArticlesQuery above: that one is also read by the
+// real production homepage (src/app/[locale]/page.tsx), and this pass
+// needs two things production doesn't fetch yet (cover, body — the
+// latter only to derive an excerpt from, never rendered as body copy
+// here) plus a 4th article (1 featured + 3 cards). Keeping them
+// independent means the production query's own shape/cost never changes
+// because of this pass.
+export const latestArticlesLabQuery = defineQuery(`
+  *[_type == "article" && language == $locale] | order(publishedAt desc) [0...4] {
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    cover,
+    body
   }
 `);
 

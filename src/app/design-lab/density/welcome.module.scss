@@ -1,0 +1,359 @@
+@use "../../../styles/mixins";
+@use "./tone";
+
+// Layout-delta pass (Cyprus "Welcome to..." composition) — was tone-mid,
+// both themes; moved to tone-base this pass (see this pass's own report)
+// so the section reads deeper, letting the card (--color-sand-deep) read
+// as more clearly raised above it and framing the bright portrait in a
+// darker surround. Deliberately tone-base, not tone-deep — see
+// tone.tone-base-surface's own comment.
+//
+// Consolidation pass: this file used to hold two full structural variants
+// (an A/B photo-treatment comparison) behind a photoVariant prop. Variant
+// B (narrow card + photo tucked to the container edge, gradient seam) was
+// approved and is now the only Welcome layout — variant A's entire rule
+// group and the shared/B-specific split have been removed; every class
+// below is renamed to drop its "B" suffix now that there's nothing left
+// to distinguish it from.
+.welcomeOuterMid {
+  @include tone.tone-base-surface;
+}
+
+.welcomeInner {
+  @include mixins.container;
+  padding-top: var(--space-band-y);
+  padding-bottom: var(--space-band-y);
+}
+
+// --- Top zone (kicker/heading/paragraph) ------------------------------------
+// container-type here (not on the heading itself): the heading's cqw
+// formula reads whatever width this zone actually has — the card's own
+// ~55%-wide content column, narrower than the section's full width, so the
+// heading renders smaller here than a full-width treatment would (an
+// acknowledged tradeoff from the original A/B pass, not a bug).
+.welcomeTopZone {
+  container-type: inline-size;
+  padding: var(--space-7) var(--space-7) 0;
+
+  @include mixins.breakpoint-up(md) {
+    padding: var(--space-8) var(--space-8) 0;
+  }
+}
+
+.welcomeKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  // --tone-mid-accent-small: the established AA-safe swap for small text
+  // on sand-deep (checked: 7.25:1 light / 8.28:1 dark).
+  color: var(--tone-mid-accent-small);
+}
+
+.welcomeHeading {
+  --welcome-heading-fs: clamp(2.5rem, 5.4cqw, 4rem);
+  margin: var(--space-5) 0 0;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--welcome-heading-fs);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+.welcomeEmphasis {
+  font-style: italic;
+}
+
+.welcomeParagraph {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// --- Areas / CTA / signature -------------------------------------------------
+.welcomeAreasList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3) var(--space-5);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.welcomeAreaItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+// A short hairline dash, not a checkmark/tick — §9: a tick next to a
+// disorder name reads as a promise of outcome.
+.welcomeAreaDash {
+  flex-shrink: 0;
+  width: var(--space-3);
+  height: 1px;
+  background: var(--color-accent);
+  transform: translateY(-0.35em);
+}
+
+// Font-size/line-height/colour match .welcomeParagraph exactly (was:
+// --fs-small/--lh-small/--color-text — the labels read as secondary/
+// lighter-weight next to the intro paragraph; this puts them at the same
+// visual weight as body copy). --color-accent (.welcomeAreaLink, below) is
+// deliberately NOT touched: that's the site's existing "this is an active
+// link" signal, a separate semantic distinction from type-weight matching.
+.welcomeAreaText {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+.welcomeAreaLink {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 150ms ease;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.welcomeCta {
+  align-self: flex-start;
+  margin-top: var(--space-6);
+}
+
+// Pushed toward the bottom of the column (margin-top: auto), but the REAL,
+// guaranteed gap from the CTA is padding-top below — never collapses even
+// when auto resolves to 0.
+.welcomeSignature {
+  margin-top: auto;
+  padding-top: var(--space-6);
+}
+
+.welcomeSignatureRule {
+  margin: 0 0 var(--space-4);
+}
+
+.welcomeSignatureRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.welcomeSignatureName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: 1.1875rem;
+  color: var(--color-text);
+}
+
+.welcomeSignatureReg {
+  margin: 0;
+  text-align: right;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--lh-small);
+  color: var(--color-text-muted);
+}
+
+// ============================================================================
+// Card shell — narrowed to its own text width, photo tucked behind its
+// right edge and extended to the container's own content edge.
+// ============================================================================
+
+// overflow stays visible — the photo still protrudes past this card's own
+// right edge, by design, and hidden would clip that. The photo layer keeps
+// its OWN overflow:hidden (below) so the image + its reveal mask are still
+// clipped correctly; only THIS box stopped clipping its children.
+//
+// Card width is explicit (not the full container width) — narrowed to
+// match .welcomeContent's own width exactly, eliminating dead blush space
+// between the text column and wherever the photo starts. Photo and text
+// are fully spatially separate (the photo lives entirely outside this
+// card, tucked behind its right edge by a modest amount) — there is no
+// scrim/blend needed for CONTRAST (nothing sits behind text), only the
+// narrow seam-fade below, purely to blend the photo's own hard left edge
+// into the card surface.
+.welcomeCard {
+  position: relative;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-sand-deep);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-soft);
+  --photo-overhang-x: 0px;
+
+  @include mixins.breakpoint-up(md) {
+    // Matches .welcomeContent's own width exactly — the card's right edge
+    // sits just past the longest rendered text line plus this card's own
+    // right padding, instead of extending further for no reason.
+    width: 64%;
+    // Right edge extended to land exactly at the container's own content
+    // edge (the same edge the site's content container uses, matching
+    // where full-width content elsewhere in this section would reach) —
+    // while holding the tuck (how much of the photo sits behind the
+    // card) fixed at 48px, the value tuned to clear the signature
+    // registration line's own right-aligned text (a 96px tuck was tried
+    // first and found to visibly overlap that line — see git history on
+    // this file for the measured collision). Since the tuck is fixed and
+    // the right edge moved further out, the photo's own WIDTH grows to
+    // span the new distance (488px — see .welcomePhotoLayer below).
+    --photo-overhang-x: calc(var(--space-10) + var(--space-9) * 3 + var(--space-5));
+    // Shared with .welcomePhotoLayer's own width and .welcomeSeamFade's
+    // own sizing, so the two stay geometrically locked together without
+    // repeating the raw value in three places.
+    --photo-width: 30.5rem; // 488px
+    // ~31% of --photo-width — a touch under "a third", tuned down after
+    // confirming by screenshot that a full third started to shade into
+    // where the subject's shoulder sits.
+    --seam-fade-width: 9.5rem; // 152px
+  }
+}
+
+// 100% of the (now narrowed) card — the text's own rendered width and
+// line-wrapping are unaffected by the card's own boundary moving in to
+// meet it.
+.welcomeContent {
+  position: relative;
+  z-index: 2;
+
+  @include mixins.breakpoint-up(md) {
+    width: 100%;
+  }
+}
+
+.welcomeLowerZone {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--space-7) var(--space-7);
+
+  @include mixins.breakpoint-up(md) {
+    padding: 0 var(--space-8) var(--space-8);
+  }
+}
+
+// Mobile: a plain block below the content (comes AFTER .welcomeContent in
+// DOM — "behind text" only ever applies from md up).
+//
+// md+: a narrower box that occupies roughly the card's right portion and
+// protrudes past its right edge only (--photo-overhang-x, defined on
+// .welcomeCard above) — no vertical protrusion, top/bottom sit flush with
+// the card. The card's own overflow:visible (above) is what lets the
+// rightward bleed render without being clipped. Square corners on every
+// side — the left side sits over the card's own plain surface (not a free
+// edge — rounding it would look like a stray notch mid-card).
+.welcomePhotoLayer {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  width: calc(100% - var(--space-5) * 2);
+  margin: var(--space-6) auto var(--space-7);
+  border-radius: 0;
+  background: var(--color-photo-backdrop);
+  z-index: 0;
+
+  @include mixins.breakpoint-up(md) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(-1 * var(--photo-overhang-x));
+    width: var(--photo-width);
+    aspect-ratio: auto;
+    margin: 0;
+    border-radius: 0;
+    overflow: hidden; // restated: this element still clips its own image + mask regardless of the card's own overflow:visible
+  }
+
+  // Reveal, layer 1 — right-to-left: the mask's leading edge starts at
+  // the box's own right edge and travels left as it opens.
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 1.1s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.welcomeCard[data-revealed="true"] .welcomePhotoLayer {
+  clip-path: inset(0 0 0 0);
+}
+
+// Static seam-blend overlay — sits in the card's OWN surface colour token
+// (--color-sand-deep — the same token the card itself uses, so this
+// recolours automatically with the active theme; on dark it resolves to
+// the Cyprus surface-raised composite, not a hardcoded blush). Spans only
+// the photo's own left portion, flush with its left edge (same
+// --photo-overhang-x token as the photo layer, so the two stay locked
+// together). NEVER animates (no clip-path, no transition) — only
+// .welcomePhotoLayer above carries the reveal mask. Hidden on mobile —
+// the photo stacks below the content there, not behind it, so there's no
+// seam to blend.
+.welcomeSeamFade {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(-1 * var(--photo-overhang-x) + var(--photo-width) - var(--seam-fade-width));
+    width: var(--seam-fade-width);
+    z-index: 1;
+    background: linear-gradient(
+      to right,
+      var(--color-sand-deep) 0%,
+      color-mix(in srgb, var(--color-sand-deep) 45%, transparent) 45%,
+      transparent 100%
+    );
+  }
+}
+
+.welcomePhotoImg {
+  object-fit: cover;
+  // White-balance treatment — unchanged.
+  filter: sepia(0.08) saturate(0.95);
+  // Shifted right so the subject sits in the card's right portion, past
+  // where the seam-fade is weakest.
+  object-position: 82% 38%;
+  // Reveal, layer 2 — unchanged timing/easing, still layered on top of the
+  // clip-path mask above.
+  transform: scale(1.12);
+  transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.welcomeCard[data-revealed="true"] .welcomePhotoImg {
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcomePhotoLayer {
+    clip-path: inset(0 0 0 0);
+    transition: none;
+  }
+
+  .welcomePhotoImg {
+    transform: scale(1);
+    transition: none;
+  }
+}

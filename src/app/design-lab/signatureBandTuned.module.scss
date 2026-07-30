@@ -1,0 +1,55 @@
+@use "../../styles/mixins";
+
+// Fork of src/components/SignatureBand.module.scss for the FAQ+Signature
+// ivory pass — the real file is shared with production and stays
+// untouched (see this pass's own report: git diff on it is empty).
+// .band/.mask and the reveal mechanism are copied verbatim, unchanged.
+// Only .signature's colour/opacity differ — see that rule's own comment.
+.band {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+  display: flex;
+  justify-content: center;
+}
+
+.mask {
+  --reveal: 0;
+
+  width: min(86%, 900px);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 4%),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 4%),
+    transparent 100%
+  );
+}
+
+// Ivory pass: --color-text (light-island) is near-black, not gold, so the
+// header-echo reasoning in the real file no longer applies here. Repointed
+// to --color-accent-hover (light-island's darker accent step, #715c52) —
+// decided value, measured 5.66:1 against ivory at 100% opacity. The
+// original opacity: 0.6 is dropped entirely: no candidate in the gold
+// family clears the 3:1 floor at 60% opacity (best case 2.51:1), and a
+// translucent value that fails the floor is worse than none.
+.signature {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--color-accent-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mask {
+    --reveal: 1;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}

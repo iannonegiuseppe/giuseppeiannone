@@ -1,0 +1,177 @@
+@use "../../../styles/mixins";
+
+// --- Lightbox, /design-lab's own instance ----------------------------------
+// Structure/exit-animation mirrors the shared src/components/
+// DiplomiSection.module.scss's own qualificationDialog* rules (native
+// <dialog> + data-closing/transitionend + @starting-style) — that
+// mechanism is proven, not reinvented; see QualificationLightboxLab.tsx's
+// own top comment for why this is a SEPARATE file rather than that one
+// edited in place (it's shared with production).
+//
+// Backdrop: carbone (--light-base-text, theme-invariant #2e2b28 — same
+// token light-island-surface itself is built from) at 94%, per this
+// pass's own spec (the shared dialog's own backdrop is 80% — deliberately
+// NOT reused verbatim here, this pass asked for darker specifically). No
+// backdrop-filter, no blur.
+.dialog {
+  border: none;
+  padding: 0;
+  margin: auto;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100%;
+  height: 100%;
+
+  &::backdrop {
+    background: color-mix(in srgb, var(--light-base-text) 94%, transparent);
+  }
+
+  &[open] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Grain over the backdrop — same feTurbulence recipe chiSonoBlock.module
+// .scss's own .grain uses (not a shared component: that file bakes the
+// same data URI directly into its own CSS class too, so this is the same
+// "each consumer gets its own copy of the technique" precedent already
+// established there, not a departure from it). Slightly stronger than
+// that file's own 0.045 — this sits over a much larger, flatter dark
+// field with nothing else breaking it up.
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100vw;
+  max-height: 100vh;
+  padding: var(--space-6);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @starting-style {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+.dialog[data-closing="true"] .card {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--light-base-bg) 55%, transparent);
+  color: var(--light-base-bg);
+  font-size: 1.5rem;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.navButton {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: -1.375rem; // half of width/height — center on 50% without transform (keeps GPU-safe animation rule intact even though this isn't animated)
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--light-base-bg) 55%, transparent);
+  color: var(--light-base-bg);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
+.navButtonPrev {
+  left: var(--space-4);
+}
+
+.navButtonNext {
+  right: var(--space-4);
+}
+
+// width/height come from QualificationLightboxLab.tsx as real HTML
+// attributes (Next Image, non-fill) — width/height: auto here lets the
+// browser scale the image down from its intrinsic size while preserving
+// aspect ratio, rather than distorting a portrait or landscape scan.
+// Thin light edge, per this pass's own spec ("so it reads as an object
+// sitting on the dark, not a hole cut in it") — --light-base-bg at low
+// alpha, not a hardcoded white/hex.
+.image {
+  max-width: 92vw;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid color-mix(in srgb, var(--light-base-bg) 35%, transparent);
+}
+
+.caption {
+  margin-top: var(--space-4);
+  max-width: 92vw;
+  text-align: center;
+}
+
+.captionMain {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  color: var(--light-base-bg);
+}
+
+// Load-bearing, not decorative (see the .tsx's own comment) — kept small
+// and muted so it reads as a footnote, not a second headline, but still
+// legible: color-mix against the SAME --light-base-bg the caption above
+// uses, not a separate muted-ivory token, so it stays theme-invariant
+// like the rest of this dialog.
+.captionNote {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: var(--lh-small);
+  color: color-mix(in srgb, var(--light-base-bg) 70%, transparent);
+}

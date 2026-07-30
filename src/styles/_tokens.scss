@@ -80,6 +80,28 @@ $z-index: (
   // re-verified: 5.66:1 (was documented ~5.43:1, a minor stale rounding —
   // both pass with margin, correcting for accuracy).
   --color-accent-hover: #715c52;
+  // Button system pass — a dedicated LIGHTENING step, distinct from
+  // --color-accent-hover above (which darkens, the opposite direction).
+  // Needed because the new button system's absolute rule is "hover always
+  // lightens, never darkens" — --color-accent-hover can't serve double
+  // duty for both an existing darkening hover (portable-text CTA links,
+  // untouched) and a new lightening one without contradicting itself.
+  //
+  // Derived as a formula (color-mix from the accent itself), not a bare
+  // hex, so it can never drift from --color-accent independently — 30%
+  // toward --color-surface (this theme's true white; NOT --color-bg,
+  // which the tonal-scale system reassigns inside tone-mid scope, see
+  // AnimatedDivider's/ShimmerText's own comments on that exact landmine).
+  // 30% specifically because contrast math ruled out anything lighter:
+  // the brief's own reference target (~#9C8467, equivalent to roughly a
+  // 12% lighten) measures only 3.21:1 for an ivory label and 3.96:1 even
+  // for a dark-ink label — both fail 4.5:1. This app's own rest-state
+  // accent (#7e6b5b) already sits at only 4.582:1 against ivory, so ANY
+  // lightening at all drops an ivory label below 4.5 — resolved by
+  // flipping the label to dark ink on hover instead (see Button.module.scss),
+  // which only clears 4.5:1 reliably at 30% lightening or more (measured:
+  // 20% -> 4.16:1 fail, 25% -> 4.54:1 marginal, 30% -> 4.96:1, real margin).
+  --color-accent-light: color-mix(in srgb, var(--color-accent) 70%, var(--color-surface) 30%);
   // Contact section pass: a SURFACE use of the same darkened step
   // --color-accent-hover already computes (not a new hue — aliased, not
   // re-declared, so the two can never drift apart by accident) — kept as
@@ -99,18 +121,24 @@ $z-index: (
   --color-accent-deep: var(--color-accent-hover);
   // Contact band refinement pass — diagonal gradient endpoints (135deg,
   // light at 0%, dark at 100%), per spec's own literal hex targets.
-  // Verified (this codebase's own manual sRGB relative-luminance method):
-  // full-strength ivory (--color-bg) measures 4.76:1 against the LIGHT
-  // endpoint (the worst case — the dark endpoint alone measures 6.04:1)
-  // — passes 4.5:1 but with very little margin (0.26). Load-bearing for
-  // every text role on this band: at this specific light endpoint, no
-  // blended/reduced-opacity ivory clears 4.5:1 at all (95% only reaches
-  // 4.48:1) — every text role that needs AA on this band uses
-  // full-strength ivory now, not a blend. Flagged in the Contact
-  // section's own report as a tight, near-floor constraint worth
-  // reconsidering if a "quieter" opacity-based text hierarchy is wanted.
-  --color-accent-gradient-light: #7c685a;
-  --color-accent-gradient-dark: #6a594a;
+  //
+  // Corrective pass (tone-deep darken, LIGHT THEME ONLY — the dark
+  // theme's own endpoints just below this block already read as a
+  // genuinely dark surface and were left untouched): the six deep
+  // sections read as "mid-brown, not dark" once there were six of them —
+  // these two stops sat only one step darker than --color-accent itself
+  // (#7e6b5b), barely distinguishable from it. Darkened while holding the
+  // same warm-brown hue (not shifted toward grey) and the same
+  // light-stop-lighter-than-dark-stop relationship. Re-verified (manual
+  // sRGB relative-luminance method): full-strength ivory (--color-bg) now
+  // measures 10.25:1 against the light endpoint (was 4.76:1) and 13.72:1
+  // against the dark endpoint (was 6.04:1) — both far clear of the 4.5:1
+  // floor. This margin WOULD allow a blended/reduced-opacity ivory (e.g.
+  // 60% ivory blend still clears 4.82:1) — flagged, not introduced: no
+  // second foreground tone was requested, and every current deep-section
+  // consumer already reads correctly at full strength.
+  --color-accent-gradient-light: #453829;
+  --color-accent-gradient-dark: #2e2419;
   --color-accent-soft: #e4eae6;
   --color-text: #2e2b28;
   --color-text-muted: #686058;
@@ -119,6 +147,63 @@ $z-index: (
   // buttons) — the brief specifically calls for "ivory text", not plain
   // white, so this reuses --color-bg rather than a separate hardcoded value.
   --color-accent-contrast: var(--color-bg);
+  // CTA bridge light-island pass: --theme-accent/-accent-contrast capture
+  // THIS theme's own --color-accent/-accent-contrast at the theme root,
+  // immune to any later local hijack (tone-mid-surface, tone-deep-
+  // foreground, light-island-surface all reassign --color-accent/
+  // -accent-contrast for their own scopes — none of them touch these two
+  // new names). Declared identically in both theme root blocks (this one
+  // and .themeDark's own, below) so a component that deliberately needs
+  // "the page's ACTUAL active-theme accent, regardless of the local
+  // tonal scope it happens to sit inside" has a correct, theme-aware
+  // escape hatch — not a hardcoded direction, which would break on the
+  // /design-lab/light-mode variant. First consumer: CtaBridgeBlock's own
+  // Button, which needed to match Welcome's Button exactly (Welcome's
+  // own tone-base scope never hijacks --color-accent, so it already
+  // reads the ambient theme's real accent for free; CTA bridge's new
+  // light-island scope does hijack it, so its Button opts back out via
+  // these two tokens instead).
+  --theme-accent: var(--color-accent);
+  --theme-accent-contrast: var(--color-accent-contrast);
+  // --color-focus isn't a simple alias of --color-accent on either theme
+  // (light: equals --color-accent-hover's value; dark: equals
+  // --color-accent's value — the two themes don't share the same
+  // underlying relationship), so --theme-accent can't stand in for it —
+  // needs its own theme-root capture, same reasoning as --theme-accent
+  // itself, just for this token instead.
+  --theme-focus: var(--color-focus);
+  // Foreground for an icon/label sitting on a --color-text-tinted overlay
+  // (VideoPlayer's control-bar scrim: color-mix(--color-text, 65%)) — a
+  // DIFFERENT role from --color-accent-contrast even though they start
+  // equal: --color-accent-contrast tracks --color-bg (correct against the
+  // flat --color-accent fill); this tracks whatever --color-text currently
+  // means (correct against a --color-text-tinted surface). They diverge
+  // only inside a scope that retones --color-text without also retoning
+  // --color-bg the same way — see tone.tone-deep-foreground's own override
+  // of this token for exactly that case.
+  --color-scrim-icon: var(--color-accent-contrast);
+
+  // Glass button/panel set (Cyprus-derived) — for a surface sitting over
+  // arbitrary imagery/video (currently: Hero's video background) rather
+  // than a flat token surface. Defined identically here and in the dark
+  // theme block below: a glass panel floating over footage reasonably
+  // doesn't need to differ by site theme (footage brightness dominates,
+  // not page theme), and this is the first real consumer of these tokens
+  // outside the /design-lab/tone-swatch demo — previously dark-only,
+  // which would have left the light-theme render of the same component
+  // broken.
+  // bg alpha lowered from Cyprus's own reference 0.06 to 0.04 — this is
+  // an IVORY tint, so raising its opacity (tried 0.14 first) lightens the
+  // panel and REDUCES contrast against the light label text sitting on
+  // it; the direction that actually helps is less ivory bleeding through,
+  // letting more of the already-dark scrim+video show through the blur
+  // instead. Measured against a real rendered frame: 0.06 gave 4.43–
+  // 4.84:1 (marginal), 0.04 gives a real margin — see this pass's own
+  // report for the exact re-measured numbers.
+  --color-glass-bg: rgba(239, 233, 219, 0.04);
+  --color-glass-solid: rgba(16, 40, 38, 0.85);
+  --color-glass-border: rgba(239, 233, 219, 0.18);
+  --color-glass-highlight: rgba(255, 255, 255, 0.12);
 
   // Warm accent for error/hover states — originally added for the
   // availability badge's waitlist dot, that consumer is gone (removed with
@@ -131,6 +216,99 @@ $z-index: (
   // now measures well under 3:1 — flagged separately, since the old
   // near-black accent is what made that specific pairing pass before.
   --color-amber: #b07d2a;
+
+  // Welcome-block redesign pass: a portrait's own real photographed
+  // backdrop is a fixed pixel value — it doesn't change with site theme —
+  // so this token is deliberately declared ONCE here and never
+  // reassigned in the .themeDark/[data-theme="dark"] block below (every
+  // other color token in this file DOES flip there; this one is the one
+  // intentional exception).
+  //
+  // Re-sampled this pass for the light-background portrait swap
+  // (public/design-lab/03.webp, replacing the old dark-background
+  // 04.webp — the value below is NOT that photo's dark corners anymore).
+  // Real bug caught while re-sampling: the first attempt (navigate
+  // straight to the image URL, screenshot the page, sample the PNG)
+  // silently sampled the browser's own default-viewport letterbox
+  // instead of the image — 03.webp's real size is 1800x1827, well past
+  // Playwright's default 1280x720 viewport, so the "screenshot" was
+  // actually the shrunk-to-fit rendering, not the source pixels; it
+  // happened to still report a plausible-looking dark value, which is
+  // exactly the kind of false-positive this method is supposed to catch,
+  // not produce. Fixed by drawing the real <img> element (its own
+  // naturalWidth/naturalHeight) onto a canvas directly, no screenshot
+  // step at all. The four corners do NOT closely agree this time: three
+  // cluster in a light warm-neutral grey (topLeft #b4b1b2, topRight
+  // #c5c4c7, bottomRight #afacb0), bottomLeft is a clear outlier
+  // (#766d6c, much darker) — almost certainly the subject's dark polo
+  // shoulder or the framed artwork's own edge/shadow falling in that
+  // corner, not neutral wall. Used the average of the three agreeing
+  // corners, excluding the outlier.
+  --color-photo-backdrop: #b8b6b8;
+
+  // Light island pass (Hope, /design-lab dark theme): same "declared
+  // once, never reassigned in .themeDark" exception as
+  // --color-photo-backdrop above — these three deliberately hold the
+  // parked light theme's own literal values (identical to --color-bg/
+  // -text/-accent's OWN definitions just above/below in this same block)
+  // under theme-invariant names, so a section can pull "the light theme's
+  // ivory/ink/bronze" out of a scope where the surrounding dark theme has
+  // already overridden the plain-named tokens. No new palette — a
+  // read-only re-export of values already defined in this file, for the
+  // one case (an intentional light interlude inside an otherwise-dark
+  // page) where the themed override needs to be bypassed rather than
+  // followed. See tone.light-island-surface (_tone.scss) for the
+  // mechanism that consumes these, and this pass's own report for why
+  // Hope is the first (and currently only) consumer.
+  --light-base-bg: #f6f3ee;
+  --light-base-text: #2e2b28;
+  --light-base-accent: #7e6b5b;
+  // Added this pass (Hope height/dividers): the light theme's own
+  // --color-accent-hover step, needed so AnimatedDivider's dark-branch
+  // sweep-color override (which reads --color-accent-hover unconditionally
+  // once nested under a `.themeDark`/`[data-theme="dark"]` ancestor — the
+  // selector itself can't be un-matched from inside a local scope) still
+  // resolves to a light-appropriate value once light-island-surface
+  // overrides --color-accent-hover locally. See that mixin's own comment.
+  --light-base-accent-hover: #715c52;
+  // Added this pass (Metodo light-conversion): the light theme's own
+  // --color-text-muted/--color-hairline/--color-line values — Metodo's
+  // real, shared CSS (metodo.module.scss) reads these GENERIC tokens
+  // directly (stepText, iconCircle's own border), not an indirection like
+  // Hope/Credentials' own --color-accent-contrast — light-island-surface
+  // needed extending (below) to also reassign the generic trio, matching
+  // tone-mid-surface's own equally-comprehensive pattern, so this is the
+  // theme-invariant source for that extension. Same literal values as
+  // this file's own light :root block, just re-exported.
+  --light-base-muted: #686058;
+  --light-base-hairline: #e7e0d3;
+  --light-base-line: #ddd6c9;
+
+  // Hope-specific indirection: HopeSection.module.scss's .hopeEmphasis
+  // reads this instead of --color-accent-contrast directly, purely so the
+  // light-island scope below can give the italic word its own accent
+  // color without touching the eyebrow/heading (which must stay ink, not
+  // accent). Defaulted to the EXACT prior value here and in the dark
+  // block below, so every existing render (the real site's own Hope band,
+  // and /design-lab's dark Hope before this pass) is byte-identical —
+  // this is a zero-behavior-change indirection everywhere except inside
+  // tone.light-island-surface's own override.
+  --hope-emphasis-color: var(--color-accent-contrast);
+
+  // Same indirection pattern, two more (Hope height/dividers pass):
+  // HopeSection.module.scss's .hopeSection now paints from
+  // --hope-section-bg rather than --color-accent directly — freeing
+  // --color-accent up to keep meaning "the real accent color" inside
+  // light-island-surface's scope (needed there for AnimatedDivider's own
+  // base gradient, added this pass), rather than being hijacked for two
+  // conflicting roles (section-fill color AND real-accent color) at once.
+  // Padding likewise: an indirection per breakpoint tier so light-island-
+  // surface can give /design-lab's Hope more vertical room without
+  // touching the real site's own band height. Both default to the exact
+  // prior literal values, so every existing render is unaffected.
+  --hope-section-bg: var(--color-accent);
+  --hope-section-padding-block: var(--space-8);
+  --hope-section-padding-block-lg: var(--space-9);
 
   // --- Fonts (variables populated by next/font in layout.tsx) --------------
   // Global restyle pass: EB Garamond replaces Marcellus entirely, Source
@@ -176,6 +354,15 @@ $z-index: (
   // — flagged, not silently papered over.
   --fs-display-sm: clamp(3rem, 2.7rem + 1vw, 3.25rem); // EB Garamond 400
   --lh-display-sm: 1.15;
+  // CTA bridge two-column pass: the heading now carries its own column
+  // alone (no kicker/body directly beside it, per that pass's own brief),
+  // needing one modest step above --fs-display (2.5rem-3.75rem, the
+  // hero's own H1 size) rather than reusing it verbatim — same "one real
+  // step up" reasoning --fs-h2-lg/--fs-display-sm were each added for
+  // earlier, just at the top of the scale instead of the middle. ~7%
+  // larger at every width, not a second hero-sized jump.
+  --fs-display-lg: clamp(2.75rem, 5.25vw, 4rem); // EB Garamond 400
+  --lh-display-lg: 1.15;
   --fs-h3: 1.375rem; // Source Sans 3 400 (not EB Garamond — too small at this size)
   --lh-h3: 1.3;
   --fs-body-lg: 1.125rem; // Source Sans 3 400, intro paragraphs
@@ -257,6 +444,72 @@ $z-index: (
   --button-font-size: 1rem; // 16px
   --button-min-height: 3rem; // 48px
   --button-border-width: 1.5px;
+
+  // --- Tonal scale (three-step surface rhythm, /design-lab only) -----------
+  // Named by ROLE (base/mid/deep), never by color — the dark theme below
+  // reassigns all three to entirely different hues, so a color name would
+  // lie immediately. This is a SEPARATE layer from the existing --color-*
+  // tokens above (which stay exactly as they are, still used by the real
+  // site) — nothing here touches those.
+  //
+  // tone-base: the existing page ivory, unchanged, reused verbatim.
+  // tone-deep: the existing dark-band gradient's own LIGHTER stop
+  // (--color-accent-gradient-light), reused as the measurement/contrast
+  // reference — not a new color. This is the harder-to-see end of that
+  // gradient, i.e. the correct worst-case to measure foreground tokens
+  // against (same "measure against the light endpoint" method the
+  // Contact band's own gradient comments already established). The
+  // gradient ITSELF (both stops) is what still paints — --tone-deep-bg
+  // holds it as a real, usable background-image value; the existing
+  // rich-dark-surface sheen/vignette mixin is a separate decorative
+  // layer on top, not part of this token, and Phase 2 decides how the
+  // two combine.
+  //
+  // tone-mid: NEW — genuinely between the two, not a tint of base. All
+  // four foreground values on it are ALSO new — the existing
+  // --color-accent/--color-text-muted measure under 3.5:1 here (checked,
+  // not assumed), so mid needs its own darker steps to hold AA.
+  //
+  // Measured (this file's own manual sRGB relative-luminance method):
+  //   text (#2e2b28) on tone-mid (#c9bca8): 7.53:1
+  //   muted (#4d463d, NEW) on tone-mid: 4.98:1
+  //   accent (#554539, NEW) on tone-mid: 4.90:1
+  //   accent-small (#4f4034, NEW) on tone-mid: 5.31:1
+  //   hairline (#9c8570, NEW) on tone-mid: 1.87:1 visual separation (no AA
+  //     floor for hairlines, but the existing hairline #e7e0d3 measures
+  //     only 1.19:1 against tone-base and would all but disappear here —
+  //     needed its own darker step, flagged in the brief, confirmed true).
+  //   text/muted/accent/accent-small on tone-deep (#f6f3ee, all four): 4.76:1
+  //     — the deep gradient's light endpoint is tight enough (per the
+  //     Contact band's own prior finding: "no blended ivory clears 4.5:1
+  //     here") that text/muted/accent/small-accent ALL collapse to the
+  //     same full-strength ivory value out of necessity. Hierarchy on
+  //     tone-deep comes from weight/size/italic, not color — same
+  //     constraint Credentials/Contact already live with today.
+  --tone-base-bg: var(--color-bg);
+  --tone-base-text: var(--color-text);
+  --tone-base-muted: var(--color-text-muted);
+  --tone-base-hairline: var(--color-hairline);
+  --tone-base-accent: var(--color-accent);
+  --tone-base-accent-small: var(--color-accent-hover);
+
+  --tone-mid-bg: #c9bca8;
+  --tone-mid-text: var(--color-text);
+  --tone-mid-muted: #4d463d;
+  --tone-mid-hairline: #9c8570;
+  --tone-mid-accent: #554539;
+  --tone-mid-accent-small: #4f4034;
+
+  --tone-deep-bg: linear-gradient(
+    135deg,
+    var(--color-accent-gradient-light) 0%,
+    var(--color-accent-gradient-dark) 100%
+  );
+  --tone-deep-text: var(--color-bg);
+  --tone-deep-muted: var(--color-bg);
+  --tone-deep-hairline: color-mix(in srgb, var(--color-bg) 30%, transparent);
+  --tone-deep-accent: var(--color-bg);
+  --tone-deep-accent-small: var(--color-bg);
 }
 
 // --- Responsive scaling for the semantic spacing tokens ---------------------
@@ -293,6 +546,283 @@ $z-index: (
     --space-heading-gap: 3rem; // 48px
     --space-card-pad: 2rem; // 32px
   }
+}
+
+// --- Dark variant (Cyprus-derived; /design-lab's primary theme since
+// Phase 2 — light is parked, unchanged, at /design-lab/light-mode) -------
+// STEP 0 analysis for the Cyprus-style rebuild sampled cyprusvipestates.com's
+// own shipped CSS directly (grepped hex/token values out of its real
+// stylesheets, not guessed): --sea-deep #081512, --sea #102826, --ivory
+// #efe9db, --corp-color (gold) #bd8948, --corp-color-light #e0c8a7,
+// --champagne #c29a5e, --hairline hsla(42,38%,90%,.16). Every value below is
+// one of those, or a step computed from them and contrast-checked with this
+// file's own manual sRGB relative-luminance method (see the checks noted
+// per line) — nothing here is invented.
+//
+// Scoped entirely under .themeDark (applied once, on the dark route's root
+// wrapper — see page.tsx) rather than a media query: the client picks the
+// variant, the OS color-scheme preference must not silently override that
+// choice. Every component already sources color exclusively from these
+// custom properties (the project's own "no raw hex in component files"
+// rule) — reassigning the values here is the ENTIRE mechanism that
+// reskins the whole page; no component file changes for color.
+//
+// --color-accent-gradient-light/-dark are the one deliberate divergence
+// from a literal "just flip the tokens" approach: those two feed the
+// site's existing "dark band" mechanic (Hope/Credentials/Footer/Contact —
+// rich-dark-surface mixin, density.module.scss), which paints its surface
+// FROM these two stops. On the light variant that's a taupe band standing
+// out against an ivory page. Reusing gold there on the dark variant would
+// paint entire sections solid gold — not what the reference does. Cyprus's
+// own real device (verified in its CSS: .brochure, no .is-light, sits on
+// the page's own default-dark background; .brochure__card inside it uses
+// --sea, a LIGHTER dark, as its own separate fill) is a lighter-dark panel
+// floating on a darker-dark page — so these two tokens get lighter-dark
+// steps instead of gold, keeping "dark band = tonal punctuation" legible
+// (§10.4) when the page's own base is already dark, without touching the
+// mixin itself.
+// Canvas-background fix: also matched on :root[data-theme="dark"], not
+// just the .themeDark class — a plain class only reassigns these custom
+// properties for ITS OWN descendants, but <body>'s background-color
+// (design-lab-globals.scss) lives on an ANCESTOR of the .themeDark div,
+// which never sees a descendant's override (CSS custom properties only
+// cascade downward). `:root` always means the document's <html> element,
+// regardless of where the rule is written — so the moment <html> carries
+// data-theme="dark" (set by a tiny blocking inline script, see
+// DesignLabHomepage.tsx, so it runs before first paint / no flash), this
+// same token reassignment applies at the true root, and <body>'s existing
+// var(--color-bg)/var(--color-text) rule resolves correctly with zero
+// changes to that file. .themeDark itself is left in place, still applied
+// to the content wrapper div — redundant with the html-level rule now,
+// but harmless (identical values, not a conflict) and not worth the risk
+// of removing when nothing requires it gone.
+.themeDark,
+:root[data-theme="dark"] {
+  --color-bg: #081512; // sea-deep — matches Cyprus design-tokens.css --bg exactly
+  // Desaturated from Cyprus's --sea (#102826) for this project's calmer
+  // register — a deliberate divergence, not a copy. #102826 read as
+  // slightly acidic against the champagne/gold accent; #16261F keeps the
+  // same green family but pulls the saturation down. --color-surface-tint/
+  // --color-sand/--color-greige below are kept as literal duplicates of
+  // this same value (not var() aliases) purely because that's how they
+  // were already declared — updated in lockstep here so they don't drift
+  // from what tone-mid now looks like. See this pass's own report for the
+  // full re-verified contrast table (this token underpins six /design-lab
+  // sections) and the base/mid/deep step-coherence check.
+  --color-surface: #16261F;
+  --color-surface-tint: #16261F;
+  --color-sand: #16261F;
+  // Cyprus reconciliation pass: this was an independent third opaque hex
+  // (#163430) — exactly the pattern Cyprus's OWN depth model does NOT use.
+  // Cyprus builds its third depth step as a translucent ivory FILM over
+  // --surface (--surface-raised: rgba(239,233,219,0.045)), not a fourth
+  // solid color. Redefined as that same composite, expressed directly so
+  // it can never drift from --color-surface independently. Aliases
+  // --color-surface-raised below rather than repeating the formula. NOTE:
+  // since --color-surface-raised is computed FROM --color-surface, its
+  // resolved color moves slightly whenever --color-surface does (confirmed
+  // in this pass's own re-verification) — deep was not edited directly,
+  // but isn't fully independent of mid either.
+  --color-sand-deep: var(--color-surface-raised);
+  --color-greige: #16261F;
+  --color-line: hsla(42, 38%, 90%, 0.16); // Cyprus's own --hairline value
+  --color-hairline: hsla(42, 38%, 90%, 0.16);
+  // Cyprus reconciliation pass: #bd8948 ("corp-color", sampled from the
+  // live site during an earlier pass) does not match any of the three
+  // canonical gold steps in Cyprus's own design-tokens.css (the source of
+  // truth this pass uses instead) — champagne/bronze/gold-light. Remapped
+  // to champagne, the step Cyprus itself uses for text/link/accent roles.
+  // Re-verified (this file's manual sRGB relative-luminance method):
+  // 7.17:1 on --color-bg, 5.97:1 on --color-surface, 5.32:1 on
+  // --color-surface-raised — ALL clear 4.5:1 with real margin. This also
+  // means the old per-tone workaround (tone-deep swapping to a lighter
+  // gold because #bd8948 failed at 4.36:1 there) is no longer needed —
+  // see the tonal-scale block below.
+  --color-accent: #c29a5e; // champagne
+  // Hover lightens, not darkens (inverse of the light variant): this
+  // accent already sits near the light variant's OWN floor in the darken
+  // direction, and a dark-on-dark UI conventionally lightens on hover.
+  // Unchanged — already matches Cyprus's gold-light exactly. Checked:
+  // 11.53:1 on --color-bg.
+  --color-accent-hover: #e0c8a7; // gold-light
+  // Button system pass: dark theme's OWN --color-accent-hover already
+  // lightens (see its own comment above) — no new derivation needed here,
+  // just an alias, so this token means the same thing on both themes
+  // ("the button system's hover-lighten step") while pointing at
+  // different existing values underneath.
+  --color-accent-light: var(--color-accent-hover);
+  --color-accent-deep: var(--color-accent-hover);
+  // See the light theme's own comment on --theme-accent/-accent-contrast
+  // (base :root, above) — re-declared here so dark theme's OWN accent/
+  // contrast are what gets captured when THIS theme is active.
+  --theme-accent: var(--color-accent);
+  --theme-accent-contrast: var(--color-accent-contrast);
+  // Cyprus reconciliation pass: this gradient feeds rich-dark-surface
+  // (_tone.scss) — the mixin every REAL tone-deep section (Hope,
+  // Credentials, Contact, Footer, CTA bridge, Video) paints its
+  // background from. Light stop is now --color-surface-raised (same
+  // Cyprus depth-film composite as --color-sand-deep above — the two
+  // "tone-deep" concepts in this codebase now visually agree). Dark stop
+  // is --color-bg directly — Cyprus's own model has no independent
+  // near-bg hex; reusing --color-bg means this gradient is now composed
+  // entirely from Cyprus-derived tokens, zero independent hex values.
+  --color-accent-gradient-light: var(--color-surface-raised);
+  --color-accent-gradient-dark: var(--color-bg);
+  // Cyprus reconciliation pass: was an ivory wash (hsla(42,38%,90%,0.08))
+  // — Cyprus's own --accent-soft is gold-based. Remapped to the literal
+  // Cyprus value. Real consumers checked (sharedSections.module.scss
+  // btnSecondary:hover, portableTextComponents.module.scss keyTakeaways):
+  // composited over --color-bg this reads as #22281d, over --color-surface
+  // as #29382e — text-muted (ivory 72%) measures 7.20:1 / 6.14:1 on those,
+  // gold-light measures 9.39:1 / 7.65:1 — both existing consumers stay
+  // comfortably clear of 4.5:1 with the new gold-tinted value.
+  --color-accent-soft: rgba(194, 154, 94, 0.14);
+  --color-text: #efe9db; // ivory — matches Cyprus exactly
+  // Checked: 8.31:1 on --color-bg, 7.29:1 on --color-surface — matches
+  // Cyprus's own --text-soft role (rgba(239,233,219,0.72)) exactly.
+  --color-text-muted: hsla(42, 38%, 90%, 0.72);
+  --color-focus: #c29a5e; // champagne — checked 7.17:1 on --color-bg
+  // See the light theme's own comment on --theme-focus (base :root,
+  // above) — re-declared here so dark theme's OWN --color-focus is what
+  // gets captured when THIS theme is active.
+  --theme-focus: var(--color-focus);
+  // --color-accent-contrast already aliases var(--color-bg) in :root — once
+  // --color-bg flips dark here, solid-gold-fill buttons automatically get
+  // DARK text, not light. Checked: seaDeep-on-gold 6.07:1 vs. white-on-gold
+  // (Cyprus's own real button) only 3.07:1 — a deliberate improvement over
+  // the reference, not a copy of it, since white-on-gold fails AA for
+  // normal-size text.
+  //
+  // Checked and lightened one step from the light variant's #b07d2a
+  // (4.29:1 on --color-surface — under the 4.5:1 floor): #c99248 clears
+  // 6.83:1 on --color-bg / 5.68:1 on --color-surface.
+  --color-amber: #c99248;
+
+  // --- Cyprus depth/gold/glow/glass foundation (Phase 1) -------------------
+  // Everything below is NEW this pass — added per the Cyprus reference
+  // token set, visual-foundation categories only (depth, gold, text, glow,
+  // glass, lines). Explicitly excludes Cyprus's scarcity/urgency layer
+  // (--scarcity-green, banners, Action Center, priority chips) — none of
+  // that was ported, referenced, or recreated; §9 prohibits it outright.
+  //
+  // The canonical Cyprus "surface-raised" film: a translucent ivory wash
+  // over --color-surface. This IS the third depth step in Cyprus's model
+  // — not a fourth opaque color. --color-sand-deep and
+  // --color-accent-gradient-light both alias this one definition above,
+  // so there's a single source for "what tone-deep looks like."
+  --color-surface-raised: color-mix(in srgb, var(--color-text) 4.5%, var(--color-surface) 95.5%);
+  // Third gold step — no existing semantic role/consumer yet (added per
+  // spec: "if a Cyprus concept has no home, add a new semantic token").
+  // HONEST FLAG: measured as text it clears only 3.84:1 on --color-bg and
+  // 3.19:1 on --color-surface (both under the 4.5:1 body floor and short
+  // of even the 3:1 large-text floor on --color-surface), and fails
+  // outright on --color-surface-raised (2.85:1). Bronze is NOT safe as a
+  // text color anywhere in this system — treat it as decorative-only
+  // (fills, borders, icon washes), matching how Cyprus's own reference
+  // likely uses it, never as a text/link token.
+  --color-gold-bronze: #8e6b3d;
+  // Third text tier, below --color-text-muted (Cyprus's "text-soft").
+  // HONEST FLAG: measured 3.93:1 / 3.73:1 / 3.56:1 on bg/surface/
+  // surface-raised — all FAIL the 4.5:1 body-text floor, though all clear
+  // the 3:1 large-text floor. Cyprus's own "faint" naming suggests small
+  // captions, but that usage would violate this site's AA floor here —
+  // restrict this token to large-scale or genuinely decorative text only
+  // (never small captions/labels) until/unless re-verified otherwise.
+  --color-text-faint: hsla(42, 38%, 90%, 0.45);
+  // Glow — ambient gold bloom (buttons, focus states, the divider glow
+  // added in Phase 2). Two intensities, matching Cyprus's own pairing.
+  --color-glow: rgba(194, 154, 94, 0.2);
+  --color-glow-strong: rgba(216, 178, 104, 0.55);
+  // Glass — translucent panel system (frosted-card treatments). First
+  // real consumer wired up later (Hero's video-hero buttons) — bg alpha
+  // lowered from Cyprus's own reference 0.06 to 0.04; see the base :root
+  // copy of this token for the measured reasoning, kept identical here
+  // so light/dark stay in sync.
+  --color-glass-bg: rgba(239, 233, 219, 0.04);
+  --color-glass-solid: rgba(16, 40, 38, 0.85);
+  --color-glass-border: rgba(239, 233, 219, 0.18);
+  --color-glass-highlight: rgba(255, 255, 255, 0.12);
+  // Stronger hairline step — for edges that need more definition than the
+  // base 0.16-alpha hairline gives, e.g. tone-deep's own boundary now that
+  // it's a subtle film-lift rather than a visibly darker/lighter block.
+  --color-hairline-strong: hsla(42, 38%, 90%, 0.3);
+  // Phase 2 — AnimatedDivider's dark-only glow, mirroring Cyprus's own
+  // .sg__stripe. A full box-shadow value (same pattern as --shadow-soft
+  // above), not just a color, so the component only needs one var().
+  // Dark-only by design: defined exclusively in this block, never in the
+  // base :root, so referencing it outside a dark-theme scope would
+  // resolve to nothing rather than silently leaking onto light.
+  --divider-glow: 0 0 0.625rem var(--color-glow); // 10px, per Cyprus's own value
+
+  // Cyprus reconciliation pass: dark-theme-only radius override — the
+  // sitewide --radius-button (:root, 8px) is left completely untouched
+  // for the light theme (in scope for a later pass, not this one).
+  // Blast radius (every component currently reading --radius-button):
+  // Button.module.scss (the shared Button, sitewide), ContactForm.module.scss
+  // (the compact segmented control + the filled submit button),
+  // LocationsSection.module.scss (the small filter/tag pill),
+  // sharedSections.module.scss (btnPrimary/btnSecondary base), and the
+  // styleguide's own two docs-only button examples. All five only change
+  // when dark is active — since Phase 2, that's /design-lab itself
+  // (dark is now primary there); light theme (/design-lab/light-mode and
+  // the real, un-migrated site) still renders these at 8px, untouched.
+  --radius-button: 1rem; // 16px — Cyprus --r-ui
+
+  // --- Tonal scale, dark theme -----------------------------------------
+  // Same three role-names, reassigned entirely within the EXISTING dark
+  // palette above. Unlike the light theme (base=lightest, deep=darkest),
+  // the ROLE mapping here follows the site's own already-established
+  // dark-theme logic: on a page that's already dark by default,
+  // "punctuation" reads as a LIGHTER step, not a darker one. So the scale
+  // ascends in lightness: base (--color-bg, the page's own default,
+  // darkest) -> mid (--color-surface, the lighter panel) -> deep
+  // (--color-surface-raised, the Cyprus depth-film composite — lightest
+  // of the three, the most emphasized tone).
+  //
+  // Re-measured in full this pass (manual sRGB relative-luminance method):
+  //   text (ivory): 15.40:1 / 12.82:1 / 11.43:1 (base/mid/deep)
+  //   muted (ivory @ 72%, Cyprus "text-soft"): 8.31:1 / 7.29:1 / 6.69:1
+  //   accent (champagne): 7.17:1 / 5.97:1 / 5.32:1 — ALL clear 4.5:1 now.
+  //     REAL SIMPLIFICATION: the old per-tone workaround (tone-deep
+  //     swapping to the lighter gold step because the old #bd8948 failed
+  //     at 4.36:1 there) is gone — champagne alone holds AA on every
+  //     tone, so tone-deep-accent no longer needs special-casing.
+  //   accent-small (gold-light): 11.53:1 / 9.60:1 / 8.56:1 — clears
+  //     everywhere too; kept consistent across all three tones for the
+  //     same reason (no more per-tone exception needed).
+  --tone-base-bg: var(--color-bg);
+  --tone-base-text: var(--color-text);
+  --tone-base-muted: var(--color-text-muted);
+  --tone-base-hairline: var(--color-hairline);
+  --tone-base-accent: var(--color-accent);
+  --tone-base-accent-small: var(--color-accent-hover);
+
+  --tone-mid-bg: var(--color-surface);
+  --tone-mid-text: var(--color-text);
+  --tone-mid-muted: var(--color-text-muted);
+  --tone-mid-hairline: var(--color-hairline);
+  --tone-mid-accent: var(--color-accent);
+  --tone-mid-accent-small: var(--color-accent-hover);
+
+  --tone-deep-bg: var(--color-surface-raised);
+  --tone-deep-text: var(--color-text);
+  --tone-deep-muted: var(--color-text-muted);
+  // Stronger hairline on this one tone — see --color-hairline-strong's
+  // own comment: tone-deep's own boundary needs more definition now that
+  // it's a subtle film-lift rather than a visibly distinct block.
+  --tone-deep-hairline: var(--color-hairline-strong);
+  --tone-deep-accent: var(--color-accent); // champagne now holds AA here directly — see block comment above
+  --tone-deep-accent-small: var(--color-accent-hover); // consistent with base/mid — no more special-casing
+
+  // Same indirection as the base :root block above, defaulted to this
+  // theme's own --color-accent-contrast — preserves /design-lab's prior
+  // dark-Hope rendering exactly. --light-base-bg/-text/-accent are
+  // deliberately NOT repeated in this block (the entire point is that
+  // they stay theme-invariant).
+  --hope-emphasis-color: var(--color-accent-contrast);
+  --hope-section-bg: var(--color-accent);
+  --hope-section-padding-block: var(--space-8);
+  --hope-section-padding-block-lg: var(--space-9);
 }
 
 // --- Header height (Hero — full-height pass) --------------------------------

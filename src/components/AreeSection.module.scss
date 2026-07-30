@@ -52,152 +52,201 @@
   color: var(--color-text-muted);
 }
 
-// Container-alignment bug, found and fixed during this pass's own
-// verification: this rule used to end with a plain `padding: 0` (meant
-// only to zero out a <ul>'s own default list-indent) — but the shorthand
-// `padding` resets ALL of an element's padding, so it silently wiped out
-// mixins.container's own `padding-inline` set two lines above, at 0
-// specificity cost (same selector, later declaration wins). Measured
-// live: header padding-inline computed to 48px/48px, list computed to
-// 0px/0px — exactly the "rows outdent past the header" bug. Fixed by
-// simply not re-touching padding here at all — the class selector below
-// already outranks the UA stylesheet's own <ul> padding-inline-start
-// default, so no reset was ever actually needed.
-.areeList {
+// --- Card-grid rebuild pass ------------------------------------------------
+// Supersedes the hairline-divider list above entirely (AreeSection.tsx's
+// own comment covers the interactivity-state rationale). Six equal cards,
+// 1 column mobile -> 2 tablet (md) -> 3 desktop (lg), stretched to equal
+// height via CSS Grid's own default align-items: stretch (no JS
+// measurement needed).
+// Gap pass: was --space-6 (32px) base / --space-7 (48px) at lg — both
+// over the "max 30px" target once the grid had no dividers left to lean
+// on. --space-5 (24px), the next real step down, clears the floor at
+// every breakpoint (kept uniform rather than stepping it up again at lg —
+// the previous "wider gap at lg" reasoning doesn't apply once the target
+// itself is a ceiling, not a lower bound).
+.areeGrid {
   @include mixins.container;
-  @include mixins.hairline-divider; // top border, for the list's own top edge
   list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
   margin-top: var(--space-7);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.areeRow {
-  border-bottom: 1px solid var(--color-hairline);
-}
-
-// Shared row layout — link and plain variants only differ in
-// interactivity (cursor/focus-ring/hover), not geometry, so both share
-// this shape via separate classes rather than one class both apply.
-// Row-density pass: padding-block stepped down one token (--space-6 ->
-// --space-5) — see this pass's own report for the measured row height
-// before/after. Title-descriptor gap (.areeRowText's own gap, below) is
-// already --space-1, the smallest rung on the scale — nothing smaller to
-// step down to without a raw px value, so it's untouched; reported as-is.
-.areeRowLink,
-.areeRowPlain,
-.areeRowPreview {
+// The <li> itself: a flex column so its one child (.areeCardReveal) can
+// stretch to the grid row's own (equal) height via flex:1 below, rather
+// than relying on percentage-height chains.
+.areeGridItem {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  width: 100%;
-  padding-block: var(--space-5);
+  flex-direction: column;
+}
+
+// RevealOnScroll's own wrapper div — flex:1 passes the grid row's height
+// down to the actual card inside. Stagger: --card-delay-index (set via
+// RevealOnScroll's new `style` prop, AreeSection.tsx) consumed as a
+// transition-delay, the same deterministic-index pattern
+// AnimatedDivider's own --divider-delay-index already uses for its sweep
+// (there: a negative animation-delay for a continuous loop; here: a
+// positive transition-delay for a one-shot reveal — same pattern,
+// different animation type). The attribute-substring selector
+// ([class*="revealed"]) is needed because RevealOnScroll's own
+// pendingReveal/revealed classes come from FinalContactSection.module.scss,
+// a DIFFERENT compiled CSS Modules file — Next.js always keeps the
+// original class name as a literal substring of the hashed one, the same
+// established cross-file technique design-lab-globals.scss's own
+// [class*="labHeaderCta"] fix already uses. Specificity here (0,2,0: one
+// class + one attribute selector) beats .revealed alone (0,1,0), so this
+// wins regardless of which file's CSS happens to load first.
+.areeCardReveal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.areeCardReveal[class*="revealed"] {
+  transition-delay: calc(var(--card-delay-index, 0) * 80ms);
+}
+
+// The card itself — same rule for both interactive (<a>) and
+// non-interactive (<div>) variants, so they're visually IDENTICAL at
+// rest; .areeCardLink below adds ONLY the interactive affordances
+// (cursor/focus-ring/hover), never applied to the non-interactive
+// variant. --radius-m, not --radius-l: this token's own comment
+// (_tokens.scss) labels -m "cards" and -l "imagery" specifically.
+.areeCard {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--space-6);
+  background: var(--color-sand-deep);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
   text-decoration: none;
   color: inherit;
+  transition:
+    border-color 250ms ease,
+    background-color 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    padding: var(--space-7);
+  }
 }
 
-.areeRowLink {
+// Restrained hover/focus-visible, colour only — no lift, no scale, no
+// shadow, per this pass's own explicit instruction. Gated entirely by
+// this class: only ever applied to the <a> variant (AreeSection.tsx), so
+// a non-interactive card (no slug yet) can never match these selectors —
+// confirmed live, not assumed (see this pass's own report). The moment a
+// slug lands and the card starts rendering as .areeCardLink, this hover
+// treatment applies automatically, with zero further CSS changes needed.
+.areeCardLink {
   cursor: pointer;
 
   @include mixins.focus-ring;
+
+  &:hover,
+  &:focus-visible {
+    // Hairline -> accent at low alpha (not full-strength — the border
+    // itself stays quiet, brightening is the icon/number's job below).
+    border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    // Surface "one step lighter": a small further lightening on top of
+    // --color-sand-deep's own base, using --color-text — the SAME token
+    // --color-surface-raised itself mixes against --color-surface to
+    // create sand-deep in the first place (_tokens.scss). First attempt
+    // used --color-accent-contrast instead, which in THIS (dark) theme
+    // aliases --color-bg — the darkest tone, not the lightest — so it
+    // measurably DARKENED the card instead of lightening it. Caught via
+    // live computed-style comparison before reporting, not assumed;
+    // --color-text (ivory here) is the correct "lighten" direction.
+    background: color-mix(in srgb, var(--color-text) 8%, var(--color-sand-deep) 92%);
+  }
 }
 
-// Preview-hover pass (temporary/demo — see areeSection.ts's own field
-// comment): visually identical hover reaction to a real link row, but
-// deliberately NOT interactive — cursor stays the default arrow, no
-// focus-ring (this element is never focusable in the first place, see
-// AreeSection.tsx: a plain <div>, no href/role/tabindex).
-.areeRowPreview {
-  cursor: default;
-}
-
-.areeRowText {
+.areeCardTop {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--space-4);
 }
 
-// Mobile-first: one type step down from the desktop size (--fs-h3 base,
-// --fs-h2 at lg+) per this pass's own mobile instruction.
-.areeRowTitle {
+// Size-up pass: 1.25rem (20px) -> 2.5rem (40px), a plain 2x container
+// scale — the icons' own SVG stroke-width (still "1", unchanged in every
+// ./icons/aree file) scales proportionally along with the shapes, so the
+// stroke doesn't read as disproportionately heavier at the larger size,
+// just uniformly bigger. Rest state dimmed to 70% (was a flat 100%) so
+// the hover brighten-to-full below has something to brighten FROM —
+// previously the icon was already at full accent at rest, making a
+// "brighten to full" hover a no-op.
+.areeCardIcon {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: color-mix(in srgb, var(--color-accent) 70%, transparent);
+  transition: color 250ms ease;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.areeCardLink:hover .areeCardIcon,
+.areeCardLink:focus-visible .areeCardIcon {
+  color: var(--color-accent);
+}
+
+// Quiet marker, not a headline: EB Garamond (matches the title's own
+// display face) at a low accent alpha — deliberately low-contrast, this
+// is decorative (aria-hidden in the markup) rather than real text content,
+// so it isn't held to the 4.5:1 body floor the title/description are.
+// Hover/focus now brightens to FULL accent (was 75%), matching the icon.
+.areeCardNumber {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  transition: color 250ms ease;
+}
+
+.areeCardLink:hover .areeCardNumber,
+.areeCardLink:focus-visible .areeCardNumber {
+  color: var(--color-accent);
+}
+
+.areeCardTitle {
+  display: block;
+  margin: 0 0 var(--space-2);
   font-family: var(--font-display);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   color: var(--color-text);
-  transition:
-    color 150ms ease,
-    font-style 150ms ease;
-
-  @include mixins.breakpoint-up(lg) {
-    font-size: var(--fs-h2);
-    line-height: var(--lh-h2);
-  }
 }
 
-.areeRowLink:hover .areeRowTitle,
-.areeRowLink:focus-visible .areeRowTitle {
-  color: var(--color-accent);
-  // font-style: italic;
-  transition:
-    color 150ms ease,
-    font-style 150ms ease;
-}
-
-// Preview-hover pass: same visual reaction as the real link's :hover
-// above, but scoped to (hover: hover) from the start — a touch device has
-// no real ":hover" concept, it simulates one on tap that then gets stuck
-// until the next tap elsewhere; gating on (hover: hover) means touch
-// devices never enter this state at all, per this pass's own instruction.
-@media (hover: hover) {
-  .areeRowPreview:hover .areeRowTitle {
-    color: var(--color-accent);
-    // font-style: italic;
-  }
-}
-
-.areeRowDescriptor {
+.areeCardDescriptor {
+  display: block;
+  margin: 0;
   font-family: var(--font-body);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--color-text-muted);
 }
 
-// Hidden by default (opacity + a slight leftward offset), revealed on
-// hover/focus-visible of the row link only — a plain (slug-less) row
-// never renders this element at all (see AreeSection.tsx), so there's
-// nothing to hide there in the first place.
-.areeRowArrow {
-  flex-shrink: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  color: var(--color-accent);
-  opacity: 0;
-  transform: translateX(-0.5rem);
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
-}
-
-.areeRowLink:hover .areeRowArrow,
-.areeRowLink:focus-visible .areeRowArrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-@media (hover: hover) {
-  .areeRowPreview:hover .areeRowArrow {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-// "prefers-reduced-motion: no transition, state still changes" — the
-// color/opacity/transform END STATES above are untouched by this block,
-// only the animated approach to them is removed. Applies equally to the
-// preview-hover rows above (same .areeRowTitle/.areeRowArrow classes).
+// Colour changes on hover/focus-visible still apply under reduced motion
+// (the :hover/:focus-visible end-state rules above are untouched by this
+// block) — only the animated approach to them is removed, same
+// "state changes, transition doesn't" pattern this codebase already uses
+// elsewhere (e.g. AreeSection's own row-hover predecessor).
 @media (prefers-reduced-motion: reduce) {
-  .areeRowTitle,
-  .areeRowArrow {
+  .areeCard,
+  .areeCardIcon,
+  .areeCardNumber {
     transition: none;
   }
 }
