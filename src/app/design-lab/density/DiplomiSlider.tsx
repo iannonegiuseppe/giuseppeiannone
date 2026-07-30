@@ -1,22 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ResolvedQualification } from "@/components/DiplomiCardRow";
-import { QualificationDialog, type QualificationDialogHandle } from "@/components/QualificationDialog";
+import { QualificationLightboxLab, type QualificationLightboxLabHandle } from "./QualificationLightboxLab";
 import styles from "./diplomiSlider.module.scss";
+
+// Privacy-gate pair resolved server-side (DesignLabHomepage.tsx) from
+// homePage.diplomi.items[].scan/.scanRedacted — `interactive` is computed
+// there, not here, so this component never has to re-derive the gate
+// condition itself. scanLqip/lightboxUrl are both undefined whenever
+// `interactive` is false, which is what the non-interactive branch below
+// relies on instead of re-checking the two source fields directly.
+export type DiplomiLabItem = {
+  id: string;
+  year: string;
+  title: string;
+  institution: string;
+  interactive: boolean;
+  scanLqip?: string;
+  lightboxUrl?: string;
+  width: number;
+  height: number;
+};
 
 // Diplomi rebuild (framed-certificate slider) — a NEW, dedicated
 // component for /design-lab only. DiplomiBlock.tsx (the existing
 // density/ component) is ALSO rendered by /design-lab/density
 // (DensityPage.tsx imports it directly, with its own separate,
 // hardcoded-and-scan-less DIPLOMI array) — redesigning it in place would
-// have silently redesigned that other route's Diplomi section too,
-// which this task's own "do not touch other blocks" scope doesn't cover
-// (that route was never mentioned or reviewed in this pass). Left
-// DiplomiBlock.tsx/diplomi.module.scss completely untouched; this file
-// is /design-lab's own instance instead, same pattern already used for
-// Welcome/Contact/Sedi (each got its own dedicated component rather than
-// a shared one edited to serve two different pages).
+// have silently redesigned that other route's Diplomi section too, out of
+// this pass's own scope. Left DiplomiBlock.tsx/diplomi.module.scss
+// completely untouched; this file is /design-lab's own instance instead,
+// same pattern already used for Welcome/Contact/Sedi.
 //
 // Slider mechanics mirror DiplomiCardRow.tsx (scroll-snap + arrows +
 // edge-fade + overflow detection, same rAF/passive-listener technique) —
@@ -24,21 +38,23 @@ import styles from "./diplomiSlider.module.scss";
 // explicit reasoning (native scroll-snap + arrows + touch swipe already
 // cover every input; drag risks swallowing the card's own link clicks).
 //
-// Lightbox: QualificationDialog is imported directly, not copied — its
-// own styles (DiplomiSection.module.scss's qualificationDialog* rules)
-// are self-contained (checked: no coupling to that file's card-row
-// classes), so it renders correctly wherever it's mounted.
+// Lightbox pass: QualificationLightboxLab is a NEW component, not the
+// shared QualificationDialog.tsx — that file is imported by the REAL
+// production DiplomiSection (src/app/[locale]/page.tsx), so editing it for
+// this pass's own requirements (Lenis scroll-lock, prev/next cycling
+// restricted to interactive-only items, the redaction caption line, the
+// capped-and-lazy image pipeline) would have changed production behaviour
+// too. Same "shared component diverges -> new, separately-named one, don't
+// mutate" call this whole route makes repeatedly.
 export function DiplomiSlider({
   headingId,
-  alboLine,
-  qualifications,
+  items,
 }: {
   headingId: string;
-  alboLine?: string;
-  qualifications: ResolvedQualification[];
+  items: DiplomiLabItem[];
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
-  const dialogRef = useRef<QualificationDialogHandle>(null);
+  const lightboxRef = useRef<QualificationLightboxLabHandle>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
@@ -72,7 +88,7 @@ export function DiplomiSlider({
       track.removeEventListener("scroll", onScroll);
       observer.disconnect();
     };
-  }, [qualifications.length]);
+  }, [items.length]);
 
   function scrollByOneCard(direction: 1 | -1) {
     const track = trackRef.current;
@@ -87,43 +103,86 @@ export function DiplomiSlider({
     });
   }
 
+  // Lightbox navigation only ever cycles through items that passed the
+  // privacy gate — a card that failed it is never a valid lightbox stop,
+  // so it's filtered out of the list the lightbox itself owns, not
+  // skipped reactively during prev/next.
+  const interactiveItems = items.filter((item) => item.interactive);
+
+  function openLightboxFor(item: DiplomiLabItem) {
+    const interactiveIndex = interactiveItems.findIndex((candidate) => candidate.id === item.id);
+    if (interactiveIndex === -1) return;
+    lightboxRef.current?.open(interactiveIndex);
+  }
+
   return (
     <>
-      <div className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>Le qualifiche</p>
-          <h2 id={headingId} className={styles.heading}>
-            Formazione e <em className={styles.headingEmphasis}>qualifiche</em>
+      {/* Heading zone — two columns at md+ (density principle: a single
+          narrow column leaving half the container empty is prohibited).
+          Kicker/heading/intro/Albo-line copy is DRAFT, hardcoded here, not
+          read from homePage.diplomi.kicker/.heading/.alboLine — see
+          DesignLabHomepage.tsx's own comment on the DiplomiSlider call
+          site for why those three fields specifically couldn't be reused
+          (they're shared with the real production DiplomiSection). TODO:
+          if this copy is approved, the clean fix is a NEW, design-lab-only
+          field group (mirroring homePage.profilo vs. chiSonoSection),
+          not overwriting the shared diplomi fields. */}
+      <div className={styles.headingZone}>
+        <div className={styles.headingLeft}>
+          <p className={styles.headingKicker}>
+            <span className={styles.headingKickerRule} aria-hidden="true" />
+            PERCORSO FORMATIVO
+          </p>
+          {/* font-synthesis: none — deliberate. If the genuine EB Garamond
+              italic face isn't loaded/subset, "formazione" should render
+              upright (a visible, reportable font-loading bug) rather than
+              a browser-faked skew standing in for it unnoticed. */}
+          <h2 id={headingId} className={styles.headingH2} style={{ fontSynthesis: "none" }}>
+            Quattordici anni di <em className={styles.headingAccent}>formazione</em>.
           </h2>
         </div>
-
-        {hasOverflow ? (
-          <div className={styles.arrows}>
-            <button
-              type="button"
-              className={styles.iconButton}
-              aria-label="Qualifica precedente"
-              disabled={!canScrollPrev}
-              onClick={() => scrollByOneCard(-1)}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={styles.iconButton}
-              aria-label="Qualifica successiva"
-              disabled={!canScrollNext}
-              onClick={() => scrollByOneCard(1)}
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-        ) : null}
+        <div className={styles.headingRight}>
+          {/* DRAFT — pending client approval, per this pass's own brief. */}
+          <p className={styles.headingIntro}>
+            I titoli che seguono sono quelli su cui si basa il mio lavoro: la laurea, il master di
+            ricerca, la specializzazione in psicoterapia. Sono documenti pubblici e consultabili.
+          </p>
+          {/* Moved here from beneath the card row, per this pass's own
+              brief — no date/place of birth added anywhere, this is the
+              exact verbatim line given. */}
+          <p className={styles.headingAlboLine}>
+            Iscritto all&apos;Albo degli Psicologi della Lombardia, sezione A, n. 18949 — dal 15
+            settembre 2016.
+          </p>
+        </div>
       </div>
+
+      {hasOverflow ? (
+        <div className={styles.arrows}>
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Qualifica precedente"
+            disabled={!canScrollPrev}
+            onClick={() => scrollByOneCard(-1)}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label="Qualifica successiva"
+            disabled={!canScrollNext}
+            onClick={() => scrollByOneCard(1)}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      ) : null}
 
       <div
         className={styles.trackWrap}
@@ -140,56 +199,72 @@ export function DiplomiSlider({
           tabIndex={0}
           aria-label="Formazione e qualifiche"
         >
-          {qualifications.map((q, index) => (
-            <li key={q.id} className={styles.cardItem} role="listitem">
-              <div className={styles.card}>
-                <p className={styles.yearWatermark} aria-hidden="true">
-                  {q.year}
-                </p>
-                {q.thumbnailUrl ? (
-                  <button
-                    type="button"
-                    className={styles.cardButton}
-                    onClick={() => dialogRef.current?.open(index)}
-                    aria-label={`${q.institution}, ${q.year} — vedi il certificato`}
-                  >
-                    <span className={styles.frame}>
-                      <DocumentIcon />
-                      {/* span, not p: this whole cluster sits inside a
-                          <button>, whose HTML content model is phrasing
-                          content only — <p> (block/sectioning) isn't
-                          valid there. display:block in the SCSS makes
-                          these render identically to the non-button
-                          branch below. */}
-                      <span className={styles.cardYear}>{q.year}</span>
-                      <span className={styles.cardInstitution}>{q.institution}</span>
-                      <span className={styles.cardTitle}>{q.title}</span>
-                      <span className={styles.divider} aria-hidden="true" />
-                      <span className={styles.cardLink}>Vedi il certificato →</span>
-                    </span>
-                  </button>
-                ) : (
-                  // No scan yet: a clean factual card, ending at the
-                  // title — no divider, no "In arrivo" placeholder line.
-                  // (Was a dimmed pending state; with every real
-                  // qualification currently scan-less, that read as a
-                  // wall of "In arrivo" instead of a set of facts.)
+          {items.map((item) =>
+            item.interactive ? (
+              // Whole-card real <button> — not a div with onClick, not a
+              // button nested inside a div. aria-label names institution
+              // + year so a screen reader announces what will open before
+              // it does.
+              <li key={item.id} className={styles.cardItem} role="listitem">
+                <button
+                  type="button"
+                  className={styles.card}
+                  data-interactive="true"
+                  aria-label={`${item.institution}, ${item.year} — vedi il titolo`}
+                  onClick={() => openLightboxFor(item)}
+                >
+                  <p className={styles.yearWatermark} aria-hidden="true">
+                    {item.year}
+                  </p>
+                  {/* Hover crop: reads scanLqip only — a tiny inline base64
+                      data URI already present in the page's own JSON
+                      payload, not a network image request (see
+                      DesignLabHomepage.tsx's own comment). Opacity is 0 at
+                      rest, raised only on :hover/:focus-visible in the
+                      stylesheet. */}
+                  <span
+                    className={styles.hoverCrop}
+                    aria-hidden="true"
+                    style={item.scanLqip ? { backgroundImage: `url(${item.scanLqip})` } : undefined}
+                  />
+                  <span className={styles.frame}>
+                    <DocumentIcon />
+                    {/* span, not p: this whole cluster sits inside a
+                        <button>, whose HTML content model is phrasing
+                        content only. */}
+                    <span className={styles.cardYear}>{item.year}</span>
+                    <span className={styles.cardInstitution}>{item.institution}</span>
+                    <span className={styles.cardTitle}>{item.title}</span>
+                    {/* Persistent, not hover-only — this is what tells a
+                        touch user the card is tappable at all. */}
+                    <span className={styles.cardAffordance}>Vedi il titolo →</span>
+                  </span>
+                </button>
+              </li>
+            ) : (
+              // Non-interactive: no scan, or scanRedacted still false. No
+              // affordance line, no hover response, no cursor:pointer, not
+              // focusable — a plain <div>, matching the shared component's
+              // own long-standing behaviour when nothing to view exists.
+              <li key={item.id} className={styles.cardItem} role="listitem">
+                <div className={styles.card}>
+                  <p className={styles.yearWatermark} aria-hidden="true">
+                    {item.year}
+                  </p>
                   <div className={styles.frame}>
                     <DocumentIcon />
-                    <span className={styles.cardYear}>{q.year}</span>
-                    <span className={styles.cardInstitution}>{q.institution}</span>
-                    <span className={styles.cardTitle}>{q.title}</span>
+                    <p className={styles.cardYear}>{item.year}</p>
+                    <p className={styles.cardInstitution}>{item.institution}</p>
+                    <p className={styles.cardTitle}>{item.title}</p>
                   </div>
-                )}
-              </div>
-            </li>
-          ))}
+                </div>
+              </li>
+            ),
+          )}
         </ul>
       </div>
 
-      {alboLine ? <p className={styles.alboLine}>{alboLine}</p> : null}
-
-      <QualificationDialog ref={dialogRef} qualifications={qualifications} closeLabel="Chiudi" />
+      <QualificationLightboxLab ref={lightboxRef} items={interactiveItems} closeLabel="Chiudi" />
     </>
   );
 }
