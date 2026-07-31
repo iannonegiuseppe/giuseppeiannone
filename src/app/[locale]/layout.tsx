@@ -185,6 +185,24 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {/* Stage 2c — dark-canvas fix, same mechanism DesignLabHomepage.tsx
+            already used: a tiny BLOCKING inline script, first thing in
+            body, sets data-theme="dark" on <html> before the browser's
+            first paint — synchronous inline scripts run during HTML
+            parsing, before rendering proceeds, so there's no flash of the
+            light background first. This one attribute is what activates
+            _tokens.scss's :root[data-theme="dark"] block (see that file's
+            own "Canvas-background fix" comment), which is what makes
+            <body>'s existing background-color: var(--color-bg) rule
+            (globals.scss, untouched) resolve dark. Unlike design-lab's own
+            version, this one is unconditional — production has no light
+            variant to branch on anymore, every route under this layout
+            goes dark. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.dataset.theme="dark"`,
+          }}
+        />
         {personJsonLd ? <JsonLdScript data={personJsonLd} /> : null}
         {medicalBusinessJsonLd ? (
           <JsonLdScript data={medicalBusinessJsonLd} />
