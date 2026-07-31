@@ -2,19 +2,12 @@ import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AreeSection } from "@/components/AreeSection";
-import { CtaBridgeSection } from "@/components/CtaBridgeSection";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
 import { FaqSection } from "@/components/FaqSection";
-import { FinalContactSection } from "@/components/FinalContactSection";
-import { LocationsSection, type SedeData } from "@/components/LocationsSection";
+import type { SedeData } from "@/components/LocationsSection";
 import { RecognitionSection } from "@/components/RecognitionSection";
-import {
-  type RealArticle,
-  ResourcesSection,
-} from "@/components/ResourcesSection";
-import { SignatureBand } from "@/components/SignatureBand";
-import { VideoSection } from "@/components/VideoSection";
+import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
@@ -23,7 +16,7 @@ import {
   areeSectionQuery,
   ctaBridgeSectionQuery,
   homePageQuery,
-  latestArticlesQuery,
+  latestArticlesLabQuery,
   sedesQuery,
 } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
@@ -39,15 +32,39 @@ import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 // the real shared implementation now. sectionWrappers.module.scss is a
 // NEW file, split out of density.module.scss (which stays in design-lab,
 // still backing dozens of sections this page never renders) — it holds
-// only the three wrapper classes this page actually uses
-// (.metodoLightWrap/.section/.diplomiLightWrap), as mixins density.module
-// .scss's own same-named classes now @include too, so there's one source
-// of truth, not two copies that can drift.
+// only the wrapper classes this page actually uses, as mixins
+// density.module.scss's own same-named classes now @include too, so
+// there's one source of truth, not two copies that can drift.
 import { ChiSonoBlock } from "@/components/ChiSonoBlock";
 import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
 import { MetodoInteractive } from "@/components/MetodoInteractive";
 import metodoStyles from "@/components/metodo.module.scss";
 import sectionWrapperStyles from "@/components/sectionWrappers.module.scss";
+// Stage 2b-2 — migrate the remaining homepage sections: production now
+// renders design-lab's rebuild of every section still on the OLD visual
+// language (CtaBridgeSection -> CtaBridgeBlock, VideoSection -> VideoBlock,
+// LocationsSection -> SediBlock, FinalContactSection -> ContactBlock,
+// ResourcesSection -> ResourcesLab, SignatureBand -> SignatureBandTuned),
+// same mechanism Stage 2b already used for Metodo/Chi sono/Diplomi. The
+// six real components this replaces (CtaBridgeSection.tsx/VideoSection.tsx/
+// LocationsSection.tsx/FinalContactSection.tsx/ResourcesSection.tsx/
+// SignatureBand.tsx, plus their .module.scss files) are untouched and
+// still on disk — just no longer imported here, per the same "don't
+// delete a route/component, just stop rendering it" precedent Stage 2b
+// set for JourneySection/ChiSonoSection/DiplomiSection.
+import { WelcomeBlock } from "@/components/WelcomeBlock";
+import { CredentialsBand } from "@/components/CredentialsBand";
+import { PricingBlock } from "@/components/PricingBlock";
+import { CtaBridgeBlock } from "@/components/CtaBridgeBlock";
+import { VideoBlock } from "@/components/VideoBlock";
+import { SediBlock } from "@/components/SediBlock";
+import { SediMapProvider } from "@/components/SediMapContext";
+import { LocationsMarquee, type LocationsMarqueeItem } from "@/components/LocationsMarquee";
+import marqueeStyles from "@/components/locationsMarquee.module.scss";
+import { ContactBlock } from "@/components/ContactBlock";
+import { ParallaxFrameStatic } from "@/components/ParallaxFrameStatic";
+import { ResourcesLab, type RealArticleLab } from "@/components/ResourcesLab";
+import { SignatureBandTuned } from "@/components/SignatureBandTuned";
 
 // PREVIEW-GATE (temporary) — restoring the rest of the real homepage:
 // 1. Restore these imports (uncomment): FormazioneBand, PricingSection,
@@ -55,45 +72,16 @@ import sectionWrapperStyles from "@/components/sectionWrappers.module.scss";
 // 2. In Home(), restore `formazione`/`prezzi`-driven sections into the
 //    Promise.all as needed.
 // 3. In the JSX, uncomment the remaining FormazioneBand/PricingSection
-//    block below and place it between VideoSection and FaqSection —
-//    where the PreviewPlaceholderSection stand-in used to sit before the
-//    placeholder-removal pass took it out of the homepage flow entirely
-//    (component itself untouched — see PreviewPlaceholderSection.tsx's
-//    own comment; it's still the standard device for any future gated
-//    homepage anchor, just has no current call site).
+//    block below and place it where the PreviewPlaceholderSection stand-in
+//    used to sit before the placeholder-removal pass took it out of the
+//    homepage flow entirely (component itself untouched — see
+//    PreviewPlaceholderSection.tsx's own comment; it's still the standard
+//    device for any future gated homepage anchor, just has no current call
+//    site). Note this comment moved alongside the Tariffe section in the
+//    Stage 2b-2 reorder — Tariffe (homePage.tariffe, PricingBlock) is a
+//    separate, already-live field/component, not a lift of this gate.
 // Gated sections: FormazioneBand, Pricing — content/design decisions
 // still pending on both, per that pass's own instruction (do not touch).
-// Locations map pass: Sedes/SedesSection is un-gated as of this pass,
-// rebuilt as LocationsSection (address list + interactive map) — no
-// longer part of this gate; see that pass's own report for the full
-// rebuild. Hero, Recognition, Hope, Journey ("Metodo"), Chi sono, Aree,
-// Diplomi, Video, Faq, FinalContact ("Contact"), Resources ("Blog
-// preview"), and Locations ("Sedi") are NOT gated — they stay live
-// (Diplomi un-gated in the homePage-array migration pass; Chi sono
-// un-gated in the Chi sono section pass; Aree un-gated in the Aree
-// section pass — its own new AreeSection component/query, NOT the older
-// homePage.diCosa/ConcernsSection.tsx pairing, which this pass supersedes
-// and leaves orphaned, same precedent as diploma/qualification and
-// homePage.chiSono/ChiSonoOverlap before it; Video un-gated in the video
-// section pass — data comes off the same homePageQuery fetch already in
-// use, no separate query needed; Faq/FinalContact/Resources un-gated in
-// the FAQ/Contact/Blog-preview un-gate pass — all three read off queries
-// that already existed [homePageQuery's own faq{}/finalCta{} projections,
-// plus the standalone latestArticlesQuery for Resources], nothing new
-// authored; ResourcesSection's own zero-articles fallback [see that
-// file's own comment] renders 3 hardcoded mock articles with real-but-
-// 404ing links — deliberately untouched, per that pass's own amendment;
-// Locations un-gated in the locations map pass — sedesQuery already
-// existed, reads the existing `sede` document type, now extended with
-// district/photo fields, see that pass's own report).
-// ChiSonoBlock (design-lab-to-production migration; was ChiSonoSection)
-// keeps id="chi-sono" on its own root section — the header's "Chi sono"
-// nav link still anchor-scrolls there rather than routing to the future
-// full /chi-sono page (see headerNavItems.ts's own
-// PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched here, it
-// reverses only once /chi-sono is actually built, a separate, later
-// pass). "Metodo" (now MetodoInteractive, was JourneySection) still
-// resolves to this page's own #metodo anchor, unaffected by any of this.
 // import { FormazioneBand } from "@/components/FormazioneBand";
 // import { PricingSection } from "@/components/PricingSection";
 
@@ -172,6 +160,34 @@ interface HomePageData {
     photo?: SanityImage;
   };
   hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
+  // Copy pass: was hardcoded (design-lab's WELCOME constant) — now sourced
+  // from Sanity like every other section, see homePage.ts's own "welcome"
+  // field group.
+  welcome?: {
+    kicker?: string;
+    title?: string;
+    titleEmphasis?: string;
+    paragraph?: string;
+  };
+  // Rebuild pass: was entirely hardcoded (design-lab's CREDENTIALS
+  // constant) — now sourced from Sanity, see homePage.ts's own
+  // "credentialsBand" field group.
+  credentialsBand?: {
+    eyebrow?: string;
+    heading?: string;
+    clinicalPracticeYears?: number;
+    clinicalPracticeCaption?: string;
+    clinicalPracticeDescription?: string;
+    trainingYears?: number;
+    trainingCaption?: string;
+    trainingDescription?: string;
+    locationsCount?: number;
+    locationsCaption?: string;
+    locationsDescription?: string;
+    languagesValue?: string;
+    languagesCaption?: string;
+    languagesDescription?: string;
+  };
   diplomi?: {
     kicker?: string;
     heading?: string;
@@ -215,7 +231,39 @@ interface HomePageData {
       tier: "dominant" | "peripheral";
     }[];
   };
+  // Stage 2b-2 rename pass: DEPRECATED in favour of "locations" below (see
+  // homePage.ts's own schema comment) — kept typed/fetched, data left
+  // intact, not deleted. Nothing in this file reads it anymore.
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
+  // New "Sedi" field group (Stage 2b-2 rename pass, was sediLab) — see
+  // homePage.ts's own schema comment for the full rename history.
+  locations?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    intro?: string;
+    onlineSubLine?: string;
+  };
+  // New "Spazi" (photo strip) field group (Stage 2b-2 rename pass, was
+  // spaziLab) — see homePage.ts's own schema comment.
+  spaces?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    introLine?: string;
+  };
+  // New "Tariffe" field group (design-lab-only until this pass) —
+  // deliberately separate from "prezzi" (the real, still-gated
+  // PricingSection's own field, whose layout is explicitly an open
+  // decision) — see homePage.ts's own "tariffe" field group comment.
+  tariffe?: {
+    eyebrow?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    rows?: { mode: string; subline: string; price: string }[];
+    detailsItems?: string[];
+    detrazioneFootnote?: string;
+  };
   prezzi?: {
     kicker?: string;
     heading?: string;
@@ -244,6 +292,16 @@ interface HomePageData {
     responseNote?: string;
     googleProfileLabel?: string;
     photo?: SanityImage;
+  };
+  // New "Contact" field group (design-lab-only until this pass, was
+  // contactLab) — separate from the shared finalCta above;
+  // googleProfileLabel is the one field still read from finalCta, see the
+  // ContactBlock render site below.
+  contactSection?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    photoCaption?: string;
   };
   faq?: {
     kicker?: string;
@@ -279,6 +337,37 @@ function renderHeadingEmphasis(text: string, emphasisWord: string | undefined, e
     </>
   );
 }
+
+// Stage 2b-2 — copied verbatim from DesignLabHomepage.tsx's own interim
+// fallback (structure pass, slot 13): for each physical address, use
+// addr.photo if Sanity has one (none do yet — checked live, not assumed),
+// else the assigned interim stock file. §9 gate already applied to every
+// file in public/interiors (see design-lab's own pass report) — all 5 are
+// empty rooms, no people, no staged session; none excluded. Reserved/
+// unused: public/interiors/interior-5.jpg (5 stock photos supplied, only
+// 4 physical locations to fill).
+//
+// INTERIM MARKER: once real per-location interiors are uploaded to
+// Sanity (sede.addresses[].photo), this whole map becomes dead weight —
+// safe to delete then, not before. Also registered in docs/pre-launch.md.
+const INTERIOR_STOCK_FALLBACK: Record<string, string> = {
+  "addr-1_sede-milano": "/interiors/interior-1.jpg", // Milano · Via Buonarroti
+  "addr-2_sede-milano": "/interiors/interior-2.jpg", // Milano · Via Trivulziana
+  "addr-1_sede-monza": "/interiors/interior-3.jpg", // Monza
+  "addr-2_sede-cernusco": "/interiors/interior-4.jpg", // Cernusco sul Naviglio
+};
+
+// Stage 2b-2 — copied verbatim from DesignLabHomepage.tsx's own lookup:
+// addr.district on the two Milano addresses holds the name of the
+// third-party medical centre hosting each studio — dropped from this
+// caption entirely (matches SediBlock.tsx's own fix to the list/popup
+// side of the same data). The two Milano captions are given verbatim
+// (street-based, not derived from the address string), Monza/Cernusco
+// keep their existing city-only caption.
+const MILANO_STREET_CAPTION: Record<string, string> = {
+  "Via Michelangelo Buonarroti 41": "Milano · Via Buonarroti",
+  "Piazza della Trivulziana 4/A": "Milano · Via Trivulziana",
+};
 
 export async function generateMetadata({
   params,
@@ -317,23 +406,28 @@ export default async function Home({
   // the revalidation webhook; areas is a separate plain list type (see
   // area.ts's own comment), fetched alongside its section's header copy.
   // sedes (Locations/"Sedi") is the same established pattern — its own
-  // plain list type (`sede`), tagged "sede" for the revalidation webhook,
-  // live again as of the locations map pass.
+  // plain list type (`sede`), tagged "sede" for the revalidation webhook.
+  //
+  // Stage 2b-2: realArticles now comes off latestArticlesLabQuery (was
+  // latestArticlesQuery) — ResourcesLab needs cover+body on top of the
+  // title/slug/publishedAt the old, real ResourcesSection read; see that
+  // query's own comment for why it's a separate query, not an extension.
   const [homePage, aree, areas, ctaBridge, siteSettings, realArticles, sedes] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
     sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
     sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
     sanityFetch<CtaBridgeSectionData | null>(ctaBridgeSectionQuery, { locale }, ["ctaBridgeSection"]),
     getSiteSettings(locale),
-    sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
+    sanityFetch<RealArticleLab[]>(latestArticlesLabQuery, { locale }, ["article"]),
     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
   ]);
 
   // messages/{it,en}.json's Diplomi.closeLabel — resolved server-side,
-  // passed down as a prop to DiplomiSlider's lightbox close button (a
-  // "use client" component, can't call getTranslations itself). Design-
-  // lab-to-production migration: this used to be a hardcoded Italian
-  // literal ("Chiudi") regardless of locale.
+  // passed down as a prop to every "use client" component that needs it
+  // (DiplomiSlider, CtaBridgeBlock, WelcomeBlock — each wraps a dialog/
+  // lightbox close button, matching this codebase's established
+  // "server-resolved i18n string as a plain prop" convention; Footer.tsx
+  // does the same).
   const tDiplomi = await getTranslations({ locale, namespace: "Diplomi" });
   const closeLabel = tDiplomi("closeLabel");
 
@@ -364,6 +458,57 @@ export default async function Home({
     };
   });
 
+  // Stage 2b-2 — Welcome/Chi sono/Contact/Lo spazio photos: same static
+  // asset references design-lab uses (not new Sanity image fields — this
+  // migration's own brief was "use the existing photos as plain static
+  // assets", matching Metodo/CTA bridge's own established pattern for
+  // /design-lab imagery, and Chi sono's own portraitUrl already set this
+  // precedent on this file before this pass). Alt text is hardcoded
+  // Italian regardless of locale, same as Chi sono's own pre-existing
+  // photoAlt above — an asset description tied to a specific stock photo,
+  // not CMS copy; flagged in this pass's own report, not silently
+  // resolved as an i18n gap.
+  const welcomePhotoUrl = "/design-lab/03.webp";
+  const welcomePhotoAlt = "Giuseppe Iannone, ritratto in una galleria, sfondo chiaro.";
+
+  const portraitUrl = "/design-lab/photos/01.webp";
+  const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
+
+  const contactPhotoUrl = "/design-lab/photos/09.webp";
+  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+
+  const roomPhotoUrl = "/design-lab/photos/11.webp";
+  const roomPhotoAlt =
+    "Lo studio: la finestra con vista sul verde, la scrivania con l'orchidea, durante una seduta.";
+
+  // Stage 2b-2 — Locations marquee ("Spazi"), same fallback logic as
+  // design-lab's own (see INTERIOR_STOCK_FALLBACK/MILANO_STREET_CAPTION
+  // above): for each physical address, use addr.photo if Sanity has one,
+  // else the assigned interim stock file. allPhotosReal gates
+  // LocationsMarquee's own introLine (true only once every item came from
+  // a real addr.photo, not the interim stock fallback).
+  const marqueeItems: LocationsMarqueeItem[] = [];
+  let allPhotosReal = true;
+  for (const sede of sedes ?? []) {
+    if (sede.isOnline) continue; // no physical interior to show
+    for (const addr of sede.addresses ?? []) {
+      const name = MILANO_STREET_CAPTION[addr.address] ?? sede.city;
+      const fallbackKey = `${addr._key}_${sede._id}`;
+      const photoUrl = addr.photo
+        ? urlFor(addr.photo).width(640).format("webp").url()
+        : INTERIOR_STOCK_FALLBACK[fallbackKey];
+      if (!photoUrl) continue;
+      if (!addr.photo) allPhotosReal = false;
+      marqueeItems.push({
+        id: `${sede._id}-${addr._key}`,
+        name,
+        photoUrl,
+        alt: `${name} — interno dello studio`,
+      });
+    }
+  }
+  if (marqueeItems.length === 0) allPhotosReal = false;
+
   return (
     <main>
       <HeroOverlap
@@ -389,12 +534,75 @@ export default async function Home({
         headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
+      {/* Stage 2b-2 — Welcome, new to production (design-lab-to-production
+          migration). Copy from Sanity (homePage.welcome). */}
+      <WelcomeBlock
+        kicker={homePage?.welcome?.kicker ?? ""}
+        title={homePage?.welcome?.title ?? ""}
+        titleEmphasis={homePage?.welcome?.titleEmphasis ?? ""}
+        paragraph={homePage?.welcome?.paragraph ?? ""}
+        photoUrl={welcomePhotoUrl}
+        photoAlt={welcomePhotoAlt}
+        authorName={siteSettings?.author?.name ?? ""}
+        authorCredentials={siteSettings?.author?.credentials}
+        authorRegistrationNumber={siteSettings?.author?.registrationNumber}
+        areas={areas}
+        locale={locale as Locale}
+        closeLabel={closeLabel}
+      />
+
+      {/* Stage 2b-2 — Credentials, new to production (design-lab-to-
+          production migration). See CredentialsBand.tsx's own comment. */}
+      <CredentialsBand
+        eyebrow={homePage?.credentialsBand?.eyebrow ?? ""}
+        heading={homePage?.credentialsBand?.heading ?? ""}
+        items={[
+          {
+            value: String(homePage?.credentialsBand?.clinicalPracticeYears ?? ""),
+            caption: homePage?.credentialsBand?.clinicalPracticeCaption ?? "",
+            description: homePage?.credentialsBand?.clinicalPracticeDescription ?? "",
+          },
+          {
+            value: String(homePage?.credentialsBand?.trainingYears ?? ""),
+            caption: homePage?.credentialsBand?.trainingCaption ?? "",
+            description: homePage?.credentialsBand?.trainingDescription ?? "",
+          },
+          {
+            value: String(homePage?.credentialsBand?.locationsCount ?? ""),
+            caption: homePage?.credentialsBand?.locationsCaption ?? "",
+            description: homePage?.credentialsBand?.locationsDescription ?? "",
+          },
+          {
+            value: homePage?.credentialsBand?.languagesValue ?? "",
+            caption: homePage?.credentialsBand?.languagesCaption ?? "",
+            description: homePage?.credentialsBand?.languagesDescription ?? "",
+          },
+        ]}
+      />
+
+      {/* Un-gated in the Aree section pass — data comes from its own
+          areeSection + area fetches above, not homePage.diCosa. Supersedes
+          the still-gated ConcernsSection below (removed from that block —
+          see this file's own import-block comment). Stage 2b-2: repositioned
+          only (was between Chi sono and CTA bridge) — presentation/styling
+          untouched, Aree isn't part of this migration's own 12-section
+          scope. */}
+      <AreeSection
+        kicker={aree?.kicker ?? ""}
+        title={aree?.title ?? ""}
+        intro={aree?.intro}
+        areas={areas}
+        locale={locale as Locale}
+      />
+
       {/* Design-lab-to-production migration: MetodoInteractive replaces
           JourneySection here — homePage.percorso (kicker/heading/steps,
           including the click-to-expand expandedText panel) is no longer
           rendered anywhere; homePage.metodo (title + shortLine per step
           only) is the new source. id="metodo" preserves the header nav
-          anchor JourneySection's own root used to carry. */}
+          anchor JourneySection's own root used to carry. Stage 2b-2:
+          repositioned only (was right after Hope) to match design-lab's
+          own order — internals untouched. */}
       <div className={sectionWrapperStyles.metodoLightWrap}>
         <section
           id="metodo"
@@ -416,43 +624,71 @@ export default async function Home({
         </section>
       </div>
 
+      {/* PREVIEW-GATE (temporary) — real section, preserved verbatim.
+          Placeholder-removal pass: the PreviewPlaceholderSection stand-in
+          that used to sit here (id="formazione") is gone — FormazioneBand
+          stays gated (content/design decisions still pending), but the
+          homepage no longer shows any visible placeholder for it.
+          Reversal: uncomment the block below, verbatim, unchanged — plus
+          the import and Promise.all restorations noted at the top of this
+          file.
+      <FormazioneBand
+        kicker={homePage?.formazione?.kicker ?? ""}
+        credentials={homePage?.formazione?.credentials}
+        counters={homePage?.formazione?.counters}
+      />
+      */}
+
+      {/* Stage 2b-2 — Tariffe, new to production (design-lab-to-production
+          migration). Deliberately separate from the still-gated
+          PricingSection/homePage.prezzi above (see PREVIEW-GATE comment) —
+          that decision is untouched, do not lift it as part of this
+          section. toneMidWrap: the same tone-mid mechanism Aree already
+          used pre-migration on design-lab, now shared via
+          sectionWrappers.module.scss. */}
+      <div className={sectionWrapperStyles.toneMidWrap}>
+        <RevealOnScroll>
+          <PricingBlock
+            eyebrow={homePage?.tariffe?.eyebrow ?? ""}
+            heading={homePage?.tariffe?.heading ?? ""}
+            headingEmphasisWord={homePage?.tariffe?.headingEmphasisWord}
+            rows={homePage?.tariffe?.rows ?? []}
+            detailsItems={homePage?.tariffe?.detailsItems ?? []}
+            detrazioneFootnote={homePage?.tariffe?.detrazioneFootnote ?? ""}
+          />
+        </RevealOnScroll>
+      </div>
+
+      {/* Stage 2b-2 — CtaBridgeBlock replaces CtaBridgeSection here (design-
+          lab-to-production migration) — same ctaBridge data (ctaBridgeQuery,
+          fetched above), new light-island presentation. CtaBridgeSection.tsx
+          itself is untouched, just no longer imported. */}
+      <RevealOnScroll>
+        <CtaBridgeBlock
+          title={ctaBridge?.title ?? ""}
+          titleEmphasis={ctaBridge?.titleEmphasis}
+          body={ctaBridge?.body ?? ""}
+          linkLabel={ctaBridge?.linkLabel ?? ""}
+          locale={locale as Locale}
+          closeLabel={closeLabel}
+        />
+      </RevealOnScroll>
+
       {/* Design-lab-to-production migration: ChiSonoBlock replaces
           ChiSonoSection here — chiSonoSection (the 5-paragraph personal-
           story singleton) is no longer fetched or rendered; homePage.
           profilo (professional-facts-only, 3 paragraphs) is the new
           source. ChiSonoBlock renders its own id="chi-sono" internally,
-          preserving the header's "Chi sono" nav anchor. Photo is the same
-          static asset reference the design-lab source uses (not a new
-          Sanity image field — this migration's brief was "use the
-          existing Chi sono portrait as a plain static asset", matching
-          Metodo/CTA bridge's own established pattern for /design-lab
-          imagery). */}
+          preserving the header's "Chi sono" nav anchor. Stage 2b-2:
+          repositioned only (was right after Metodo) to match design-lab's
+          own order, now sits after CTA bridge — internals untouched. */}
       <ChiSonoBlock
         eyebrow={homePage?.profilo?.eyebrow ?? ""}
         heading={homePage?.profilo?.heading ?? ""}
         headingEmphasisWord={homePage?.profilo?.headingEmphasisWord}
         paragraphs={homePage?.profilo?.paragraphs ?? []}
-        photoUrl="/design-lab/photos/01.webp"
-        photoAlt="Giuseppe Iannone, psicoterapeuta — ritratto"
-      />
-
-      {/* Un-gated in the Aree section pass — data comes from its own
-          areeSection + area fetches above, not homePage.diCosa. Supersedes
-          the still-gated ConcernsSection below (removed from that block —
-          see this file's own import-block comment). */}
-      <AreeSection
-        kicker={aree?.kicker ?? ""}
-        title={aree?.title ?? ""}
-        intro={aree?.intro}
-        areas={areas}
-        locale={locale as Locale}
-      />
-
-      <CtaBridgeSection
-        title={ctaBridge?.title ?? ""}
-        titleEmphasis={ctaBridge?.titleEmphasis}
-        body={ctaBridge?.body ?? ""}
-        linkLabel={ctaBridge?.linkLabel ?? ""}
+        photoUrl={portraitUrl}
+        photoAlt={portraitAlt}
       />
 
       {/* Design-lab-to-production migration: DiplomiSlider replaces
@@ -461,7 +697,9 @@ export default async function Home({
           intro/alboLine/items), so design-lab and production show
           identical Diplomi content by construction. diplomiLabItems is
           computed above (privacy-gate: a card is interactive iff scan is
-          present AND scanRedacted is true). */}
+          present AND scanRedacted is true). Stage 2b-2: repositioned only
+          (relative order to CTA bridge/Chi sono unchanged in spirit —
+          still immediately after them) — internals untouched. */}
       <div className={sectionWrapperStyles.diplomiLightWrap}>
         <section className={sectionWrapperStyles.section} aria-labelledby="diplomi-block-heading">
           <DiplomiSlider
@@ -477,71 +715,134 @@ export default async function Home({
         </section>
       </div>
 
-      {/* Un-gated in the video section pass — data comes off the same
-          homePageQuery fetch above (homePage.video), no separate fetch.
-          Renders nothing until a video file is published (component's
-          own CMS gate — see VideoSection.tsx's own early return), which
-          currently is true for both locales in the live dataset. Sits
-          ahead of FAQ, per this pass's own "Diplomi -> Video -> Prezzi"
-          instruction. */}
-      <VideoSection
-        kicker={homePage?.video?.kicker}
-        heading={homePage?.video?.heading}
-        lead={homePage?.video?.lead}
-        videoUrl={homePage?.video?.videoUrl}
-        poster={homePage?.video?.poster}
-        captionsUrl={homePage?.video?.captionsUrl}
-        locale={locale as Locale}
+      {/* Stage 2b-2 — VideoBlock replaces VideoSection here (design-lab-to-
+          production migration) — same homePage.video data, new asymmetric
+          layout. Renders nothing until a video file is published (the
+          component's own CMS gate, unchanged). VideoSection.tsx itself is
+          untouched, just no longer imported. */}
+      <RevealOnScroll>
+        <VideoBlock
+          kicker={homePage?.video?.kicker}
+          heading={homePage?.video?.heading}
+          lead={homePage?.video?.lead}
+          videoUrl={homePage?.video?.videoUrl}
+          poster={homePage?.video?.poster}
+          captionsUrl={homePage?.video?.captionsUrl}
+          locale={locale as Locale}
+        />
+      </RevealOnScroll>
+
+      {/* Stage 2b-2 — Sedi: SediBlock replaces LocationsSection here
+          (design-lab-to-production migration). Same homePage.sedi/sede
+          documents as before, new copy field group (homePage.locations,
+          renamed from sediLab), address-list affordance, restored
+          attribution. SediMapProvider is the shared activeId source for
+          both this block and the Spazi photo strip below — a strip photo
+          click flies the map to that location, same as clicking its
+          address. LocationsSection.tsx itself is untouched, just no
+          longer imported. */}
+      <SediMapProvider>
+        <RevealOnScroll>
+          <SediBlock
+            kicker={homePage?.locations?.kicker ?? ""}
+            heading={homePage?.locations?.heading ?? ""}
+            headingEmphasisWord={homePage?.locations?.headingEmphasisWord}
+            intro={homePage?.locations?.intro}
+            onlineSubLine={homePage?.locations?.onlineSubLine}
+            sedes={sedes}
+            locale={locale as Locale}
+          />
+        </RevealOnScroll>
+
+        {/* Stage 2b-2 — Spazi (photo strip), new to production
+            (design-lab-to-production migration). Semantically part of the
+            Sedi map block, not its own tonal moment — reversed onto Sedi's
+            own mid-tone surface (toneMidWrap). */}
+        <div className={sectionWrapperStyles.toneMidWrap}>
+          <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
+            <LocationsMarquee
+              kicker={homePage?.spaces?.kicker ?? ""}
+              heading={homePage?.spaces?.heading ?? ""}
+              headingEmphasisWord={homePage?.spaces?.headingEmphasisWord}
+              introLine={homePage?.spaces?.introLine}
+              allPhotosReal={allPhotosReal}
+              items={marqueeItems}
+            />
+          </section>
+        </div>
+      </SediMapProvider>
+
+      {/* Stage 2b-2 — ContactBlock replaces FinalContactSection here
+          (design-lab-to-production migration). contactSection is this
+          block's own independent kicker/heading/caption field group
+          (renamed from contactLab, separate from the shared finalCta) —
+          googleProfileLabel is the one field still read from finalCta,
+          unchanged. NOTE: ContactBlock uses ContactFormLab, not the real,
+          shared ContactForm FinalContactSection used — a different field
+          model (email always required, telefono local-state-only; see
+          ContactFormLab.tsx's own top comment) is now live on the
+          production contact form as a direct consequence of this swap,
+          flagged in this pass's own report, not silently absorbed.
+          FinalContactSection.tsx/ContactForm.tsx themselves are untouched,
+          just no longer imported here. */}
+      <ContactBlock
+        kicker={homePage?.contactSection?.kicker ?? ""}
+        heading={homePage?.contactSection?.heading ?? ""}
+        headingEmphasisWord={homePage?.contactSection?.headingEmphasisWord}
+        photoCaption={homePage?.contactSection?.photoCaption ?? ""}
+        googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
+        googleProfileUrl={siteSettings?.googleProfileUrl}
+        locale={locale}
+        photoUrl={contactPhotoUrl}
+        photoAlt={contactPhotoAlt}
       />
 
-      {/* PREVIEW-GATE (temporary) — real sections, preserved verbatim.
-          Placeholder-removal pass: the PreviewPlaceholderSection stand-in
-          that used to sit here (id="formazione") is gone — FormazioneBand/
-          Pricing stay gated (content/design decisions still pending on
-          both), but the homepage no longer shows any visible placeholder
-          for them; the gap they'll eventually fill sits between Video and
-          Locations below, currently closed. Reversal: uncomment the block
-          below, verbatim, unchanged — plus the import and Promise.all
-          restorations noted at the top of this file.
-      <FormazioneBand
-        kicker={homePage?.formazione?.kicker ?? ""}
-        credentials={homePage?.formazione?.credentials}
-        counters={homePage?.formazione?.counters}
-      />
+      {/* Stage 2b-2 — "Lo spazio" (parallax), new to production
+          (design-lab-to-production migration). CSS-only reveal, image
+          only — no JS scroll listener, no rAF loop, no Lenis subscription.
+          aspect "12 / 5" is a plain CSS value (not CMS content, not
+          locale-dependent) — same literal design-lab's own THE_SPACE.it
+          constant uses; not imported from design-lab's content.ts since
+          that file is shared with the untouchable DensityPage.tsx route
+          and the structural rule bars production from reaching into
+          src/app/design-lab/ at all. roomPhotoUrl/roomPhotoAlt above are,
+          like Welcome/Contact/Chi sono's own photos, still hardcoded, not
+          CMS. */}
+      <section className={sectionWrapperStyles.spaceSection}>
+        <figure
+          className={`${sectionWrapperStyles.fullBleedFrame} ${sectionWrapperStyles.spaceFrameFlush}`}
+        >
+          <ParallaxFrameStatic aspect="12 / 5" imageUrl={roomPhotoUrl} imageAlt={roomPhotoAlt} />
+        </figure>
+      </section>
 
-      <PricingSection
-        kicker={homePage?.prezzi?.kicker ?? ""}
-        heading={homePage?.prezzi?.heading ?? ""}
-        body={homePage?.prezzi?.body ?? ""}
-        buttonLabel={homePage?.prezzi?.buttonLabel ?? ""}
-        showPrices={homePage?.prezzi?.showPrices ?? true}
-        priceLines={homePage?.prezzi?.priceLines}
-        footnote={homePage?.prezzi?.footnote}
-        noPricesSentence={homePage?.prezzi?.noPricesSentence}
-      />
-      */}
-
-      {/* Un-gated in the locations map pass — rebuilt as LocationsSection
-          (address list + interactive Leaflet map), replacing the retired
-          SedesSection/SedesStage sticky-scroll implementation entirely.
-          kicker/heading/paragraph come off the same pre-existing
-          homePage.sedi field group the old gated section already used;
-          sedes comes off sedesQuery (see this pass's own report). */}
-      <LocationsSection
-        kicker={homePage?.sedi?.kicker ?? ""}
-        heading={homePage?.sedi?.heading ?? ""}
-        paragraph={homePage?.sedi?.paragraph}
-        sedes={sedes}
-        locale={locale as Locale}
-      />
+      {/* Stage 2b-2 — ResourcesLab replaces ResourcesSection here (design-
+          lab-to-production migration) — realArticles now comes off
+          latestArticlesLabQuery (see Promise.all above, cover+body added).
+          The live dataset currently has 0 published "article" documents,
+          so this renders ResourcesLab's own built-in mock fallback (see
+          that file's own comment) rather than ResourcesSection's — a
+          different, though similarly real-but-404ing, fallback set.
+          ResourcesSection.tsx itself is untouched, just no longer
+          imported. */}
+      <div className={sectionWrapperStyles.toneMidWrap}>
+        <RevealOnScroll>
+          <ResourcesLab
+            kicker={homePage?.risorse?.kicker ?? ""}
+            heading={homePage?.risorse?.heading ?? ""}
+            locale={locale}
+            realArticles={realArticles}
+            allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
+          />
+        </RevealOnScroll>
+      </div>
 
       {/* Un-gated in the FAQ/Contact/Blog-preview pass — items come off
           the same homePageQuery fetch above (homePage.faq), no separate
-          query. Sits right after Locations (the still-gated Formazione/
-          Pricing block above no longer renders a visible placeholder
-          here — see the placeholder-removal pass's own comment on that
-          block), per this pass's own "[Pricing gated] -> Locations -> FAQ
-          -> Contact -> Blog preview" instruction. */}
+          query. Stage 2b-2: repositioned only (was between Sedi and
+          Contact) to match design-lab's own order, now sits near the end —
+          presentation/styling untouched, FAQ isn't part of this
+          migration's own 12-section scope. */}
       <FaqSection
         kicker={homePage?.faq?.kicker ?? ""}
         heading={homePage?.faq?.heading ?? ""}
@@ -550,40 +851,15 @@ export default async function Home({
         items={homePage?.faq?.items}
       />
 
-      {/* Un-gated in the FAQ/Contact/Blog-preview pass — data comes off
-          the same homePageQuery fetch (homePage.finalCta) plus
-          siteSettings (googleProfileUrl), both already fetched above.
-          VARIANT B pass (slim inset accent band): photo/responseNote are
-          no longer passed — both fields are now orphaned (still fetched
-          as part of the bare `finalCta,` projection, still populated in
-          the dataset, just unread) — see FinalContactSection.tsx's own
-          top-of-file comment for the full HONESTY-RULE flag. */}
-      <FinalContactSection
-        kicker={homePage?.finalCta?.kicker ?? ""}
-        heading={homePage?.finalCta?.heading ?? ""}
-        body={homePage?.finalCta?.body ?? ""}
-        googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
-        googleProfileUrl={siteSettings?.googleProfileUrl}
-        locale={locale}
-      />
-
-      {/* Un-gated in the FAQ/Contact/Blog-preview pass — realArticles
-          comes from the existing latestArticlesQuery (already fetched
-          above), same standalone query Resources always used. The live
-          dataset currently has 0 published "article" documents, so this
-          renders its own built-in 3-mock-article fallback (hardcoded in
-          ResourcesSection.tsx, real-but-404ing links) — deliberately left
-          as-is, per this pass's own amendment: no swap, no empty-state,
-          no hiding. */}
-      <ResourcesSection
-        kicker={homePage?.risorse?.kicker ?? ""}
-        heading={homePage?.risorse?.heading ?? ""}
-        locale={locale}
-        realArticles={realArticles}
-        allArticlesLabel={homePage?.risorse?.allArticlesLabel ?? ""}
-      />
-
-      <SignatureBand />
+      {/* Stage 2b-2 — SignatureBandTuned replaces SignatureBand here
+          (design-lab-to-production migration) — light-island pass, the
+          band previously sat unwrapped on the raw root. SignatureBand.tsx
+          itself is untouched, just no longer imported. */}
+      <div className={sectionWrapperStyles.signatureLightWrap}>
+        <RevealOnScroll>
+          <SignatureBandTuned />
+        </RevealOnScroll>
+      </div>
     </main>
   );
 }
