@@ -581,18 +581,41 @@ export default async function Home({
         }
       />
 
-      <RecognitionSection
-        kicker={homePage?.recognition?.kicker ?? ""}
-        heading={homePage?.recognition?.heading ?? ""}
-        bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
-        fragments={homePage?.recognition?.fragments}
-      />
+      {/* Stage 2c fix: Recognition was left unwrapped by Stage 2b-2's own
+          scope omission (see that pass's own report) — toneMidWrap
+          reassigns --color-bg/-text/-muted/-hairline/-line/-accent/
+          -accent-hover locally (tone.tone-mid-surface), matching
+          design-lab's own wrapper exactly, same pattern AreeSection/
+          FaqSection/DiplomiSlider already use. Layout/copy/spacing
+          untouched; only the wrapper is new. */}
+      <div style={{ marginTop: "-1rem" }} className={sectionWrapperStyles.toneMidWrap}>
+        <RevealOnScroll>
+          <RecognitionSection
+            kicker={homePage?.recognition?.kicker ?? ""}
+            heading={homePage?.recognition?.heading ?? ""}
+            bridgeLine={homePage?.recognition?.bridgeLine ?? ""}
+            fragments={homePage?.recognition?.fragments}
+          />
+        </RevealOnScroll>
+      </div>
 
-      <HopeSection
-        eyebrow={homePage?.hope?.eyebrow ?? ""}
-        heading={homePage?.hope?.heading ?? ""}
-        headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
-      />
+      {/* Stage 2c fix: Hope was left unwrapped by Stage 2b-2's own scope
+          omission — a light island (deliberate light interlude inside the
+          otherwise-dark page), matching design-lab's own wrapper exactly.
+          Unwrapped, HopeSection picks up --color-accent directly (gold
+          under the dark theme); hopeLightWrap is what makes its
+          foreground tokens resolve against the light-island surface
+          instead. No grain/content sub-wrappers needed since a flat light
+          surface has no vignette to stack above. */}
+      <div className={sectionWrapperStyles.hopeLightWrap}>
+        <RevealOnScroll>
+          <HopeSection
+            eyebrow={homePage?.hope?.eyebrow ?? ""}
+            heading={homePage?.hope?.heading ?? ""}
+            headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
+          />
+        </RevealOnScroll>
+      </div>
 
       {/* Stage 2b-2 — Welcome, new to production (design-lab-to-production
           migration). Copy from Sanity (homePage.welcome). */}
@@ -644,16 +667,24 @@ export default async function Home({
           areeSection + area fetches above, not homePage.diCosa. Supersedes
           the still-gated ConcernsSection below (removed from that block —
           see this file's own import-block comment). Stage 2b-2: repositioned
-          only (was between Chi sono and CTA bridge) — presentation/styling
-          untouched, Aree isn't part of this migration's own 12-section
-          scope. */}
-      <AreeSection
-        kicker={aree?.kicker ?? ""}
-        title={aree?.title ?? ""}
-        intro={aree?.intro}
-        areas={areas}
-        locale={locale as Locale}
-      />
+          only (was between Chi sono and CTA bridge).
+          Stage 2c fix: toneMidWrap was left off by Stage 2b-2's own scope
+          omission — added now, matching design-lab's own wrapper exactly,
+          including its id="aree" — this pass also wires up Hero's own
+          video-hero actions (HeroVideoActions), whose "Perché rivolgersi"
+          button scrolls here, so the id is live, not just kept for
+          exactness. */}
+      <div id="aree" className={sectionWrapperStyles.toneMidWrap}>
+        <RevealOnScroll>
+          <AreeSection
+            kicker={aree?.kicker ?? ""}
+            title={aree?.title ?? ""}
+            intro={aree?.intro}
+            areas={areas}
+            locale={locale as Locale}
+          />
+        </RevealOnScroll>
+      </div>
 
       {/* Design-lab-to-production migration: MetodoInteractive replaces
           JourneySection here — homePage.percorso (kicker/heading/steps,
@@ -900,16 +931,23 @@ export default async function Home({
       {/* Un-gated in the FAQ/Contact/Blog-preview pass — items come off
           the same homePageQuery fetch above (homePage.faq), no separate
           query. Stage 2b-2: repositioned only (was between Sedi and
-          Contact) to match design-lab's own order, now sits near the end —
-          presentation/styling untouched, FAQ isn't part of this
-          migration's own 12-section scope. */}
-      <FaqSection
-        kicker={homePage?.faq?.kicker ?? ""}
-        heading={homePage?.faq?.heading ?? ""}
-        linkLabel={homePage?.faq?.linkLabel ?? ""}
-        locale={locale}
-        items={homePage?.faq?.items}
-      />
+          Contact) to match design-lab's own order, now sits near the end.
+          Stage 2c fix: faqLightWrap was left off by Stage 2b-2's own scope
+          omission — added now, matching design-lab's own wrapper exactly.
+          FaqSection.tsx/.module.scss/FaqAccordion.tsx themselves are
+          untouched, every colour they read is generic and already covered
+          by light-island-surface's reassignment list. */}
+      <div className={sectionWrapperStyles.faqLightWrap}>
+        <RevealOnScroll>
+          <FaqSection
+            kicker={homePage?.faq?.kicker ?? ""}
+            heading={homePage?.faq?.heading ?? ""}
+            linkLabel={homePage?.faq?.linkLabel ?? ""}
+            locale={locale}
+            items={homePage?.faq?.items}
+          />
+        </RevealOnScroll>
+      </div>
 
       {/* Stage 2b-2 — SignatureBandTuned replaces SignatureBand here
           (design-lab-to-production migration) — light-island pass, the

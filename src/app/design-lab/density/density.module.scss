@@ -1,12 +1,19 @@
 @use "../../../styles/mixins";
 @use "../../../styles/tone";
 // .metodoLightWrap/.section/.diplomiLightWrap/.fullBleedFrame/
-// .credentialsInner/.toneMidWrap/.signatureLightWrap below now @include
-// their declarations from here (design-lab-to-production migration)
-// rather than declaring them directly — src/components/
-// sectionWrappers.module.scss is the single source of truth, since
-// production also consumes them (see that file's own comment). Every
-// other class in this stylesheet is untouched.
+// .credentialsInner/.toneMidWrap/.signatureLightWrap/.hopeLightWrap/
+// .faqLightWrap below now @include their declarations from here
+// (design-lab-to-production migration) rather than declaring them
+// directly — src/components/sectionWrappers.module.scss is the single
+// source of truth, since production also consumes them (see that file's
+// own comment). Every other class in this stylesheet is untouched.
+//
+// Stage 2c: .hopeLightWrap/.faqLightWrap joined this list — Stage 2b-2's
+// own component-migration list omitted Recognition/Hope/Aree/FAQ, so
+// production never got these two wrappers (or .toneMidWrap, already
+// shared, for Recognition/Aree); the dark theme switch made the gap
+// visible and this pass closes it. See sectionWrappers.module.scss's own
+// comment on hope-light-wrap/faq-light-wrap for the full reasoning.
 //
 // Stage 2b-2: .ctaBridgeLightWrap, .scrambleWrap/.srOnly,
 // .spaceSection/.spaceFrameFlush/.spaceParallaxFrame/.spaceParallaxImage,
@@ -442,8 +449,7 @@
 // has no vignette/noise to layer content above, so no z-index-stacking
 // child wrapper is needed either — HopeSection renders directly inside.
 .hopeLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.hope-light-wrap;
 }
 
 // --- Tonal scale, Phase 2 --------------------------------------------------
@@ -513,8 +519,7 @@
 // -text/-accent/-focus generically (confirmed by reading FaqSection
 // .module.scss directly), so they re-tone with zero edits to that file.
 .faqLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.faq-light-wrap;
 }
 
 // Signature — light-island pass: the band itself has no wrapper today

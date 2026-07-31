@@ -98,6 +98,31 @@
   position: relative;
 }
 
+// Stage 2c fix: Recognition/Hope/Aree/FAQ were left out of Stage 2b-2's own
+// component-migration list (a scope omission, not a deliberate exclusion —
+// see that pass's own report) — production rendered them bare, with no
+// tone wrapper at all, which the light theme mostly hid and the dark
+// theme switch made visible (Hope in particular picks up --color-accent
+// unwrapped, reading as unintended champagne gold rather than the
+// intended light-island cream). Hope-as-light-island wrapper — replaces
+// .richDarkWrap/.richDarkGrain/.richDarkContent for Hope specifically. No
+// grain layer: a clean light interlude has no vignette/noise to layer
+// content above, so no z-index-stacking child wrapper is needed either —
+// HopeSection renders directly inside.
+@mixin hope-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// FAQ — light-island pass: same minimal mechanism as .diplomiLightWrap/
+// .ctaBridgeLightWrap — FaqSection's own accordion/dividers/toggle read
+// --color-line/-hairline/-text/-accent/-focus generically, so they re-tone
+// with zero edits to that file.
+@mixin faq-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
 .metodoLightWrap {
   @include metodo-light-wrap;
 }
@@ -132,4 +157,12 @@
 
 .signatureLightWrap {
   @include signature-light-wrap;
+}
+
+.hopeLightWrap {
+  @include hope-light-wrap;
+}
+
+.faqLightWrap {
+  @include faq-light-wrap;
 }
