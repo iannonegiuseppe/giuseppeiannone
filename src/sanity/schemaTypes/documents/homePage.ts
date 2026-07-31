@@ -234,6 +234,16 @@ export const homePage = defineType({
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
         stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField(
+          "intro",
+          "Intro paragraph (shown beside the heading, design-lab-to-production migration pass)",
+          { required: false },
+        ),
+        stringField(
           "alboLine",
           "Albo registration line (shown below the card row)",
         ),
@@ -318,9 +328,23 @@ export const homePage = defineType({
     // 8. JourneySection (interactive rebuild — supersedes the earlier
     // static staircase pass; steps[].description renamed to shortLine,
     // expandedText added for the desktop right panel / mobile inline copy)
+    //
+    // DEPRECATED as of the design-lab-to-production migration: "metodo"
+    // (below) now renders in this section's place on the real homepage —
+    // JourneySection.tsx is no longer called from page.tsx, so nothing in
+    // this ENTIRE field group renders anywhere as of this migration.
+    // Left fully intact deliberately (not deleted, not cleared) — same
+    // precedent as homePage.chiSono/chiSonoSection elsewhere in this
+    // file. steps[].expandedText specifically holds real, already-
+    // written detail copy for JourneySection's click-to-expand panel, a
+    // mechanic "metodo"'s own static rebuild doesn't have — flagged here
+    // so a future editor doesn't assume it's safe to delete.
     defineField({
       name: "percorso",
-      title: "8. Come si svolge un percorso",
+      title: "8. Come si svolge un percorso — DEPRECATED, no longer rendered (see \"metodo\" below)",
+      description:
+        "Orphaned as of the design-lab-to-production migration — JourneySection.tsx is no longer " +
+        "rendered on the real homepage, superseded by \"metodo\" below. Left intact, not deleted.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
@@ -345,7 +369,9 @@ export const homePage = defineType({
                 stringField("shortLine", "Short line (always visible, next to the numeral)"),
                 textField(
                   "expandedText",
-                  "Expanded text (desktop: shown in the right panel when this step is active; mobile: shown inline, always visible)",
+                  "DEPRECATED — nothing renders this field as of the design-lab-to-production " +
+                    "migration (the click-to-expand panel it fed no longer exists; \"metodo\" below " +
+                    "only keeps title + shortLine). Content preserved, not deleted.",
                 ),
               ],
               preview: { select: { title: "title", subtitle: "shortLine" } },
