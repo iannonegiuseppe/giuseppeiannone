@@ -25,11 +25,13 @@ export function HeroVideoActions({
   areeLabel,
   contactLabel,
   locale,
+  closeLabel,
 }: {
   areeHref: string;
   areeLabel: string;
   contactLabel: string;
   locale: Locale;
+  closeLabel: string;
 }) {
   const contactDialogRef = useRef<ContactFormDialogHandle>(null);
 
@@ -41,7 +43,7 @@ export function HeroVideoActions({
       <Button type="button" variant="glass" onClick={() => contactDialogRef.current?.open()}>
         {contactLabel}
       </Button>
-      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel="Chiudi" />
+      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel={closeLabel} />
     </div>
   );
 }

@@ -1,4 +1,21 @@
-@use "../../styles/mixins";
+@use "../styles/mixins";
+@use "./sectionWrappers.module.scss" as wrappers;
+@use "../styles/tone";
+
+// Design-lab-to-production migration: .ctaBridgeLightWrap/.section moved
+// here from density.module.scss (which stayed in design-lab) — this
+// component self-wraps (both classes apply inside its own JSX, not via
+// an external wrapper the caller supplies), so nothing else needed to
+// keep a copy. .section still @includes the shared mixin — it's the same
+// container/padding/hairline shell several other sections use.
+.ctaBridgeLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.section {
+  @include wrappers.section;
+}
 
 // Two-column pass: was a single centered/left-aligned stack (full-width
 // display headline, body, an oversized underlined link below both). Now

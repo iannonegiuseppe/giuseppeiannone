@@ -51,9 +51,20 @@ function stringField(
   });
 }
 
+// DEPRECATED as of the design-lab-to-production migration: homePage.profilo
+// is now the rendered Chi sono source on the real homepage (ChiSonoBlock,
+// a full-bleed rebuild with its own shorter, professional-facts-only
+// copy) — this document type's own 5-paragraph personal-story content is
+// real, finished client copy, just no longer rendered anywhere. Left
+// fully intact deliberately (not deleted, not cleared) — same precedent
+// this file's own top comment already set for the OLDER homePage.chiSono
+// field group it itself superseded.
 export const chiSonoSection = defineType({
   name: "chiSonoSection",
-  title: "Chi sono section (homepage)",
+  title: "Chi sono section (homepage) — DEPRECATED, no longer rendered (see homePage.profilo)",
+  description:
+    "Orphaned as of the design-lab-to-production migration — no longer rendered on the real " +
+    "homepage, superseded by homePage.profilo. Left intact, not deleted; still real client copy.",
   type: "document",
   fields: [
     stringField("kicker", "Kicker"),

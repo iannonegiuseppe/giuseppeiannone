@@ -1,5 +1,30 @@
 @use "../../../styles/mixins";
-@use "./tone";
+@use "../../../styles/tone";
+// .metodoLightWrap/.section/.diplomiLightWrap/.fullBleedFrame/
+// .credentialsInner/.toneMidWrap/.signatureLightWrap/.hopeLightWrap/
+// .faqLightWrap below now @include their declarations from here
+// (design-lab-to-production migration) rather than declaring them
+// directly — src/components/sectionWrappers.module.scss is the single
+// source of truth, since production also consumes them (see that file's
+// own comment). Every other class in this stylesheet is untouched.
+//
+// Stage 2c: .hopeLightWrap/.faqLightWrap joined this list — Stage 2b-2's
+// own component-migration list omitted Recognition/Hope/Aree/FAQ, so
+// production never got these two wrappers (or .toneMidWrap, already
+// shared, for Recognition/Aree); the dark theme switch made the gap
+// visible and this pass closes it. See sectionWrappers.module.scss's own
+// comment on hope-light-wrap/faq-light-wrap for the full reasoning.
+//
+// Stage 2b-2: .ctaBridgeLightWrap, .scrambleWrap/.srOnly,
+// .spaceSection/.spaceFrameFlush/.spaceParallaxFrame/.spaceParallaxImage,
+// the "Light"-suffixed Credentials classes (.credentialsBandLight/
+// -Kicker/-KickerRule/-Heading/-Rule/-ListLight/-ItemLight/-ValueLight/
+// -CaptionLight/-Description), and .videoLightWrap/-LightContent/
+// -BlockGrid/-BlockTextCol/-BlockHeading/-PlateFrame were all removed
+// entirely from this file (not kept as mixins) — each was exclusively
+// used by one component that moved to src/components/ with its own new
+// dedicated stylesheet, so nothing in /design-lab still reads them here.
+@use "../../../components/sectionWrappers.module.scss" as wrappers;
 
 // C1 fix: every full-bleed element on this page (.hopeSection,
 // .credentialsBand, .marqueeSection, .zigzagBleed, .fullBleedFrame,
@@ -50,9 +75,7 @@
 }
 
 .section {
-  @include mixins.container;
-  padding-block: var(--space-band-y);
-  border-bottom: 1px solid var(--color-hairline);
+  @include wrappers.section;
 }
 
 .sectionLabel {
@@ -350,15 +373,6 @@
 // hijacked by this mixin to mean "the real light accent" (needed below for
 // the new AnimatedDivider), so this band's fill deliberately does NOT
 // reuse that token the way the dark .credentialsBand above does.
-.credentialsBandLight {
-  @include tone.light-island-surface;
-  position: relative;
-  width: var(--vw100, 100vw);
-  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
-  padding-block: var(--space-band-y);
-  overflow: hidden;
-}
-
 // Metodo-as-light-island wrapper. Metodo's own <section> (density.module
 // .scss's shared .section, used unchanged by Chi Sono/Lo Spazio too) is
 // NOT a full-width root the way AreeSection.tsx is — .section applies
@@ -388,66 +402,11 @@
 // stepTitle/stepText's own real content (see this pass's own report for
 // the live-sampled comparison this value was picked from).
 .metodoLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
-  width: var(--vw100, 100vw);
-  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
-  overflow: hidden;
-  --metodo-numeral-alpha: 12%;
-}
-
-// Rebuild pass: eyebrow + heading + divider, added above the four cells —
-// same kicker/rule/heading pattern Recognition's own header group uses,
-// re-pointed to this scope's correctly-hijacked tokens (--color-accent /
-// --color-accent-contrast) rather than the generic --color-text/
-// --color-line, matching this component's own original design (it never
-// read those generic tokens to begin with). Note: light-island-surface
-// was later extended (Metodo pass) to ALSO hijack --color-text/-line/etc
-// for a different consumer — harmless here since these two rules were
-// never wired to them, just don't assume the "not touched" framing below
-// still describes the mixin itself, only this component's own choice.
-.credentialsKicker {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-.credentialsKickerRule {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--color-accent-contrast) 40%, transparent);
-}
-
-.credentialsHeading {
-  margin: var(--space-4) 0 0;
-  color: var(--color-accent-contrast);
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
-}
-
-// AnimatedDivider, reused as-is (no rebuild) — spans this container's full
-// width (its own default: width:100% of parent), unlike Hope's narrow
-// centred usage. Its own CSS reads --color-accent/--color-accent-hover/
-// --divider-glow directly, all three correctly re-pointed to the light
-// palette by light-island-surface already — verified live, see this
-// pass's own report, not assumed from Hope's precedent alone.
-.credentialsRule {
-  margin: var(--space-6) 0 var(--space-8);
+  @include wrappers.metodo-light-wrap;
 }
 
 .credentialsInner {
-  position: relative;
-  z-index: 1;
-  @include mixins.container;
+  @include wrappers.credentials-inner;
 }
 
 // --- Shared wrapper for the two REAL components that need this same
@@ -490,8 +449,7 @@
 // has no vignette/noise to layer content above, so no z-index-stacking
 // child wrapper is needed either — HopeSection renders directly inside.
 .hopeLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.hope-light-wrap;
 }
 
 // --- Tonal scale, Phase 2 --------------------------------------------------
@@ -501,7 +459,7 @@
 // --color-accent (safe here — unlike tone-deep, mid's background isn't
 // built from that token, see tone.scss's own comment on why).
 .toneMidWrap {
-  @include tone.tone-mid-surface;
+  @include wrappers.tone-mid-wrap;
 }
 
 // Diplomi — light-island pass: replaces .toneMidWrap for this section only.
@@ -515,8 +473,7 @@
 // own top-level sections already render unconstrained, the same reason
 // .toneMidWrap above never needed it either.
 .diplomiLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.diplomi-light-wrap;
 }
 
 // tone-deep wrapper for CTA bridge / Video specifically — NOT the same
@@ -556,19 +513,13 @@
 // on the root itself, same as AreeSection/HopeSection), so no vw100
 // full-bleed trick is needed here either — just the mixin. No grain
 // layer: a flat light interlude has nothing to layer content above.
-.ctaBridgeLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
-}
-
 // FAQ — light-island pass: replaces .toneMidWrap for this section only.
 // Same minimal mechanism as .diplomiLightWrap/.ctaBridgeLightWrap —
 // FaqSection's own accordion/dividers/toggle read --color-line/-hairline/
 // -text/-accent/-focus generically (confirmed by reading FaqSection
 // .module.scss directly), so they re-tone with zero edits to that file.
 .faqLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.faq-light-wrap;
 }
 
 // Signature — light-island pass: the band itself has no wrapper today
@@ -578,8 +529,7 @@
 // what makes that token resolve to the ivory-pass value in the first
 // place.
 .signatureLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.signature-light-wrap;
 }
 
 // Tonal-scale pass cleanup: the old bespoke Contact overlay mechanism
@@ -654,107 +604,6 @@
   color: var(--color-accent-contrast);
 }
 
-// --- Three-level pass (/design-lab's Credentials band only) --------------
-// *Light-suffixed parallel classes — see this pass's own JSX comment for
-// why: .credentialsList/-Item/-Value/-Caption above are shared with
-// DensityPage.tsx's own (2-level, left-aligned, dark, divided) Credentials
-// render, and this pass's changes (3 levels, centred, no dividers, gold
-// numeral) are specific to the rebuilt /design-lab version only.
-.credentialsListLight {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-8);
-
-  // Divider-removal pass: the vertical rules used to carry the "these are
-  // four separate things" signal on their own; gone now, so the gap does
-  // that job instead. --space-7 (this class's previous, shared value) read
-  // as four items floating once the dividers were removed — measured
-  // against the real render, not assumed. --space-8 restores a clearly
-  // deliberate separation without the rules.
-  @include mixins.breakpoint-up(lg) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-8);
-  }
-}
-
-// No divider (removed entirely, not hidden) and centred — the three-level
-// stack (number/subtitle/description) reads as one composed unit rather
-// than a left-aligned column once there's no rule to anchor it to an edge.
-.credentialsItemLight {
-  text-align: center;
-}
-
-// Gold numeral pass: --color-accent, not --color-accent-contrast — within
-// this scope (tone.light-island-surface) that's the light palette's real
-// accent (#7e6b5b), already correctly hijacked here for the same reason
-// the AnimatedDivider above needs it. NOT --color-gold-bronze (#8e6b3d):
-// that token is dark-theme-only and its own comment (_tokens.scss)
-// explicitly flags it as unsafe for text (3.19-3.84:1 against DARK
-// surfaces, never measured against light ones, and there is no light-theme
-// equivalent of that specific token) — see this pass's own report for the
-// measured ratio against this band's real ivory background.
-//
-// Size-up pass: --fs-display-sm -> --fs-display, one real step up (the
-// same H1 token, not a one-off) — --lh-display-sm and --lh-display are
-// both 1.15, so no line-height change was actually needed here.
-.credentialsValueLight {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-size: var(--fs-display);
-  line-height: var(--lh-display);
-  color: var(--color-accent);
-}
-
-// Subtitle — unchanged in principle from the shared .credentialsCaption,
-// just centred and under its own class name (see the parallel-class note
-// above). Forced-capital first letter (::first-letter, not
-// text-transform: capitalize, which would upper-case every word — e.g.
-// "Anni Di Pratica Clinica") so the Sanity copy itself can stay natural
-// sentence case and this is purely a display rule, consistent regardless
-// of what an editor types.
-//
-// Size-up pass: --fs-body -> --fs-body-lg, one real step up — now with an
-// explicit line-height (--lh-body-lg) rather than relying on inherited
-// body line-height, since this rule previously never set one of its own.
-// Weight pass: --font-weight-bold (700) -> --font-weight-medium (500),
-// per explicit instruction — real Source Sans 3 weight (loaded at 400/
-// 500/700 in layout.tsx, not synthesised), same token the header nav
-// already uses. Reads lighter than the bold version — see this pass's
-// own report for the visual comparison.
-.credentialsCaptionLight {
-  margin: var(--space-2) 0 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-accent-contrast);
-
-  &::first-letter {
-    text-transform: uppercase;
-  }
-}
-
-// Third level, new this pass: one short sentence, small and muted.
-// color-mix against --color-accent-contrast (not --color-text-muted) —
-// light-island-surface does not touch --color-text-muted at all, so
-// reading it directly here would silently resolve to the surrounding DARK
-// theme's own muted ivory rather than a muted light ink. Percentage
-// checked against the real render — see this pass's own report.
-//
-// Size-up pass: --fs-small -> --fs-body, one real step up (with its
-// paired --lh-body line-height).
-.credentialsDescription {
-  margin: var(--space-2) 0 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: color-mix(in srgb, var(--color-accent-contrast) 75%, transparent);
-}
-
 // §9 fix: "5 titoli e specializzazioni" as a big scrambled number read as
 // an achievement count, the same register §9 already bans for testimonial
 // stats. There is also no real, itemized list of exactly 5 anywhere in
@@ -788,19 +637,6 @@
   font-size: var(--fs-small);
   line-height: var(--lh-small);
   color: color-mix(in srgb, var(--color-accent-contrast) 85%, transparent);
-}
-
-// Tabular-ish alignment while scrambling — without this, letters/digits
-// of different intrinsic widths shift the caption below as characters
-// resolve. font-variant-numeric only evens out digit widths (EB Garamond
-// ships no tabular-lining variant of its own), which is enough since the
-// scramble's own random letters are cosmetic and brief (<= 330ms).
-.scrambleWrap {
-  font-variant-numeric: tabular-nums;
-}
-
-.srOnly {
-  @include mixins.visually-hidden;
 }
 
 // --- Section 04: Aree, with weight -----------------------------------------
@@ -895,13 +731,7 @@
 // Standard viewport-edge technique: the section itself stays contained
 // (mixins.container caps it), this one child escapes that constraint.
 .fullBleedFrame {
-  width: var(--vw100, 100vw);
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: calc(-1 * var(--vw100, 100vw) / 2);
-  margin-right: calc(-1 * var(--vw100, 100vw) / 2);
-  margin-top: var(--space-6);
+  @include wrappers.full-bleed-frame;
 }
 
 // Parallax outer frame — fixed aspect-ratio, clips the oversized inner
@@ -972,67 +802,9 @@
 // live) plus .fullBleedFrame's own margin-top (var(--space-6), 32px),
 // both transparent, both letting the root's dark background show through
 // INSIDE what should have been the image's own edge-to-edge band.
-// Confirmed live via getComputedStyle before touching anything: section
-// padding-top/-bottom both 96px, background transparent; fullBleedFrame
-// margin-top 32px. Neither .section nor .fullBleedFrame is edited — both
-// are shared, reused elsewhere on this page (.section by most other
-// sections, .fullBleedFrame by the Sedi map frame too, per its own
-// comment) — this section now uses its own wrapper instead of .section,
-// and its own fullBleedFrame instance gets a zero-margin override via
-// .spaceFrameFlush (a modifier class added alongside .fullBleedFrame in
-// the JSX, not a rewrite of it). Zero padding, zero border, zero margin —
-// the image runs into the sections either side with nothing between.
-.spaceSection {
-  position: relative;
-}
-
-.spaceFrameFlush {
-  margin-top: 0;
-}
-
-// CSS-only reveal (ParallaxFrameStatic.tsx) — "Lo spazio" only. New
-// classes, not a repurposing of .parallaxFrame/.parallaxFixedLayer above
-// (those stay exactly as they are — DensityPage.tsx still renders
-// .parallaxFrame via the original, JS-driven ParallaxFrame.tsx).
-//
-// Correction pass: was a fixed height: 160vh — now aspect-ratio: 10/4,
-// per direct instruction. The fixed image child + clip-path mechanic
-// below is unaffected by this: the frame's HEIGHT changes how much
-// scroll distance the reveal plays out over, not whether it works.
-.spaceParallaxFrame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 10 / 4;
-  overflow: hidden;
-  // clip-path is the operative property — it clips a position:fixed
-  // descendant to THIS box at paint time, across the containing-block
-  // boundary a fixed element would otherwise escape. overflow:hidden
-  // alone does not do this for a fixed child; kept alongside anyway as
-  // the belt-and-braces the brief itself asked for.
-  clip-path: inset(0);
-
-  @media (prefers-reduced-motion: reduce) {
-    height: auto;
-    aspect-ratio: var(--space-parallax-aspect, 16 / 9);
-    overflow: visible;
-    clip-path: none;
-  }
-}
-
-.spaceParallaxImage {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  object-fit: cover;
-  pointer-events: none;
-
-  @media (prefers-reduced-motion: reduce) {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-  }
-}
+// Lo Spazio's wrapper classes (.spaceSection/.spaceFrameFlush) and
+// ParallaxFrameStatic's own internal classes (.spaceParallaxFrame/
+// .spaceParallaxImage) all moved out — see this file's own top comment.
 
 .spaceFrameB {
   margin-top: var(--space-6);
@@ -1106,56 +878,12 @@
 // right content edge, exactly. Split: 60/40 (was 65/35 full-bleed,
 // before that 58/42) — gap comes from --space-8, a spacing token, per
 // this pass's own instruction.
-.videoBlockGrid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-
-  @include mixins.breakpoint-up(lg) {
-    // fr, not %: percentage tracks are sized against the grid container's
-    // full width BEFORE the gap is subtracted, so 60%+40% (=100%) leaves
-    // no room for the gap and the shrink-to-fit that follows lands on
-    // track 1 alone (measured: track 1 lost the entire 64px gap, track 2
-    // stayed at a true 40% — an uneven, unintended skew). fr tracks
-    // distribute the space actually remaining AFTER the gap, giving a
-    // true 60/40 split of the usable width.
-    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
-    align-items: start;
-    gap: var(--space-8);
-  }
-}
-
-// No max-width here: item 3 requires the column's own RIGHT edge to
-// land exactly on the container's right content edge. An earlier
-// version capped this at 40ch, which is narrower than the 40%-of-
-// container track at lg+ — the column (a block box, no auto margins)
-// then stopped short of the track's own right edge instead of reaching
-// it, and on mobile constrained it below the required full width too.
-.videoBlockTextCol {
-  @include mixins.breakpoint-up(lg) {
-    padding-top: var(--space-2); // optical alignment: the player's own
-    // chrome-less top edge reads slightly higher than the kicker's cap-
-    // height at the exact same grid row start — a small nudge down.
-  }
-}
-
-// Item 4: the reused real .videoHeading (VideoSection.module.scss) caps
-// at --fs-h2 — a real, un-editable file, and too small for "one of the
-// bigger typographic moments on the page." This is density's own
-// display-scale heading class (.heading, the same one Chi sono's
-// headline uses) reused here instead, NOT the real component's own
-// heading class.
-.videoBlockHeading {
-  margin: var(--space-4) 0 0;
-  text-wrap: balance;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-size: var(--fs-display);
-  line-height: var(--lh-display);
-  color: var(--color-text);
-}
-
+// VideoBlock's own .videoBlockGrid/-TextCol/-Heading/-LightWrap/
+// -LightContent/-PlateFrame all moved out — see this file's own top
+// comment. (.toneDeepSection/-Grain/-Content below are unrelated,
+// pre-existing dead code — nothing in this file currently renders them —
+// left untouched, out of scope for this pass.)
+//
 // Tonal-scale pass: three scoped overrides for real, un-editable classes
 // from VideoSection.module.scss, all landmines this pass's own brief
 // explicitly called out — checked, not assumed:
@@ -1183,51 +911,6 @@
   [class*="videoLead"] {
     color: var(--tone-deep-text);
   }
-}
-
-// Video light-island pass: NEW wrapper, same mechanism as
-// .diplomiLightWrap/.ctaBridgeLightWrap (tone.light-island-surface) —
-// .toneDeepSection/-Grain/-Content above are left untouched, still used
-// by Contact.
-.videoLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
-}
-
-.videoLightContent {
-  position: relative;
-
-  // .videoKicker's shared `color: var(--color-accent)` would read the
-  // plain accent (#7e6b5b) — this pass wants the darkened
-  // --color-accent-hover (#715c52) instead, the same treatment Diplomi's
-  // own kicker already uses. .videoKickerRule needs no override: its own
-  // `background: var(--color-line)` already resolves correctly through
-  // light-island-surface's own reassignment of that token.
-  [class*="videoKicker"]:not([class*="videoKickerRule"]) {
-    color: var(--color-accent-hover);
-  }
-
-  // Play-triangle landmine (flagged in this pass's own proposal, measured
-  // before writing this): under light-island, --color-accent-contrast is
-  // repinned to --light-base-text (dark carbone) — correct for Hope/
-  // Credentials' own text-sitting-on-ivory use, wrong for a glyph sitting
-  // on the accent-coloured circle (measured ~2.77:1, below the 3:1 floor
-  // for a graphical UI object). This restores production's own unwrapped-
-  // light-theme pairing instead (--color-accent-contrast: var(--color-bg)
-  // at :root) — ivory on brown, ~4.59:1.
-  [class*="videoPlayerPlayTriangle"] {
-    border-left-color: var(--color-bg);
-  }
-}
-
-// Plate frame: reuses Diplomi's own card-frame recipe (a low-alpha
-// accent-tinted hairline, diplomiSlider.module.scss's own .card border) —
-// not a new device, the same one already living on this exact ivory
-// surface one section up. Radius matches --radius-l (VideoPlayer's own
-// radius) so this reads as one frame around the player, not a second box.
-.videoPlateFrame {
-  border-radius: var(--radius-l);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
 // --- "Static map frame" (simplified Section 07 for this pass — see the

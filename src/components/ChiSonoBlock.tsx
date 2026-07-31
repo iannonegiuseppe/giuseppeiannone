@@ -91,8 +91,13 @@ export function ChiSonoBlock({
   }, []);
 
   return (
+    // id="chi-sono" — design-lab-to-production migration: the header's
+    // "Chi sono" nav link anchor-scrolls to this id (same id the retired
+    // production ChiSonoSection.tsx used) — needed on both consumers now
+    // that this component renders in that section's place.
     <section
       ref={rootRef}
+      id="chi-sono"
       className={styles.section}
       aria-labelledby="chi-sono-heading"
       data-revealed={revealed}

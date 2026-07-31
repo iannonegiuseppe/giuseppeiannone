@@ -115,6 +115,7 @@ type WelcomeBlockProps = {
   authorRegistrationNumber?: string;
   areas?: AreaRow[];
   locale: Locale;
+  closeLabel: string;
 };
 
 // Consolidation pass: this was a temporary A/B comparison shell (two full
@@ -136,6 +137,7 @@ export function WelcomeBlock({
   authorRegistrationNumber,
   areas,
   locale,
+  closeLabel,
 }: WelcomeBlockProps) {
   const [revealed, setRevealed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -210,7 +212,7 @@ export function WelcomeBlock({
         </div>
       </div>
 
-      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel="Chiudi" />
+      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel={closeLabel} />
     </div>
   );
 }

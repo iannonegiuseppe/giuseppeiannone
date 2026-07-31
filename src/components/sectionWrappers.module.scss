@@ -1,0 +1,168 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Design-lab-to-production migration: the three section-wrapper classes
+// production actually reaches for (Metodo's full-bleed light-island band,
+// the shared container/padding/hairline .section shell it and Diplomi
+// both sit inside, and Diplomi's own light-island band) — split out of
+// src/app/design-lab/density/density.module.scss rather than moved
+// wholesale, since that file backs dozens of other /design-lab-only
+// sections production never renders (moving it whole would just
+// repackage the same "production depends on the doomed directory"
+// problem this split exists to fix).
+//
+// Single source of truth: each rule below is a MIXIN, not just a class.
+// density.module.scss's own same-named classes (.metodoLightWrap/
+// .section/.diplomiLightWrap — still used by every other /design-lab
+// section that isn't part of this migration) @include these same mixins
+// instead of repeating the declarations — see that file's own comment.
+// Never edit a declaration in one place without the other; there's only
+// one real body, here.
+@mixin metodo-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  overflow: hidden;
+  --metodo-numeral-alpha: 12%;
+}
+
+@mixin section {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+@mixin diplomi-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// Standard viewport-edge full-bleed technique — needed by BOTH the Lo
+// Spazio wrapper (this file's own consumers) AND density.module.scss's
+// own DensityPage.tsx consumer (a separate, untouched route) — genuinely
+// shared, not exclusive to either side, so it stays a mixin both @include
+// rather than moving wholesale.
+@mixin full-bleed-frame {
+  width: var(--vw100, 100vw);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-right: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-top: var(--space-6);
+}
+
+// Lo Spazio's own wrapper geometry — zero padding/border/margin so the
+// parallax image runs edge-to-edge into the sections either side. Only
+// this migration's own two callers (DesignLabHomepage.tsx, production)
+// use these two; DensityPage.tsx's own Lo Spazio still uses the older
+// .parallaxFrame/.parallaxFixedLayer pair, untouched.
+@mixin space-section {
+  position: relative;
+}
+
+@mixin space-frame-flush {
+  margin-top: 0;
+}
+
+// Credentials band's container — genuinely shared with DensityPage.tsx's
+// OWN (older, dark-theme) Credentials render, which reuses this exact
+// class name for an unrelated but visually-equivalent purpose. Kept as a
+// mixin both sides @include, same reasoning as .section above.
+@mixin credentials-inner {
+  position: relative;
+  z-index: 1;
+  @include mixins.container;
+}
+
+// Stage 2b-2: tone-mid wrapper, used by any section (real component or
+// density-owned) moving to tone-mid — Tariffe/Spazi/Risorse/Footer on
+// BOTH sides now, plus Recognition/Aree/etc. on design-lab's side only
+// (not part of this migration, still read density.module.scss's own
+// @include of this same mixin). Reassigns every foreground role,
+// including --color-accent (safe here — unlike tone-deep, mid's
+// background isn't built from that token, see tone.scss's own comment).
+@mixin tone-mid-wrap {
+  @include tone.tone-mid-surface;
+}
+
+// Signature — light-island pass: the band itself has no wrapper on
+// production's own raw root today. SignatureBandTuned's own fork
+// (signatureBandTuned.module.scss) repoints .signature's colour to a
+// token this mixin reassigns (--color-accent-hover) — this wrapper is
+// what makes that token resolve to the ivory-pass value in the first
+// place.
+@mixin signature-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// Stage 2c fix: Recognition/Hope/Aree/FAQ were left out of Stage 2b-2's own
+// component-migration list (a scope omission, not a deliberate exclusion —
+// see that pass's own report) — production rendered them bare, with no
+// tone wrapper at all, which the light theme mostly hid and the dark
+// theme switch made visible (Hope in particular picks up --color-accent
+// unwrapped, reading as unintended champagne gold rather than the
+// intended light-island cream). Hope-as-light-island wrapper — replaces
+// .richDarkWrap/.richDarkGrain/.richDarkContent for Hope specifically. No
+// grain layer: a clean light interlude has no vignette/noise to layer
+// content above, so no z-index-stacking child wrapper is needed either —
+// HopeSection renders directly inside.
+@mixin hope-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+// FAQ — light-island pass: same minimal mechanism as .diplomiLightWrap/
+// .ctaBridgeLightWrap — FaqSection's own accordion/dividers/toggle read
+// --color-line/-hairline/-text/-accent/-focus generically, so they re-tone
+// with zero edits to that file.
+@mixin faq-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.metodoLightWrap {
+  @include metodo-light-wrap;
+}
+
+.section {
+  @include section;
+}
+
+.diplomiLightWrap {
+  @include diplomi-light-wrap;
+}
+
+.fullBleedFrame {
+  @include full-bleed-frame;
+}
+
+.spaceSection {
+  @include space-section;
+}
+
+.spaceFrameFlush {
+  @include space-frame-flush;
+}
+
+.credentialsInner {
+  @include credentials-inner;
+}
+
+.toneMidWrap {
+  @include tone-mid-wrap;
+}
+
+.signatureLightWrap {
+  @include signature-light-wrap;
+}
+
+.hopeLightWrap {
+  @include hope-light-wrap;
+}
+
+.faqLightWrap {
+  @include faq-light-wrap;
+}

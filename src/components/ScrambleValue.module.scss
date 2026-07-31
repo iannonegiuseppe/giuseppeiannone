@@ -1,0 +1,18 @@
+@use "../styles/mixins";
+
+// Design-lab-to-production migration: split out of density.module.scss
+// (which stayed in design-lab) — both classes were exclusively used by
+// this component.
+
+// Tabular-ish alignment while scrambling — without this, letters/digits
+// of different intrinsic widths shift the caption below as characters
+// resolve. font-variant-numeric only evens out digit widths (EB Garamond
+// ships no tabular-lining variant of its own), which is enough since the
+// scramble's own random letters are cosmetic and brief (<= 330ms).
+.scrambleWrap {
+  font-variant-numeric: tabular-nums;
+}
+
+.srOnly {
+  @include mixins.visually-hidden;
+}

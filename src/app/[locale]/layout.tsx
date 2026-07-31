@@ -4,7 +4,7 @@ import { VisualEditing } from "next-sanity/visual-editing";
 import { EB_Garamond, Source_Sans_3 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { Footer } from "@/components/Footer";
+import { FooterLab } from "@/components/FooterLab";
 import { Header } from "@/components/Header";
 import { LenisProvider } from "@/components/LenisProvider";
 import { routing } from "@/i18n/routing";
@@ -18,7 +18,19 @@ import { getSiteUrl, resolveRobots } from "@/sanity/metadata";
 import type { Locale } from "@/sanity/paths";
 import { sedesQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
+import sectionWrapperStyles from "@/components/sectionWrappers.module.scss";
 import "./globals.scss";
+
+// Stage 2b-2 — migrate the remaining homepage sections: FooterLab replaces
+// the real Footer here (design-lab-to-production migration), same
+// mechanism used for every other section in this pass. UNLIKE every other
+// swap in this pass, this one is NOT homepage-scoped — Footer renders once
+// here, at the layout level, shared by every page on the site (FAQ,
+// articles, styleguide, etc.), so this is a site-wide visual change, not a
+// homepage-only one (confirmed with the client before making this edit).
+// Footer.tsx/.module.scss themselves are untouched, just no longer
+// imported. toneMidWrap: the same tone-mid mechanism Aree/Tariffe/Spazi/
+// Risorse already use, shared via sectionWrappers.module.scss.
 
 // Global restyle pass: EB Garamond replaces Marcellus entirely (not kept
 // alongside it for any heading tier). Regular (400) is still the only
@@ -173,6 +185,24 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {/* Stage 2c — dark-canvas fix, same mechanism DesignLabHomepage.tsx
+            already used: a tiny BLOCKING inline script, first thing in
+            body, sets data-theme="dark" on <html> before the browser's
+            first paint — synchronous inline scripts run during HTML
+            parsing, before rendering proceeds, so there's no flash of the
+            light background first. This one attribute is what activates
+            _tokens.scss's :root[data-theme="dark"] block (see that file's
+            own "Canvas-background fix" comment), which is what makes
+            <body>'s existing background-color: var(--color-bg) rule
+            (globals.scss, untouched) resolve dark. Unlike design-lab's own
+            version, this one is unconditional — production has no light
+            variant to branch on anymore, every route under this layout
+            goes dark. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.dataset.theme="dark"`,
+          }}
+        />
         {personJsonLd ? <JsonLdScript data={personJsonLd} /> : null}
         {medicalBusinessJsonLd ? (
           <JsonLdScript data={medicalBusinessJsonLd} />
@@ -193,18 +223,21 @@ export default async function LocaleLayout({
               contactChannels={siteSettings?.contactChannels}
             />
             {children}
-            <Footer
-              locale={typedLocale}
-              authorName={siteSettings?.author?.name ?? ""}
-              authorCredentials={siteSettings?.author?.credentials}
-              authorRegistrationNumber={siteSettings?.author?.registrationNumber}
-              contactChannels={siteSettings?.contactChannels}
-              piva={siteSettings?.piva}
-              sedes={sedes}
-              crisisSupportText={siteSettings?.crisisSupportText}
-              googleProfileUrl={siteSettings?.googleProfileUrl}
-              socialLinks={siteSettings?.socialLinks}
-            />
+            <div className={sectionWrapperStyles.toneMidWrap}>
+              <FooterLab
+                locale={typedLocale}
+                authorName={siteSettings?.author?.name ?? ""}
+                authorCredentials={siteSettings?.author?.credentials}
+                authorRegistrationNumber={siteSettings?.author?.registrationNumber}
+                contactChannels={siteSettings?.contactChannels}
+                piva={siteSettings?.piva}
+                sedes={sedes}
+                crisisSupportText={siteSettings?.crisisSupportText}
+                emergencyContacts={siteSettings?.emergencyContacts}
+                googleProfileUrl={siteSettings?.googleProfileUrl}
+                socialLinks={siteSettings?.socialLinks}
+              />
+            </div>
           </LenisProvider>
         </NextIntlClientProvider>
         {isDraft ? <VisualEditing /> : null}

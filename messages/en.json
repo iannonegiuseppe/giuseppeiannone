@@ -9,7 +9,9 @@
     "label": "Key points"
   },
   "Hero": {
-    "cta": "Book a first consultation"
+    "cta": "Book a first consultation",
+    "areeLabel": "Why reach out",
+    "contactLabel": "Message me"
   },
   "Diplomi": {
     "prevLabel": "Previous qualification",

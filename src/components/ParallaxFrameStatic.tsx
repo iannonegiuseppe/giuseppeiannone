@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import styles from "./density.module.scss";
+import styles from "./ParallaxFrameStatic.module.scss";
 
 // CSS-only reveal — forked from ParallaxFrame.tsx (still used, unmodified,
 // by DensityPage.tsx's own preview route) specifically for "Lo spazio" on

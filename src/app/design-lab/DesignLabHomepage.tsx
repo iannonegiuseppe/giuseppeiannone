@@ -1,6 +1,6 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
-import { AnimatedDivider } from "@/components/AnimatedDivider";
+import { getTranslations } from "next-intl/server";
 import { AreeSection } from "@/components/AreeSection";
 import { FaqSection } from "@/components/FaqSection";
 import { Header } from "@/components/Header";
@@ -10,8 +10,8 @@ import { HopeSection } from "@/components/HopeSection";
 import { SignatureMark } from "@/components/Logo";
 import { LenisProvider } from "@/components/LenisProvider";
 import type { SedeData } from "@/components/LocationsSection";
-import { SediBlock } from "./density/SediBlock";
-import { SediMapProvider } from "./density/SediMapContext";
+import { SediBlock } from "@/components/SediBlock";
+import { SediMapProvider } from "@/components/SediMapContext";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
@@ -27,29 +27,30 @@ import {
 } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
 import { imageDimensions, urlFor } from "@/sanity/image";
-import { ChiSonoBlock } from "./density/ChiSonoBlock";
-import { ContactBlock } from "./density/ContactBlock";
-import { CtaBridgeBlock } from "./CtaBridgeBlock";
-import { DiplomiSlider, type DiplomiLabItem } from "./density/DiplomiSlider";
-import { FooterLab } from "./density/FooterLab";
-import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
-import { HeroVideoActions } from "./HeroVideoActions";
+import { ChiSonoBlock } from "@/components/ChiSonoBlock";
+import { ContactBlock } from "@/components/ContactBlock";
+import { CredentialsBand } from "@/components/CredentialsBand";
+import { CtaBridgeBlock } from "@/components/CtaBridgeBlock";
+import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
+import { FooterLab } from "@/components/FooterLab";
+import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
+import { HeroVideoActions } from "@/components/HeroVideoActions";
 import {
   THE_SPACE,
 } from "./density/content";
 import densityStyles from "./density/density.module.scss";
-import metodoStyles from "./density/metodo.module.scss";
-import { LocationsMarquee, type LocationsMarqueeItem } from "./density/LocationsMarquee";
-import marqueeStyles from "./density/locationsMarquee.module.scss";
-import { MetodoInteractive } from "./density/MetodoInteractive";
-import { ParallaxFrameStatic } from "./density/ParallaxFrameStatic";
-import { PricingBlock } from "./density/PricingBlock";
-import { ResourcesLab, type RealArticleLab } from "./density/ResourcesLab";
-import { ScrambleValue } from "./density/ScrambleValue";
-import { SignatureBandTuned } from "./SignatureBandTuned";
-import { VideoBlock } from "./VideoBlock";
+import wrapperStyles from "@/components/sectionWrappers.module.scss";
+import metodoStyles from "@/components/metodo.module.scss";
+import { LocationsMarquee, type LocationsMarqueeItem } from "@/components/LocationsMarquee";
+import marqueeStyles from "@/components/locationsMarquee.module.scss";
+import { MetodoInteractive } from "@/components/MetodoInteractive";
+import { ParallaxFrameStatic } from "@/components/ParallaxFrameStatic";
+import { PricingBlock } from "@/components/PricingBlock";
+import { ResourcesLab, type RealArticleLab } from "@/components/ResourcesLab";
+import { SignatureBandTuned } from "@/components/SignatureBandTuned";
+import { VideoBlock } from "@/components/VideoBlock";
 import { ViewportWidthFix } from "./ViewportWidthFix";
-import { WelcomeBlock } from "./density/WelcomeBlock";
+import { WelcomeBlock } from "@/components/WelcomeBlock";
 
 const LOCALE: Locale = "it";
 
@@ -105,6 +106,13 @@ interface HomePageData {
     ctaLabel?: string;
     photo?: SanityImage;
     youtubeId?: string;
+    // Stage 2c — ambient background-video variant (HeroBackgroundVideo/
+    // HeroVideoActions), separate from youtubeId's click-to-play overlay
+    // above. All three optional/independent — see homePage.ts's own
+    // schema comment.
+    backgroundVideoDesktopUrl?: string;
+    backgroundVideoMobileUrl?: string;
+    backgroundVideoPoster?: SanityImage;
   };
   hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   // Copy pass: was hardcoded (content.ts's WELCOME constant) — now sourced
@@ -138,6 +146,8 @@ interface HomePageData {
   diplomi?: {
     kicker?: string;
     heading?: string;
+    headingEmphasisWord?: string;
+    intro?: string;
     alboLine?: string;
     items?: QualificationItemData[];
   };
@@ -191,14 +201,14 @@ interface HomePageData {
     }[];
   };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
-  sediLab?: {
+  locations?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
     intro?: string;
     onlineSubLine?: string;
   };
-  spaziLab?: {
+  spaces?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
@@ -223,7 +233,7 @@ interface HomePageData {
     googleProfileLabel?: string;
     photo?: SanityImage;
   };
-  contactLab?: {
+  contactSection?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
@@ -310,7 +320,24 @@ export async function DesignLabHomepage({
       sanityFetch<SedeData[]>(sedesQuery, { locale: LOCALE }, ["sede"]),
     ]);
 
+  // messages/{it,en}.json's Diplomi.closeLabel — resolved server-side and
+  // passed down as a prop to every "use client" component that needs it
+  // (DiplomiSlider, CtaBridgeBlock, WelcomeBlock — each wraps a dialog/
+  // lightbox close button), matching this codebase's established
+  // "server-resolved i18n string as a plain prop" convention (Footer.tsx
+  // does the same). Design-lab-to-production migration pass: these three
+  // used to hardcode the Italian literal "Chiudi" directly.
+  const tDiplomi = await getTranslations({ locale: LOCALE, namespace: "Diplomi" });
+  const closeLabel = tDiplomi("closeLabel");
+
   const theSpace = THE_SPACE.it;
+
+  // Stage 2c — hero background-video poster, same fallback chain as
+  // production: homePage.hero.backgroundVideoPoster if set, else the
+  // same hardcoded placeholder interior photo this slot has always used.
+  const heroPosterUrl = homePage?.hero?.backgroundVideoPoster
+    ? urlFor(homePage.hero.backgroundVideoPoster).url()
+    : "/interiors/interior-3.jpg";
 
   const portraitUrl = "/design-lab/photos/01.webp";
   const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
@@ -482,24 +509,13 @@ export async function DesignLabHomepage({
             eyebrow={<SignatureMark className={heroOverlapStyles.heroVideoEyebrow} />}
             backgroundMedia={
               <HeroBackgroundVideo
-                // Real file, per this pass's own instruction — but NOT
-                // verified end-to-end: 792MB, and Chromium never fired
-                // loadedmetadata even after a 3-minute wait (no error
-                // either) — almost certainly an unoptimized export (moov
-                // atom not at the front, so the whole file must be
-                // scanned before metadata is available) on top of being
-                // wildly oversized for a web hero background regardless.
-                // Needs re-encoding (H.264/H.265 MP4, faststart, a few MB
-                // not hundreds) before this is actually usable — see this
-                // pass's own report. Wired to the real path anyway, per
-                // instruction, so swapping in a fixed export needs no
-                // further code change.
-                srcMp4="/video-placeholder.mov"
-                // Poster: still the temporary interior-photo stand-in —
-                // couldn't extract a real frame from the file above for
-                // the same reason (browser couldn't decode/seek it).
-                // Replace once a web-ready export exists.
-                poster="/interiors/interior-3.jpg"
+                // Stage 2c — Sanity-driven, same fields and fallback
+                // chain as production (see homePage.ts's own schema
+                // comment). Neither set -> no <video> mounts, poster
+                // above (heroPosterUrl) is the whole hero.
+                srcDesktop={homePage?.hero?.backgroundVideoDesktopUrl}
+                srcMobile={homePage?.hero?.backgroundVideoMobileUrl}
+                poster={heroPosterUrl}
                 posterAlt=""
               />
             }
@@ -509,6 +525,7 @@ export async function DesignLabHomepage({
                 areeLabel="Perché rivolgersi"
                 contactLabel="Scrivimi"
                 locale={LOCALE}
+                closeLabel={closeLabel}
               />
             }
           />
@@ -564,91 +581,41 @@ export async function DesignLabHomepage({
             authorRegistrationNumber={siteSettings?.author?.registrationNumber}
             areas={areas}
             locale={LOCALE}
+            closeLabel={closeLabel}
           />
 
-          {/* 5. Credentials — light island (same mechanism as Hope, see
-              tone.light-island-surface's own comment). Rebuild pass: real
-              Sanity data (homePage.credentialsBand) replaces the old
-              hardcoded CREDENTIALS constant; the "titoli e specializzazioni"
-              qualifications list is gone entirely (it made this cell
-              stretch, and duplicated Diplomi below, which is the real home
-              for that content — see this pass's own report). No grain
-              layer, same reasoning as Hope: a flat light surface has
-              nothing to layer above. */}
-          <section
-            className={densityStyles.credentialsBandLight}
-            aria-label="Credenziali"
-          >
-            <div className={densityStyles.credentialsInner}>
-              <RevealOnScroll>
-                <p className={densityStyles.credentialsKicker}>
-                  <span className={densityStyles.credentialsKickerRule} aria-hidden="true" />
-                  {homePage?.credentialsBand?.eyebrow ?? ""}
-                </p>
-                <h2 className={densityStyles.credentialsHeading}>
-                  {homePage?.credentialsBand?.heading ?? ""}
-                </h2>
-                <AnimatedDivider className={densityStyles.credentialsRule} />
-                {/* Three-level pass: .credentialsItem/-Value/-Caption are
-                    SHARED with DensityPage.tsx's own (2-level, left-aligned,
-                    dark, divided) Credentials render — confirmed via grep,
-                    same cross-route sharing already found and split last
-                    pass for .credentialsBand. Rather than mutate those
-                    shared classes for a 3-level/centred/gold/dividerless
-                    treatment DensityPage.tsx never asked for, this pass adds
-                    parallel *Light-suffixed classes (credentialsListLight/
-                    -ItemLight/-ValueLight/-CaptionLight) plus the wholly new
-                    credentialsDescription — DensityPage.tsx's own render is
-                    untouched, verified live (see this pass's own report). */}
-                <ul className={densityStyles.credentialsListLight}>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.clinicalPracticeYears ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.clinicalPracticeCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.clinicalPracticeDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.trainingYears ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.trainingCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.trainingDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.locationsCount ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.locationsCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.locationsDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={homePage?.credentialsBand?.languagesValue ?? ""} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.languagesCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.languagesDescription ?? ""}
-                    </p>
-                  </li>
-                </ul>
-              </RevealOnScroll>
-            </div>
-          </section>
+          {/* 5. Credentials — extracted to its own component
+              (design-lab-to-production migration), see CredentialsBand.tsx's
+              own comment. The "titoli e specializzazioni" qualifications
+              list stays gone entirely (it made this cell stretch, and
+              duplicated Diplomi below, which is the real home for that
+              content — see the earlier §9-compliance pass's own report). */}
+          <CredentialsBand
+            eyebrow={homePage?.credentialsBand?.eyebrow ?? ""}
+            heading={homePage?.credentialsBand?.heading ?? ""}
+            items={[
+              {
+                value: String(homePage?.credentialsBand?.clinicalPracticeYears ?? ""),
+                caption: homePage?.credentialsBand?.clinicalPracticeCaption ?? "",
+                description: homePage?.credentialsBand?.clinicalPracticeDescription ?? "",
+              },
+              {
+                value: String(homePage?.credentialsBand?.trainingYears ?? ""),
+                caption: homePage?.credentialsBand?.trainingCaption ?? "",
+                description: homePage?.credentialsBand?.trainingDescription ?? "",
+              },
+              {
+                value: String(homePage?.credentialsBand?.locationsCount ?? ""),
+                caption: homePage?.credentialsBand?.locationsCaption ?? "",
+                description: homePage?.credentialsBand?.locationsDescription ?? "",
+              },
+              {
+                value: homePage?.credentialsBand?.languagesValue ?? "",
+                caption: homePage?.credentialsBand?.languagesCaption ?? "",
+                description: homePage?.credentialsBand?.languagesDescription ?? "",
+              },
+            ]}
+          />
 
           {/* 6. Aree — tone-mid. AreeSection is a REAL shared component;
             the wrapper reassigns --color-text/-muted/-hairline/-accent
@@ -725,6 +692,7 @@ export async function DesignLabHomepage({
               body={ctaBridge?.body ?? ""}
               linkLabel={ctaBridge?.linkLabel ?? ""}
               locale={LOCALE}
+              closeLabel={closeLabel}
             />
           </RevealOnScroll>
 
@@ -753,19 +721,23 @@ export async function DesignLabHomepage({
             to their own base values, which were already commented "tuned
             against tone-base (ivory)" — exactly this surface.
 
-            Heading-zone pass: kicker/heading/intro/Albo-line copy is now
-            HARDCODED inside DiplomiSlider.tsx itself, not read from
-            homePage.diplomi.kicker/.heading/.alboLine — those three fields
-            DO exist in the schema, but they're the SAME fields the real,
-            production DiplomiSection reads (src/app/[locale]/page.tsx:
-            kicker={homePage?.diplomi?.kicker}, etc.) — patching them to
-            this pass's new draft copy would change what's live on the real
-            site, not just this preview. See DiplomiSlider.tsx's own
-            comment for the full reasoning and the hardcoded strings. */}
+            Heading-zone pass: design-lab-to-production migration — the
+            copy that used to be DRAFT/hardcoded inside DiplomiSlider.tsx
+            now lives in homePage.diplomi.kicker/.heading/
+            .headingEmphasisWord/.intro/.alboLine, the SAME fields the
+            now-retired production DiplomiSection route used to read
+            (src/app/[locale]/page.tsx swaps to this same DiplomiSlider —
+            both consumers read the identical shared data now, by design). */}
           <div className={densityStyles.diplomiLightWrap}>
             <section className={densityStyles.section} aria-labelledby="diplomi-block-heading">
               <DiplomiSlider
                 headingId="diplomi-block-heading"
+                kicker={homePage?.diplomi?.kicker ?? ""}
+                heading={homePage?.diplomi?.heading ?? ""}
+                headingEmphasisWord={homePage?.diplomi?.headingEmphasisWord}
+                intro={homePage?.diplomi?.intro}
+                alboLine={homePage?.diplomi?.alboLine}
+                closeLabel={closeLabel}
                 items={diplomiLabItems}
               />
             </section>
@@ -800,11 +772,11 @@ export async function DesignLabHomepage({
           <SediMapProvider>
             <RevealOnScroll>
               <SediBlock
-                kicker={homePage?.sediLab?.kicker ?? ""}
-                heading={homePage?.sediLab?.heading ?? ""}
-                headingEmphasisWord={homePage?.sediLab?.headingEmphasisWord}
-                intro={homePage?.sediLab?.intro}
-                onlineSubLine={homePage?.sediLab?.onlineSubLine}
+                kicker={homePage?.locations?.kicker ?? ""}
+                heading={homePage?.locations?.heading ?? ""}
+                headingEmphasisWord={homePage?.locations?.headingEmphasisWord}
+                intro={homePage?.locations?.intro}
+                onlineSubLine={homePage?.locations?.onlineSubLine}
                 sedes={sedes}
                 locale={LOCALE}
               />
@@ -822,10 +794,10 @@ export async function DesignLabHomepage({
             <div className={densityStyles.toneMidWrap}>
               <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
                 <LocationsMarquee
-                  kicker={homePage?.spaziLab?.kicker ?? ""}
-                  heading={homePage?.spaziLab?.heading ?? ""}
-                  headingEmphasisWord={homePage?.spaziLab?.headingEmphasisWord}
-                  introLine={homePage?.spaziLab?.introLine}
+                  kicker={homePage?.spaces?.kicker ?? ""}
+                  heading={homePage?.spaces?.heading ?? ""}
+                  headingEmphasisWord={homePage?.spaces?.headingEmphasisWord}
+                  introLine={homePage?.spaces?.introLine}
                   allPhotosReal={allPhotosReal}
                   items={marqueeItems}
                 />
@@ -836,15 +808,15 @@ export async function DesignLabHomepage({
           {/* 14. Contact final — light-surface pass: reversed off tone-deep
             onto light-island (.contactLightWrap, contactBlock.module.scss),
             the last dark section on this page per that pass's own brief.
-            contactLab is this block's own independent kicker/heading/
+            contactSection is this block's own independent kicker/heading/
             caption field group (separate from the shared finalCta above,
-            same reasoning as sediLab/spaziLab) — googleProfileLabel is the
+            same reasoning as locations/spaces) — googleProfileLabel is the
             one field still read from finalCta, untouched by this pass. */}
           <ContactBlock
-            kicker={homePage?.contactLab?.kicker ?? ""}
-            heading={homePage?.contactLab?.heading ?? ""}
-            headingEmphasisWord={homePage?.contactLab?.headingEmphasisWord}
-            photoCaption={homePage?.contactLab?.photoCaption ?? ""}
+            kicker={homePage?.contactSection?.kicker ?? ""}
+            heading={homePage?.contactSection?.heading ?? ""}
+            headingEmphasisWord={homePage?.contactSection?.headingEmphasisWord}
+            photoCaption={homePage?.contactSection?.photoCaption ?? ""}
             googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
             googleProfileUrl={siteSettings?.googleProfileUrl}
             locale={LOCALE}
@@ -869,8 +841,8 @@ export async function DesignLabHomepage({
             border) + .fullBleedFrame with the .spaceFrameFlush modifier
             (zero margin) — .section and .fullBleedFrame themselves stay
             exactly as they are for every other consumer. */}
-          <section className={densityStyles.spaceSection}>
-            <figure className={`${densityStyles.fullBleedFrame} ${densityStyles.spaceFrameFlush}`}>
+          <section className={wrapperStyles.spaceSection}>
+            <figure className={`${wrapperStyles.fullBleedFrame} ${wrapperStyles.spaceFrameFlush}`}>
               <ParallaxFrameStatic
                 aspect={theSpace.blocks[0]?.aspect}
                 imageUrl={roomPhotoUrl}
