@@ -22,15 +22,19 @@ export type DiplomiLabItem = {
   height: number;
 };
 
-// Diplomi rebuild (framed-certificate slider) — a NEW, dedicated
-// component for /design-lab only. DiplomiBlock.tsx (the existing
-// density/ component) is ALSO rendered by /design-lab/density
+// Diplomi rebuild (framed-certificate slider) — a NEW component,
+// originally /design-lab only, now (design-lab-to-production migration)
+// also rendered by the real production homepage (src/app/[locale]/
+// page.tsx), reading the same shared homePage.diplomi.* fields both
+// consumers already used for kicker/heading/alboLine (now also
+// headingEmphasisWord/intro, added this migration). DiplomiBlock.tsx (the
+// existing density/ component) is ALSO rendered by /design-lab/density
 // (DensityPage.tsx imports it directly, with its own separate,
 // hardcoded-and-scan-less DIPLOMI array) — redesigning it in place would
 // have silently redesigned that other route's Diplomi section too, out of
-// this pass's own scope. Left DiplomiBlock.tsx/diplomi.module.scss
-// completely untouched; this file is /design-lab's own instance instead,
-// same pattern already used for Welcome/Contact/Sedi.
+// scope for this file. Left DiplomiBlock.tsx/diplomi.module.scss
+// completely untouched; this file is its own instance instead, same
+// pattern already used for Welcome/Contact/Sedi.
 //
 // Slider mechanics mirror DiplomiCardRow.tsx (scroll-snap + arrows +
 // edge-fade + overflow detection, same rAF/passive-listener technique) —
@@ -39,18 +43,55 @@ export type DiplomiLabItem = {
 // cover every input; drag risks swallowing the card's own link clicks).
 //
 // Lightbox pass: QualificationLightboxLab is a NEW component, not the
-// shared QualificationDialog.tsx — that file is imported by the REAL
-// production DiplomiSection (src/app/[locale]/page.tsx), so editing it for
-// this pass's own requirements (Lenis scroll-lock, prev/next cycling
-// restricted to interactive-only items, the redaction caption line, the
-// capped-and-lazy image pipeline) would have changed production behaviour
-// too. Same "shared component diverges -> new, separately-named one, don't
-// mutate" call this whole route makes repeatedly.
+// shared QualificationDialog.tsx — that file is imported by the OLDER
+// production DiplomiSection (now retired from page.tsx, left untouched,
+// unused), so editing it for this pass's own requirements (Lenis
+// scroll-lock, prev/next cycling restricted to interactive-only items,
+// the redaction caption line, the capped-and-lazy image pipeline) would
+// have changed that other component's behaviour too. Same "shared
+// component diverges -> new, separately-named one, don't mutate" call
+// this whole route makes repeatedly.
+//
+// Heading-zone copy (kicker/heading/headingEmphasisWord/intro/alboLine)
+// is now a set of real props, sourced from homePage.diplomi.* by both
+// callers — was hardcoded directly in this file's own JSX before the
+// design-lab-to-production migration (see git history for the prior
+// DRAFT copy this replaced). closeLabel is likewise now a prop (resolved
+// server-side via getTranslations by both callers, messages/{it,en}.json's
+// Diplomi.closeLabel) rather than the literal "Chiudi" this file used to
+// hardcode regardless of locale.
+function renderHeadingEmphasis(text: string, emphasisWord: string | undefined, emphasisClassName: string) {
+  if (!emphasisWord) return text;
+  const index = text.indexOf(emphasisWord);
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const after = text.slice(index + emphasisWord.length);
+  return (
+    <>
+      {before}
+      <em className={emphasisClassName}>{emphasisWord}</em>
+      {after}
+    </>
+  );
+}
+
 export function DiplomiSlider({
   headingId,
+  kicker,
+  heading,
+  headingEmphasisWord,
+  intro,
+  alboLine,
+  closeLabel,
   items,
 }: {
   headingId: string;
+  kicker: string;
+  heading: string;
+  headingEmphasisWord?: string;
+  intro?: string;
+  alboLine?: string;
+  closeLabel: string;
   items: DiplomiLabItem[];
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
@@ -119,41 +160,29 @@ export function DiplomiSlider({
     <>
       {/* Heading zone — two columns at md+ (density principle: a single
           narrow column leaving half the container empty is prohibited).
-          Kicker/heading/intro/Albo-line copy is DRAFT, hardcoded here, not
-          read from homePage.diplomi.kicker/.heading/.alboLine — see
-          DesignLabHomepage.tsx's own comment on the DiplomiSlider call
-          site for why those three fields specifically couldn't be reused
-          (they're shared with the real production DiplomiSection). TODO:
-          if this copy is approved, the clean fix is a NEW, design-lab-only
-          field group (mirroring homePage.profilo vs. chiSonoSection),
-          not overwriting the shared diplomi fields. */}
+          Kicker/heading/intro/Albo-line all come from props now (homePage.
+          diplomi.*, resolved by the caller) — see this file's own top
+          comment. */}
       <div className={styles.headingZone}>
         <div className={styles.headingLeft}>
           <p className={styles.headingKicker}>
             <span className={styles.headingKickerRule} aria-hidden="true" />
-            PERCORSO FORMATIVO
+            {kicker}
           </p>
           {/* font-synthesis: none — deliberate. If the genuine EB Garamond
-              italic face isn't loaded/subset, "formazione" should render
-              upright (a visible, reportable font-loading bug) rather than
-              a browser-faked skew standing in for it unnoticed. */}
+              italic face isn't loaded/subset, the emphasized word should
+              render upright (a visible, reportable font-loading bug)
+              rather than a browser-faked skew standing in for it
+              unnoticed. */}
           <h2 id={headingId} className={styles.headingH2} style={{ fontSynthesis: "none" }}>
-            Quattordici anni di <em className={styles.headingAccent}>formazione</em>.
+            {renderHeadingEmphasis(heading, headingEmphasisWord, styles.headingAccent!)}
           </h2>
         </div>
         <div className={styles.headingRight}>
-          {/* DRAFT — pending client approval, per this pass's own brief. */}
-          <p className={styles.headingIntro}>
-            I titoli che seguono sono quelli su cui si basa il mio lavoro: la laurea, il master di
-            ricerca, la specializzazione in psicoterapia. Sono documenti pubblici e consultabili.
-          </p>
-          {/* Moved here from beneath the card row, per this pass's own
-              brief — no date/place of birth added anywhere, this is the
-              exact verbatim line given. */}
-          <p className={styles.headingAlboLine}>
-            Iscritto all&apos;Albo degli Psicologi della Lombardia, sezione A, n. 18949 — dal 15
-            settembre 2016.
-          </p>
+          {intro ? <p className={styles.headingIntro}>{intro}</p> : null}
+          {/* Moved here from beneath the card row, per the original
+              design-lab brief. */}
+          {alboLine ? <p className={styles.headingAlboLine}>{alboLine}</p> : null}
         </div>
       </div>
 
@@ -264,7 +293,7 @@ export function DiplomiSlider({
         </ul>
       </div>
 
-      <QualificationLightboxLab ref={lightboxRef} items={interactiveItems} closeLabel="Chiudi" />
+      <QualificationLightboxLab ref={lightboxRef} items={interactiveItems} closeLabel={closeLabel} />
     </>
   );
 }

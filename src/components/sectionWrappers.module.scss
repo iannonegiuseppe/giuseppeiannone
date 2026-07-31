@@ -1,0 +1,51 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Design-lab-to-production migration: the three section-wrapper classes
+// production actually reaches for (Metodo's full-bleed light-island band,
+// the shared container/padding/hairline .section shell it and Diplomi
+// both sit inside, and Diplomi's own light-island band) — split out of
+// src/app/design-lab/density/density.module.scss rather than moved
+// wholesale, since that file backs dozens of other /design-lab-only
+// sections production never renders (moving it whole would just
+// repackage the same "production depends on the doomed directory"
+// problem this split exists to fix).
+//
+// Single source of truth: each rule below is a MIXIN, not just a class.
+// density.module.scss's own same-named classes (.metodoLightWrap/
+// .section/.diplomiLightWrap — still used by every other /design-lab
+// section that isn't part of this migration) @include these same mixins
+// instead of repeating the declarations — see that file's own comment.
+// Never edit a declaration in one place without the other; there's only
+// one real body, here.
+@mixin metodo-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  overflow: hidden;
+  --metodo-numeral-alpha: 12%;
+}
+
+@mixin section {
+  @include mixins.container;
+  padding-block: var(--space-band-y);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+@mixin diplomi-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.metodoLightWrap {
+  @include metodo-light-wrap;
+}
+
+.section {
+  @include section;
+}
+
+.diplomiLightWrap {
+  @include diplomi-light-wrap;
+}

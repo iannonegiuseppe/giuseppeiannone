@@ -1,5 +1,6 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { AnimatedDivider } from "@/components/AnimatedDivider";
 import { AreeSection } from "@/components/AreeSection";
 import { FaqSection } from "@/components/FaqSection";
@@ -27,10 +28,10 @@ import {
 } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
 import { imageDimensions, urlFor } from "@/sanity/image";
-import { ChiSonoBlock } from "./density/ChiSonoBlock";
+import { ChiSonoBlock } from "@/components/ChiSonoBlock";
 import { ContactBlock } from "./density/ContactBlock";
 import { CtaBridgeBlock } from "./CtaBridgeBlock";
-import { DiplomiSlider, type DiplomiLabItem } from "./density/DiplomiSlider";
+import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
 import { FooterLab } from "./density/FooterLab";
 import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
 import { HeroVideoActions } from "./HeroVideoActions";
@@ -38,10 +39,10 @@ import {
   THE_SPACE,
 } from "./density/content";
 import densityStyles from "./density/density.module.scss";
-import metodoStyles from "./density/metodo.module.scss";
+import metodoStyles from "@/components/metodo.module.scss";
 import { LocationsMarquee, type LocationsMarqueeItem } from "./density/LocationsMarquee";
 import marqueeStyles from "./density/locationsMarquee.module.scss";
-import { MetodoInteractive } from "./density/MetodoInteractive";
+import { MetodoInteractive } from "@/components/MetodoInteractive";
 import { ParallaxFrameStatic } from "./density/ParallaxFrameStatic";
 import { PricingBlock } from "./density/PricingBlock";
 import { ResourcesLab, type RealArticleLab } from "./density/ResourcesLab";
@@ -49,7 +50,7 @@ import { ScrambleValue } from "./density/ScrambleValue";
 import { SignatureBandTuned } from "./SignatureBandTuned";
 import { VideoBlock } from "./VideoBlock";
 import { ViewportWidthFix } from "./ViewportWidthFix";
-import { WelcomeBlock } from "./density/WelcomeBlock";
+import { WelcomeBlock } from "@/components/WelcomeBlock";
 
 const LOCALE: Locale = "it";
 
@@ -138,6 +139,8 @@ interface HomePageData {
   diplomi?: {
     kicker?: string;
     heading?: string;
+    headingEmphasisWord?: string;
+    intro?: string;
     alboLine?: string;
     items?: QualificationItemData[];
   };
@@ -309,6 +312,16 @@ export async function DesignLabHomepage({
       ]),
       sanityFetch<SedeData[]>(sedesQuery, { locale: LOCALE }, ["sede"]),
     ]);
+
+  // messages/{it,en}.json's Diplomi.closeLabel — resolved server-side and
+  // passed down as a prop to every "use client" component that needs it
+  // (DiplomiSlider, CtaBridgeBlock, WelcomeBlock — each wraps a dialog/
+  // lightbox close button), matching this codebase's established
+  // "server-resolved i18n string as a plain prop" convention (Footer.tsx
+  // does the same). Design-lab-to-production migration pass: these three
+  // used to hardcode the Italian literal "Chiudi" directly.
+  const tDiplomi = await getTranslations({ locale: LOCALE, namespace: "Diplomi" });
+  const closeLabel = tDiplomi("closeLabel");
 
   const theSpace = THE_SPACE.it;
 
@@ -564,6 +577,7 @@ export async function DesignLabHomepage({
             authorRegistrationNumber={siteSettings?.author?.registrationNumber}
             areas={areas}
             locale={LOCALE}
+            closeLabel={closeLabel}
           />
 
           {/* 5. Credentials — light island (same mechanism as Hope, see
@@ -725,6 +739,7 @@ export async function DesignLabHomepage({
               body={ctaBridge?.body ?? ""}
               linkLabel={ctaBridge?.linkLabel ?? ""}
               locale={LOCALE}
+              closeLabel={closeLabel}
             />
           </RevealOnScroll>
 
@@ -753,19 +768,23 @@ export async function DesignLabHomepage({
             to their own base values, which were already commented "tuned
             against tone-base (ivory)" — exactly this surface.
 
-            Heading-zone pass: kicker/heading/intro/Albo-line copy is now
-            HARDCODED inside DiplomiSlider.tsx itself, not read from
-            homePage.diplomi.kicker/.heading/.alboLine — those three fields
-            DO exist in the schema, but they're the SAME fields the real,
-            production DiplomiSection reads (src/app/[locale]/page.tsx:
-            kicker={homePage?.diplomi?.kicker}, etc.) — patching them to
-            this pass's new draft copy would change what's live on the real
-            site, not just this preview. See DiplomiSlider.tsx's own
-            comment for the full reasoning and the hardcoded strings. */}
+            Heading-zone pass: design-lab-to-production migration — the
+            copy that used to be DRAFT/hardcoded inside DiplomiSlider.tsx
+            now lives in homePage.diplomi.kicker/.heading/
+            .headingEmphasisWord/.intro/.alboLine, the SAME fields the
+            now-retired production DiplomiSection route used to read
+            (src/app/[locale]/page.tsx swaps to this same DiplomiSlider —
+            both consumers read the identical shared data now, by design). */}
           <div className={densityStyles.diplomiLightWrap}>
             <section className={densityStyles.section} aria-labelledby="diplomi-block-heading">
               <DiplomiSlider
                 headingId="diplomi-block-heading"
+                kicker={homePage?.diplomi?.kicker ?? ""}
+                heading={homePage?.diplomi?.heading ?? ""}
+                headingEmphasisWord={homePage?.diplomi?.headingEmphasisWord}
+                intro={homePage?.diplomi?.intro}
+                alboLine={homePage?.diplomi?.alboLine}
+                closeLabel={closeLabel}
                 items={diplomiLabItems}
               />
             </section>

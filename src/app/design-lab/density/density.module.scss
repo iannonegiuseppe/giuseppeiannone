@@ -1,5 +1,12 @@
 @use "../../../styles/mixins";
-@use "./tone";
+@use "../../../styles/tone";
+// .metodoLightWrap/.section/.diplomiLightWrap below now @include their
+// declarations from here (design-lab-to-production migration) rather than
+// declaring them directly — src/components/sectionWrappers.module.scss is
+// the single source of truth, since production also consumes these three
+// (see that file's own comment). Every other class in this stylesheet is
+// untouched.
+@use "../../../components/sectionWrappers.module.scss" as wrappers;
 
 // C1 fix: every full-bleed element on this page (.hopeSection,
 // .credentialsBand, .marqueeSection, .zigzagBleed, .fullBleedFrame,
@@ -50,9 +57,7 @@
 }
 
 .section {
-  @include mixins.container;
-  padding-block: var(--space-band-y);
-  border-bottom: 1px solid var(--color-hairline);
+  @include wrappers.section;
 }
 
 .sectionLabel {
@@ -388,12 +393,7 @@
 // stepTitle/stepText's own real content (see this pass's own report for
 // the live-sampled comparison this value was picked from).
 .metodoLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
-  width: var(--vw100, 100vw);
-  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
-  overflow: hidden;
-  --metodo-numeral-alpha: 12%;
+  @include wrappers.metodo-light-wrap;
 }
 
 // Rebuild pass: eyebrow + heading + divider, added above the four cells —
@@ -515,8 +515,7 @@
 // own top-level sections already render unconstrained, the same reason
 // .toneMidWrap above never needed it either.
 .diplomiLightWrap {
-  @include tone.light-island-surface;
-  position: relative;
+  @include wrappers.diplomi-light-wrap;
 }
 
 // tone-deep wrapper for CTA bridge / Video specifically — NOT the same

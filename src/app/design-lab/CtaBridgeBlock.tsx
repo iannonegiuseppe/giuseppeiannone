@@ -58,12 +58,14 @@ export function CtaBridgeBlock({
   body,
   linkLabel,
   locale,
+  closeLabel,
 }: {
   title: string;
   titleEmphasis?: string;
   body: string;
   linkLabel: string;
   locale: Locale;
+  closeLabel: string;
 }) {
   const contactDialogRef = useRef<ContactFormDialogHandle>(null);
 
@@ -92,7 +94,7 @@ export function CtaBridgeBlock({
           </div>
         </div>
       </div>
-      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel="Chiudi" />
+      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel={closeLabel} />
     </section>
   );
 }

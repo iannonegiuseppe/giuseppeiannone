@@ -1,5 +1,11 @@
-@use "../../../styles/mixins";
-@use "./tone";
+@use "../styles/mixins";
+// tone.light-island-surface — this component's own SCSS uses the
+// tonal-mixin system directly (not just via a caller's wrapper class the
+// way Metodo/Diplomi do). _tone.scss now lives in src/styles/ alongside
+// mixins/tokens (design-lab-to-production migration) — it's the tonal-
+// surface system the whole production page depends on now, not a
+// design-lab-only file.
+@use "../styles/tone";
 
 // Layout-delta pass (Cyprus "Welcome to..." composition) — was tone-mid,
 // both themes; moved to tone-base this pass (see this pass's own report)

@@ -191,6 +191,8 @@ export const homePageQuery = defineQuery(`
     diplomi{
       kicker,
       heading,
+      headingEmphasisWord,
+      intro,
       alboLine,
       items[]{
         _key,
@@ -351,16 +353,16 @@ export const latestArticlesQuery = defineQuery(`
   }
 `);
 
-// Risorse overlay-hero pass (design-lab only) — a SEPARATE query, not an
-// extension of latestArticlesQuery above: that one is also read by the
-// real production homepage (src/app/[locale]/page.tsx), and this pass
-// needs two things production doesn't fetch yet (cover, body — the
-// latter only to derive an excerpt from, never rendered as body copy
-// here) plus a 4th article (1 featured + 3 cards). Keeping them
+// Risorse pass (design-lab only) — a SEPARATE query, not an extension of
+// latestArticlesQuery above: that one is also read by the real
+// production homepage (src/app/[locale]/page.tsx), and this pass needs
+// two things production doesn't fetch yet (cover, body — the latter only
+// to derive an excerpt from, never rendered as body copy here). Three
+// most recent only (no featured article anymore) — keeping them
 // independent means the production query's own shape/cost never changes
 // because of this pass.
 export const latestArticlesLabQuery = defineQuery(`
-  *[_type == "article" && language == $locale] | order(publishedAt desc) [0...4] {
+  *[_type == "article" && language == $locale] | order(publishedAt desc) [0...3] {
     _id,
     title,
     "slug": slug.current,

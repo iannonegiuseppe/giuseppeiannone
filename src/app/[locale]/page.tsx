@@ -1,13 +1,10 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AreeSection } from "@/components/AreeSection";
-import { ChiSonoSection } from "@/components/ChiSonoSection";
 import { CtaBridgeSection } from "@/components/CtaBridgeSection";
-import { DiplomiSection } from "@/components/DiplomiSection";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import { HopeSection } from "@/components/HopeSection";
-import { JourneySection } from "@/components/JourneySection";
 import { FaqSection } from "@/components/FaqSection";
 import { FinalContactSection } from "@/components/FinalContactSection";
 import { LocationsSection, type SedeData } from "@/components/LocationsSection";
@@ -19,17 +16,38 @@ import {
 import { SignatureBand } from "@/components/SignatureBand";
 import { VideoSection } from "@/components/VideoSection";
 import { sanityFetch } from "@/sanity/client";
+import { imageDimensions, urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
 import {
   areasQuery,
   areeSectionQuery,
-  chiSonoSectionQuery,
   ctaBridgeSectionQuery,
   homePageQuery,
   latestArticlesQuery,
   sedesQuery,
 } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+// Design-lab-to-production migration — these now render in place of
+// JourneySection/ChiSonoSection/DiplomiSection (all three still real
+// files, just no longer imported here — see this file's own comments at
+// each render site for why). ChiSonoBlock/DiplomiSlider/WelcomeBlock/
+// MetodoInteractive and their SCSS modules (plus QualificationLightboxLab,
+// pulled in by DiplomiSlider) were moved from src/app/design-lab/density/
+// into src/components/ — that directory belongs to the separate, out-of-
+// scope /design-lab/density route and is slated for removal/re-gating; a
+// production page can't depend on it. These are no longer forks, they're
+// the real shared implementation now. sectionWrappers.module.scss is a
+// NEW file, split out of density.module.scss (which stays in design-lab,
+// still backing dozens of sections this page never renders) — it holds
+// only the three wrapper classes this page actually uses
+// (.metodoLightWrap/.section/.diplomiLightWrap), as mixins density.module
+// .scss's own same-named classes now @include too, so there's one source
+// of truth, not two copies that can drift.
+import { ChiSonoBlock } from "@/components/ChiSonoBlock";
+import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
+import { MetodoInteractive } from "@/components/MetodoInteractive";
+import metodoStyles from "@/components/metodo.module.scss";
+import sectionWrapperStyles from "@/components/sectionWrappers.module.scss";
 
 // PREVIEW-GATE (temporary) — restoring the rest of the real homepage:
 // 1. Restore these imports (uncomment): FormazioneBand, PricingSection,
@@ -68,13 +86,14 @@ import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 // Locations un-gated in the locations map pass — sedesQuery already
 // existed, reads the existing `sede` document type, now extended with
 // district/photo fields, see that pass's own report).
-// ChiSonoSection keeps id="chi-sono" on its own root section — the
-// header's "Chi sono" nav link still anchor-scrolls there rather than
-// routing to the future full /chi-sono page (see headerNavItems.ts's
-// own PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched
-// here, it reverses only once /chi-sono is actually built, a separate,
-// later pass). "Metodo" already resolves to this page's own #metodo
-// anchor, unaffected by any of this.
+// ChiSonoBlock (design-lab-to-production migration; was ChiSonoSection)
+// keeps id="chi-sono" on its own root section — the header's "Chi sono"
+// nav link still anchor-scrolls there rather than routing to the future
+// full /chi-sono page (see headerNavItems.ts's own
+// PREVIEW_GATE_ANCHOR_OVERRIDES comment — that gate is untouched here, it
+// reverses only once /chi-sono is actually built, a separate, later
+// pass). "Metodo" (now MetodoInteractive, was JourneySection) still
+// resolves to this page's own #metodo anchor, unaffected by any of this.
 // import { FormazioneBand } from "@/components/FormazioneBand";
 // import { PricingSection } from "@/components/PricingSection";
 
@@ -86,18 +105,12 @@ interface QualificationItemData {
   tier: "titolo" | "formazione_continua";
   document?: SanityImage;
   documentLqip?: string;
-}
-
-interface ChiSonoSectionData {
-  kicker?: string;
-  title?: string;
-  titleEmphasisWord?: string;
-  paragraphs?: string[];
-  pullQuote?: string;
-  portrait?: SanityImage & { alt?: string };
-  portraitLqip?: string;
-  storyLink?: { current?: string };
-  signatureEnabled?: boolean;
+  // Privacy-gate pair — see homePage.ts's own comment on these two fields
+  // and DiplomiSlider.tsx's own comment on the interactivity logic that
+  // reads them exclusively (never `document` above).
+  scan?: SanityImage;
+  scanRedacted?: boolean;
+  scanLqip?: string;
 }
 
 interface AreeSectionData {
@@ -162,15 +175,34 @@ interface HomePageData {
   diplomi?: {
     kicker?: string;
     heading?: string;
+    headingEmphasisWord?: string;
+    intro?: string;
     alboLine?: string;
     items?: QualificationItemData[];
   };
+  // DEPRECATED as of the design-lab-to-production migration — see
+  // homePage.ts's own schema comment. No longer rendered (superseded by
+  // "metodo" below); kept typed/fetched since the underlying field group
+  // is intentionally left intact, not deleted.
   percorso?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
     paragraph?: string;
     steps?: { title: string; shortLine: string; expandedText: string }[];
+  };
+  metodo?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    paragraph?: string;
+    steps?: { title: string; shortLine: string }[];
+  };
+  profilo?: {
+    eyebrow?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    paragraphs?: string[];
   };
   recognition?: {
     kicker?: string;
@@ -228,6 +260,26 @@ interface HomePageData {
 // `en: "/en"` is restored below; proxy.ts's own matching
 // EN_GATED_PATHNAMES block should be removed in lockstep (see that
 // file).
+// Same small substring-split-and-wrap helper DesignLabHomepage.tsx/
+// CtaBridgeBlock.tsx/PricingBlock.tsx/ChiSonoBlock.tsx each already have
+// their own copy of — matching this codebase's established convention
+// (see ChiSonoBlock.tsx's own comment) rather than extracting a shared
+// one. Used for Metodo's heading <em> here.
+function renderHeadingEmphasis(text: string, emphasisWord: string | undefined, emphasisClassName: string) {
+  if (!emphasisWord) return text;
+  const index = text.indexOf(emphasisWord);
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const after = text.slice(index + emphasisWord.length);
+  return (
+    <>
+      {before}
+      <em className={emphasisClassName}>{emphasisWord}</em>
+      {after}
+    </>
+  );
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -254,19 +306,21 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // Diplomi/Faq/FinalContact's data all come straight off the same
-  // homePage fetch (homePage.diplomi.items / .faq / .finalCta), no
-  // separate query. chiSonoSection/areeSection are each their OWN
-  // standalone singleton (not a homePage field group — see each schema
-  // file's own comment), so they need their own fetch, tagged for the
-  // revalidation webhook; areas is a separate plain list type (see
+  // Diplomi/Metodo/Profilo/Faq/FinalContact's data all come straight off
+  // the same homePage fetch (homePage.diplomi.items / .metodo / .profilo /
+  // .faq / .finalCta), no separate query. Design-lab-to-production
+  // migration: chiSonoSection is no longer fetched here at all — it's
+  // deprecated/orphaned (see its own schema comment), superseded by
+  // homePage.profilo, and nothing in this file reads it anymore. areeSection
+  // is its own standalone singleton (not a homePage field group — see that
+  // schema file's own comment), so it still needs its own fetch, tagged for
+  // the revalidation webhook; areas is a separate plain list type (see
   // area.ts's own comment), fetched alongside its section's header copy.
   // sedes (Locations/"Sedi") is the same established pattern — its own
   // plain list type (`sede`), tagged "sede" for the revalidation webhook,
   // live again as of the locations map pass.
-  const [homePage, chiSono, aree, areas, ctaBridge, siteSettings, realArticles, sedes] = await Promise.all([
+  const [homePage, aree, areas, ctaBridge, siteSettings, realArticles, sedes] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
-    sanityFetch<ChiSonoSectionData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
     sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
     sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
     sanityFetch<CtaBridgeSectionData | null>(ctaBridgeSectionQuery, { locale }, ["ctaBridgeSection"]),
@@ -274,6 +328,41 @@ export default async function Home({
     sanityFetch<RealArticle[]>(latestArticlesQuery, { locale }, ["article"]),
     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
   ]);
+
+  // messages/{it,en}.json's Diplomi.closeLabel — resolved server-side,
+  // passed down as a prop to DiplomiSlider's lightbox close button (a
+  // "use client" component, can't call getTranslations itself). Design-
+  // lab-to-production migration: this used to be a hardcoded Italian
+  // literal ("Chiudi") regardless of locale.
+  const tDiplomi = await getTranslations({ locale, namespace: "Diplomi" });
+  const closeLabel = tDiplomi("closeLabel");
+
+  // Privacy-gate pass, copied verbatim from DesignLabHomepage.tsx (see
+  // that file's own comment for the full reasoning): interactivity is
+  // computed HERE, server-side, from scan + scanRedacted — never left to
+  // the client to infer, and never read from `document` (the older,
+  // separate field this array item type also carries). lightboxUrl is a
+  // URL STRING built with urlFor (free string construction, not a network
+  // request); scanLqip is a tiny inline base64 data URI already present in
+  // the page's own JSON payload.
+  const diplomiLabItems: DiplomiLabItem[] = (homePage?.diplomi?.items ?? []).map((item) => {
+    const interactive = Boolean(item.scan) && item.scanRedacted === true;
+    const dims = item.scan ? imageDimensions(item.scan) : null;
+    return {
+      id: item._key,
+      year: item.year,
+      title: item.title,
+      institution: item.institution,
+      interactive,
+      scanLqip: interactive ? item.scanLqip : undefined,
+      lightboxUrl:
+        interactive && item.scan
+          ? urlFor(item.scan).width(2000).quality(82).format("webp").url()
+          : undefined,
+      width: dims?.width ?? 1400,
+      height: dims?.height ?? 1980,
+    };
+  });
 
   return (
     <main>
@@ -300,31 +389,51 @@ export default async function Home({
         headingEmphasisWord={homePage?.hope?.headingEmphasisWord}
       />
 
-      <JourneySection
-        kicker={homePage?.percorso?.kicker ?? ""}
-        heading={homePage?.percorso?.heading ?? ""}
-        headingEmphasisWord={homePage?.percorso?.headingEmphasisWord}
-        paragraph={homePage?.percorso?.paragraph}
-        steps={homePage?.percorso?.steps}
-      />
+      {/* Design-lab-to-production migration: MetodoInteractive replaces
+          JourneySection here — homePage.percorso (kicker/heading/steps,
+          including the click-to-expand expandedText panel) is no longer
+          rendered anywhere; homePage.metodo (title + shortLine per step
+          only) is the new source. id="metodo" preserves the header nav
+          anchor JourneySection's own root used to carry. */}
+      <div className={sectionWrapperStyles.metodoLightWrap}>
+        <section
+          id="metodo"
+          className={sectionWrapperStyles.section}
+          aria-labelledby="metodo-heading"
+        >
+          <p className={metodoStyles.eyebrow}>
+            <span className={metodoStyles.eyebrowRule} aria-hidden="true" />
+            {homePage?.metodo?.kicker ?? ""}
+          </p>
+          <h2 id="metodo-heading" className={metodoStyles.heading}>
+            {renderHeadingEmphasis(
+              homePage?.metodo?.heading ?? "",
+              homePage?.metodo?.headingEmphasisWord,
+              metodoStyles.headingEmphasis!,
+            )}
+          </h2>
+          <MetodoInteractive steps={homePage?.metodo?.steps ?? []} />
+        </section>
+      </div>
 
-      {/* Section-reorder pass: Chi sono now comes BEFORE Diplomi (was
-          after) — Metodo -> Chi sono -> Diplomi -> Areas. Un-gated in the
-          Chi sono section pass — data comes from its own chiSonoSection
-          singleton fetch above (chiSono), not homePage. Keeps
-          id="chi-sono" so the header's still-gated "Chi sono" nav anchor
-          (see headerNavItems.ts) continues to land here. */}
-      <ChiSonoSection
-        kicker={chiSono?.kicker ?? ""}
-        title={chiSono?.title ?? ""}
-        titleEmphasisWord={chiSono?.titleEmphasisWord}
-        paragraphs={chiSono?.paragraphs}
-        pullQuote={chiSono?.pullQuote}
-        portrait={chiSono?.portrait}
-        portraitLqip={chiSono?.portraitLqip}
-        storyLink={chiSono?.storyLink}
-        signatureEnabled={chiSono?.signatureEnabled}
-        locale={locale as Locale}
+      {/* Design-lab-to-production migration: ChiSonoBlock replaces
+          ChiSonoSection here — chiSonoSection (the 5-paragraph personal-
+          story singleton) is no longer fetched or rendered; homePage.
+          profilo (professional-facts-only, 3 paragraphs) is the new
+          source. ChiSonoBlock renders its own id="chi-sono" internally,
+          preserving the header's "Chi sono" nav anchor. Photo is the same
+          static asset reference the design-lab source uses (not a new
+          Sanity image field — this migration's brief was "use the
+          existing Chi sono portrait as a plain static asset", matching
+          Metodo/CTA bridge's own established pattern for /design-lab
+          imagery). */}
+      <ChiSonoBlock
+        eyebrow={homePage?.profilo?.eyebrow ?? ""}
+        heading={homePage?.profilo?.heading ?? ""}
+        headingEmphasisWord={homePage?.profilo?.headingEmphasisWord}
+        paragraphs={homePage?.profilo?.paragraphs ?? []}
+        photoUrl="/design-lab/photos/01.webp"
+        photoAlt="Giuseppe Iannone, psicoterapeuta — ritratto"
       />
 
       {/* Un-gated in the Aree section pass — data comes from its own
@@ -346,18 +455,27 @@ export default async function Home({
         linkLabel={ctaBridge?.linkLabel ?? ""}
       />
 
-      {/* Un-gated in the homePage-array migration pass — data comes
-          straight off homePage.diplomi.items (part of homePageQuery
-          above), no separate fetch. Renders whatever is currently in the
-          dataset: real scans/text where uploaded, the typographic
-          placeholder fallback for anything still [segnaposto]. */}
-      <DiplomiSection
-        kicker={homePage?.diplomi?.kicker ?? ""}
-        heading={homePage?.diplomi?.heading ?? ""}
-        alboLine={homePage?.diplomi?.alboLine}
-        qualifications={homePage?.diplomi?.items}
-        locale={locale as Locale}
-      />
+      {/* Design-lab-to-production migration: DiplomiSlider replaces
+          DiplomiSection here — both now read the exact same shared
+          homePage.diplomi.* fields (kicker/heading/headingEmphasisWord/
+          intro/alboLine/items), so design-lab and production show
+          identical Diplomi content by construction. diplomiLabItems is
+          computed above (privacy-gate: a card is interactive iff scan is
+          present AND scanRedacted is true). */}
+      <div className={sectionWrapperStyles.diplomiLightWrap}>
+        <section className={sectionWrapperStyles.section} aria-labelledby="diplomi-block-heading">
+          <DiplomiSlider
+            headingId="diplomi-block-heading"
+            kicker={homePage?.diplomi?.kicker ?? ""}
+            heading={homePage?.diplomi?.heading ?? ""}
+            headingEmphasisWord={homePage?.diplomi?.headingEmphasisWord}
+            intro={homePage?.diplomi?.intro}
+            alboLine={homePage?.diplomi?.alboLine}
+            closeLabel={closeLabel}
+            items={diplomiLabItems}
+          />
+        </section>
+      </div>
 
       {/* Un-gated in the video section pass — data comes off the same
           homePageQuery fetch above (homePage.video), no separate fetch.

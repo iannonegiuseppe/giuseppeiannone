@@ -12,7 +12,7 @@ import {
 } from "./content";
 import { CertificatesMarquee } from "./CertificatesMarquee";
 import { DiplomiBlock } from "./DiplomiBlock";
-import { MetodoInteractive } from "./MetodoInteractive";
+import { MetodoInteractive } from "@/components/MetodoInteractive";
 import { ParallaxFrame } from "./ParallaxFrame";
 import { ScrambleValue } from "./ScrambleValue";
 import styles from "./density.module.scss";
