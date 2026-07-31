@@ -38,6 +38,66 @@
   position: relative;
 }
 
+// Standard viewport-edge full-bleed technique — needed by BOTH the Lo
+// Spazio wrapper (this file's own consumers) AND density.module.scss's
+// own DensityPage.tsx consumer (a separate, untouched route) — genuinely
+// shared, not exclusive to either side, so it stays a mixin both @include
+// rather than moving wholesale.
+@mixin full-bleed-frame {
+  width: var(--vw100, 100vw);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-right: calc(-1 * var(--vw100, 100vw) / 2);
+  margin-top: var(--space-6);
+}
+
+// Lo Spazio's own wrapper geometry — zero padding/border/margin so the
+// parallax image runs edge-to-edge into the sections either side. Only
+// this migration's own two callers (DesignLabHomepage.tsx, production)
+// use these two; DensityPage.tsx's own Lo Spazio still uses the older
+// .parallaxFrame/.parallaxFixedLayer pair, untouched.
+@mixin space-section {
+  position: relative;
+}
+
+@mixin space-frame-flush {
+  margin-top: 0;
+}
+
+// Credentials band's container — genuinely shared with DensityPage.tsx's
+// OWN (older, dark-theme) Credentials render, which reuses this exact
+// class name for an unrelated but visually-equivalent purpose. Kept as a
+// mixin both sides @include, same reasoning as .section above.
+@mixin credentials-inner {
+  position: relative;
+  z-index: 1;
+  @include mixins.container;
+}
+
+// Stage 2b-2: tone-mid wrapper, used by any section (real component or
+// density-owned) moving to tone-mid — Tariffe/Spazi/Risorse/Footer on
+// BOTH sides now, plus Recognition/Aree/etc. on design-lab's side only
+// (not part of this migration, still read density.module.scss's own
+// @include of this same mixin). Reassigns every foreground role,
+// including --color-accent (safe here — unlike tone-deep, mid's
+// background isn't built from that token, see tone.scss's own comment).
+@mixin tone-mid-wrap {
+  @include tone.tone-mid-surface;
+}
+
+// Signature — light-island pass: the band itself has no wrapper on
+// production's own raw root today. SignatureBandTuned's own fork
+// (signatureBandTuned.module.scss) repoints .signature's colour to a
+// token this mixin reassigns (--color-accent-hover) — this wrapper is
+// what makes that token resolve to the ivory-pass value in the first
+// place.
+@mixin signature-light-wrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
 .metodoLightWrap {
   @include metodo-light-wrap;
 }
@@ -48,4 +108,28 @@
 
 .diplomiLightWrap {
   @include diplomi-light-wrap;
+}
+
+.fullBleedFrame {
+  @include full-bleed-frame;
+}
+
+.spaceSection {
+  @include space-section;
+}
+
+.spaceFrameFlush {
+  @include space-frame-flush;
+}
+
+.credentialsInner {
+  @include credentials-inner;
+}
+
+.toneMidWrap {
+  @include tone-mid-wrap;
+}
+
+.signatureLightWrap {
+  @include signature-light-wrap;
 }

@@ -4,7 +4,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import videoStyles from "@/components/VideoSection.module.scss";
 import { urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
-import densityStyles from "./density/density.module.scss";
+import densityStyles from "./VideoBlock.module.scss";
 
 // Differentiation pass, item 3: the real VideoSection (centered header
 // stacked above a centered player) reads as "a media box with text

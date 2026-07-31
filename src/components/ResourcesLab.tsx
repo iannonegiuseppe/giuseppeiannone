@@ -5,9 +5,9 @@ import { urlFor } from "@/sanity/image";
 import { plainTextFromPortableText } from "@/sanity/jsonLd";
 import styles from "./resourcesLab.module.scss";
 
-// Overlay-hero pass — forked from src/components/ResourcesSection.tsx +
-// ResourceColumn.tsx + FeaturedResource.tsx (all three shared with
-// production, rendered directly and unforked on /design-lab before this
+// Forked from src/components/ResourcesSection.tsx + ResourceColumn.tsx +
+// FeaturedResource.tsx (all three shared with production, rendered
+// directly and unforked on /design-lab before the original overlay-hero
 // pass — confirmed by reading DesignLabHomepage.tsx's own previous
 // import). None of the three real files are touched: this is a new,
 // independent component tree. The real files' own field gaps (no cover,
@@ -16,6 +16,10 @@ import styles from "./resourcesLab.module.scss";
 // the excerpt from `body` via the existing, unmodified
 // plainTextFromPortableText (src/sanity/jsonLd.ts) rather than a new
 // field — "pulled automatically from the opening lines," per spec.
+//
+// Three-cards-only pass: the overlay hero (featured article, scrim,
+// hero-sized cover) is gone entirely — see this pass's own report. The
+// block is now the header row plus up to three cards, most-recent-first.
 
 export type RealArticleLab = {
   _id: string;
@@ -164,65 +168,17 @@ function formatArticleDate(iso: string, locale: Locale): string {
   }).format(new Date(iso));
 }
 
-// Cover request caps — deliberately different per slot (hero is full-
-// width, cards are a third): requesting the SAME source size for both
-// would either under-serve the hero or over-serve the cards. Next's own
-// responsive pipeline (sizes prop below, already configured in
-// next.config for cdn.sanity.io) generates the actual per-viewport
-// variant from whichever of these two capped sources it's given — this
-// cap is the ceiling Sanity itself resizes to, not the final delivered
-// size.
-const HERO_COVER_WIDTH = 2000;
+// Card-sized cover request only now — the hero-sized cap (2000px, for
+// the full-width overlay image) is gone along with the hero itself.
+// Next's own responsive pipeline (sizes prop below, already configured
+// in next.config for cdn.sanity.io) generates the actual per-viewport
+// variant from this capped source — the cap is the ceiling Sanity itself
+// resizes to, not the final delivered size.
 const CARD_COVER_WIDTH = 800;
 
 function coverUrl(cover: SanityImage | undefined, width: number): string | undefined {
   if (!cover) return undefined;
   return urlFor(cover).width(width).format("webp").quality(80).url();
-}
-
-function HeroFallback({ locale, article, href }: { locale: Locale; article: ResolvedArticle; href: string }) {
-  return (
-    <a href={href} className={styles.heroFallback} aria-label={article.title}>
-      <div className={styles.heroFallbackImage} aria-hidden="true">
-        <span>{locale === "it" ? "Immagine [segnaposto]" : "Image [placeholder]"}</span>
-      </div>
-      <div className={styles.heroFallbackText}>
-        <p className={styles.heroMeta}>
-          {article.category} · {formatArticleDate(article.publishedAt, locale)}
-        </p>
-        <h3 className={styles.heroTitle}>{article.title}</h3>
-        {article.excerpt ? <p className={styles.heroExcerpt}>{article.excerpt}</p> : null}
-      </div>
-    </a>
-  );
-}
-
-function Hero({ locale, article, href }: { locale: Locale; article: ResolvedArticle; href: string }) {
-  const src = coverUrl(article.cover, HERO_COVER_WIDTH);
-  if (!src) return <HeroFallback locale={locale} article={article} href={href} />;
-
-  return (
-    <a href={href} className={styles.hero} aria-label={article.title}>
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes="100vw"
-        className={styles.heroImage}
-      />
-      <div className={styles.heroTextOverlay}>
-        <p className={styles.heroMeta}>
-          {article.category} · {formatArticleDate(article.publishedAt, locale)}
-        </p>
-        <h3 className={styles.heroTitle}>{article.title}</h3>
-        {article.excerpt ? <p className={styles.heroExcerpt}>{article.excerpt}</p> : null}
-        <span className={styles.heroReadMore} aria-hidden="true">
-          {locale === "it" ? "Leggi l'articolo" : "Read the article"}
-          <span>→</span>
-        </span>
-      </div>
-    </a>
-  );
 }
 
 function Card({ locale, article, href }: { locale: Locale; article: ResolvedArticle; href: string }) {
@@ -243,6 +199,7 @@ function Card({ locale, article, href }: { locale: Locale; article: ResolvedArti
         {article.category} · {formatArticleDate(article.publishedAt, locale)}
       </p>
       <h3 className={styles.cardTitle}>{article.title}</h3>
+      {article.excerpt ? <p className={styles.cardExcerpt}>{article.excerpt}</p> : null}
     </a>
   );
 }
@@ -261,17 +218,17 @@ export function ResourcesLab({
   allArticlesLabel: string;
 }) {
   const typedLocale = locale as Locale;
-  const articles = resolveArticles(realArticles, typedLocale);
-  if (articles.length === 0) return null;
-
-  const [featured, ...rest] = articles;
-  const cards = rest.slice(0, 3);
+  // Three most recent only — no CMS pick, no featured flag. Any fourth or
+  // later article (mock data still carries 4 entries, untouched per
+  // instruction) simply doesn't render here; "Tutte le risorse" is what
+  // leads to the rest.
+  const cards = resolveArticles(realArticles, typedLocale).slice(0, 3);
 
   return (
     <section className={styles.resourcesSection} data-lab-section="resources-lab">
       {/* Header row — unchanged from ResourcesSection.tsx's own layout,
           reproduced (not imported) since this whole tree is now
-          independent. */}
+          independent. Always renders, regardless of article data. */}
       <div className={styles.resourcesHeader}>
         <p className={styles.resourcesKicker}>
           <span className={styles.resourcesKickerRule} aria-hidden="true" />
@@ -283,8 +240,6 @@ export function ResourcesLab({
           <span aria-hidden="true">→</span>
         </a>
       </div>
-
-      {featured ? <Hero locale={typedLocale} article={featured} href={articlePath(typedLocale, featured.slug)} /> : null}
 
       {cards.length > 0 ? (
         <div className={styles.cardsGrid} data-card-count={cards.length}>

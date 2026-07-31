@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { Button } from "@/components/Button";
 import { ContactFormDialog, type ContactFormDialogHandle } from "@/components/ContactFormDialog";
 import type { Locale } from "@/sanity/paths";
-import densityStyles from "./density/density.module.scss";
 import styles from "./ctaBridgeBlock.module.scss";
 
 // Item 7: standalone reproduction of the real CtaBridgeSection — same
@@ -72,8 +71,8 @@ export function CtaBridgeBlock({
   if (!title || !linkLabel) return null;
 
   return (
-    <section className={densityStyles.ctaBridgeLightWrap} aria-labelledby="cta-bridge-block-title">
-      <div className={densityStyles.section}>
+    <section className={styles.ctaBridgeLightWrap} aria-labelledby="cta-bridge-block-title">
+      <div className={styles.section}>
         <div className={styles.layout}>
           <div className={styles.headingColumn}>
             <h2 id="cta-bridge-block-title" className={styles.heading}>

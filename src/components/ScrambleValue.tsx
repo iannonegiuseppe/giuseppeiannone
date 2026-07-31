@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import styles from "./density.module.scss";
+import styles from "./ScrambleValue.module.scss";
 
 // Digits + Latin letters only (no symbols), per this pass's own
 // instruction — visually the same family EB Garamond already renders

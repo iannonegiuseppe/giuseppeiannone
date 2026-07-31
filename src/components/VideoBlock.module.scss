@@ -1,0 +1,93 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+@use "./sectionWrappers.module.scss" as wrappers;
+
+// Design-lab-to-production migration: split out of density.module.scss
+// (which stayed in design-lab) — every class below was exclusively used
+// by this component, so nothing there needed it kept. .section is the
+// one exception, genuinely shared with several other sections — it
+// @includes the same mixin sectionWrappers.module.scss's own .section
+// class does, one source of truth.
+.section {
+  @include wrappers.section;
+}
+
+// Video light-island pass: NEW wrapper (light-island-surface).
+.videoLightWrap {
+  @include tone.light-island-surface;
+  position: relative;
+}
+
+.videoLightContent {
+  position: relative;
+
+  // .videoKicker's shared `color: var(--color-accent)` would read the
+  // plain accent (#7e6b5b) — this wants the darkened --color-accent-hover
+  // (#715c52) instead, the same treatment Diplomi's own kicker already
+  // uses. .videoKickerRule needs no override: its own `background:
+  // var(--color-line)` already resolves correctly through light-island-
+  // surface's own reassignment of that token. [class*="..."] targets the
+  // real, shared VideoSection.module.scss/VideoPlayer.module.scss classes
+  // (un-editable files) by their hashed-classname substring.
+  [class*="videoKicker"]:not([class*="videoKickerRule"]) {
+    color: var(--color-accent-hover);
+  }
+
+  // Play-triangle landmine: under light-island, --color-accent-contrast is
+  // repinned to --light-base-text (dark carbone) — correct for Hope/
+  // Credentials' own text-sitting-on-ivory use, wrong for a glyph sitting
+  // on the accent-coloured circle (measured ~2.77:1, below the 3:1 floor
+  // for a graphical UI object). This restores the unwrapped-light-theme
+  // pairing instead (--color-accent-contrast: var(--color-bg) at :root) —
+  // ivory on brown, ~4.59:1.
+  [class*="videoPlayerPlayTriangle"] {
+    border-left-color: var(--color-bg);
+  }
+}
+
+// width 100%, grid, 1fr mobile / 6fr-4fr desktop (fr, not %, so the gap
+// doesn't skew the split — percentage tracks size against the full
+// container width BEFORE the gap is subtracted).
+.videoBlockGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+    align-items: start;
+    gap: var(--space-8);
+  }
+}
+
+// No max-width here: the column's own RIGHT edge lands exactly on the
+// container's right content edge (a block box, no auto margins).
+.videoBlockTextCol {
+  @include mixins.breakpoint-up(lg) {
+    padding-top: var(--space-2); // optical alignment: the player's own
+    // chrome-less top edge reads slightly higher than the kicker's cap-
+    // height at the exact same grid row start — a small nudge down.
+  }
+}
+
+// Reused display-scale heading class (the same one Chi sono's headline
+// uses) instead of the real component's own (un-editable) .videoHeading,
+// which caps at --fs-h2 — too small for this treatment.
+.videoBlockHeading {
+  margin: var(--space-4) 0 0;
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+// Plate frame: reuses Diplomi's own card-frame recipe (a low-alpha
+// accent-tinted hairline). Radius matches --radius-l (VideoPlayer's own
+// radius) so this reads as one frame around the player, not a second box.
+.videoPlateFrame {
+  border-radius: var(--radius-l);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+}

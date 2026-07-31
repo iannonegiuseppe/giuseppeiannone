@@ -1,7 +1,6 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { AnimatedDivider } from "@/components/AnimatedDivider";
 import { AreeSection } from "@/components/AreeSection";
 import { FaqSection } from "@/components/FaqSection";
 import { Header } from "@/components/Header";
@@ -11,8 +10,8 @@ import { HopeSection } from "@/components/HopeSection";
 import { SignatureMark } from "@/components/Logo";
 import { LenisProvider } from "@/components/LenisProvider";
 import type { SedeData } from "@/components/LocationsSection";
-import { SediBlock } from "./density/SediBlock";
-import { SediMapProvider } from "./density/SediMapContext";
+import { SediBlock } from "@/components/SediBlock";
+import { SediMapProvider } from "@/components/SediMapContext";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
@@ -29,26 +28,27 @@ import {
 import { getSiteSettings } from "@/sanity/seo";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import { ChiSonoBlock } from "@/components/ChiSonoBlock";
-import { ContactBlock } from "./density/ContactBlock";
-import { CtaBridgeBlock } from "./CtaBridgeBlock";
+import { ContactBlock } from "@/components/ContactBlock";
+import { CredentialsBand } from "@/components/CredentialsBand";
+import { CtaBridgeBlock } from "@/components/CtaBridgeBlock";
 import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
-import { FooterLab } from "./density/FooterLab";
+import { FooterLab } from "@/components/FooterLab";
 import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
 import { HeroVideoActions } from "./HeroVideoActions";
 import {
   THE_SPACE,
 } from "./density/content";
 import densityStyles from "./density/density.module.scss";
+import wrapperStyles from "@/components/sectionWrappers.module.scss";
 import metodoStyles from "@/components/metodo.module.scss";
-import { LocationsMarquee, type LocationsMarqueeItem } from "./density/LocationsMarquee";
-import marqueeStyles from "./density/locationsMarquee.module.scss";
+import { LocationsMarquee, type LocationsMarqueeItem } from "@/components/LocationsMarquee";
+import marqueeStyles from "@/components/locationsMarquee.module.scss";
 import { MetodoInteractive } from "@/components/MetodoInteractive";
-import { ParallaxFrameStatic } from "./density/ParallaxFrameStatic";
-import { PricingBlock } from "./density/PricingBlock";
-import { ResourcesLab, type RealArticleLab } from "./density/ResourcesLab";
-import { ScrambleValue } from "./density/ScrambleValue";
-import { SignatureBandTuned } from "./SignatureBandTuned";
-import { VideoBlock } from "./VideoBlock";
+import { ParallaxFrameStatic } from "@/components/ParallaxFrameStatic";
+import { PricingBlock } from "@/components/PricingBlock";
+import { ResourcesLab, type RealArticleLab } from "@/components/ResourcesLab";
+import { SignatureBandTuned } from "@/components/SignatureBandTuned";
+import { VideoBlock } from "@/components/VideoBlock";
 import { ViewportWidthFix } from "./ViewportWidthFix";
 import { WelcomeBlock } from "@/components/WelcomeBlock";
 
@@ -194,14 +194,14 @@ interface HomePageData {
     }[];
   };
   sedi?: { kicker?: string; heading?: string; paragraph?: string };
-  sediLab?: {
+  locations?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
     intro?: string;
     onlineSubLine?: string;
   };
-  spaziLab?: {
+  spaces?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
@@ -226,7 +226,7 @@ interface HomePageData {
     googleProfileLabel?: string;
     photo?: SanityImage;
   };
-  contactLab?: {
+  contactSection?: {
     kicker?: string;
     heading?: string;
     headingEmphasisWord?: string;
@@ -580,89 +580,38 @@ export async function DesignLabHomepage({
             closeLabel={closeLabel}
           />
 
-          {/* 5. Credentials — light island (same mechanism as Hope, see
-              tone.light-island-surface's own comment). Rebuild pass: real
-              Sanity data (homePage.credentialsBand) replaces the old
-              hardcoded CREDENTIALS constant; the "titoli e specializzazioni"
-              qualifications list is gone entirely (it made this cell
-              stretch, and duplicated Diplomi below, which is the real home
-              for that content — see this pass's own report). No grain
-              layer, same reasoning as Hope: a flat light surface has
-              nothing to layer above. */}
-          <section
-            className={densityStyles.credentialsBandLight}
-            aria-label="Credenziali"
-          >
-            <div className={densityStyles.credentialsInner}>
-              <RevealOnScroll>
-                <p className={densityStyles.credentialsKicker}>
-                  <span className={densityStyles.credentialsKickerRule} aria-hidden="true" />
-                  {homePage?.credentialsBand?.eyebrow ?? ""}
-                </p>
-                <h2 className={densityStyles.credentialsHeading}>
-                  {homePage?.credentialsBand?.heading ?? ""}
-                </h2>
-                <AnimatedDivider className={densityStyles.credentialsRule} />
-                {/* Three-level pass: .credentialsItem/-Value/-Caption are
-                    SHARED with DensityPage.tsx's own (2-level, left-aligned,
-                    dark, divided) Credentials render — confirmed via grep,
-                    same cross-route sharing already found and split last
-                    pass for .credentialsBand. Rather than mutate those
-                    shared classes for a 3-level/centred/gold/dividerless
-                    treatment DensityPage.tsx never asked for, this pass adds
-                    parallel *Light-suffixed classes (credentialsListLight/
-                    -ItemLight/-ValueLight/-CaptionLight) plus the wholly new
-                    credentialsDescription — DensityPage.tsx's own render is
-                    untouched, verified live (see this pass's own report). */}
-                <ul className={densityStyles.credentialsListLight}>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.clinicalPracticeYears ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.clinicalPracticeCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.clinicalPracticeDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.trainingYears ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.trainingCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.trainingDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={String(homePage?.credentialsBand?.locationsCount ?? "")} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.locationsCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.locationsDescription ?? ""}
-                    </p>
-                  </li>
-                  <li className={densityStyles.credentialsItemLight}>
-                    <p className={densityStyles.credentialsValueLight}>
-                      <ScrambleValue value={homePage?.credentialsBand?.languagesValue ?? ""} />
-                    </p>
-                    <p className={densityStyles.credentialsCaptionLight}>
-                      {homePage?.credentialsBand?.languagesCaption ?? ""}
-                    </p>
-                    <p className={densityStyles.credentialsDescription}>
-                      {homePage?.credentialsBand?.languagesDescription ?? ""}
-                    </p>
-                  </li>
-                </ul>
-              </RevealOnScroll>
-            </div>
-          </section>
+          {/* 5. Credentials — extracted to its own component
+              (design-lab-to-production migration), see CredentialsBand.tsx's
+              own comment. The "titoli e specializzazioni" qualifications
+              list stays gone entirely (it made this cell stretch, and
+              duplicated Diplomi below, which is the real home for that
+              content — see the earlier §9-compliance pass's own report). */}
+          <CredentialsBand
+            eyebrow={homePage?.credentialsBand?.eyebrow ?? ""}
+            heading={homePage?.credentialsBand?.heading ?? ""}
+            items={[
+              {
+                value: String(homePage?.credentialsBand?.clinicalPracticeYears ?? ""),
+                caption: homePage?.credentialsBand?.clinicalPracticeCaption ?? "",
+                description: homePage?.credentialsBand?.clinicalPracticeDescription ?? "",
+              },
+              {
+                value: String(homePage?.credentialsBand?.trainingYears ?? ""),
+                caption: homePage?.credentialsBand?.trainingCaption ?? "",
+                description: homePage?.credentialsBand?.trainingDescription ?? "",
+              },
+              {
+                value: String(homePage?.credentialsBand?.locationsCount ?? ""),
+                caption: homePage?.credentialsBand?.locationsCaption ?? "",
+                description: homePage?.credentialsBand?.locationsDescription ?? "",
+              },
+              {
+                value: homePage?.credentialsBand?.languagesValue ?? "",
+                caption: homePage?.credentialsBand?.languagesCaption ?? "",
+                description: homePage?.credentialsBand?.languagesDescription ?? "",
+              },
+            ]}
+          />
 
           {/* 6. Aree — tone-mid. AreeSection is a REAL shared component;
             the wrapper reassigns --color-text/-muted/-hairline/-accent
@@ -819,11 +768,11 @@ export async function DesignLabHomepage({
           <SediMapProvider>
             <RevealOnScroll>
               <SediBlock
-                kicker={homePage?.sediLab?.kicker ?? ""}
-                heading={homePage?.sediLab?.heading ?? ""}
-                headingEmphasisWord={homePage?.sediLab?.headingEmphasisWord}
-                intro={homePage?.sediLab?.intro}
-                onlineSubLine={homePage?.sediLab?.onlineSubLine}
+                kicker={homePage?.locations?.kicker ?? ""}
+                heading={homePage?.locations?.heading ?? ""}
+                headingEmphasisWord={homePage?.locations?.headingEmphasisWord}
+                intro={homePage?.locations?.intro}
+                onlineSubLine={homePage?.locations?.onlineSubLine}
                 sedes={sedes}
                 locale={LOCALE}
               />
@@ -841,10 +790,10 @@ export async function DesignLabHomepage({
             <div className={densityStyles.toneMidWrap}>
               <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
                 <LocationsMarquee
-                  kicker={homePage?.spaziLab?.kicker ?? ""}
-                  heading={homePage?.spaziLab?.heading ?? ""}
-                  headingEmphasisWord={homePage?.spaziLab?.headingEmphasisWord}
-                  introLine={homePage?.spaziLab?.introLine}
+                  kicker={homePage?.spaces?.kicker ?? ""}
+                  heading={homePage?.spaces?.heading ?? ""}
+                  headingEmphasisWord={homePage?.spaces?.headingEmphasisWord}
+                  introLine={homePage?.spaces?.introLine}
                   allPhotosReal={allPhotosReal}
                   items={marqueeItems}
                 />
@@ -855,15 +804,15 @@ export async function DesignLabHomepage({
           {/* 14. Contact final — light-surface pass: reversed off tone-deep
             onto light-island (.contactLightWrap, contactBlock.module.scss),
             the last dark section on this page per that pass's own brief.
-            contactLab is this block's own independent kicker/heading/
+            contactSection is this block's own independent kicker/heading/
             caption field group (separate from the shared finalCta above,
-            same reasoning as sediLab/spaziLab) — googleProfileLabel is the
+            same reasoning as locations/spaces) — googleProfileLabel is the
             one field still read from finalCta, untouched by this pass. */}
           <ContactBlock
-            kicker={homePage?.contactLab?.kicker ?? ""}
-            heading={homePage?.contactLab?.heading ?? ""}
-            headingEmphasisWord={homePage?.contactLab?.headingEmphasisWord}
-            photoCaption={homePage?.contactLab?.photoCaption ?? ""}
+            kicker={homePage?.contactSection?.kicker ?? ""}
+            heading={homePage?.contactSection?.heading ?? ""}
+            headingEmphasisWord={homePage?.contactSection?.headingEmphasisWord}
+            photoCaption={homePage?.contactSection?.photoCaption ?? ""}
             googleProfileLabel={homePage?.finalCta?.googleProfileLabel ?? ""}
             googleProfileUrl={siteSettings?.googleProfileUrl}
             locale={LOCALE}
@@ -888,8 +837,8 @@ export async function DesignLabHomepage({
             border) + .fullBleedFrame with the .spaceFrameFlush modifier
             (zero margin) — .section and .fullBleedFrame themselves stay
             exactly as they are for every other consumer. */}
-          <section className={densityStyles.spaceSection}>
-            <figure className={`${densityStyles.fullBleedFrame} ${densityStyles.spaceFrameFlush}`}>
+          <section className={wrapperStyles.spaceSection}>
+            <figure className={`${wrapperStyles.fullBleedFrame} ${wrapperStyles.spaceFrameFlush}`}>
               <ParallaxFrameStatic
                 aspect={theSpace.blocks[0]?.aspect}
                 imageUrl={roomPhotoUrl}
