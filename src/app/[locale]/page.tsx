@@ -2,10 +2,14 @@ import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AreeSection } from "@/components/AreeSection";
+import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
 import { HeroOverlap } from "@/components/HeroOverlap";
+import heroOverlapStyles from "@/components/HeroOverlap.module.scss";
+import { HeroVideoActions } from "@/components/HeroVideoActions";
 import { HopeSection } from "@/components/HopeSection";
 import { FaqSection } from "@/components/FaqSection";
 import type { SedeData } from "@/components/LocationsSection";
+import { SignatureMark } from "@/components/Logo";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
@@ -135,6 +139,13 @@ interface HomePageData {
     ctaLabel?: string;
     photo?: SanityImage;
     youtubeId?: string;
+    // Stage 2c — ambient background-video variant (HeroBackgroundVideo/
+    // HeroVideoActions), separate from youtubeId's click-to-play overlay
+    // above. All three optional/independent — see homePage.ts's own
+    // schema comment.
+    backgroundVideoDesktopUrl?: string;
+    backgroundVideoMobileUrl?: string;
+    backgroundVideoPoster?: SanityImage;
   };
   chiSono?: {
     introHeading?: string;
@@ -431,6 +442,14 @@ export default async function Home({
   const tDiplomi = await getTranslations({ locale, namespace: "Diplomi" });
   const closeLabel = tDiplomi("closeLabel");
 
+  // Stage 2c fix — Hero's two action buttons (video-background variant):
+  // design-lab hardcodes their labels as Italian literals directly in
+  // HeroVideoActions' own call site (LOCALE is always "it" there), which
+  // can't carry over here — production serves /en too. messages/{it,en}
+  // .json's new Hero.areeLabel/.contactLabel keys are this pass's own
+  // addition, not a pre-existing catalog entry.
+  const tHero = await getTranslations({ locale, namespace: "Hero" });
+
   // Privacy-gate pass, copied verbatim from DesignLabHomepage.tsx (see
   // that file's own comment for the full reasoning): interactivity is
   // computed HERE, server-side, from scan + scanRedacted — never left to
@@ -457,6 +476,15 @@ export default async function Home({
       height: dims?.height ?? 1980,
     };
   });
+
+  // Stage 2c — hero background-video poster, fallback chain per explicit
+  // instruction: homePage.hero.backgroundVideoPoster if set, else the
+  // same hardcoded placeholder interior photo this slot has always used
+  // — so the hero's own LCP element never renders blank mid-migration,
+  // whether or not the client has uploaded a real poster yet.
+  const heroPosterUrl = homePage?.hero?.backgroundVideoPoster
+    ? urlFor(homePage.hero.backgroundVideoPoster).url()
+    : "/interiors/interior-3.jpg";
 
   // Stage 2b-2 — Welcome/Chi sono/Contact/Lo spazio photos: same static
   // asset references design-lab uses (not new Sanity image fields — this
@@ -511,6 +539,14 @@ export default async function Home({
 
   return (
     <main>
+      {/* Stage 2c fix: matches design-lab's own Hero exactly now (was the
+          only permitted difference in this pass's own acceptance test,
+          per explicit instruction to close it anyway). eyebrow is the
+          signature-only logo mark (SignatureMark, same asset Footer/
+          Header use), not author-credentials text — its own built-in
+          aria-label ("Dr. Giuseppe Iannone") carries the meaning.
+          backgroundMedia/actions are pre-rendered ReactNodes, same pattern
+          HeroOverlap.tsx already established for both slots. */}
       <HeroOverlap
         treatment="treated"
         headline={homePage?.hero?.headline ?? ""}
@@ -519,6 +555,30 @@ export default async function Home({
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
         youtubeId={homePage?.hero?.youtubeId}
+        eyebrow={<SignatureMark className={heroOverlapStyles.heroVideoEyebrow} />}
+        backgroundMedia={
+          <HeroBackgroundVideo
+            // Stage 2c — Sanity-driven. Both fields optional/independent;
+            // homePage.ts's own schema comment has the full reasoning for
+            // why desktop/mobile are two separate uploads rather than one
+            // file resized. Neither set -> no <video> mounts, poster
+            // above (heroPosterUrl, its own fallback chain) is the whole
+            // hero, exactly as before this field group existed.
+            srcDesktop={homePage?.hero?.backgroundVideoDesktopUrl}
+            srcMobile={homePage?.hero?.backgroundVideoMobileUrl}
+            poster={heroPosterUrl}
+            posterAlt=""
+          />
+        }
+        actions={
+          <HeroVideoActions
+            areeHref="#aree"
+            areeLabel={tHero("areeLabel")}
+            contactLabel={tHero("contactLabel")}
+            locale={locale as Locale}
+            closeLabel={closeLabel}
+          />
+        }
       />
 
       <RecognitionSection

@@ -107,6 +107,44 @@ export const homePage = defineType({
               "Doesn't look like an 11-character YouTube video ID — double-check it's just the ID, not the full URL.",
             ),
         }),
+        // Stage 2c — ambient, muted, autoplay-once background video for the
+        // full-bleed hero variant (HeroBackgroundVideo/HeroVideoActions,
+        // design-lab-to-production migration) — a DIFFERENT mechanism from
+        // youtubeId above (that one is a click-to-play overlay on the
+        // static photo; this one replaces the photo's own background
+        // entirely, ambient and silent). All three fields below are
+        // optional and independent: no video field set -> photo above
+        // stays the whole hero, exactly as today. desktop/mobile are two
+        // separate encodes (not one file resized) — the client is
+        // supplying pre-encoded 1080p/720p exports, not raw footage for
+        // this schema to transform.
+        defineField({
+          name: "backgroundVideoDesktop",
+          title: "Background video — desktop (1080p, optional)",
+          description:
+            "Served at viewport widths ~768px and above. Silent/muted, plays once and holds on its last frame — never looped. Leave empty to keep the hero on its static photo.",
+          type: "file",
+          options: { accept: "video/mp4" },
+        }),
+        defineField({
+          name: "backgroundVideoMobile",
+          title: "Background video — mobile (720p, optional)",
+          description:
+            "Served below ~768px viewport width — a separate, smaller encode, never the desktop file resized on the fly. Leave empty and phones simply get no background video (the desktop file is never sent to them as a fallback).",
+          type: "file",
+          options: { accept: "video/mp4" },
+        }),
+        defineField({
+          name: "backgroundVideoPoster",
+          title: "Background video poster (optional)",
+          description:
+            "Shown immediately and stays visible until the background video above is actually playing — the video only ever fades in on top of this, never replaces it outright. Leave empty to fall back to the current placeholder interior photo, so this frame is never blank.",
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({ name: "alt", title: "Alternative text", type: "string" }),
+          ],
+        }),
       ],
     }),
 

@@ -33,8 +33,8 @@ import { CredentialsBand } from "@/components/CredentialsBand";
 import { CtaBridgeBlock } from "@/components/CtaBridgeBlock";
 import { DiplomiSlider, type DiplomiLabItem } from "@/components/DiplomiSlider";
 import { FooterLab } from "@/components/FooterLab";
-import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
-import { HeroVideoActions } from "./HeroVideoActions";
+import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
+import { HeroVideoActions } from "@/components/HeroVideoActions";
 import {
   THE_SPACE,
 } from "./density/content";
@@ -106,6 +106,13 @@ interface HomePageData {
     ctaLabel?: string;
     photo?: SanityImage;
     youtubeId?: string;
+    // Stage 2c — ambient background-video variant (HeroBackgroundVideo/
+    // HeroVideoActions), separate from youtubeId's click-to-play overlay
+    // above. All three optional/independent — see homePage.ts's own
+    // schema comment.
+    backgroundVideoDesktopUrl?: string;
+    backgroundVideoMobileUrl?: string;
+    backgroundVideoPoster?: SanityImage;
   };
   hope?: { eyebrow?: string; heading?: string; headingEmphasisWord?: string };
   // Copy pass: was hardcoded (content.ts's WELCOME constant) — now sourced
@@ -325,6 +332,13 @@ export async function DesignLabHomepage({
 
   const theSpace = THE_SPACE.it;
 
+  // Stage 2c — hero background-video poster, same fallback chain as
+  // production: homePage.hero.backgroundVideoPoster if set, else the
+  // same hardcoded placeholder interior photo this slot has always used.
+  const heroPosterUrl = homePage?.hero?.backgroundVideoPoster
+    ? urlFor(homePage.hero.backgroundVideoPoster).url()
+    : "/interiors/interior-3.jpg";
+
   const portraitUrl = "/design-lab/photos/01.webp";
   const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
 
@@ -495,24 +509,13 @@ export async function DesignLabHomepage({
             eyebrow={<SignatureMark className={heroOverlapStyles.heroVideoEyebrow} />}
             backgroundMedia={
               <HeroBackgroundVideo
-                // Real file, per this pass's own instruction — but NOT
-                // verified end-to-end: 792MB, and Chromium never fired
-                // loadedmetadata even after a 3-minute wait (no error
-                // either) — almost certainly an unoptimized export (moov
-                // atom not at the front, so the whole file must be
-                // scanned before metadata is available) on top of being
-                // wildly oversized for a web hero background regardless.
-                // Needs re-encoding (H.264/H.265 MP4, faststart, a few MB
-                // not hundreds) before this is actually usable — see this
-                // pass's own report. Wired to the real path anyway, per
-                // instruction, so swapping in a fixed export needs no
-                // further code change.
-                srcMp4="/video-placeholder.mov"
-                // Poster: still the temporary interior-photo stand-in —
-                // couldn't extract a real frame from the file above for
-                // the same reason (browser couldn't decode/seek it).
-                // Replace once a web-ready export exists.
-                poster="/interiors/interior-3.jpg"
+                // Stage 2c — Sanity-driven, same fields and fallback
+                // chain as production (see homePage.ts's own schema
+                // comment). Neither set -> no <video> mounts, poster
+                // above (heroPosterUrl) is the whole hero.
+                srcDesktop={homePage?.hero?.backgroundVideoDesktopUrl}
+                srcMobile={homePage?.hero?.backgroundVideoMobileUrl}
+                poster={heroPosterUrl}
                 posterAlt=""
               />
             }
@@ -522,6 +525,7 @@ export async function DesignLabHomepage({
                 areeLabel="Perché rivolgersi"
                 contactLabel="Scrivimi"
                 locale={LOCALE}
+                closeLabel={closeLabel}
               />
             }
           />

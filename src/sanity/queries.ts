@@ -183,7 +183,10 @@ export const homePageQuery = defineQuery(`
       positioningStatement,
       ctaLabel,
       photo,
-      youtubeId
+      youtubeId,
+      "backgroundVideoDesktopUrl": backgroundVideoDesktop.asset->url,
+      "backgroundVideoMobileUrl": backgroundVideoMobile.asset->url,
+      backgroundVideoPoster
     },
     chiSono,
     formazione,

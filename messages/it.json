@@ -9,7 +9,9 @@
     "label": "In breve"
   },
   "Hero": {
-    "cta": "Prenota un primo colloquio"
+    "cta": "Prenota un primo colloquio",
+    "areeLabel": "Perché rivolgersi",
+    "contactLabel": "Scrivimi"
   },
   "Diplomi": {
     "prevLabel": "Diploma precedente",
