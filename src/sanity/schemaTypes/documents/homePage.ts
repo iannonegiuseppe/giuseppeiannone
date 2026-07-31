@@ -626,28 +626,32 @@ export const homePage = defineType({
     }),
 
     // 11. SedesSection (scene list is the separate `sede` document type)
+    // DEPRECATED as of the design-lab-to-production migration: superseded
+    // by "locations" below. Left intact, not deleted — its own paragraph
+    // field still carries a live [segnaposto]/[placeholder] marker, but
+    // per the client's own instruction that gap is superseded by the new
+    // copy, not a chase item.
     defineField({
       name: "sedi",
-      title: "11. Sedi",
+      title: "11. Sedi — DEPRECATED, no longer rendered (see \"locations\" below)",
+      description:
+        "Orphaned as of the design-lab-to-production migration — no longer rendered, " +
+        "superseded by \"locations\". Left intact, not deleted.",
       type: "object",
       fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("paragraph", "Paragraph")],
     }),
 
-    // Sedi (/design-lab light-surface rebuild) — deliberately a SEPARATE
-    // field group from "sedi" above (the real, live production one,
-    // src/app/[locale]/page.tsx), same reuse-vs-new call as profilo/
-    // chiSonoSection: this pass's copy/heading-emphasis shape (an italic
-    // accent word inside the heading, an online-entry sub-line) doesn't
-    // exist on the shared group, and patching it there would change
-    // production immediately. headingEmphasisWord follows the same
-    // contract as profilo's own field (must match the heading text
-    // exactly, case-sensitive).
+    // Sedi (design-lab light-surface rebuild) — DEPRECATED as of the
+    // design-lab-to-production migration: renamed/superseded by
+    // "locations" below (same data shape, copied over) now that both
+    // /design-lab and production read the same field. Left intact, not
+    // deleted, per the same precedent as "sedi" above.
     defineField({
       name: "sediLab",
-      title: "11b. Sedi (design-lab light-surface rebuild)",
+      title: "11b. Sedi (design-lab light-surface rebuild) — DEPRECATED, see \"locations\"",
       description:
-        "Independent from \"sedi\" above (the real, live production field group) — " +
-        "/design-lab's own light-surface rebuild, with its own copy.",
+        "Orphaned as of the design-lab-to-production migration — superseded by " +
+        "\"locations\" below (same shape, data copied over). Left intact, not deleted.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
@@ -662,17 +666,65 @@ export const homePage = defineType({
       ],
     }),
 
-    // Photo strip (/design-lab only — LocationsMarquee.tsx has no
-    // production counterpart, so this is a plain addition, not a fork of
-    // anything shared). Same headingEmphasisWord contract as sediLab/
-    // profilo above. "introLine" renders only when every strip photo is a
-    // real client-supplied one (see LocationsMarquee.tsx's own comment) —
-    // it asserts real/own photography, so it must never render against
-    // the temporary interior stock fallback.
+    // Photo strip — DEPRECATED as of the design-lab-to-production
+    // migration: renamed/superseded by "spaces" below. Left intact, not
+    // deleted.
     defineField({
       name: "spaziLab",
-      title: "11c. Gli spazi (design-lab photo strip)",
-      description: "/design-lab only — the photo-strip heading zone below Sedi.",
+      title: "11c. Gli spazi (design-lab photo strip) — DEPRECATED, see \"spaces\"",
+      description:
+        "Orphaned as of the design-lab-to-production migration — superseded by " +
+        "\"spaces\" below (same shape, data copied over). Left intact, not deleted.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField(
+          "introLine",
+          "Intro line (renders ONLY once every strip photo is real — see LocationsMarquee.tsx)",
+        ),
+      ],
+    }),
+
+    // 11d. Locations — design-lab-to-production migration: the live Sedi/
+    // locations section. Supersedes "sedi" and "sediLab" above (both
+    // deprecated in favour of this) — named for the English component
+    // family it renders through (LocationsSection/LocationsMap/
+    // LocationsMarquee), not a topic-and-suffix name that would age badly
+    // once this stops being the "new" one.
+    defineField({
+      name: "locations",
+      title: "11d. Locations",
+      description:
+        "The live Sedi/locations section — supersedes \"sedi\" and \"sediLab\" above, " +
+        "both deprecated in favour of this.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField("intro", "Intro paragraph"),
+        stringField("onlineSubLine", "Online entry — sub-line (e.g. \"Stessa durata, stesso costo.\")"),
+      ],
+    }),
+
+    // 11e. Spaces (photo strip) — design-lab-to-production migration:
+    // the live Spazi section. Supersedes "spaziLab" above.
+    defineField({
+      name: "spaces",
+      title: "11e. Spaces (photo strip)",
+      description:
+        "The live Spazi/photo-strip section — supersedes \"spaziLab\" above, " +
+        "deprecated in favour of this.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
@@ -943,10 +995,25 @@ export const homePage = defineType({
       ],
     }),
 
-    // 15. FinalContactSection
+    // 15. FinalContactSection — PARTIALLY DEPRECATED as of the design-lab-
+    // to-production migration: kicker/heading/body/ctaLabel/privacyNote/
+    // responseNote/photo are superseded by "contactSection" below and no
+    // longer rendered. googleProfileLabel is the ONE exception — it stays
+    // read from here directly, shared by both the CTA bridge and the
+    // Contact section (never duplicated into contactSection). Per the
+    // client's own instruction: responseNote's [segnaposto] marker is a
+    // cancelled decision (the "within N days" promise was replaced by
+    // "rispondo entro 24 ore", which lives in contactSection's own reply-
+    // line copy, not a field on this document), not an unfilled one — no
+    // chase item there.
     defineField({
       name: "finalCta",
-      title: "15. Non sai da dove iniziare? (final CTA)",
+      title: "15. Non sai da dove iniziare? (final CTA) — PARTIALLY DEPRECATED, see \"contactSection\"",
+      description:
+        "kicker/heading/body/ctaLabel/privacyNote/responseNote/photo are orphaned as of the " +
+        "design-lab-to-production migration, superseded by \"contactSection\" below. " +
+        "googleProfileLabel is NOT deprecated — still read directly by both the CTA bridge " +
+        "and the Contact section.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
@@ -955,7 +1022,7 @@ export const homePage = defineType({
         stringField("ctaLabel", "CTA button label"),
         textField("privacyNote", "Privacy note", { rows: 1 }),
         textField("responseNote", "Response-time note", { rows: 1 }),
-        stringField("googleProfileLabel", "Google profile link label"),
+        stringField("googleProfileLabel", "Google profile link label — NOT deprecated, still live"),
         defineField({
           name: "photo",
           title: "Photo",
@@ -966,17 +1033,43 @@ export const homePage = defineType({
       ],
     }),
 
-    // 15b. Contact (design-lab light-surface rebuild) — independent from
-    // "finalCta" above (the real, live production field group), same
-    // reasoning as sediLab/spaziLab: /design-lab's own copy, own kicker/
-    // heading with an emphasized word and a photo caption, never touching
-    // what production reads.
+    // 15b. Contact (design-lab light-surface rebuild) — DEPRECATED as of
+    // the design-lab-to-production migration: renamed/superseded by
+    // "contactSection" below (same shape, data copied over). Left intact,
+    // not deleted.
     defineField({
       name: "contactLab",
-      title: "15b. Contatto (design-lab light-surface rebuild)",
+      title: "15b. Contatto (design-lab light-surface rebuild) — DEPRECATED, see \"contactSection\"",
       description:
-        "Independent from \"finalCta\" above (the real, live production field group) — " +
-        "/design-lab's own light-surface rebuild, with its own copy.",
+        "Orphaned as of the design-lab-to-production migration — superseded by " +
+        "\"contactSection\" below (same shape, data copied over). Left intact, not deleted.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        stringField(
+          "headingEmphasisWord",
+          "Heading — emphasized word (must match the heading above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        stringField("photoCaption", "Photo caption"),
+      ],
+    }),
+
+    // 15c. Contact section (form) — design-lab-to-production migration:
+    // the live Contact section. Supersedes "contactLab" above. Named for
+    // the SECTION (there are now two contact-related elements on the
+    // page — this form, and the CTA bridge that opens a modal pointing at
+    // it), not the bare topic "contact", which would be ambiguous between
+    // the two.
+    defineField({
+      name: "contactSection",
+      title: "15c. Contact section (form)",
+      description:
+        "The live Contact section (the form at the bottom of the page) — supersedes " +
+        "\"contactLab\" above. \"finalCta\" above is partially superseded too (see its own " +
+        "description) — googleProfileLabel stays read from finalCta directly, shared with " +
+        "the CTA bridge.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),

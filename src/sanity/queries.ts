@@ -228,6 +228,8 @@ export const homePageQuery = defineQuery(`
     sedi,
     sediLab,
     spaziLab,
+    locations,
+    spaces,
     prezzi,
     risorse,
     video{
@@ -240,6 +242,7 @@ export const homePageQuery = defineQuery(`
     },
     finalCta,
     contactLab,
+    contactSection,
     faq{
       kicker,
       heading,
