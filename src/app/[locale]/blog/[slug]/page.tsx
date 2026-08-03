@@ -5,10 +5,11 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import type { Image as SanityImage } from "sanity";
 import { getArticleBySlug, getArticleSlugs } from "@/sanity/articles";
-import { imageDimensions, urlFor } from "@/sanity/image";
-import { articlePath, articlesPath } from "@/sanity/paths";
-import { getPortableTextComponents } from "@/sanity/portableTextComponents";
+import { urlFor } from "@/sanity/image";
+import { articlePath } from "@/sanity/paths";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+import styles from "./article.module.scss";
+import { getArticlePortableTextComponents } from "./articlePortableText";
 
 interface ArticleData {
   _id: string;
@@ -16,7 +17,6 @@ interface ArticleData {
   slug: string;
   publishedAt: string | null;
   cover?: (SanityImage & { alt?: string }) | undefined;
-  excerpt?: string;
   tags?: string[];
   body: unknown;
   seo?: SeoFields;
@@ -64,32 +64,40 @@ export default async function ArticlePage({
   const data = (await getArticleBySlug(locale, slug)) as ArticleData | null;
   if (!data) notFound();
 
-  const coverDimensions = data.cover ? imageDimensions(data.cover) : null;
-  const components = await getPortableTextComponents(locale);
+  const components = getArticlePortableTextComponents();
 
   return (
-    <main>
-      <a href={articlesPath(locale as "it" | "en")}>Blog</a>
-      <h1>{data.title}</h1>
-      {data.publishedAt ? (
-        <time dateTime={data.publishedAt}>{data.publishedAt}</time>
+    <main className={styles.page}>
+      {data.cover ? (
+        <div className={styles.coverBand}>
+          <Image
+            src={urlFor(data.cover).width(2400).height(1029).url()}
+            alt={data.cover.alt ?? ""}
+            fill
+            sizes="100vw"
+            className={styles.coverImage}
+            priority
+          />
+        </div>
       ) : null}
-      {data.tags && data.tags.length > 0 ? (
-        <ul>
-          {data.tags.map((tag) => (
-            <li key={tag}>{tag}</li>
-          ))}
-        </ul>
-      ) : null}
-      {data.cover && coverDimensions ? (
-        <Image
-          src={urlFor(data.cover).width(coverDimensions.width).url()}
-          alt={data.cover.alt ?? data.title}
-          width={coverDimensions.width}
-          height={coverDimensions.height}
-        />
-      ) : null}
-      <PortableText value={data.body as never} components={components} />
+      <div className={styles.column}>
+        <header className={styles.header}>
+          <p className={styles.kickerRow}>
+            <span className={styles.kickerRule} aria-hidden="true" />
+            <span className={styles.kicker}>Blog</span>
+          </p>
+          {/* Plain, no italic-accent span: the article schema has no
+              emphasis-word field (unlike homePage.hero's own
+              headlineEmphasisWord) — confirmed by reading the schema
+              directly, not guessed. See article.module.scss's own
+              .titleEmphasis for the ready-to-use styling if a field is
+              added later. */}
+          <h1 className={styles.title}>{data.title}</h1>
+        </header>
+        <div className={styles.body}>
+          <PortableText value={data.body as never} components={components} />
+        </div>
+      </div>
     </main>
   );
 }

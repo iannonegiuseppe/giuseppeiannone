@@ -371,6 +371,29 @@ $z-index: (
   --lh-body: 1.7;
   --fs-small: 0.875rem; // Source Sans 3 400, captions, breadcrumbs
   --lh-small: 1.5;
+  // Article reading-frame pass: long-form body copy is a distinct role from
+  // --fs-body (1rem/1.7, used for short component text elsewhere) — a
+  // sustained multi-minute read wants a size/line-height tuned for that
+  // specifically, not reused from a role built for shorter UI copy.
+  // Raised from an initial 19px to 21px after measuring real characters-
+  // per-line against the 660px column (this pass's own report, measured via
+  // real line-wrap detection, not estimated): 19px measured 82.5 avg at
+  // desktop, well over the 62-74 target; 21px measures 73.6 avg (range
+  // 71-75) at 768/1024/1440 alike — in range. Larger type was the
+  // deliberate fix, not a narrower column — this audience reads about
+  // anxiety/panic, and a calmer, more comfortable setting reads better
+  // than a dense one for its own sake, independent of the character-count
+  // math.
+  --fs-article-body: 1.3125rem; // 21px, Source Sans 3 400
+  --lh-article-body: 1.7;
+  // Below md (390 measured): 21px was too large for a column this narrow.
+  // One step down to 18px still only measures 43.5 avg chars/line (range
+  // 36-47) — short of 62-74 even after the drop, because the column itself
+  // is capped by the viewport at this width (342px of content at 390),
+  // not by font size. Going smaller than 18px to chase the target would
+  // trade a readable mobile size for a number; not done.
+  --fs-article-body-sm: 1.125rem; // 18px
+  --lh-article-body-sm: 1.7;
 
   --font-weight-regular: 400;
   --font-weight-medium: 500; // real Source Sans 3 weight, header nav only

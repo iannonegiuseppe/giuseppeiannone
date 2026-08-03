@@ -1,0 +1,243 @@
+@use "../../../../styles/mixins";
+@use "../../../../styles/tone";
+
+// Reading frame pass — ivory light-island on a dark-default site, same
+// mechanism every homepage light block uses (Metodo, Hope, FAQ, etc.):
+// long-form reading is the one thing this site asks a visitor to do for
+// minutes at a stretch, and that's harder on a dark ground.
+.page {
+  @include tone.light-island-surface;
+  padding-bottom: var(--space-9);
+}
+
+// --- Cover band ------------------------------------------------------------
+// Fixed 21:9 ratio regardless of source dimensions (269x187 up to 2560x2560
+// measured across the imported set) — object-fit: cover crops to fit rather
+// than letting a near-square or ultra-wide source distort the band. Omitted
+// entirely (see page.tsx) rather than rendered empty when an article has no
+// cover — no placeholder box, no empty space reserved for it.
+.coverBand {
+  position: relative;
+  width: var(--vw100, 100vw);
+  margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  background: var(--color-sand); // visible only for the instant before the image paints
+}
+
+.coverImage {
+  object-fit: cover;
+}
+
+// --- Reading column ----------------------------------------------------
+// 660px, holding at every width down to md (768) — measures 73.6 avg
+// chars/line (range 71-75) at --fs-article-body, in the 62-74 target (this
+// pass's own report). Narrower than --container-max-width (1320px, the
+// sitewide grid) deliberately: a reading column optimizes for line length,
+// not for matching every other section's own width.
+.column {
+  // max-width includes the padding below lg (border-box, the sitewide
+  // default) — sized so the TEXT content area is still exactly 660px once
+  // that 24px-per-side padding is subtracted, not 660px total. Missing
+  // this the first time measurably shortened lines below lg (this pass's
+  // own report: 67.4 avg chars/line at 768 vs 73.6 at 1024, same
+  // font-size — 612px of real content width, not 660, was the cause).
+  // Below the viewport can hold it (this max-width, e.g. mobile), the box
+  // just shrinks to 100% width as normal; no overflow risk either way.
+  width: 100%;
+  max-width: calc(41.25rem + 2 * var(--space-5)); // 660px content + 24px/side padding
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    max-width: 41.25rem; // 660px, no padding needed once the column is already narrower than the viewport
+    padding-inline: 0;
+  }
+}
+
+// --- Header: kicker rule + h1 ------------------------------------------
+// No lead paragraph: `excerpt` is WordPress's own truncation of the body's
+// own opening paragraph, not distinct editorial copy — rendering it here
+// printed the same sentence twice (this pass's own report). Dropped from
+// the header entirely; `excerpt` itself is untouched in the CMS and still
+// powers the /blog listing cards, where it belongs.
+.header {
+  padding-top: var(--space-7);
+  padding-bottom: var(--space-6);
+}
+
+// Same kicker/kickerRule pair used elsewhere (chiSonoBlock/footerLab) — a
+// short --color-line rule leading a small-caps label. No breadcrumb trail,
+// no author/reading-time — those are a later pass, per this one's own scope.
+.kickerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+// H1 — EB Garamond 400, no CMS emphasis-word field on the article schema
+// (see page.tsx's own comment) — renders plain, no italic accent span.
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+// Real italic-accent technique, same recipe as HeroOverlap's own
+// .heroOverlapEmphasis (documented in /styleguide) — kept here, unused
+// today, so the day an emphasis-word field is added to the article schema
+// this needs zero new CSS, just a component wired to use it.
+.titleEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
+}
+
+// --- Body (Portable Text) ------------------------------------------------
+.body {
+  font-family: var(--font-body);
+  font-size: var(--fs-article-body-sm);
+  line-height: var(--lh-article-body-sm);
+  color: var(--color-text);
+
+  @include mixins.breakpoint-up(md) {
+    font-size: var(--fs-article-body);
+    line-height: var(--lh-article-body);
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+}
+
+.paragraph {
+  margin: var(--space-5) 0 0;
+}
+
+// Vertical rhythm: more space above an h2 than below it (a heading reads as
+// belonging to the section it introduces, not the one before it) — h3
+// narrower still since it's a subdivision within an h2 section, not a new
+// one. Both explicit font-weight 400 + font-synthesis: none — the browser
+// synthesises a fake bold on EB Garamond otherwise (bitten this project
+// before, see the global restyle pass's own note in layout.tsx).
+.h2 {
+  margin: var(--space-8) 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.h3 {
+  margin: var(--space-6) 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+// Blockquote — vertical accent rule on the left, same accent language as
+// .kickerRule (a thin, deliberate line, not a heavy structural border), EB
+// Garamond italic. Not centred, no quotation marks. Uses --color-accent
+// (not --color-line) — matches this project's one other blockquote
+// treatment (src/sanity/portableTextComponents.module.scss), so "accent
+// rule" reads as a genuine accent-colored mark, not a neutral hairline.
+.blockquote {
+  margin: var(--space-6) 0 0;
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  color: var(--color-text);
+}
+
+.list {
+  margin: var(--space-5) 0 0;
+  padding-left: var(--space-6);
+}
+
+.listItem {
+  margin: var(--space-2) 0 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.strong {
+  font-weight: var(--font-weight-bold);
+}
+
+.em {
+  font-style: italic;
+}
+
+// Links inside prose — underlined with an offset, darkened accent
+// (--color-accent-hover, #715c52 rest, 5.66:1), distinguishable from body
+// text without relying on colour alone (the underline is the non-colour
+// signal). Hover moved to --color-accent-gradient-light (#453829, one step
+// further down the accent family, normally the deep-section gradient's
+// lighter stop) after measuring the original hover candidate
+// (--color-accent, #7e6b5b) at only 4.58:1 — too thin a margin above the
+// 4.5:1 floor. New hover measures 10.25:1 (this pass's own report).
+.link {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--color-accent-gradient-light);
+  }
+
+  @include mixins.focus-ring;
+}
+
+// In-body images — never upscaled past natural width (these are screenshots
+// and stock, measured 220x220 up to 1030x779 across the imported set;
+// upscaling would visibly blur the narrower ones). max-width caps at the
+// column width; a narrower source simply renders at its own natural size,
+// centered in the column via the auto inline margins rather than sitting
+// flush left — an un-centered small image inside a 660px column reads as a
+// layout mistake, not a deliberate choice. Alt text (including the 99
+// generated-from-title ones, see article.ts's own generatedAlt field) is
+// wired through <Image>'s own alt prop only — never rendered as a visible
+// caption.
+.image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--space-6) auto 0;
+  border-radius: var(--radius-l);
+}
