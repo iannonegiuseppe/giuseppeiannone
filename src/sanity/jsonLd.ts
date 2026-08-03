@@ -102,6 +102,48 @@ export function buildMedicalBusinessJsonLd({
   };
 }
 
+// Blog article pass — the Person node here is embedded directly (not a
+// reference to the layout's own sitewide Person), matching how every
+// other JSON-LD builder in this file works: each page's structured data
+// is self-contained, so a crawler parsing just this page's script tag
+// gets a complete, valid graph without needing to also fetch the layout's
+// own markup. BlogPosting (not the more generic Article) since every
+// imported document is a WordPress blog post, the more specific type schema.org
+// itself recommends when it applies.
+export function buildBlogPostingJsonLd({
+  headline,
+  url,
+  siteUrl,
+  datePublished,
+  authorName,
+  authorJobTitle,
+  imageUrl,
+}: {
+  headline: string;
+  url: string;
+  siteUrl: string;
+  datePublished?: string;
+  authorName: string;
+  authorJobTitle?: string;
+  imageUrl?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline,
+    url,
+    datePublished,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    image: imageUrl,
+    author: {
+      "@type": "Person",
+      name: authorName,
+      jobTitle: authorJobTitle,
+      url: siteUrl,
+    },
+  };
+}
+
 export function buildBreadcrumbListJsonLd(
   items: BreadcrumbItem[],
   siteUrl: string,

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "@/i18n/navigation";
 import { homePath, type Locale } from "@/sanity/paths";
 import type { ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
@@ -64,11 +65,27 @@ export function HeaderInteractive({
   const dialogRef = useRef<ChannelPickerDialogHandle>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Blog article pass — no prop threads this: Header is rendered once at
+  // the layout level (a sibling of {children}, not its parent), so a page
+  // component can't hand it a per-route prop the ordinary way. Reading the
+  // route here instead — next-intl's own usePathname (locale-agnostic, so
+  // this matches both /blog/... and /en/blog/...  with one check). Article
+  // covers are unpredictable stock/AI photos with no baked-in scrim of
+  // their own (unlike the homepage hero), so this route always needs the
+  // dark glass treatment, not just past the scroll threshold.
+  const pathname = usePathname();
+  const forceCollapsed = pathname.startsWith("/blog/");
 
   useEffect(() => {
     const header = headerRef.current;
     const button = buttonRef.current;
     if (!header || !button) return;
+
+    if (forceCollapsed) {
+      header.dataset.collapsed = "true";
+      button.dataset.collapsed = "true";
+      return; // permanently collapsed on this route — no scroll listener needed
+    }
 
     // Reduced-motion: state still tracks scroll, just without an animated
     // transition (the 0ms override lives in sectionsShared.module.scss) —
@@ -105,11 +122,21 @@ export function HeaderInteractive({
       scrollContainer.removeEventListener("scroll", onScroll);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [forceCollapsed]);
+
+  // SSR/initial-paint value, not just the post-hydration effect above —
+  // avoids a one-frame flash of the transparent state on the article
+  // route before the effect above runs.
+  const initialCollapsed = forceCollapsed ? "true" : "false";
 
   return (
     <>
-      <header className={styles.labHeader} ref={headerRef} data-lab-header="true" data-collapsed="false">
+      <header
+        className={styles.labHeader}
+        ref={headerRef}
+        data-lab-header="true"
+        data-collapsed={initialCollapsed}
+      >
         <div className={styles.labHeaderInner}>
           {/* Logo pass: signature + a live "Psicoterapeuta" descriptor,
               both inside one link. No aria-label added here — the SVG's
@@ -153,7 +180,7 @@ export function HeaderInteractive({
             <button
               ref={buttonRef}
               type="button"
-              data-collapsed="false"
+              data-collapsed={initialCollapsed}
               className={`${sharedStyles.btnSecondary} ${styles.labHeaderCta}`}
               onClick={() => dialogRef.current?.open()}
             >
