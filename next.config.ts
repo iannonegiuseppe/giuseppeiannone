@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { getWordPressArticleRedirects } from "./src/sanity/buildTimeRedirects";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -9,6 +10,24 @@ const nextConfig: NextConfig = {
   // their own lockfiles, which would otherwise make Next.js infer the wrong root.
   turbopack: {
     root: path.resolve(__dirname),
+  },
+  async redirects() {
+    // WordPress migration pass — generated from the live article slug
+    // list (see buildTimeRedirects.ts), not hand-maintained. Static
+    // permanent redirects here rather than middleware: middleware runs on
+    // every request, and this is a fixed map that only changes when an
+    // article is added/removed.
+    const wordPressArticleRedirects = await getWordPressArticleRedirects();
+
+    return [
+      ...wordPressArticleRedirects,
+      // The risorse/resources PREVIEW-GATE routes were live on preview
+      // and may be linked from somewhere — redirect rather than 404.
+      { source: "/risorse", destination: "/blog", permanent: true },
+      { source: "/risorse/:slug", destination: "/blog/:slug", permanent: true },
+      { source: "/en/resources", destination: "/en/blog", permanent: true },
+      { source: "/en/resources/:slug", destination: "/en/blog/:slug", permanent: true },
+    ];
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
