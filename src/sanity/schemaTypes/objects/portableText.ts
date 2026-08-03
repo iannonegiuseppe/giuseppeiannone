@@ -41,6 +41,21 @@ export const portableText = defineType({
           type: "string",
           validation: (Rule) => Rule.required(),
         }),
+        // WordPress migration pass — set true only when `alt` above was
+        // generated (the article's own title, reused verbatim) rather
+        // than authored, because the source WordPress image had none.
+        // Query for these with:
+        //   *[_type == "article"]{ title, "genAlt": body[_type == "image" && generatedAlt == true] }
+        // Hidden from the Studio form — it's a migration marker, not
+        // something an editor sets directly; it just stops being true
+        // the moment someone edits alt for that image.
+        defineField({
+          name: "generatedAlt",
+          title: "Alt text was generated (not authored)",
+          type: "boolean",
+          initialValue: false,
+          hidden: true,
+        }),
       ],
     }),
     defineArrayMember({ type: "keyTakeaways" }),

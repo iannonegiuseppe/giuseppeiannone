@@ -80,28 +80,21 @@ export function cookiePolicyPath(locale: Locale): string {
   return locale === "it" ? "/cookie-policy" : "/en/cookie-policy";
 }
 
-// Blog/resources index — same "decided in code, not content" reasoning
-// as the singletons above (no dedicated document type for this listing
-// page itself). Legalizes what design-lab's ResourcesSection.tsx/
-// DesignLabFooter.tsx were each inventing locally as a stopgap (see
-// their own now-outdated comments) — those callers are updated to use
-// this instead of maintaining a parallel convention. EN is translated
-// ("resources"), matching every other singleton's locale handling
-// (aboutPath, methodPath, etc.) rather than the stopgaps' own
-// deliberately-flagged "not translated" compromise.
+// Blog listing — repointed from /risorse, /en/resources (WordPress
+// migration pass): those were PREVIEW-GATE placeholder routes for this
+// exact listing, but the decided URL structure for the migrated blog is
+// /blog, /en/blog. "blog" isn't translated (unlike the other singletons)
+// per that decision. Old /risorse, /en/resources URLs redirect to these
+// in next.config.ts, since they were live on preview and may be linked.
 export function articlesPath(locale: Locale): string {
-  return locale === "it" ? "/risorse" : "/en/resources";
+  return locale === "it" ? "/blog" : "/en/blog";
 }
 
 // Individual article path — same slug-preservation pattern as
 // pillarPath/subtopicPath (the prefix is translated, the slug itself
-// isn't). The route doesn't exist yet (built later, once the article
-// schema has real content behind it) — this legalizes the URL SHAPE
-// now so callers stop hand-rolling it, per this pass's own instruction;
-// it may 404 in the meantime, same as pillar/subtopic links already do
-// elsewhere in the lab.
+// isn't). Repointed alongside articlesPath above, same reasoning.
 export function articlePath(locale: Locale, slug: string): string {
-  return locale === "it" ? `/risorse/${slug}` : `/en/resources/${slug}`;
+  return locale === "it" ? `/blog/${slug}` : `/en/blog/${slug}`;
 }
 
 // Every fixed (non-slug-driven) path function, in nav order — the single

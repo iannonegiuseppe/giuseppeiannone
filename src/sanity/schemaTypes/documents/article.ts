@@ -43,6 +43,27 @@ export const article = defineType({
       title: "Body",
       type: "portableText",
     }),
+    // WordPress migration pass — WordPress's own authored excerpt
+    // (excerpt.rendered), not a truncation of body: those are written
+    // summaries and truncating body loses them. Optional — nothing
+    // upstream requires it yet.
+    defineField({
+      name: "excerpt",
+      title: "Excerpt",
+      type: "text",
+      rows: 3,
+    }),
+    // WordPress migration pass — WordPress's own tags (post_tag taxonomy),
+    // imported wholesale (all ~86, not just the frequently-used ones);
+    // filtering/display decisions happen at render time, not at import
+    // time. WordPress's own categories are NOT modeled here: 467 of 468
+    // posts sit in one category, not a real taxonomy.
+    defineField({
+      name: "tags",
+      title: "Tags",
+      type: "array",
+      of: [{ type: "string" }],
+    }),
     defineField({
       name: "seo",
       title: "SEO",

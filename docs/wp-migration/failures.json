@@ -1,0 +1,18 @@
+[
+  {
+    "wpId": 4814,
+    "error": "fetch failed"
+  },
+  {
+    "wpId": 4306,
+    "error": "WP post 4306 fetch failed: 503"
+  },
+  {
+    "wpId": 4020,
+    "error": "fetch failed"
+  },
+  {
+    "wpId": 4016,
+    "error": "fetch failed"
+  }
+]
