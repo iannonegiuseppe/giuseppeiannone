@@ -422,6 +422,45 @@ export const allSubtopicSlugsQuery = defineQuery(`
   }
 `);
 
+// --- Blog (WordPress migration pass) ------------------------------------
+// Article routes: /blog listing (paginated) + /blog/[slug].
+
+export const articleSlugsQuery = defineQuery(`
+  *[_type == "article" && language == $locale]{ "slug": slug.current }
+`);
+
+export const articleBySlugQuery = defineQuery(`
+  *[_type == "article" && language == $locale && slug.current == $slug][0]{
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    cover,
+    excerpt,
+    tags,
+    ${bodyProjection},
+    seo,
+    ${alternatesProjection}
+  }
+`);
+
+// Paginated listing: $start/$end are a GROQ slice range (0-indexed,
+// end-exclusive), computed by the route from the page number + page size.
+export const articlesPageQuery = defineQuery(`
+  *[_type == "article" && language == $locale] | order(publishedAt desc) [$start...$end]{
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    cover,
+    excerpt
+  }
+`);
+
+export const articlesCountQuery = defineQuery(`
+  count(*[_type == "article" && language == $locale])
+`);
+
 // --- sitemap.xml (Step 5) -----------------------------------------------
 // Not locale-scoped: sitemap.ts runs once and emits entries for every
 // language itself, each with reciprocal hreflang alternates (same
