@@ -35,3 +35,21 @@ export async function getSubtopicTrail(
   const pillarTrail = await getPillarTrail(locale, pillarTitle, pillarPath);
   return [...pillarTrail, { name: subtopicTitle, path: subtopicPath }];
 }
+
+// Blog article pass — Home > Blog > {article title}, same shape as
+// getPillarTrail (a fixed middle crumb instead of a dynamic one, since
+// there's no separate "articlesPath" document, just the fixed /blog route).
+export async function getArticleTrail(
+  locale: Locale,
+  articlesLabel: string,
+  articlesPath: string,
+  articleTitle: string,
+  articlePath: string,
+): Promise<BreadcrumbItem[]> {
+  const home = await getHomeCrumb(locale);
+  return [
+    home,
+    { name: articlesLabel, path: articlesPath },
+    { name: articleTitle, path: articlePath },
+  ];
+}

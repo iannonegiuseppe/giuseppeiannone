@@ -1,6 +1,17 @@
 @use "../../../../styles/mixins";
 @use "../../../../styles/tone";
 
+// This route's header is permanently collapsed (HeaderInteractive.tsx's
+// own forceCollapsed) — measurably shorter than the generic --header-
+// height token (114px/100px, the header's REST-state size). Measured
+// directly against the live rendered header via getBoundingClientRect()
+// (not computed from padding arithmetic, which font-metric rounding makes
+// imprecise): 53.09px at lg+, 64px below lg. Shared here (rather than
+// re-typed as magic numbers) since both .progressTrack and .coverBand
+// need the same precise value.
+$collapsed-header-height: 4rem; // 64px, below lg
+$collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
+
 // Reading frame pass — ivory light-island on a dark-default site, same
 // mechanism every homepage light block uses (Metodo, Hope, FAQ, etc.):
 // long-form reading is the one thing this site asks a visitor to do for
@@ -10,36 +21,166 @@
   padding-bottom: var(--space-9);
 }
 
-// --- Cover band ------------------------------------------------------------
-// Fixed 21:9 ratio regardless of source dimensions (269x187 up to 2560x2560
-// measured across the imported set) — object-fit: cover crops to fit rather
-// than letting a near-square or ultra-wide source distort the band. Omitted
-// entirely (see page.tsx) rather than rendered empty when an article has no
-// cover — no placeholder box, no empty space reserved for it.
+// --- Cover band, now the header's own backdrop -----------------------------
+// Third pass: the whole header (breadcrumbs/kicker/h1/meta/author) moved
+// ON TOP of the cover — the previous stacked layout (header, then a full
+// cover band, then body) read as too tall. aspect-ratio:21/9 is a
+// PREFERRED size, not a cap — a non-replaced box with in-flow content
+// taller than that ratio provides just grows past it (verified: no
+// explicit height is set anywhere here that would clip it), so a long
+// title + full meta/author block never gets cropped.
+//
+// Always renders now, cover or not — an article with no cover gets the
+// same header on a flat scrim-colored band (no image layer, no empty
+// gap) rather than skipping the band entirely, since the header text
+// needs SOMEWHERE to sit regardless.
 .coverBand {
   position: relative;
   width: var(--vw100, 100vw);
   margin-inline: calc(50% - (var(--vw100, 100vw) / 2));
-  aspect-ratio: 21 / 9;
-  overflow: hidden;
-  background: var(--color-sand); // visible only for the instant before the image paints
+
+  // Sixth pass, item 1 — no longer a .readingArea grid item. Real bug:
+  // .readingArea is now bounded by mixins.container (fifth pass, for the
+  // TOC's own alignment) — a bounded ancestor caps this element's
+  // full-bleed width math too (the 50%-of-parent centering trick measures
+  // against the CONTAINER's width once nested inside it, not the true
+  // viewport), which is what produced the left inset strip this pass
+  // fixes. Rendered as a plain sibling BEFORE .readingArea in the JSX now
+  // (see page.tsx), so nothing bounds its width calc. This also simplifies
+  // .readingArea back to a single implicit row (see that class's own
+  // comment) — .toc and .column no longer need an explicit shared row
+  // assignment now that .coverBand isn't competing for row 1.
+  // min-height (a 21:9-equivalent floor, computed directly rather than
+  // via the `aspect-ratio` property), not a hard aspect-ratio box — real
+  // bug found via a 390px screenshot: aspect-ratio:21/9 at that width
+  // computes to 167px, and with overflow:hidden (needed at the time to
+  // keep the cover image from bleeding past its box) the full header
+  // content — kicker/h1/meta/author, not just the photo — was silently
+  // clipped, invisible below the breadcrumbs. min-height only sets a
+  // floor; overflow is no longer restricted, so content taller than the
+  // ratio (a long title, or any width narrow enough that the header text
+  // itself needs more than 167px) pushes the band taller instead of
+  // being cut off. The image still fills exactly whatever height results
+  // (position:absolute; inset:0 on .coverImage/.coverScrim), so there's
+  // no visual seam either way.
+  min-height: calc(var(--vw100, 100vw) * 9 / 21);
+  // Doubles as the no-cover fallback fill — see .coverHeaderContent's own
+  // comment for why this alone (without the scrim layer) already clears
+  // the same contrast floors the photo+scrim combination is calculated
+  // against, so "no cover" never under-shoots legibility.
+  background: var(--light-base-text);
+  // Seventh pass, item 2 — content centred on BOTH axes now, not just
+  // horizontally. padding-top reserves EXACTLY the fixed header's own
+  // measured collapsed height (see this file's own top-of-file comment)
+  // — no extra breathing-room addition — and padding-bottom is 0, so
+  // align-items:center splits ALL of the remaining space evenly above and
+  // below the content. A real bug caught by direct measurement (not
+  // assumed): the first version of this rule reserved var(--header-height)
+  // (the REST-state token, 114px/100px — much taller than this route's
+  // actually-collapsed header) PLUS an extra var(--space-5) top and
+  // var(--space-7) bottom "breathing room" left over from the pre-
+  // centring layout, which made the two centring gaps measure unequal
+  // once you included those extras in the total (204.77px top vs 114.78px
+  // bottom at 1440) — centred WITHIN the reserved region, but the reserved
+  // region itself was asymmetric. Fixed by reserving only the header's own
+  // real footprint and letting flex distribute literally everything else.
+  //
+  // Safe against clipping at any height: this element has no overflow
+  // constraint and no fixed height (min-height is a floor only, per this
+  // class's own comment above), so if centred content plus the reserved
+  // header space is taller than the 21:9 floor, the band simply grows to
+  // fit — checked at 390 (this pass's own report has the measured result),
+  // where the band is naturally short and the header content is
+  // relatively tall; it fits with room to spare, no growth needed there.
+  display: flex;
+  align-items: center;
+  padding-top: $collapsed-header-height;
+  padding-bottom: 0;
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: $collapsed-header-height-lg;
+  }
 }
 
 .coverImage {
   object-fit: cover;
+  z-index: 0; // below .coverScrim (1) and .coverHeaderContent (2)
+}
+
+// Scrim — sized to guarantee legibility against the WORST realistic cover
+// (a pure white source; the imported set is stock/screenshots/AI images of
+// unpredictable brightness, so this can't be tuned against the current
+// sample). Arithmetic (this pass's own report has the full working):
+// color-mix(--light-base-text 75%, transparent) over pure white composites
+// to ~rgb(98,96,94); --light-base-bg text (#f6f3ee) on that composite
+// measures 5.65:1 — clears both the 4.5:1 body floor (meta, breadcrumbs)
+// and the 3:1 large-heading floor (h1) with real margin, not a razor edge.
+.coverScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--light-base-text) 75%, transparent);
+}
+
+// --- Reading area (TOC pass) ---------------------------------------------
+// Below lg: a plain wrapper, .column behaves exactly as the previous pass
+// left it.
+//
+// At lg+ (fifth pass — real bug found via screenshot, not assumed): this
+// used to be an unbounded 1fr/41.25rem/1fr grid, so the TOC's left edge
+// (justify-self:end in the first 1fr track) floated at whatever the
+// viewport happened to leave over — NOT the same left edge the sitewide
+// container (mixins.container, --container-max-width 1320px) uses for
+// the header's own logo and every other section. Now bounded by that
+// same mixins.container (identical max-width/padding-inline to
+// HeaderInteractive.module.scss's own .labHeaderInner), with an explicit
+// TOC column flush against the container's own left edge — the two can't
+// drift apart again since they're the same mixin.
+//
+// Sixth pass: TOC track widened 13.75rem -> 15rem (item 3, +20px). Also
+// .coverBand no longer shares this grid (moved out entirely, item 1 — see
+// its own comment) — this is now genuinely a single-row, two-column grid
+// (.toc, .column), which is also why neither child needs an explicit
+// grid-row anymore; auto-placement already puts both in row 1.
+//
+// .column now fills the ENTIRE remaining 1fr track (item 4) instead of a
+// fixed 41.25rem centered within it — see .column's own comment for the
+// resulting measure and the characters-per-line this pass's own report
+// flags.
+.readingArea {
+  @include mixins.breakpoint-up(lg) {
+    @include mixins.container;
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    column-gap: var(--space-7);
+  }
 }
 
 // --- Reading column ----------------------------------------------------
-// 660px, holding at every width down to md (768) — measures 73.6 avg
-// chars/line (range 71-75) at --fs-article-body, in the 62-74 target (this
-// pass's own report). Narrower than --container-max-width (1320px, the
-// sitewide grid) deliberately: a reading column optimizes for line length,
-// not for matching every other section's own width.
+// Below lg: 660px, holding at every width down to md (768) — measures 73.6
+// avg chars/line (range 71-75) at --fs-article-body, in the 62-74 target
+// (fifth pass's own report).
+//
+// At lg+ (sixth pass, item 4 — filled the ENTIRE remaining grid track,
+// uncapped: measured ~936px at 1440, ~104 avg chars/line, well past the
+// 62-74 target, flagged rather than shipped silently).
+//
+// Seventh pass, item 3 — capped at 50rem (800px), per explicit
+// instruction: keeps the wide layout at moderate viewports (1024's 640px
+// track is already under the cap, so nothing changes there) while
+// bounding the worst case at 1440+. Measured (this pass's own report):
+// ~80 avg chars/line at 1440 now — past the ideal 62-74 range but
+// materially better than the uncapped ~104, and an explicitly accepted
+// trade-off per this pass's own brief ("acceptable"). No margin-inline
+// added to re-center within the track: max-width alone leaves the column
+// flush against the TOC-adjacent edge of its grid track (grid's own
+// default item alignment), with the leftover space trailing to the
+// right rather than splitting evenly on both sides.
 .column {
   // max-width includes the padding below lg (border-box, the sitewide
   // default) — sized so the TEXT content area is still exactly 660px once
   // that 24px-per-side padding is subtracted, not 660px total. Missing
-  // this the first time measurably shortened lines below lg (this pass's
+  // this the first time measurably shortened lines below lg (fifth pass's
   // own report: 67.4 avg chars/line at 768 vs 73.6 at 1024, same
   // font-size — 612px of real content width, not 660, was the cause).
   // Below the viewport can hold it (this max-width, e.g. mobile), the box
@@ -50,48 +191,369 @@
   padding-inline: var(--space-5);
 
   @include mixins.breakpoint-up(lg) {
-    max-width: 41.25rem; // 660px, no padding needed once the column is already narrower than the viewport
+    // grid-column is a no-op below lg (.readingArea isn't a grid there) —
+    // at lg+ it places .column in the grid's own 1fr track. No explicit
+    // grid-row: .readingArea is a single-row grid now (.coverBand moved
+    // out, item 1 — see .readingArea's own comment), so auto-placement is
+    // enough.
+    grid-column: 2;
+    // Item 3 — capped at 50rem (was `none`, filling the whole 1fr track
+    // edge-to-edge). width:100% (set unconditionally above) still fills
+    // up TO this cap; margin-inline:auto (base rule) is a no-op here since
+    // there's no space trailing after the max-width is hit AND no space
+    // needing to be split before it — the column just occupies the first
+    // 50rem of the track.
+    max-width: 50rem;
     padding-inline: 0;
   }
 }
 
-// --- Header: kicker rule + h1 ------------------------------------------
-// No lead paragraph: `excerpt` is WordPress's own truncation of the body's
-// own opening paragraph, not distinct editorial copy — rendering it here
-// printed the same sentence twice (this pass's own report). Dropped from
-// the header entirely; `excerpt` itself is untouched in the CMS and still
-// powers the /blog listing cards, where it belongs.
-.header {
-  padding-top: var(--space-7);
-  padding-bottom: var(--space-6);
+// --- Table of contents (lg+ only) -----------------------------------------
+// Eighth pass, item 1 — split into two elements. Real bug found by direct
+// measurement (not assumed): margin-top on a position:sticky element is
+// NOT purely a "natural position" offset — the sticky spec constrains the
+// element's MARGIN edge to stay >= `top` from the scrollport, so a
+// stuck sticky element with both `margin-top: X` and `top: Y` settles
+// with its border box at Y + X, not Y. .toc had margin-top: var(--space-7)
+// (48px, for the natural pre-scroll alignment with the body's first
+// paragraph) AND top: calc(var(--header-height) + var(--space-5)) — the
+// 48px was silently added on top of the intended pinned offset once
+// scrolled, landing the pinned TOC 48px lower than intended.
+//
+// Fix: .tocWrapper (below) is the actual grid item — it carries the
+// grid-column placement and the margin-top that aligns the TOC's natural
+// (pre-scroll) start with the body's first paragraph (.body's own
+// padding-top: var(--space-7), see that class's own comment — unchanged
+// reasoning, just moved to a plain, non-sticky element so it can no
+// longer interact with the sticky offset calculation). .toc itself (this
+// nav, nested one level inside the wrapper) carries ONLY the sticky
+// mechanics — no margin, so `top` alone determines the pinned position.
+//
+// A second real bug caught while verifying the fix above (not assumed):
+// .tocWrapper must NOT get align-self:start here. Position:sticky's stick
+// RANGE is bounded by its containing block's height — for .toc, that's
+// now .tocWrapper (its actual parent), not the grid area directly.
+// align-self:start sizes a grid item to its own CONTENT height, and
+// .tocWrapper's only content is the (short) nav — so the wrapper collapsed
+// to roughly the same height as the TOC list itself, leaving zero room
+// for sticky to ever engage; the TOC just scrolled away with the page
+// instead of pinning (confirmed: at scrollY 2000, its viewport-relative
+// top measured exactly natural-top minus 2000, i.e. plain static
+// scrolling, not stuck at all). Left at the default (stretch) instead, so
+// the wrapper fills the FULL grid row height — matching .column's own
+// (much taller) content — giving .toc the same tall containing block the
+// original single-element version got for free from the grid row itself.
+.tocWrapper {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+    grid-column: 1;
+    margin-top: var(--space-7);
+  }
 }
 
-// Same kicker/kickerRule pair used elsewhere (chiSonoBlock/footerLab) — a
-// short --color-line rule leading a small-caps label. No breadcrumb trail,
-// no author/reading-time — those are a later pass, per this one's own scope.
-.kickerRow {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin: 0 0 var(--space-4);
+.toc {
+  // top offset — item 1's own explicit instruction: "the same offset the
+  // breadcrumbs use, nothing more." Breadcrumbs sit at exactly
+  // $collapsed-header-height-lg below the cover's own top edge (.coverBand
+  // padding-top, no extra space-5 added there since the seventh pass's own
+  // centring fix) — same value used here, unchanged by any extra spacing
+  // term this rule used to add. align-self (grid-item alignment) moved to
+  // .tocWrapper above — .toc is no longer a direct grid child itself.
+  position: sticky;
+  top: $collapsed-header-height-lg;
+  // Sixth pass, item 3 — widened 13.75rem (220px) -> 15rem (240px),
+  // +20px. Horizontal padding removed entirely (was var(--space-3), 12px
+  // both sides, via the shorthand below) so the panel's text sits flush
+  // against the container's own left edge, same edge the wordmark above
+  // it uses — padding-block kept for vertical breathing room only.
+  width: 15rem; // 240px (was 220px)
+  // Fifth pass — max-height/overflow-y removed entirely, per instruction:
+  // the panel never gets its own inner scroll area now, full stop. It
+  // sizes to its content; a genuinely tall list (the 23-heading article)
+  // now simply extends past the bottom of the viewport rather than
+  // scrolling internally — sticky detaches naturally once the reader
+  // scrolls past its row (standard behaviour, no special handling
+  // needed), so nothing is clipped or hidden, but the lowest items on a
+  // very long list aren't reachable without scrolling the page itself.
+  // See this pass's own report for the proposal on the genuinely-long
+  // case (demoting FAQ questions off the h2 level, item 3b) rather than
+  // solving it with a second scroll area.
+  background: var(--color-bg);
+  padding-block: var(--space-3);
+  padding-inline: 0;
+  border-radius: var(--radius-m);
+  // Real bug: this used mixins.z(sticky) (20) — the EXACT same value as
+  // the site's own fixed header (HeaderInteractive.module.scss's own
+  // .labHeader, also z(sticky)). Same z-index means paint order between
+  // them falls back to DOM/stacking-context order, which let the TOC win
+  // and render on top of the header while scrolling. Dropped one tier to
+  // z(dropdown) (10) — still above ordinary page content (z-index:auto/0),
+  // but now unambiguously below the header (20), not tied with it.
+  z-index: mixins.z(dropdown);
 }
 
-.kickerRule {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 1px;
-  background: var(--color-line);
-}
-
-.kicker {
-  margin: 0;
+.tocLabel {
+  margin: 0 0 var(--space-3);
   font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-accent);
+  color: var(--color-text-muted);
+}
+
+.tocList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// Active state via data-active (set from JS, driven by Lenis — see
+// ArticleToc.tsx) rather than a CSS-only mechanism (:target/scroll-timeline
+// aren't reliable enough here — :target only tracks the LAST clicked link,
+// not scroll position, and scroll-timeline's browser support doesn't
+// cover this project's baseline yet).
+//
+// Eighth pass, item 4 — font-weight removed from the active state
+// entirely (was var(--font-weight-medium) vs 400 rest): a weight change
+// reflows the line (different glyph widths), which visibly shifted
+// neighbouring list items whenever the active heading changed. Colour is
+// now the ONLY distinguishing signal, using --color-gold-bronze — a
+// genuinely gold-family token, not --color-accent-hover (which THIS
+// scope's tone.light-island-surface repoints to a muted taupe, #715c52,
+// not gold — confirmed the fifth pass's own 1.01:1 finding was measuring
+// that repointed brown against the equally-muted rest colour, not gold at
+// all). --color-gold-bronze isn't in light-island-surface's reassignment
+// list, so it resolves to its real, unshadowed value here.
+//
+// Measured (this pass's own report): active #8e6b3d vs the panel's own
+// background 4.39:1, rest #686058 vs background 5.58:1 — both comfortably
+// clear the 3:1 non-text floor; active sits just under this project's
+// usual 4.5:1 text floor (a real, reported shortfall — gold-bronze is the
+// best-contrast gold-family token available, champagne/gold-light both
+// measure lower against ivory, see this pass's own report for the full
+// comparison table). Active-vs-rest is still low by pure luminance
+// (1.27:1) — hue (warm gold vs. grey-brown), not luminance, is doing the
+// visual separation here; flagged honestly rather than implied otherwise.
+.tocLink {
+  display: block;
+  padding: var(--space-1) 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &[data-active="true"] {
+    color: var(--color-gold-bronze);
+  }
+
+  @include mixins.focus-ring;
+}
+
+// --- Reading progress ------------------------------------------------------
+// Seventh pass, item 1 — re-diagnosed live rather than assumed: the prior
+// pass's own top values (4rem below lg / 3.32rem at lg+, measured against
+// the collapsed header's real getBoundingClientRect()) land within
+// 0.016px of the header's true bottom edge.
+//
+// Eighth pass, item 3 — the previous pass's own "pull it under the
+// header's glass" fix made the bar disappear entirely. Diagnosed by
+// sampling actual rendered pixels (not just computed styles): with the
+// bar pulled 4px up (fully inside the header's box) and z-index dropped
+// below the header, the header's backdrop-filter: blur(28px) — a blur
+// radius 14x the bar's own 2px height — smeared the thin gold stripe into
+// statistical noise. Pixel-sampled the rendered header at the bar's exact
+// coordinates, filled vs. unfilled: BOTH measured the identical rgb
+// (115,121,116), the header's own glass-over-backdrop composite with zero
+// detectable gold contribution. The blur wasn't dimming the bar, it was
+// erasing it — no overlap depth would have fixed that, since backdrop-
+// filter blurs everything within its box regardless of how far "in" a
+// given pixel sits.
+//
+// Reverted to flush-at-the-edge (no overlap, no pulled-up top, z-index no
+// longer needs to compete with the header at all since it isn't painting
+// under it anymore) — visible again, confirmed via the same pixel-
+// sampling technique this pass's own report has the numbers for.
+//
+// Tracks scroll through the article BODY only (ArticleProgress.tsx
+// computes this relative to the body element's own height, not the whole
+// page) — not visible until JS measures real progress (initial
+// scaleX(0)). Suppressed entirely under prefers-reduced-motion: that
+// component returns null outright rather than rendering an inert track.
+.progressTrack {
+  position: fixed;
+  // Measured collapsed-header height (see this file's own top-of-file
+  // comment) — flush at the header's own bottom edge, no overlap.
+  top: $collapsed-header-height;
+
+  @include mixins.breakpoint-up(lg) {
+    top: $collapsed-header-height-lg;
+  }
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: mixins.z(dropdown);
+  pointer-events: none;
+}
+
+// Colour: item 3 — --color-accent-hover (gold-light, #e0c8a7, "the
+// lightest gold") measures only 1.46:1 against the ivory body — the
+// backdrop it sits on for most of an article's scroll — nowhere near the
+// requested 3:1 floor. Champagne (--color-accent, #c29a5e), the next step
+// down, measures 2.35:1 — still fails. --color-gold-bronze (#8e6b3d), the
+// third and darkest gold step, measures 4.39:1 — clears 3:1 with real
+// margin (this pass's own report has the full comparison table). Not a
+// new token: --color-gold-bronze already exists in _tokens.scss, added in
+// an earlier pass and previously unused for a semantic role. Unlike
+// --color-accent-hover (used in an earlier version of this rule),
+// --color-gold-bronze is NOT one of the properties tone.light-island-
+// surface reassigns — it resolves to its real, unshadowed dark-theme
+// value everywhere on the page, so ArticleProgress's position relative to
+// .page no longer matters for this specific colour choice (it still
+// renders as a sibling of .page for other reasons — see page.tsx's own
+// comment on that move).
+.progressFill {
+  height: 100%;
+  width: 100%;
+  background: var(--color-gold-bronze);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+// --- Header content, overlaid on the cover ---------------------------------
+// Third pass: moved on top of the cover band (breadcrumbs/kicker/h1/meta/
+// author all now live here) instead of stacking above a separate cover —
+// the opening was reading too tall. position:relative + z-index:2 sits it
+// above .coverImage (0) and .coverScrim (1); padding-top clears the fixed
+// site header (now permanently in its dark state on this route — see
+// HeaderInteractive.tsx's own forceCollapsed) the same way the previous
+// pass's plain .header already did.
+//
+// Every text-color custom property this content (and the shared
+// Breadcrumbs component it renders) reads is reassigned to a light value
+// here — same "component reads var(--color-x), local scope repoints the
+// custom property" mechanism light-island-surface itself already uses
+// site-wide, so Breadcrumbs.tsx needs zero changes to re-tone. One
+// uniform light value for every text role (not a dimmed second tone for
+// "muted" text) — deliberately, so contrast only needs verifying once
+// (5.65:1, see .coverScrim's own comment) rather than for two colours.
+.coverHeaderContent {
+  position: relative;
+  z-index: 2;
+  max-width: calc(41.25rem + 2 * var(--space-5));
+  // Seventh pass, item 2 — padding-top/-bottom (which used to clear the
+  // fixed header and add bottom breathing room) moved to .coverBand
+  // itself, so THAT element's align-items:center centres within the
+  // space below the header rather than across the whole band including
+  // the header-obscured strip. margin-inline:auto still centres this
+  // element horizontally within .coverBand's row-direction flex main
+  // axis (the standard auto-margin flex-centering technique) exactly as
+  // it did in normal block flow before.
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+  // Fifth pass — the whole group (breadcrumbs/h1/meta/author) centred as
+  // a unit. text-align handles the block-level text content (h1) —
+  // .breadcrumbs and .meta are their own flex rows and need their own
+  // justify-content:center alongside this, since text-align doesn't
+  // reach into a block-level flex container's own content alignment.
+  // (Sixth pass: the kicker this comment used to also mention is gone,
+  // item 2 — redundant with the breadcrumb trail's own "Blog" crumb.)
+  text-align: center;
+
+  --color-text: var(--light-base-bg);
+  --color-text-muted: var(--light-base-bg);
+  --color-accent: var(--light-base-bg);
+  --color-accent-hover: var(--light-base-bg);
+
+  @include mixins.breakpoint-up(lg) {
+    max-width: 41.25rem;
+    padding-inline: 0;
+  }
+}
+
+// Breadcrumbs — first thing in the header, above the kicker rule. Uses the
+// SHARED Breadcrumbs component/CSS as-is (src/sanity/BreadcrumbsNav.tsx) —
+// that file's own .nav is already exactly "small, quiet, muted step"
+// (font-size: var(--fs-small), current crumb in var(--color-text-muted)),
+// same component pillarPage already uses, not touched here.
+.breadcrumbs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+}
+
+// Date + reading time — sits together as one quiet meta line under the h1,
+// above the author block.
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.metaDivider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+// Author — avatar, name (links to Chi sono), role. Under the h1/meta line,
+// above the cover band (see page.tsx for why the cover moved here from
+// before the whole reading column).
+.author {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 0;
+}
+
+.authorAvatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.authorInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.authorName {
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+
+  @include mixins.focus-ring;
+}
+
+.authorRole {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 // H1 — EB Garamond 400, no CMS emphasis-word field on the article schema
@@ -119,6 +581,7 @@
 
 // --- Body (Portable Text) ------------------------------------------------
 .body {
+  padding-top: var(--space-7);
   font-family: var(--font-body);
   font-size: var(--fs-article-body-sm);
   line-height: var(--lh-article-body-sm);
@@ -240,4 +703,200 @@
   height: auto;
   margin: var(--space-6) auto 0;
   border-radius: var(--radius-l);
+}
+
+// --- End-of-article author block ---------------------------------------
+// Eighth pass, item 2 — moved back INSIDE .column (was full container
+// width, its own section below the whole reading area): belongs at the
+// end of the article body, aligned with the text measure, not spanning
+// the sitewide container. mixins.container removed — .column's own width
+// (capped at 50rem, seventh pass) is what bounds this now, same as .body
+// above it. No bio paragraph: siteSettings.author.bio holds a placeholder
+// value in the live dataset (confirmed by reading the document directly,
+// not assumed), and §9 forbids inventing biographical copy — see
+// page.tsx's own comment on this exact section for the full finding.
+.endAuthor {
+  margin-top: var(--space-9);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.endAuthorInner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  text-align: left;
+
+  @include mixins.breakpoint-up(md) {
+    flex-direction: row;
+  }
+}
+
+.endAuthorPortrait {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.endAuthorText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.endAuthorName {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+}
+
+.endAuthorCredentials {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+// Item 4 — verbatim from chiSonoSection.paragraphs (page.tsx's own
+// buildAuthorBio), same body typeface/size as the credentials line just
+// above it, one step darker (--color-text, not -muted) since it's the
+// substantive part of the block.
+.endAuthorBio {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--color-text);
+  max-width: 34rem;
+}
+
+.endAuthorLink {
+  margin-top: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--color-accent-gradient-light);
+  }
+
+  @include mixins.focus-ring;
+}
+
+// --- Related posts (item 5) -------------------------------------------------
+// Fifth pass: moved out of the 660px reading column entirely — full
+// container width, larger cards, 3 across at md+ (was cramped 3-into-660px
+// before). "3 most recent, excluding this one" — no category/tag matching
+// (see relatedArticlesQuery's own comment in queries.ts for why: 370 of
+// 468 articles have no tags at all).
+.relatedSection {
+  margin-top: var(--space-9);
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-9);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.relatedInner {
+  @include mixins.container;
+}
+
+.relatedHeading {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+.relatedCard {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+
+  @include mixins.focus-ring;
+}
+
+// Item 7 — overflow:hidden here is what clips the image's hover scale to
+// the frame: the frame itself never resizes (transform only ever applies
+// to .relatedCardImg below), so there's no layout shift and the card's
+// own footprint never changes size.
+.relatedCardImage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background: var(--color-sand);
+  margin-bottom: var(--space-4);
+}
+
+// 1.08 scale (midpoint of the requested 1.06-1.10 range), 450ms — slow
+// enough to read as a deliberate, considered motion rather than a snap,
+// not so slow it feels sluggish on a small card. cubic-bezier(0.22, 1,
+// 0.36, 1) ("ease-out-quint"-shaped: fast start, long soft settle) reused
+// for both the image scale and the title colour below, so the two read as
+// one choreographed hover rather than two unrelated transitions.
+.relatedCardImg {
+  object-fit: cover;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.relatedCardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+  color: var(--color-text);
+  text-wrap: balance;
+  transition: color 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+// Hover-capable pointers only (mouse/trackpad) — a touch tap would
+// otherwise leave the card stuck in its hover state with no corresponding
+// "un-hover" gesture.
+@media (hover: hover) {
+  .relatedCard:hover .relatedCardTitle {
+    color: var(--color-accent-hover);
+  }
+
+  .relatedCard:hover .relatedCardImg {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relatedCardImg,
+  .relatedCardTitle {
+    transition: none;
+  }
+}
+
+.relatedCardDate {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
 }

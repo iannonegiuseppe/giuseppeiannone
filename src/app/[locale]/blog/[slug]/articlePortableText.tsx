@@ -21,11 +21,25 @@ import styles from "./article.module.scss";
 // ever appear, next-sanity's PortableText renders nothing for a type with
 // no matching component (a console warning in dev), which is the "report
 // as unstyled" outcome this pass's brief explicitly allows.
-export function getArticlePortableTextComponents(): PortableTextComponents {
+// headingIds: block._key -> slug id, from src/sanity/headings.ts's own
+// extractHeadings/headingIdsByKey (the same shared utility pillarPage's
+// TOC uses) — so the TOC pass's jump-links can never point at an id that
+// doesn't exist on the rendered heading.
+export function getArticlePortableTextComponents(
+  headingIds?: Map<string, string>,
+): PortableTextComponents {
   return {
     block: {
-      h2: ({ children }) => <h2 className={styles.h2}>{children}</h2>,
-      h3: ({ children }) => <h3 className={styles.h3}>{children}</h3>,
+      h2: ({ children, value }) => (
+        <h2 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h2}>
+          {children}
+        </h2>
+      ),
+      h3: ({ children, value }) => (
+        <h3 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h3}>
+          {children}
+        </h3>
+      ),
       normal: ({ children }) => <p className={styles.paragraph}>{children}</p>,
       blockquote: ({ children }) => (
         <blockquote className={styles.blockquote}>{children}</blockquote>

@@ -143,6 +143,26 @@ export const chiSonoSectionQuery = defineQuery(`
   }
 `);
 
+// Blog article pass — the author block's avatar. A narrow query (just the
+// one field) rather than reusing chiSonoSectionQuery wholesale: that query
+// pulls kicker/title/paragraphs/pullQuote/etc the article page has no use
+// for. siteSettings.author has its own `photo` field in the schema, but no
+// image is uploaded there yet (checked directly against the dataset,
+// report) — this reuses chiSonoSection's real, already-live portrait
+// instead of inventing a path or leaving the avatar broken.
+// Also carries `paragraphs` now (article end-of-body author section,
+// seventh pass, item 4) — same document/tag as the portrait fetch above,
+// so this stays one query rather than a second round-trip. Bio text is
+// built from these paragraphs in code (see page.tsx's own comment), never
+// invented here or hardcoded in a component.
+export const chiSonoPortraitQuery = defineQuery(`
+  *[_type == "chiSonoSection" && language == $locale][0]{
+    portrait,
+    "portraitLqip": portrait.asset->metadata.lqip,
+    paragraphs
+  }
+`);
+
 // Aree section pass: header copy (standalone singleton, see
 // areeSection.ts's own comment) and the row list (standalone `area` list
 // type, see its own comment for why rows aren't nested inside the
@@ -459,6 +479,42 @@ export const articlesPageQuery = defineQuery(`
 
 export const articlesCountQuery = defineQuery(`
   count(*[_type == "article" && language == $locale])
+`);
+
+// End-of-article pass — "3 most recent, excluding this one." No
+// category/tag-based relation: 370 of 468 imported articles have no tags
+// at all (confirmed via a direct dataset query, this pass's own report),
+// so a tag-matching approach would silently fail for most articles. This
+// query can never come up empty the way a real similarity match could —
+// flagged in the report, not silently relied on.
+export const relatedArticlesQuery = defineQuery(`
+  *[_type == "article" && language == $locale && slug.current != $excludeSlug]
+    | order(publishedAt desc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    cover,
+    publishedAt
+  }
+`);
+
+// End-of-article pass — reuses the real, editor-authored contactSection
+// copy the homepage's own ContactBlock renders (kicker/heading/
+// headingEmphasisWord/photoCaption), rather than inventing new marketing
+// copy for this one section. Real bug caught in a later pass: this
+// originally read "contactLab", a field the schema itself marks
+// "DEPRECATED, see contactSection" (homePage.ts's own comment) — fixed
+// here to match what ContactBlock actually renders on the live homepage.
+// finalCta.googleProfileLabel travels alongside it since ContactBlock
+// still reads that one field from the older group (see page.tsx's own
+// comment on that specific carry-over). Narrow query (just these two
+// field groups) rather than the full homePageQuery, which pulls far more
+// than this needs.
+export const contactSectionQuery = defineQuery(`
+  *[_type == "homePage" && language == $locale][0]{
+    contactSection,
+    "googleProfileLabel": finalCta.googleProfileLabel
+  }
 `);
 
 // --- sitemap.xml (Step 5) -----------------------------------------------
