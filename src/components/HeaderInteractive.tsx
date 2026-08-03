@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "@/i18n/navigation";
 import { homePath, type Locale } from "@/sanity/paths";
 import type { ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
@@ -68,13 +68,26 @@ export function HeaderInteractive({
   // Blog article pass — no prop threads this: Header is rendered once at
   // the layout level (a sibling of {children}, not its parent), so a page
   // component can't hand it a per-route prop the ordinary way. Reading the
-  // route here instead — next-intl's own usePathname (locale-agnostic, so
-  // this matches both /blog/... and /en/blog/...  with one check). Article
-  // covers are unpredictable stock/AI photos with no baked-in scrim of
-  // their own (unlike the homepage hero), so this route always needs the
-  // dark glass treatment, not just past the scroll threshold.
+  // route here instead. Article covers are unpredictable stock/AI photos
+  // with no baked-in scrim of their own (unlike the homepage hero), so
+  // this route always needs the dark glass treatment, not just past the
+  // scroll threshold.
+  //
+  // Real bug, caught by a failed production build: this used to import
+  // usePathname from "@/i18n/navigation" (next-intl's locale-aware hook,
+  // via createNavigation) for its locale-agnostic matching — but that hook
+  // requires a NextIntlClientProvider ancestor, which only exists inside
+  // src/app/[locale]/layout.tsx. HeaderInteractive is ALSO rendered on
+  // /design-lab/* (DesignLabHomepage renders the real, shared Header —
+  // see that file's own comment), which has no such provider — prerendering
+  // /design-lab/light-mode threw and failed the build. Plain "next/
+  // navigation" usePathname works everywhere (no provider dependency), at
+  // the cost of returning the RAW path including any locale prefix — so
+  // the match below checks both the unprefixed (it) and /en-prefixed
+  // forms explicitly, rather than relying on next-intl to normalize them
+  // into one shape.
   const pathname = usePathname();
-  const forceCollapsed = pathname.startsWith("/blog/");
+  const forceCollapsed = pathname.startsWith("/blog/") || pathname.startsWith("/en/blog/");
 
   useEffect(() => {
     const header = headerRef.current;
