@@ -14,6 +14,17 @@ export function pillarPath(locale: Locale, slug: string): string {
   return locale === "it" ? `/${slug}` : `/en/${slug}`;
 }
 
+// Root-namespace pass — deliberately IDENTICAL output to pillarPath: the
+// universal `page` type shares the same root URL segment as pillarPage
+// (src/app/[locale]/[slug]/page.tsx resolves both from one route). A
+// separate function exists anyway so call sites read as "this is a page
+// link" rather than "this is a pillar link" — intent, not a real path
+// difference. See reservedSlugs.ts / the unified resolver's own comments
+// for how the two types are kept from colliding.
+export function pagePath(locale: Locale, slug: string): string {
+  return locale === "it" ? `/${slug}` : `/en/${slug}`;
+}
+
 export function subtopicPath(
   locale: Locale,
   parentSlug: string,

@@ -58,8 +58,13 @@ export async function generateStaticParams({
     { pillarSlug: string; subtopicSlug: string }[]
   >(allSubtopicSlugsQuery, { locale: params.locale }, ["subtopicPage"]);
 
+  // Route-param key is `slug` (the parent segment's folder is now
+  // [locale]/[slug]/[subtopicSlug], renamed from [pillarSlug] — root-
+  // namespace pass, see [locale]/[slug]/page.tsx's own comment). The
+  // GROQ result field stays `pillarSlug`; only the returned param key
+  // changes to match the folder rename.
   return subtopics.map((subtopic) => ({
-    pillarSlug: subtopic.pillarSlug,
+    slug: subtopic.pillarSlug,
     subtopicSlug: subtopic.subtopicSlug,
   }));
 }
@@ -67,9 +72,9 @@ export async function generateStaticParams({
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string; pillarSlug: string; subtopicSlug: string }>;
+  params: Promise<{ locale: string; slug: string; subtopicSlug: string }>;
 }): Promise<Metadata> {
-  const { locale, pillarSlug, subtopicSlug } = await params;
+  const { locale, slug: pillarSlug, subtopicSlug } = await params;
   const [data, siteSettings] = await Promise.all([
     getSubtopicPage(locale, pillarSlug, subtopicSlug),
     getSiteSettings(locale),
@@ -88,9 +93,9 @@ export async function generateMetadata({
 export default async function SubtopicPage({
   params,
 }: {
-  params: Promise<{ locale: string; pillarSlug: string; subtopicSlug: string }>;
+  params: Promise<{ locale: string; slug: string; subtopicSlug: string }>;
 }) {
-  const { locale, pillarSlug, subtopicSlug } = await params;
+  const { locale, slug: pillarSlug, subtopicSlug } = await params;
   setRequestLocale(locale);
 
   const data = await getSubtopicPage(locale, pillarSlug, subtopicSlug);

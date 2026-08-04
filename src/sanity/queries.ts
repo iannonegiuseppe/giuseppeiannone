@@ -413,6 +413,40 @@ export const pillarSlugsQuery = defineQuery(`
   *[_type == "pillarPage" && language == $locale]{ "slug": slug.current }
 `);
 
+// Root-namespace pass — src/app/[locale]/[slug]/page.tsx's own resolver.
+// One request, both root-level candidates for this slug, rather than two
+// sequential fetches (which would also hide a collision — a short-circuit
+// "try pillar, then try page" can never observe that BOTH matched). The
+// route decides precedence and logs a collision; see that file's own
+// comment. "page" is the not-yet-created universal page type (Stage 2
+// Step 4 of this pass) — querying for a _type with no schema/documents
+// yet is harmless, it just returns null until real documents exist.
+export const rootSlugQuery = defineQuery(`
+  {
+    "pillar": *[_type == "pillarPage" && language == $locale && slug.current == $slug][0]{
+      _id,
+      title,
+      ${bodyProjection},
+      seo,
+      medicalEntityType,
+      ${alternatesProjection}
+    },
+    "page": *[_type == "page" && language == $locale && slug.current == $slug][0]{
+      _id,
+      title,
+      ${bodyProjection},
+      seo,
+      ${alternatesProjection}
+    }
+  }
+`);
+
+// Same "page" type — always empty until Step 4 of this pass adds the
+// schema, unioned with pillarSlugsQuery by generateStaticParams below.
+export const pageSlugsQuery = defineQuery(`
+  *[_type == "page" && language == $locale]{ "slug": slug.current }
+`);
+
 export const subtopicPageQuery = defineQuery(`
   *[
     _type == "subtopicPage" &&
