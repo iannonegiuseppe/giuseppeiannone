@@ -58,8 +58,9 @@ const ROUTE_KEY_MAP = new Map(NAV_ROUTE_KEYS.map((entry) => [entry.key, entry]))
 // Reference types hrefFor can actually turn into a URL — see paths.ts's
 // own hrefFor and navLink.ts's comment on why "service" is deliberately
 // not offered as a reference target (no servicePath() convention exists
-// yet, so it could never resolve).
-const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "article"]);
+// yet, so it could never resolve). "page" (the universal page type,
+// root-namespace pass) added alongside hrefFor's own new branch.
+const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "article", "page"]);
 
 // PREVIEW-GATE (temporary) for "chi-sono" only now: it normally resolves
 // to its own dedicated route (aboutPath — /chi-sono, not yet built) via

@@ -223,6 +223,12 @@ export function hrefFor(locale: Locale, doc: ReferencedDoc): string {
   if (doc._type === "article" && doc.slug) {
     return articlePath(locale, doc.slug);
   }
+  // Root-namespace pass: navLink.ts's reference field now allows `page`.
+  // pagePath() has identical output to pillarPath() by design — see that
+  // function's own comment.
+  if (doc._type === "page" && doc.slug) {
+    return pagePath(locale, doc.slug);
+  }
 
   return prefix || "/";
 }
