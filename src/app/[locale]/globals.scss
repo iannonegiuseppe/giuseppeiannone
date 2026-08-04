@@ -1,4 +1,5 @@
 @use "../../styles/tokens";
+@use "../../styles/mixins";
 
 // --- Reset -----------------------------------------------------------------
 *,
@@ -69,6 +70,39 @@ textarea {
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+  }
+}
+
+// --- Container -----------------------------------------------------------
+// Single global source of truth for page width/horizontal gutters —
+// previously every consumer of mixins.container (_mixins.scss) got its own
+// copy of the same rules stamped into its own CSS Module, which is how
+// horizontal padding ended up scattered across component files instead of
+// living in one place. This lives here (globals.scss, loaded once by
+// src/app/[locale]/layout.tsx, unscoped by CSS Modules) rather than in a
+// CSS Module, specifically so it's a real, single global class — any
+// component can reach it with a plain className="container" string, no
+// import needed, and there is exactly one compiled copy of these rules
+// sitewide rather than one per Module that includes the mixin.
+//
+// Gradual adoption (explicit instruction): mixins.container ITSELF is
+// left completely unchanged below — every other page still using it is
+// untouched by this class's existence. Values here are identical to the
+// mixin's own (same tokens), so a section can move from the mixin to this
+// class with zero visual change. The mixin is DEPRECATED as of this pass
+// (see its own updated comment) — new work should reach for .container;
+// the mixin stays only until every consumer has migrated, then it can be
+// deleted outright (a plain duplicate at that point, not a wrapper — see
+// mixins.container's own comment for why this file doesn't reach back
+// into it via @extend).
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
   }
 }
 

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { getArticlesPage, getArticlesTotalPages } from "@/sanity/articles";
-import { articlePath, articlesPath } from "@/sanity/paths";
+import { getArticlesTotalPages, getBlogIndex } from "@/sanity/articles";
+import { articlesPath } from "@/sanity/paths";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+import { BlogIndexView } from "../../BlogIndexView";
 
 export async function generateStaticParams({
   params,
@@ -26,11 +26,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, page } = await params;
   const typedLocale = locale as "it" | "en";
-  const siteSettings = await getSiteSettings(locale);
+  const [siteSettings, blogIndex] = await Promise.all([
+    getSiteSettings(locale),
+    getBlogIndex(locale),
+  ]);
 
   return await buildMetadata({
     locale: typedLocale,
-    title: `Blog — page ${page}`,
+    title: `${blogIndex?.heading ?? "Blog"} — ${typedLocale === "en" ? "page" : "pagina"} ${page}`,
+    seo: blogIndex?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
     localizedPaths: {
@@ -53,40 +57,8 @@ export default async function BlogListingPagedPage({
   if (!Number.isInteger(pageNumber) || pageNumber < 1) notFound();
   if (pageNumber === 1) redirect(articlesPath(typedLocale));
 
-  const { articles, totalPages } = await getArticlesPage(locale, pageNumber);
+  const totalPages = await getArticlesTotalPages(locale);
   if (pageNumber > totalPages) notFound();
 
-  return (
-    <main>
-      <h1>Blog</h1>
-      <ul>
-        {articles.map((article) => (
-          <li key={article._id}>
-            <Link href={articlePath(typedLocale, article.slug)}>
-              {article.title}
-            </Link>
-            {article.publishedAt ? (
-              <time dateTime={article.publishedAt}> {article.publishedAt}</time>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      {pageNumber > 1 ? (
-        <Link
-          href={
-            pageNumber - 1 === 1
-              ? articlesPath(typedLocale)
-              : `${articlesPath(typedLocale)}/page/${pageNumber - 1}`
-          }
-        >
-          Previous
-        </Link>
-      ) : null}
-      {pageNumber < totalPages ? (
-        <Link href={`${articlesPath(typedLocale)}/page/${pageNumber + 1}`}>
-          Next
-        </Link>
-      ) : null}
-    </main>
-  );
+  return <BlogIndexView locale={locale} pageNumber={pageNumber} />;
 }

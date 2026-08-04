@@ -517,6 +517,32 @@ export const contactSectionQuery = defineQuery(`
   }
 `);
 
+// Blog index redesign pass — hero + closing editorial copy for the /blog
+// listing (its own singleton, blogIndexSection.ts).
+export const blogIndexQuery = defineQuery(`
+  *[_type == "blogIndexSection" && language == $locale][0]{
+    kicker,
+    heading,
+    headingEmphasisWord,
+    intro,
+    editorial,
+    seo
+  }
+`);
+
+// Blog index hero's own visual element — reuses the homepage hero's real
+// cut-out portrait (homePage.hero.photo, a transparent PNG; confirmed via
+// a direct dataset query that this asset is only referenced by
+// homePage-it/-en, not a separate "contact block" asset — the contact
+// section's own photo is a hardcoded design-lab path, not a Sanity image
+// at all). Narrow query, just this one field, rather than the full
+// homePageQuery.
+export const heroPortraitQuery = defineQuery(`
+  *[_type == "homePage" && language == $locale][0]{
+    "photo": hero.photo
+  }
+`);
+
 // --- sitemap.xml (Step 5) -----------------------------------------------
 // Not locale-scoped: sitemap.ts runs once and emits entries for every
 // language itself, each with reciprocal hreflang alternates (same

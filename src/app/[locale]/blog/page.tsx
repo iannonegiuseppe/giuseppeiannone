@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { setRequestLocale } from "next-intl/server";
-import { getArticlesPage } from "@/sanity/articles";
-import { articlePath, articlesPath } from "@/sanity/paths";
+import { getBlogIndex } from "@/sanity/articles";
+import { articlesPath } from "@/sanity/paths";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+import { BlogIndexView } from "./BlogIndexView";
 
 export async function generateMetadata({
   params,
@@ -12,11 +12,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const typedLocale = locale as "it" | "en";
-  const siteSettings = await getSiteSettings(locale);
+  const [siteSettings, blogIndex] = await Promise.all([
+    getSiteSettings(locale),
+    getBlogIndex(locale),
+  ]);
 
   return await buildMetadata({
     locale: typedLocale,
-    title: "Blog",
+    title: blogIndex?.heading ?? "Blog",
+    seo: blogIndex?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
     localizedPaths: {
@@ -33,28 +37,6 @@ export default async function BlogListingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const typedLocale = locale as "it" | "en";
 
-  const { articles, totalPages } = await getArticlesPage(locale, 1);
-
-  return (
-    <main>
-      <h1>Blog</h1>
-      <ul>
-        {articles.map((article) => (
-          <li key={article._id}>
-            <Link href={articlePath(typedLocale, article.slug)}>
-              {article.title}
-            </Link>
-            {article.publishedAt ? (
-              <time dateTime={article.publishedAt}> {article.publishedAt}</time>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      {totalPages > 1 ? (
-        <Link href={`${articlesPath(typedLocale)}/page/2`}>Next</Link>
-      ) : null}
-    </main>
-  );
+  return <BlogIndexView locale={locale} pageNumber={1} />;
 }

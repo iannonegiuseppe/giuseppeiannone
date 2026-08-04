@@ -2,6 +2,7 @@ import { aboutPage } from "./aboutPage";
 import { area } from "./area";
 import { areeSection } from "./areeSection";
 import { article } from "./article";
+import { blogIndexSection } from "./blogIndexSection";
 import { chiSonoSection } from "./chiSonoSection";
 import { contactPage } from "./contactPage";
 import { ctaBridgeSection } from "./ctaBridgeSection";
@@ -46,6 +47,10 @@ export const documentTypes = [
   // CTA bridge pass: quiet mid-page link to the contact section, between
   // Aree and Diplomi — see its own file's comment.
   ctaBridgeSection,
+  // Blog index redesign pass: hero + closing editorial copy for /blog —
+  // see its own file's comment for why "editorial" is a narrower portable
+  // text array than the shared `portableText` object type.
+  blogIndexSection,
   // Exactly two: Milan, Monza (protected like singletons in Step 7)
   locationPage,
   // Knowledge base / content
