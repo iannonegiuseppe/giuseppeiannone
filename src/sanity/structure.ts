@@ -83,10 +83,17 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title("Content")
     .items([
-      // Homepage: the page itself, plus the section documents that only
-      // exist to feed it — chiSonoSection (deprecated, superseded by
-      // homePage.profilo, still reachable here), areeSection + its Aree
-      // rows, ctaBridgeSection. None of these have a URL of their own.
+      // Homepage-fold pass: areeSection and ctaBridgeSection folded into
+      // homePage as field groups (Aree section / CTA bridge, inside Home
+      // page's own edit form) — their old standalone list items removed
+      // from here. chiSonoSection was ALSO removed from this group, not
+      // folded: hidden from the desk entirely now (schema hidden: true,
+      // same as qualification), reachable only via Vision/a direct
+      // document URL — its five paragraphs are Giuseppe's own writing,
+      // kept intact for the future Chi sono page, just no longer listed
+      // anywhere in this tree. `area` stays a separate document type
+      // (per-row slugs reserved for future individual area pages) and is
+      // the one thing besides Home page itself still filed here.
       S.listItem()
         .title("Homepage")
         .child(
@@ -94,14 +101,7 @@ export const structure: StructureResolver = (S) =>
             .title("Homepage")
             .items([
               singletonListItem(S, "homePage", "Home page"),
-              singletonListItem(
-                S,
-                "chiSonoSection",
-                "Chi sono section (deprecated — see homePage.profilo)",
-              ),
-              singletonListItem(S, "areeSection", "Aree section"),
               S.documentTypeListItem("area").title("Aree (rows)"),
-              singletonListItem(S, "ctaBridgeSection", "CTA bridge"),
             ]),
         ),
       // Real pages: every document type whose job is to BE a page with

@@ -209,6 +209,17 @@ export const homePageQuery = defineQuery(`
       backgroundVideoPoster
     },
     chiSono,
+    aree{
+      kicker,
+      title,
+      intro
+    },
+    ctaBridge{
+      title,
+      titleEmphasis,
+      body,
+      linkLabel
+    },
     formazione,
     diCosa,
     diplomi{

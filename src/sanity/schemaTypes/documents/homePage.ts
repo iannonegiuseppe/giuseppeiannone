@@ -149,10 +149,16 @@ export const homePage = defineType({
     }),
 
     // 2. ChiSonoOverlap
+    // Homepage-fold pass: hidden from the Studio form (hidden: true) —
+    // nothing has read this field group since "profilo" superseded it
+    // (see this field's own pre-existing comment history). Data
+    // untouched; hidden only removes it from the editing UI, not from
+    // the document.
     defineField({
       name: "chiSono",
       title: "2. Chi sono",
       type: "object",
+      hidden: true,
       fields: [
         textField("introHeading", "Intro heading", { rows: 2 }),
         stringField("introLinkLabel", "Intro link label"),
@@ -215,10 +221,14 @@ export const homePage = defineType({
     }),
 
     // 5. ConcernsSection
+    // Homepage-fold pass: hidden from the Studio form (hidden: true) —
+    // superseded by areeSection/area, nothing reads this field group.
+    // Data untouched.
     defineField({
       name: "diCosa",
       title: "5. Di cosa mi occupo (aree)",
       type: "object",
+      hidden: true,
       fields: [
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
@@ -384,6 +394,9 @@ export const homePage = defineType({
         "Orphaned as of the design-lab-to-production migration — JourneySection.tsx is no longer " +
         "rendered on the real homepage, superseded by \"metodo\" below. Left intact, not deleted.",
       type: "object",
+      // Homepage-fold pass: hidden from the Studio form on top of the
+      // pre-existing DEPRECATED title above — data untouched.
+      hidden: true,
       fields: [
         stringField("kicker", "Kicker"),
         stringField("heading", "Heading"),
@@ -663,6 +676,54 @@ export const homePage = defineType({
       ],
     }),
 
+    // Aree section (Homepage-fold pass) — folded in from the standalone
+    // areeSection document type, now deprecated in favour of this field
+    // group (see that document's own schema comment). Same three fields
+    // it always had; `previewHover` is NOT carried over — it was a
+    // demo-only flag AreeSection.tsx's own comment already says nothing
+    // reads ("Card-grid rebuild pass: still fetched... but no longer
+    // read here"). The rows themselves stay the separate `area` document
+    // type, untouched — each carries an optional slug reserved for a
+    // future individual area page, which a plain array field here
+    // couldn't hold the same way (see area.ts's own comment).
+    defineField({
+      name: "aree",
+      title: "Aree section",
+      description:
+        "Header copy for the Aree (intervention areas) list, shown between " +
+        "Credentials and Metodo. The rows themselves are separate `area` " +
+        "documents, not part of this field group.",
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("title", "Title"),
+        textField("intro", "Intro"),
+      ],
+    }),
+
+    // CTA bridge (Homepage-fold pass) — folded in from the standalone
+    // ctaBridgeSection document type, now deprecated in favour of this
+    // field group (see that document's own schema comment). Same four
+    // fields it always had.
+    defineField({
+      name: "ctaBridge",
+      title: "CTA bridge",
+      description:
+        "Quiet mid-page invitation linking to the contact section, shown " +
+        "between Tariffe and Profilo — not a second form.",
+      type: "object",
+      fields: [
+        stringField("title", "Title"),
+        stringField(
+          "titleEmphasis",
+          "Title — emphasized phrase (must match text inside the title above exactly, case-sensitive; leave empty for no emphasis)",
+          { required: false },
+        ),
+        textField("body", "Body"),
+        stringField("linkLabel", "Link label"),
+      ],
+    }),
+
     // 11. SedesSection (scene list is the separate `sede` document type)
     // DEPRECATED as of the design-lab-to-production migration: superseded
     // by "locations" below. Left intact, not deleted — its own paragraph
@@ -676,6 +737,9 @@ export const homePage = defineType({
         "Orphaned as of the design-lab-to-production migration — no longer rendered, " +
         "superseded by \"locations\". Left intact, not deleted.",
       type: "object",
+      // Homepage-fold pass: hidden from the Studio form on top of the
+      // pre-existing DEPRECATED title above — data untouched.
+      hidden: true,
       fields: [stringField("kicker", "Kicker"), stringField("heading", "Heading"), textField("paragraph", "Paragraph")],
     }),
 
