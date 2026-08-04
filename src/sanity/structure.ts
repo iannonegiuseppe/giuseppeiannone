@@ -79,6 +79,18 @@ function singletonListItem(S: StructureBuilder, typeId: string, title: string) {
 // This is a desk-only change: it edits which branch of this file's own
 // tree a type's list item appears under, never a document's `_id` or any
 // field.
+//
+// Homepage-fold pass (later): areeSection/ctaBridgeSection folded into
+// homePage as field groups and chiSonoSection hidden outright — all
+// three removed from this file's Homepage group as a result. Their
+// schema types are now `hidden: () => true` (same mechanism
+// `qualification` already used), so — unlike the root-namespace pass
+// above, which only ever moved list items between branches of this same
+// tree — these three are no longer reachable through normal desk
+// browsing at all, only via Vision or a direct document URL. Their
+// documents and data are untouched; see each schema file's own comment
+// for why (chiSonoSection: irreplaceable copy, hidden not folded;
+// areeSection/ctaBridgeSection: superseded, folded AND hidden).
 export const structure: StructureResolver = (S) =>
   S.list()
     .title("Content")
@@ -91,18 +103,22 @@ export const structure: StructureResolver = (S) =>
       // same as qualification), reachable only via Vision/a direct
       // document URL — its five paragraphs are Giuseppe's own writing,
       // kept intact for the future Chi sono page, just no longer listed
-      // anywhere in this tree. `area` stays a separate document type
-      // (per-row slugs reserved for future individual area pages) and is
-      // the one thing besides Home page itself still filed here.
+      // anywhere in this tree.
+      //
+      // Area-fold pass (later): `area` folded too — its 6+6 rows now
+      // live inside homePage.aree.items, editable alongside the Aree
+      // section's own kicker/title/intro in the same document (see
+      // homePage.ts's own schema comment for why folding cost nothing —
+      // slug was empty on all 12 documents and backed by no route). Its
+      // list item removed from here the same way; the type itself is now
+      // `hidden: () => true`, same mechanism as the other three. This
+      // group now contains exactly Home page — nothing else.
       S.listItem()
         .title("Homepage")
         .child(
           S.list()
             .title("Homepage")
-            .items([
-              singletonListItem(S, "homePage", "Home page"),
-              S.documentTypeListItem("area").title("Aree (rows)"),
-            ]),
+            .items([singletonListItem(S, "homePage", "Home page")]),
         ),
       // Real pages: every document type whose job is to BE a page with
       // its own URL. FAQ page + its questions nest together, same

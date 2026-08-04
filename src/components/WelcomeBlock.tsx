@@ -7,19 +7,17 @@ import type { AreaRow } from "@/components/AreeSection";
 import { Button } from "@/components/Button";
 import { ContactFormDialog, type ContactFormDialogHandle } from "@/components/ContactFormDialog";
 import { ShimmerText } from "@/components/ShimmerText";
-import { areaPath, type Locale } from "@/sanity/paths";
+import type { Locale } from "@/sanity/paths";
 import styles from "./welcome.module.scss";
 
 function WelcomeLeftContent({
   areas,
-  locale,
   contactDialogRef,
   authorName,
   authorCredentials,
   authorRegistrationNumber,
 }: {
   areas?: AreaRow[];
-  locale: Locale;
   contactDialogRef: React.RefObject<ContactFormDialogHandle | null>;
   authorName: string;
   authorCredentials?: string;
@@ -29,22 +27,19 @@ function WelcomeLeftContent({
     <>
       {/* §9: area names are permitted facts (what is treated), never
           outcome/duration/benefit language — no checkmarks either (a tick
-          next to a disorder name reads as a promise of outcome). Links
-          only where a real route exists (area.slug) — confirmed via live
-          DOM check that none do today, so every item currently renders as
-          plain text. */}
+          next to a disorder name reads as a promise of outcome). Area-fold
+          pass: always plain text now — the conditional link branch
+          (area.slug) is REMOVED, not kept dormant; `slug` no longer exists
+          on this data at all (see AreaRow's own comment in
+          AreeSection.tsx), and a future individual-area page will almost
+          certainly be a pillarPage reference, an architecturally
+          different mechanism this branch never fed anyway. */}
       {areas && areas.length > 0 ? (
         <ul className={styles.welcomeAreasList}>
           {areas.map((area) => (
-            <li key={area._id} className={styles.welcomeAreaItem}>
+            <li key={area._key} className={styles.welcomeAreaItem}>
               <span className={styles.welcomeAreaDash} aria-hidden="true" />
-              {area.slug ? (
-                <a href={areaPath(locale, area.slug)} className={styles.welcomeAreaLink}>
-                  {area.title}
-                </a>
-              ) : (
-                <span className={styles.welcomeAreaText}>{area.title}</span>
-              )}
+              <span className={styles.welcomeAreaText}>{area.title}</span>
             </li>
           ))}
         </ul>
@@ -174,7 +169,6 @@ export function WelcomeBlock({
             <div className={styles.welcomeLowerZone}>
               <WelcomeLeftContent
                 areas={areas}
-                locale={locale}
                 contactDialogRef={contactDialogRef}
                 authorName={authorName}
                 authorCredentials={authorCredentials}

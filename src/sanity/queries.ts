@@ -212,7 +212,12 @@ export const homePageQuery = defineQuery(`
     aree{
       kicker,
       title,
-      intro
+      intro,
+      items[]{
+        _key,
+        title,
+        descriptor
+      }
     },
     ctaBridge{
       title,

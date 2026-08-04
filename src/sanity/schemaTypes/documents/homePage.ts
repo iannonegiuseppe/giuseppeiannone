@@ -690,14 +690,44 @@ export const homePage = defineType({
       name: "aree",
       title: "Aree section",
       description:
-        "Header copy for the Aree (intervention areas) list, shown between " +
-        "Credentials and Metodo. The rows themselves are separate `area` " +
-        "documents, not part of this field group.",
+        "Header copy AND the six area rows for the Aree (intervention " +
+        "areas) grid, shown between Credentials and Metodo.",
       type: "object",
       fields: [
         stringField("kicker", "Kicker"),
         stringField("title", "Title"),
         textField("intro", "Intro"),
+        // Area-fold pass — folded in from the standalone `area` document
+        // type, now deprecated (see that type's own schema comment). Only
+        // title/descriptor carried over:
+        // - `slug` dropped outright — empty on all 12 source documents,
+        //   and backed by no route (areaPath() built a URL string but no
+        //   [locale]/aree/[slug] page.tsx ever existed). A future
+        //   individual-area page will almost certainly be built on
+        //   pillarPage (real slug validation, routing, JSON-LD, a
+        //   resolver already exists there) — an architecturally
+        //   different mechanism (a reference field, not a bare slug
+        //   string), so keeping the dead slug field here wouldn't have
+        //   saved any of that future work.
+        // - `order` dropped — array position replaces it, same
+        //   convention diplomi.items/tariffe.rows already use.
+        defineField({
+          name: "items",
+          title: "Areas",
+          description: "Rendered in array order (drag to reorder in Studio).",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "areaItem",
+              fields: [
+                stringField("title", "Title"),
+                stringField("descriptor", "Descriptor"),
+              ],
+              preview: { select: { title: "title", subtitle: "descriptor" } },
+            },
+          ],
+        }),
       ],
     }),
 

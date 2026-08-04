@@ -1,7 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AreeSection } from "@/components/AreeSection";
+import { AreeSection, type AreaRow } from "@/components/AreeSection";
 import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import heroOverlapStyles from "@/components/HeroOverlap.module.scss";
@@ -16,7 +16,6 @@ import { sanityFetch } from "@/sanity/client";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
 import {
-  areasQuery,
   homePageQuery,
   latestArticlesLabQuery,
   sedesQuery,
@@ -103,13 +102,6 @@ interface QualificationItemData {
   scanLqip?: string;
 }
 
-interface AreaData {
-  _id: string;
-  title: string;
-  descriptor: string;
-  slug?: string;
-}
-
 interface HomePageData {
   title?: string;
   hero?: {
@@ -151,6 +143,7 @@ interface HomePageData {
     kicker?: string;
     title?: string;
     intro?: string;
+    items?: AreaRow[];
   };
   // Homepage-fold pass: folded in from the standalone ctaBridgeSection
   // document (now deprecated/hidden).
@@ -406,24 +399,23 @@ export default async function Home({
   // Diplomi/Metodo/Profilo/Faq/FinalContact/Aree/CtaBridge's data all
   // come straight off the same homePage fetch (homePage.diplomi.items /
   // .metodo / .profilo / .faq / .finalCta / .aree / .ctaBridge), no
-  // separate query. Homepage-fold pass: areeSection/ctaBridgeSection are
-  // no longer fetched here at all — same "deprecated/orphaned, superseded
-  // by a homePage field group" status chiSonoSection already had, just
-  // one level up (a whole document, not a field). areas is still its own
-  // separate plain list type (see area.ts's own comment — untouched by
-  // this pass, each row keeps its own slug for a possible future
-  // individual area page), fetched alongside homePage's own aree header
-  // copy. sedes (Locations/"Sedi") is the same established pattern — its
-  // own plain list type (`sede`), tagged "sede" for the revalidation
-  // webhook.
+  // separate query. Homepage-fold pass: areeSection/ctaBridgeSection/area
+  // are no longer fetched here at all — areeSection/ctaBridgeSection had
+  // already gone the same way in an earlier pass (deprecated/orphaned,
+  // superseded by a homePage field group, same status chiSonoSection has
+  // long had); area's own rows now live at homePage.aree.items directly
+  // (see area.ts's own schema comment for why folding it in cost nothing
+  // — its slug field was empty on all 12 documents and backed by no
+  // route). sedes (Locations/"Sedi") is the one remaining separate plain
+  // list type feeding this page (`sede`), tagged "sede" for the
+  // revalidation webhook.
   //
   // Stage 2b-2: realArticles now comes off latestArticlesLabQuery (was
   // latestArticlesQuery) — ResourcesLab needs cover+body on top of the
   // title/slug/publishedAt the old, real ResourcesSection read; see that
   // query's own comment for why it's a separate query, not an extension.
-  const [homePage, areas, siteSettings, realArticles, sedes] = await Promise.all([
+  const [homePage, siteSettings, realArticles, sedes] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
-    sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
     getSiteSettings(locale),
     sanityFetch<RealArticleLab[]>(latestArticlesLabQuery, { locale }, ["article"]),
     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
@@ -625,7 +617,7 @@ export default async function Home({
         authorName={siteSettings?.author?.name ?? ""}
         authorCredentials={siteSettings?.author?.credentials}
         authorRegistrationNumber={siteSettings?.author?.registrationNumber}
-        areas={areas}
+        areas={homePage?.aree?.items}
         locale={locale as Locale}
         closeLabel={closeLabel}
       />
@@ -676,8 +668,7 @@ export default async function Home({
             kicker={homePage?.aree?.kicker ?? ""}
             title={homePage?.aree?.title ?? ""}
             intro={homePage?.aree?.intro}
-            areas={areas}
-            locale={locale as Locale}
+            areas={homePage?.aree?.items}
           />
         </RevealOnScroll>
       </div>
