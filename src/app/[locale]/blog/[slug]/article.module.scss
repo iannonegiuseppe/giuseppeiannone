@@ -284,14 +284,22 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   padding-block: var(--space-3);
   padding-inline: 0;
   border-radius: var(--radius-m);
-  // Real bug: this used mixins.z(sticky) (20) — the EXACT same value as
-  // the site's own fixed header (HeaderInteractive.module.scss's own
-  // .labHeader, also z(sticky)). Same z-index means paint order between
-  // them falls back to DOM/stacking-context order, which let the TOC win
-  // and render on top of the header while scrolling. Dropped one tier to
-  // z(dropdown) (10) — still above ordinary page content (z-index:auto/0),
-  // but now unambiguously below the header (20), not tied with it.
-  z-index: mixins.z(dropdown);
+  // Small fix — real bug: this used mixins.z(dropdown) (10), the EXACT
+  // same tier as .progressTrack below (also z(dropdown)). The progress
+  // bar belongs to the header, not the content, and the TOC was painting
+  // over it wherever its sticky top edge crossed the bar (same-tier ties
+  // fall back to DOM order, and the TOC comes later in the document than
+  // ArticleProgress). Dropped one tier to z(base) (0) — still an explicit
+  // integer z-index on a position:sticky element, which is what actually
+  // matters for painting above ordinary content: CSS stacking order paints
+  // non-positioned in-flow boxes (article paragraphs, headings — no
+  // z-index at all) BEFORE positioned descendants with an explicit
+  // z-index, even z-index:0 specifically — z-index:auto is what would
+  // have left it ambiguous, not the magnitude 0 itself. Full order now:
+  // header z(sticky)=20 > .progressTrack z(dropdown)=10 > .toc z(base)=0
+  // > ordinary content (unpositioned, no z-index). Existing scale only,
+  // no raw number.
+  z-index: mixins.z(base);
 }
 
 .tocLabel {
@@ -404,6 +412,11 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   right: 0;
   height: 2px;
   background: transparent;
+  // Small fix — z(dropdown) was already the right tier, unchanged here;
+  // the bug was .toc sharing this same tier (see that rule's own
+  // comment). This bar belongs to the header, not the content: it now
+  // sits strictly between the header (z(sticky), above) and the TOC
+  // (z(base), below), regardless of DOM order.
   z-index: mixins.z(dropdown);
   pointer-events: none;
 }
@@ -850,12 +863,13 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   margin-bottom: var(--space-4);
 }
 
-// 1.08 scale (midpoint of the requested 1.06-1.10 range), 450ms — slow
-// enough to read as a deliberate, considered motion rather than a snap,
-// not so slow it feels sluggish on a small card. cubic-bezier(0.22, 1,
-// 0.36, 1) ("ease-out-quint"-shaped: fast start, long soft settle) reused
-// for both the image scale and the title colour below, so the two read as
-// one choreographed hover rather than two unrelated transitions.
+// 1.05 scale (reduced from an earlier 1.08 pass — reported too strong),
+// 450ms — slow enough to read as a deliberate, considered motion rather
+// than a snap, not so slow it feels sluggish on a small card.
+// cubic-bezier(0.22, 1, 0.36, 1) ("ease-out-quint"-shaped: fast start,
+// long soft settle) reused for both the image scale and the title colour
+// below, so the two read as one choreographed hover rather than two
+// unrelated transitions.
 .relatedCardImg {
   object-fit: cover;
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -882,7 +896,7 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   }
 
   .relatedCard:hover .relatedCardImg {
-    transform: scale(1.08);
+    transform: scale(1.05);
   }
 }
 

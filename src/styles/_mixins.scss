@@ -56,6 +56,22 @@
 
 // --- Layout --------------------------------------------------------------
 // Gutters per brief §4: 24px mobile, 48px desktop.
+//
+// DEPRECATED (gradual-adoption pass) — a real global `.container` class
+// now lives in src/app/[locale]/globals.scss, defined with these exact
+// same values, as the one shared source of truth this mixin was supposed
+// to be but couldn't: every `@include mixins.container` stamps its own
+// private copy of these rules into whichever CSS Module includes it,
+// which is how horizontal padding ended up scattered across component
+// files in the first place. This mixin is intentionally left UNCHANGED
+// here — every page besides the blog listing (the pilot for this
+// migration) still depends on it, and this pass does not touch other
+// pages. Not reimplemented as a thin wrapper around .container (no
+// @extend) — mixins.scss has no dependency on globals.scss today, and
+// introducing one just to de-duplicate a few lines isn't worth the
+// inverted import direction. New work should reach for .container
+// directly; this mixin should be deleted once every consumer has
+// migrated off it.
 @mixin container {
   width: 100%;
   max-width: var(--container-max-width);

@@ -27,6 +27,8 @@ export const SINGLETON_TYPES = new Set([
   "areeSection",
   // CTA bridge pass: quiet mid-page link to the contact section.
   "ctaBridgeSection",
+  // Blog index redesign pass: /blog listing's own hero + editorial copy.
+  "blogIndexSection",
 ]);
 
 // Singletons, plus locationPage: exactly two documents (Milan, Monza) that
@@ -106,7 +108,10 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.list()
             .title("Blog")
-            .items([S.documentTypeListItem("article").title("Articles")]),
+            .items([
+              singletonListItem(S, "blogIndexSection", "Blog index (hero + editorial)"),
+              S.documentTypeListItem("article").title("Articles"),
+            ]),
         ),
       S.listItem()
         .title("FAQ")

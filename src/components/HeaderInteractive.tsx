@@ -73,6 +73,21 @@ export function HeaderInteractive({
   // this route always needs the dark glass treatment, not just past the
   // scroll threshold.
   //
+  // Blog index redesign pass — real bug found via screenshot, not
+  // assumed: the match below used to be "/blog/" (trailing slash), which
+  // never matches the bare index routes (/blog, /blog/page/2). The
+  // header's OWN text colour is always var(--color-text) — the site's
+  // root dark-theme ivory, unaffected by a page's own local tone override
+  // (Header renders at the layout level, outside any page's light-island-
+  // surface scope) — so at rest (transparent, not collapsed) it's only
+  // readable over a dark backdrop. The blog index's own hero is light
+  // ivory, not a photo: light text directly on a light background was
+  // invisible. Collapsed state fixes this on ANY page background, not
+  // just photos — its own dark glass paints FIRST, then the light text
+  // sits on top of THAT, so what's behind the glass stops mattering.
+  // Broadened the match to the bare index routes too, not just article
+  // slugs and paginated pages (those already matched "/blog/...").
+  //
   // Real bug, caught by a failed production build: this used to import
   // usePathname from "@/i18n/navigation" (next-intl's locale-aware hook,
   // via createNavigation) for its locale-agnostic matching — but that hook
@@ -87,7 +102,11 @@ export function HeaderInteractive({
   // forms explicitly, rather than relying on next-intl to normalize them
   // into one shape.
   const pathname = usePathname();
-  const forceCollapsed = pathname.startsWith("/blog/") || pathname.startsWith("/en/blog/");
+  const forceCollapsed =
+    pathname === "/blog" ||
+    pathname.startsWith("/blog/") ||
+    pathname === "/en/blog" ||
+    pathname.startsWith("/en/blog/");
 
   useEffect(() => {
     const header = headerRef.current;
