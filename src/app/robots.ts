@@ -15,7 +15,7 @@ const NAMED_BOTS = [
   "Google-Extended",
 ];
 
-const DISALLOWED_PATHS = ["/studio", "/api/", "/design-preview"];
+const DISALLOWED_PATHS = ["/studio", "/api/", "/design-preview", "/design-lab"];
 
 export default function robots(): MetadataRoute.Robots {
   if (!isProductionDeployment()) {

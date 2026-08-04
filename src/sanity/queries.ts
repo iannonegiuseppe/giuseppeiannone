@@ -625,3 +625,38 @@ export const sitemapSubtopicsQuery = defineQuery(`
     ${alternatesProjection}
   }
 `);
+
+// Sitemap pass — articles, the /blog listing itself, and the universal
+// page type. Same seo.noIndex != true / alternatesProjection pattern as
+// the three queries above; pagination pages (/blog/page/2..N) are
+// deliberately NOT queried here — no single document owns their
+// lastModified (see this pass's own report).
+export const sitemapArticlesQuery = defineQuery(`
+  *[_type == "article" && seo.noIndex != true]{
+    language,
+    "slug": slug.current,
+    _updatedAt,
+    ${alternatesProjection}
+  }
+`);
+
+// blogIndexSection is the /blog, /en/blog listing's own singleton (hero +
+// editorial copy) — its _updatedAt is the honest lastModified source for
+// that one URL, same "the document IS the page" reasoning homePage's own
+// sitemap query already uses. Not a stand-in for "an article changed" —
+// see this pass's own report on why pagination pages aren't included.
+export const sitemapBlogIndexQuery = defineQuery(`
+  *[_type == "blogIndexSection" && seo.noIndex != true]{
+    language,
+    _updatedAt
+  }
+`);
+
+export const sitemapPagesQuery = defineQuery(`
+  *[_type == "page" && seo.noIndex != true]{
+    language,
+    "slug": slug.current,
+    _updatedAt,
+    ${alternatesProjection}
+  }
+`);

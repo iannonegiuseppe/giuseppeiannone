@@ -197,6 +197,41 @@ export function subtopicLocalizedPaths(
   return paths;
 }
 
+// Sitemap pass — same shape as pillarLocalizedPaths/subtopicLocalizedPaths
+// above, for article (used by sitemap.ts; generateMetadata's own
+// hreflang for the article route doesn't need this — see that route's
+// own comment).
+export function articleLocalizedPaths(
+  alternates: AlternateEntry[] | undefined,
+): Partial<Record<Locale, string>> {
+  const paths: Partial<Record<Locale, string>> = {};
+
+  for (const alt of alternates ?? []) {
+    if (!alt.slug || !isLocale(alt.language)) continue;
+    paths[alt.language] = articlePath(alt.language, alt.slug);
+  }
+
+  return paths;
+}
+
+// Sitemap pass — same shape as pillarLocalizedPaths above, not a reuse of
+// it under a misleading name: pagePath()'s output happens to be
+// identical to pillarPath()'s (see pagePath's own comment), but this
+// function exists so a sitemap.ts call site reads as "this is a page
+// document" rather than "this is a pillar."
+export function pageLocalizedPaths(
+  alternates: AlternateEntry[] | undefined,
+): Partial<Record<Locale, string>> {
+  const paths: Partial<Record<Locale, string>> = {};
+
+  for (const alt of alternates ?? []) {
+    if (!alt.slug || !isLocale(alt.language)) continue;
+    paths[alt.language] = pagePath(alt.language, alt.slug);
+  }
+
+  return paths;
+}
+
 export interface ReferencedDoc {
   _id: string;
   _type: string;
