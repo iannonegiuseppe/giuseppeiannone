@@ -1,0 +1,88 @@
+@use "../styles/mixins";
+
+// Directory, not a grid of boxes — sits below the quotes, its own
+// container (this component isn't nested inside RecognitionConstellation's
+// .constellation, so it needs the container include itself, same as
+// PillarRecognition's own .header does). margin-top var(--space-9) (96px)
+// mirrors the large-tier/small-tier gap one level up, so this reads as
+// its own block below the quotes, not another row of them.
+.list {
+  @include mixins.container;
+  margin-top: var(--space-9);
+}
+
+// Same shape as PillarRecognition's own .kicker (PillarRecognition.
+// module.scss) — kept as a literal duplicate rather than a shared class
+// across two separate component files for one four-line rule.
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+// Inline, wrapping list — a directory read left-to-right, top-to-bottom,
+// not a grid of equal-width cells. A middot separator (::after on each
+// item but the last) stands in for punctuation between names, same idea
+// as a printed index.
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-5);
+  row-gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+
+  &:not(:last-child)::after {
+    content: "·";
+    margin-left: var(--space-5);
+    color: var(--color-line);
+  }
+}
+
+// The exact darkened-gold small-caps treatment removed from
+// RecognitionConstellation.module.scss's own .label rule when the labels
+// stopped rendering per-quote — reused here verbatim (color-mix formula,
+// measured contrast) since the data now surfaces here instead. 80%/20%
+// accent/bg mix measured at 4.97:1 against the ambient dark background
+// (the initial 65%/35% attempt measured only 3.67:1 and failed the
+// 4.5:1 floor for this text size).
+.itemText,
+.itemLink {
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-variant-caps: small-caps;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--color-accent) 80%, var(--color-bg) 20%);
+}
+
+.itemLink {
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}

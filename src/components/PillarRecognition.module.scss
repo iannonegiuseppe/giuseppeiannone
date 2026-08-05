@@ -1,0 +1,65 @@
+@use "../styles/mixins";
+
+.recognition {
+  padding-block: var(--space-8);
+}
+
+// Correction pass, item 3 — real separation below the kicker+lead-in
+// block before the quotes start. Was effectively 0 (no margin-bottom on
+// .header at all — the old .kicker sat directly against the first large
+// quote with nothing but line-height slack between them, measured at
+// ~8px). Now var(--space-8) (64px) between this whole block and the
+// constellation below — enough that the kicker reads as its own
+// element, not a caption glued to the first quote.
+.header {
+  @include mixins.container;
+  margin-bottom: var(--space-8);
+}
+
+// Correction pass, item 3 — kicker itself unchanged in size/color (still
+// 0.75rem, --color-accent, bold, uppercase, 0.16em tracking — the exact
+// shape every other section's kicker uses), but now has its own
+// margin-bottom (var(--space-4), 16px) to the lead-in below it, instead
+// of both sitting flush. Measured contrast against the ambient dark bg:
+// 7.17:1 (--color-accent's own already-documented value, tokens.scss) —
+// the kicker was never actually failing contrast; "the quotes dominate
+// it completely" was a WEIGHT/size problem (0.75rem kicker next to a
+// 30.6-52px italic quote with nothing between them), not a color one —
+// fixed by separation, not by changing the kicker's own color.
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.kickerRule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+}
+
+// Correction pass, item 4 — moved from a footnote below the constellation
+// (where it read as fine print, doing no work) to a lead-in directly
+// under the kicker, where it frames the block before the reader hits any
+// quote. Styled to match: --fs-body-lg (18px, was --fs-small/14px),
+// --color-text (full-strength, was --color-text-muted) — a real sentence
+// the reader is meant to register, not a disclaimer they skim past.
+// New wording (both locales, per instruction) already lives in
+// messages/*.json — this file only owns the type treatment.
+.leadIn {
+  margin: 0;
+  max-width: 44ch;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text);
+}

@@ -1,7 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { AreeSection } from "@/components/AreeSection";
+import { AreeSection, type AreaRow } from "@/components/AreeSection";
 import { FaqSection } from "@/components/FaqSection";
 import { Header } from "@/components/Header";
 import { HeroOverlap } from "@/components/HeroOverlap";
@@ -320,6 +320,19 @@ export async function DesignLabHomepage({
       sanityFetch<SedeData[]>(sedesQuery, { locale: LOCALE }, ["sede"]),
     ]);
 
+  // Area-fold pass (production): AreeSection/WelcomeBlock's shared
+  // AreaRow type dropped `_id`/`slug` in favour of `_key` (production now
+  // reads homePage.aree.items, an array field, not `area` documents).
+  // /design-lab still fetches the real `area` documents directly
+  // (untouched — same data, still real, just no longer the production
+  // page's own source) and only needs this local shape adjustment to
+  // keep satisfying the shared components' prop types.
+  const areaRows: AreaRow[] = areas.map((area) => ({
+    _key: area._id,
+    title: area.title,
+    descriptor: area.descriptor,
+  }));
+
   // messages/{it,en}.json's Diplomi.closeLabel — resolved server-side and
   // passed down as a prop to every "use client" component that needs it
   // (DiplomiSlider, CtaBridgeBlock, WelcomeBlock — each wraps a dialog/
@@ -579,7 +592,7 @@ export async function DesignLabHomepage({
             authorName={siteSettings?.author?.name ?? ""}
             authorCredentials={siteSettings?.author?.credentials}
             authorRegistrationNumber={siteSettings?.author?.registrationNumber}
-            areas={areas}
+            areas={areaRows}
             locale={LOCALE}
             closeLabel={closeLabel}
           />
@@ -631,8 +644,7 @@ export async function DesignLabHomepage({
                 kicker={aree?.kicker ?? ""}
                 title={aree?.title ?? ""}
                 intro={aree?.intro}
-                areas={areas}
-                locale={LOCALE}
+                areas={areaRows}
               />
             </RevealOnScroll>
           </div>

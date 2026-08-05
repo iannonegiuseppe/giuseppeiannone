@@ -1,7 +1,7 @@
 import type { Image as SanityImage } from "sanity";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AreeSection } from "@/components/AreeSection";
+import { AreeSection, type AreaRow } from "@/components/AreeSection";
 import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
 import { HeroOverlap } from "@/components/HeroOverlap";
 import heroOverlapStyles from "@/components/HeroOverlap.module.scss";
@@ -16,9 +16,6 @@ import { sanityFetch } from "@/sanity/client";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
 import {
-  areasQuery,
-  areeSectionQuery,
-  ctaBridgeSectionQuery,
   homePageQuery,
   latestArticlesLabQuery,
   sedesQuery,
@@ -105,31 +102,6 @@ interface QualificationItemData {
   scanLqip?: string;
 }
 
-interface AreeSectionData {
-  kicker?: string;
-  title?: string;
-  intro?: string;
-  // Card-grid rebuild pass: still fetched (areeSectionQuery), still a real
-  // Sanity field — but no longer read here, see AreeSection.tsx's own
-  // comment for why (previewHover faked clickability on non-interactive
-  // cards, which the rebuild's own brief explicitly forbids).
-  previewHover?: boolean;
-}
-
-interface CtaBridgeSectionData {
-  title?: string;
-  titleEmphasis?: string;
-  body?: string;
-  linkLabel?: string;
-}
-
-interface AreaData {
-  _id: string;
-  title: string;
-  descriptor: string;
-  slug?: string;
-}
-
 interface HomePageData {
   title?: string;
   hero?: {
@@ -162,6 +134,24 @@ interface HomePageData {
     kicker?: string;
     credentials?: string[];
     counters?: { value: number; label: string }[];
+  };
+  // Homepage-fold pass: folded in from the standalone areeSection
+  // document (now deprecated/hidden — see homePage.ts's own schema
+  // comment). Same three fields; previewHover wasn't carried over (dead
+  // already, see AreeSection.tsx's own comment).
+  aree?: {
+    kicker?: string;
+    title?: string;
+    intro?: string;
+    items?: AreaRow[];
+  };
+  // Homepage-fold pass: folded in from the standalone ctaBridgeSection
+  // document (now deprecated/hidden).
+  ctaBridge?: {
+    title?: string;
+    titleEmphasis?: string;
+    body?: string;
+    linkLabel?: string;
   };
   diCosa?: {
     kicker?: string;
@@ -406,28 +396,26 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // Diplomi/Metodo/Profilo/Faq/FinalContact's data all come straight off
-  // the same homePage fetch (homePage.diplomi.items / .metodo / .profilo /
-  // .faq / .finalCta), no separate query. Design-lab-to-production
-  // migration: chiSonoSection is no longer fetched here at all — it's
-  // deprecated/orphaned (see its own schema comment), superseded by
-  // homePage.profilo, and nothing in this file reads it anymore. areeSection
-  // is its own standalone singleton (not a homePage field group — see that
-  // schema file's own comment), so it still needs its own fetch, tagged for
-  // the revalidation webhook; areas is a separate plain list type (see
-  // area.ts's own comment), fetched alongside its section's header copy.
-  // sedes (Locations/"Sedi") is the same established pattern — its own
-  // plain list type (`sede`), tagged "sede" for the revalidation webhook.
+  // Diplomi/Metodo/Profilo/Faq/FinalContact/Aree/CtaBridge's data all
+  // come straight off the same homePage fetch (homePage.diplomi.items /
+  // .metodo / .profilo / .faq / .finalCta / .aree / .ctaBridge), no
+  // separate query. Homepage-fold pass: areeSection/ctaBridgeSection/area
+  // are no longer fetched here at all — areeSection/ctaBridgeSection had
+  // already gone the same way in an earlier pass (deprecated/orphaned,
+  // superseded by a homePage field group, same status chiSonoSection has
+  // long had); area's own rows now live at homePage.aree.items directly
+  // (see area.ts's own schema comment for why folding it in cost nothing
+  // — its slug field was empty on all 12 documents and backed by no
+  // route). sedes (Locations/"Sedi") is the one remaining separate plain
+  // list type feeding this page (`sede`), tagged "sede" for the
+  // revalidation webhook.
   //
   // Stage 2b-2: realArticles now comes off latestArticlesLabQuery (was
   // latestArticlesQuery) — ResourcesLab needs cover+body on top of the
   // title/slug/publishedAt the old, real ResourcesSection read; see that
   // query's own comment for why it's a separate query, not an extension.
-  const [homePage, aree, areas, ctaBridge, siteSettings, realArticles, sedes] = await Promise.all([
+  const [homePage, siteSettings, realArticles, sedes] = await Promise.all([
     sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
-    sanityFetch<AreeSectionData | null>(areeSectionQuery, { locale }, ["areeSection"]),
-    sanityFetch<AreaData[]>(areasQuery, { locale }, ["area"]),
-    sanityFetch<CtaBridgeSectionData | null>(ctaBridgeSectionQuery, { locale }, ["ctaBridgeSection"]),
     getSiteSettings(locale),
     sanityFetch<RealArticleLab[]>(latestArticlesLabQuery, { locale }, ["article"]),
     sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]),
@@ -629,7 +617,7 @@ export default async function Home({
         authorName={siteSettings?.author?.name ?? ""}
         authorCredentials={siteSettings?.author?.credentials}
         authorRegistrationNumber={siteSettings?.author?.registrationNumber}
-        areas={areas}
+        areas={homePage?.aree?.items}
         locale={locale as Locale}
         closeLabel={closeLabel}
       />
@@ -677,11 +665,10 @@ export default async function Home({
       <div id="aree" className={sectionWrapperStyles.toneMidWrap}>
         <RevealOnScroll>
           <AreeSection
-            kicker={aree?.kicker ?? ""}
-            title={aree?.title ?? ""}
-            intro={aree?.intro}
-            areas={areas}
-            locale={locale as Locale}
+            kicker={homePage?.aree?.kicker ?? ""}
+            title={homePage?.aree?.title ?? ""}
+            intro={homePage?.aree?.intro}
+            areas={homePage?.aree?.items}
           />
         </RevealOnScroll>
       </div>
@@ -756,10 +743,10 @@ export default async function Home({
           itself is untouched, just no longer imported. */}
       <RevealOnScroll>
         <CtaBridgeBlock
-          title={ctaBridge?.title ?? ""}
-          titleEmphasis={ctaBridge?.titleEmphasis}
-          body={ctaBridge?.body ?? ""}
-          linkLabel={ctaBridge?.linkLabel ?? ""}
+          title={homePage?.ctaBridge?.title ?? ""}
+          titleEmphasis={homePage?.ctaBridge?.titleEmphasis}
+          body={homePage?.ctaBridge?.body ?? ""}
+          linkLabel={homePage?.ctaBridge?.linkLabel ?? ""}
           locale={locale as Locale}
           closeLabel={closeLabel}
         />

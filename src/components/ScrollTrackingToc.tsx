@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import type { TocHeading } from "@/sanity/headings";
-import styles from "./article.module.scss";
+import styles from "./ScrollTrackingToc.module.scss";
 
+// Extracted verbatim from the blog article route's own ArticleToc.tsx
+// (reading-frame pass) so the pillar page can reuse the exact same
+// scroll-tracked table of contents instead of a second implementation —
+// see that route's page.tsx for the one remaining caller besides the
+// pillar route. Logic is unchanged; only the CSS module import and the
+// sticky top-offset (now a prop, see topOffset below) moved.
+//
 // Active-heading tracking, driven by the site's shared Lenis instance
 // (useLenisRef) rather than a native `scroll` listener — the two fight
 // each other on this site (LenisProvider.tsx's own comment; Lenis drives
@@ -27,7 +34,25 @@ const LENIS_WAIT_INTERVAL_MS = 100;
 // a heading isn't marked active while still hidden behind it.
 const ACTIVE_OFFSET_PX = 120;
 
-export function ArticleToc({ headings }: { headings: TocHeading[] }) {
+// aria-label/visible label are hardcoded "Sommario" (Italian) regardless
+// of locale — preserved exactly as ArticleToc.tsx already had it, not
+// fixed here: the blog article route this was extracted from renders this
+// same un-translated label today on both locales, and changing it would
+// be a real behavior change on that live route (this pass's brief
+// requires byte-identical output there). Flagged, not silently carried
+// over.
+export function ScrollTrackingToc({
+  headings,
+  // The sticky nav's `top` value. Required, no default here — this
+  // component's sole caller is ReadingArea.tsx, which owns the actual
+  // default (--header-height-collapsed, _tokens.scss) so there's exactly
+  // one place that value is declared, not a second one sitting here
+  // unreachable and free to go stale.
+  topOffset,
+}: {
+  headings: TocHeading[];
+  topOffset: string;
+}) {
   const lenisRef = useLenisRef();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -70,7 +95,7 @@ export function ArticleToc({ headings }: { headings: TocHeading[] }) {
   if (headings.length < 3) return null;
 
   return (
-    <nav aria-label="Sommario" className={styles.toc}>
+    <nav aria-label="Sommario" className={styles.toc} style={{ top: topOffset }}>
       <p className={styles.tocLabel}>Sommario</p>
       <ol className={styles.tocList}>
         {headings.map((heading) => (

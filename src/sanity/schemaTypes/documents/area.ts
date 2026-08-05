@@ -14,10 +14,21 @@ import { languageField } from "../lib/languageField";
 // occupo" pairing) — that component/field group is left registered,
 // still gated, and untouched (orphaned, not deleted), same precedent as
 // diploma/qualification and homePage.chiSono/ChiSonoOverlap before it.
+//
+// Area-fold pass: DEPRECATED — superseded by homePage.aree.items (only
+// title/descriptor carried over; slug was empty on all 12 documents and
+// backed by no route, order was dropped in favour of array position —
+// see this pass's own report for the full reasoning). hidden: true
+// removes this from the Studio structure tree, global search, and
+// "create new" menu (same mechanism qualification.ts/chiSonoSection.ts/
+// areeSection.ts/ctaBridgeSection.ts already use). Content copied, not
+// moved — these 12 documents and their data are untouched, just no
+// longer read by anything.
 export const area = defineType({
   name: "area",
-  title: "Area",
+  title: "Area — DEPRECATED, no longer rendered (see Home page → Aree section → Areas)",
   type: "document",
+  hidden: () => true,
   fields: [
     defineField({
       name: "title",

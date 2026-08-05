@@ -1,0 +1,66 @@
+@use "../styles/mixins";
+
+// Extracted verbatim from the blog article route's own article.module.scss
+// (.toc/.tocLabel/.tocList/.tocLink) — see ScrollTrackingToc.tsx's own
+// comment. `top` moved from a route-local SCSS variable to an inline style
+// driven by the component's topOffset prop, so each caller supplies its
+// own header-offset value instead of this shared file hardcoding one
+// route's specific (permanently-collapsed-header) number.
+//
+// z-index/background/width/radius, the sticky mechanics, and every
+// typography rule below are unchanged from the article route's own values.
+.toc {
+  position: sticky;
+  width: 15rem; // 240px
+  background: var(--color-bg);
+  padding-block: var(--space-3);
+  padding-inline: 0;
+  border-radius: var(--radius-m);
+  z-index: mixins.z(base);
+}
+
+.tocLabel {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.tocList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// Active state via data-active (set from JS, driven by Lenis — see
+// ScrollTrackingToc.tsx) rather than a CSS-only mechanism. Unchanged from
+// the article route's own rule, including its pre-existing use of
+// --color-gold-bronze (a dark-theme-only token with no light-theme
+// fallback declared in _tokens.scss — an existing quirk on the article
+// route this extraction inherits verbatim, not introduced or fixed here).
+.tocLink {
+  display: block;
+  padding: var(--space-1) 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &[data-active="true"] {
+    color: var(--color-gold-bronze);
+  }
+
+  @include mixins.focus-ring;
+}

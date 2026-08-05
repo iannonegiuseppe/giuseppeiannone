@@ -14,6 +14,17 @@ export function pillarPath(locale: Locale, slug: string): string {
   return locale === "it" ? `/${slug}` : `/en/${slug}`;
 }
 
+// Root-namespace pass — deliberately IDENTICAL output to pillarPath: the
+// universal `page` type shares the same root URL segment as pillarPage
+// (src/app/[locale]/[slug]/page.tsx resolves both from one route). A
+// separate function exists anyway so call sites read as "this is a page
+// link" rather than "this is a pillar link" — intent, not a real path
+// difference. See reservedSlugs.ts / the unified resolver's own comments
+// for how the two types are kept from colliding.
+export function pagePath(locale: Locale, slug: string): string {
+  return locale === "it" ? `/${slug}` : `/en/${slug}`;
+}
+
 export function subtopicPath(
   locale: Locale,
   parentSlug: string,
@@ -186,6 +197,41 @@ export function subtopicLocalizedPaths(
   return paths;
 }
 
+// Sitemap pass — same shape as pillarLocalizedPaths/subtopicLocalizedPaths
+// above, for article (used by sitemap.ts; generateMetadata's own
+// hreflang for the article route doesn't need this — see that route's
+// own comment).
+export function articleLocalizedPaths(
+  alternates: AlternateEntry[] | undefined,
+): Partial<Record<Locale, string>> {
+  const paths: Partial<Record<Locale, string>> = {};
+
+  for (const alt of alternates ?? []) {
+    if (!alt.slug || !isLocale(alt.language)) continue;
+    paths[alt.language] = articlePath(alt.language, alt.slug);
+  }
+
+  return paths;
+}
+
+// Sitemap pass — same shape as pillarLocalizedPaths above, not a reuse of
+// it under a misleading name: pagePath()'s output happens to be
+// identical to pillarPath()'s (see pagePath's own comment), but this
+// function exists so a sitemap.ts call site reads as "this is a page
+// document" rather than "this is a pillar."
+export function pageLocalizedPaths(
+  alternates: AlternateEntry[] | undefined,
+): Partial<Record<Locale, string>> {
+  const paths: Partial<Record<Locale, string>> = {};
+
+  for (const alt of alternates ?? []) {
+    if (!alt.slug || !isLocale(alt.language)) continue;
+    paths[alt.language] = pagePath(alt.language, alt.slug);
+  }
+
+  return paths;
+}
+
 export interface ReferencedDoc {
   _id: string;
   _type: string;
@@ -211,6 +257,12 @@ export function hrefFor(locale: Locale, doc: ReferencedDoc): string {
   // established convention, just not previously wired through here.
   if (doc._type === "article" && doc.slug) {
     return articlePath(locale, doc.slug);
+  }
+  // Root-namespace pass: navLink.ts's reference field now allows `page`.
+  // pagePath() has identical output to pillarPath() by design — see that
+  // function's own comment.
+  if (doc._type === "page" && doc.slug) {
+    return pagePath(locale, doc.slug);
   }
 
   return prefix || "/";

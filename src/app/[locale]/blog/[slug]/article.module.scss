@@ -3,14 +3,13 @@
 
 // This route's header is permanently collapsed (HeaderInteractive.tsx's
 // own forceCollapsed) — measurably shorter than the generic --header-
-// height token (114px/100px, the header's REST-state size). Measured
-// directly against the live rendered header via getBoundingClientRect()
-// (not computed from padding arithmetic, which font-metric rounding makes
-// imprecise): 53.09px at lg+, 64px below lg. Shared here (rather than
-// re-typed as magic numbers) since both .progressTrack and .coverBand
-// need the same precise value.
-$collapsed-header-height: 4rem; // 64px, below lg
-$collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
+// height token (114px/100px, the header's REST-state size). The collapsed
+// height now lives as its own token, --header-height-collapsed
+// (_tokens.scss, next to --header-height) — promoted out of this file
+// (where it used to be two hardcoded SCSS variables) once ReadingArea's
+// own sticky TOC offset needed the same value: one declared number,
+// not a second copy to keep in sync by hand. .progressTrack/.coverBand
+// below read the token directly now.
 
 // Reading frame pass — ivory light-island on a dark-default site, same
 // mechanism every homepage light block uses (Metodo, Hope, FAQ, etc.):
@@ -94,12 +93,12 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   // relatively tall; it fits with room to spare, no growth needed there.
   display: flex;
   align-items: center;
-  padding-top: $collapsed-header-height;
+  // --header-height-collapsed is itself breakpoint-scoped (_tokens.scss,
+  // same mechanism as --header-height) — no separate lg+ override needed
+  // here anymore, the custom property already resolves to the right value
+  // at each width.
+  padding-top: var(--header-height-collapsed);
   padding-bottom: 0;
-
-  @include mixins.breakpoint-up(lg) {
-    padding-top: $collapsed-header-height-lg;
-  }
 }
 
 .coverImage {
@@ -122,252 +121,15 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
   background: color-mix(in srgb, var(--light-base-text) 75%, transparent);
 }
 
-// --- Reading area (TOC pass) ---------------------------------------------
-// Below lg: a plain wrapper, .column behaves exactly as the previous pass
-// left it.
-//
-// At lg+ (fifth pass — real bug found via screenshot, not assumed): this
-// used to be an unbounded 1fr/41.25rem/1fr grid, so the TOC's left edge
-// (justify-self:end in the first 1fr track) floated at whatever the
-// viewport happened to leave over — NOT the same left edge the sitewide
-// container (mixins.container, --container-max-width 1320px) uses for
-// the header's own logo and every other section. Now bounded by that
-// same mixins.container (identical max-width/padding-inline to
-// HeaderInteractive.module.scss's own .labHeaderInner), with an explicit
-// TOC column flush against the container's own left edge — the two can't
-// drift apart again since they're the same mixin.
-//
-// Sixth pass: TOC track widened 13.75rem -> 15rem (item 3, +20px). Also
-// .coverBand no longer shares this grid (moved out entirely, item 1 — see
-// its own comment) — this is now genuinely a single-row, two-column grid
-// (.toc, .column), which is also why neither child needs an explicit
-// grid-row anymore; auto-placement already puts both in row 1.
-//
-// .column now fills the ENTIRE remaining 1fr track (item 4) instead of a
-// fixed 41.25rem centered within it — see .column's own comment for the
-// resulting measure and the characters-per-line this pass's own report
-// flags.
-.readingArea {
-  @include mixins.breakpoint-up(lg) {
-    @include mixins.container;
-    display: grid;
-    grid-template-columns: 15rem 1fr;
-    column-gap: var(--space-7);
-  }
-}
-
-// --- Reading column ----------------------------------------------------
-// Below lg: 660px, holding at every width down to md (768) — measures 73.6
-// avg chars/line (range 71-75) at --fs-article-body, in the 62-74 target
-// (fifth pass's own report).
-//
-// At lg+ (sixth pass, item 4 — filled the ENTIRE remaining grid track,
-// uncapped: measured ~936px at 1440, ~104 avg chars/line, well past the
-// 62-74 target, flagged rather than shipped silently).
-//
-// Seventh pass, item 3 — capped at 50rem (800px), per explicit
-// instruction: keeps the wide layout at moderate viewports (1024's 640px
-// track is already under the cap, so nothing changes there) while
-// bounding the worst case at 1440+. Measured (this pass's own report):
-// ~80 avg chars/line at 1440 now — past the ideal 62-74 range but
-// materially better than the uncapped ~104, and an explicitly accepted
-// trade-off per this pass's own brief ("acceptable"). No margin-inline
-// added to re-center within the track: max-width alone leaves the column
-// flush against the TOC-adjacent edge of its grid track (grid's own
-// default item alignment), with the leftover space trailing to the
-// right rather than splitting evenly on both sides.
-.column {
-  // max-width includes the padding below lg (border-box, the sitewide
-  // default) — sized so the TEXT content area is still exactly 660px once
-  // that 24px-per-side padding is subtracted, not 660px total. Missing
-  // this the first time measurably shortened lines below lg (fifth pass's
-  // own report: 67.4 avg chars/line at 768 vs 73.6 at 1024, same
-  // font-size — 612px of real content width, not 660, was the cause).
-  // Below the viewport can hold it (this max-width, e.g. mobile), the box
-  // just shrinks to 100% width as normal; no overflow risk either way.
-  width: 100%;
-  max-width: calc(41.25rem + 2 * var(--space-5)); // 660px content + 24px/side padding
-  margin-inline: auto;
-  padding-inline: var(--space-5);
-
-  @include mixins.breakpoint-up(lg) {
-    // grid-column is a no-op below lg (.readingArea isn't a grid there) —
-    // at lg+ it places .column in the grid's own 1fr track. No explicit
-    // grid-row: .readingArea is a single-row grid now (.coverBand moved
-    // out, item 1 — see .readingArea's own comment), so auto-placement is
-    // enough.
-    grid-column: 2;
-    // Item 3 — capped at 50rem (was `none`, filling the whole 1fr track
-    // edge-to-edge). width:100% (set unconditionally above) still fills
-    // up TO this cap; margin-inline:auto (base rule) is a no-op here since
-    // there's no space trailing after the max-width is hit AND no space
-    // needing to be split before it — the column just occupies the first
-    // 50rem of the track.
-    max-width: 50rem;
-    padding-inline: 0;
-  }
-}
-
-// --- Table of contents (lg+ only) -----------------------------------------
-// Eighth pass, item 1 — split into two elements. Real bug found by direct
-// measurement (not assumed): margin-top on a position:sticky element is
-// NOT purely a "natural position" offset — the sticky spec constrains the
-// element's MARGIN edge to stay >= `top` from the scrollport, so a
-// stuck sticky element with both `margin-top: X` and `top: Y` settles
-// with its border box at Y + X, not Y. .toc had margin-top: var(--space-7)
-// (48px, for the natural pre-scroll alignment with the body's first
-// paragraph) AND top: calc(var(--header-height) + var(--space-5)) — the
-// 48px was silently added on top of the intended pinned offset once
-// scrolled, landing the pinned TOC 48px lower than intended.
-//
-// Fix: .tocWrapper (below) is the actual grid item — it carries the
-// grid-column placement and the margin-top that aligns the TOC's natural
-// (pre-scroll) start with the body's first paragraph (.body's own
-// padding-top: var(--space-7), see that class's own comment — unchanged
-// reasoning, just moved to a plain, non-sticky element so it can no
-// longer interact with the sticky offset calculation). .toc itself (this
-// nav, nested one level inside the wrapper) carries ONLY the sticky
-// mechanics — no margin, so `top` alone determines the pinned position.
-//
-// A second real bug caught while verifying the fix above (not assumed):
-// .tocWrapper must NOT get align-self:start here. Position:sticky's stick
-// RANGE is bounded by its containing block's height — for .toc, that's
-// now .tocWrapper (its actual parent), not the grid area directly.
-// align-self:start sizes a grid item to its own CONTENT height, and
-// .tocWrapper's only content is the (short) nav — so the wrapper collapsed
-// to roughly the same height as the TOC list itself, leaving zero room
-// for sticky to ever engage; the TOC just scrolled away with the page
-// instead of pinning (confirmed: at scrollY 2000, its viewport-relative
-// top measured exactly natural-top minus 2000, i.e. plain static
-// scrolling, not stuck at all). Left at the default (stretch) instead, so
-// the wrapper fills the FULL grid row height — matching .column's own
-// (much taller) content — giving .toc the same tall containing block the
-// original single-element version got for free from the grid row itself.
-.tocWrapper {
-  display: none;
-
-  @include mixins.breakpoint-up(lg) {
-    display: block;
-    grid-column: 1;
-    margin-top: var(--space-7);
-  }
-}
-
-.toc {
-  // top offset — item 1's own explicit instruction: "the same offset the
-  // breadcrumbs use, nothing more." Breadcrumbs sit at exactly
-  // $collapsed-header-height-lg below the cover's own top edge (.coverBand
-  // padding-top, no extra space-5 added there since the seventh pass's own
-  // centring fix) — same value used here, unchanged by any extra spacing
-  // term this rule used to add. align-self (grid-item alignment) moved to
-  // .tocWrapper above — .toc is no longer a direct grid child itself.
-  position: sticky;
-  top: $collapsed-header-height-lg;
-  // Sixth pass, item 3 — widened 13.75rem (220px) -> 15rem (240px),
-  // +20px. Horizontal padding removed entirely (was var(--space-3), 12px
-  // both sides, via the shorthand below) so the panel's text sits flush
-  // against the container's own left edge, same edge the wordmark above
-  // it uses — padding-block kept for vertical breathing room only.
-  width: 15rem; // 240px (was 220px)
-  // Fifth pass — max-height/overflow-y removed entirely, per instruction:
-  // the panel never gets its own inner scroll area now, full stop. It
-  // sizes to its content; a genuinely tall list (the 23-heading article)
-  // now simply extends past the bottom of the viewport rather than
-  // scrolling internally — sticky detaches naturally once the reader
-  // scrolls past its row (standard behaviour, no special handling
-  // needed), so nothing is clipped or hidden, but the lowest items on a
-  // very long list aren't reachable without scrolling the page itself.
-  // See this pass's own report for the proposal on the genuinely-long
-  // case (demoting FAQ questions off the h2 level, item 3b) rather than
-  // solving it with a second scroll area.
-  background: var(--color-bg);
-  padding-block: var(--space-3);
-  padding-inline: 0;
-  border-radius: var(--radius-m);
-  // Small fix — real bug: this used mixins.z(dropdown) (10), the EXACT
-  // same tier as .progressTrack below (also z(dropdown)). The progress
-  // bar belongs to the header, not the content, and the TOC was painting
-  // over it wherever its sticky top edge crossed the bar (same-tier ties
-  // fall back to DOM order, and the TOC comes later in the document than
-  // ArticleProgress). Dropped one tier to z(base) (0) — still an explicit
-  // integer z-index on a position:sticky element, which is what actually
-  // matters for painting above ordinary content: CSS stacking order paints
-  // non-positioned in-flow boxes (article paragraphs, headings — no
-  // z-index at all) BEFORE positioned descendants with an explicit
-  // z-index, even z-index:0 specifically — z-index:auto is what would
-  // have left it ambiguous, not the magnitude 0 itself. Full order now:
-  // header z(sticky)=20 > .progressTrack z(dropdown)=10 > .toc z(base)=0
-  // > ordinary content (unpositioned, no z-index). Existing scale only,
-  // no raw number.
-  z-index: mixins.z(base);
-}
-
-.tocLabel {
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.tocList {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-// Active state via data-active (set from JS, driven by Lenis — see
-// ArticleToc.tsx) rather than a CSS-only mechanism (:target/scroll-timeline
-// aren't reliable enough here — :target only tracks the LAST clicked link,
-// not scroll position, and scroll-timeline's browser support doesn't
-// cover this project's baseline yet).
-//
-// Eighth pass, item 4 — font-weight removed from the active state
-// entirely (was var(--font-weight-medium) vs 400 rest): a weight change
-// reflows the line (different glyph widths), which visibly shifted
-// neighbouring list items whenever the active heading changed. Colour is
-// now the ONLY distinguishing signal, using --color-gold-bronze — a
-// genuinely gold-family token, not --color-accent-hover (which THIS
-// scope's tone.light-island-surface repoints to a muted taupe, #715c52,
-// not gold — confirmed the fifth pass's own 1.01:1 finding was measuring
-// that repointed brown against the equally-muted rest colour, not gold at
-// all). --color-gold-bronze isn't in light-island-surface's reassignment
-// list, so it resolves to its real, unshadowed value here.
-//
-// Measured (this pass's own report): active #8e6b3d vs the panel's own
-// background 4.39:1, rest #686058 vs background 5.58:1 — both comfortably
-// clear the 3:1 non-text floor; active sits just under this project's
-// usual 4.5:1 text floor (a real, reported shortfall — gold-bronze is the
-// best-contrast gold-family token available, champagne/gold-light both
-// measure lower against ivory, see this pass's own report for the full
-// comparison table). Active-vs-rest is still low by pure luminance
-// (1.27:1) — hue (warm gold vs. grey-brown), not luminance, is doing the
-// visual separation here; flagged honestly rather than implied otherwise.
-.tocLink {
-  display: block;
-  padding: var(--space-1) 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-small);
-  line-height: 1.4;
-  color: var(--color-text-muted);
-  text-decoration: none;
-  transition: color 0.15s ease;
-
-  &:hover {
-    color: var(--color-text);
-  }
-
-  &[data-active="true"] {
-    color: var(--color-gold-bronze);
-  }
-
-  @include mixins.focus-ring;
-}
+// --- Reading area, TOC, reading column, body typography --------------------
+// Extraction pass — .readingArea/.tocWrapper/.column/.body moved to the
+// shared src/components/ReadingArea.tsx + ReadingArea.module.scss (the
+// pillar route now renders through the same component instead of a second
+// copy that had already drifted). This route's own page.tsx calls
+// <ReadingArea> directly; see that component's own module.scss for the
+// exact values and their history — unchanged by this move, just relocated.
+// .toc/.tocLabel/.tocList/.tocLink were already shared (ScrollTrackingToc,
+// an earlier pass) and are unaffected here.
 
 // --- Reading progress ------------------------------------------------------
 // Seventh pass, item 1 — re-diagnosed live rather than assumed: the prior
@@ -401,13 +163,10 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
 // component returns null outright rather than rendering an inert track.
 .progressTrack {
   position: fixed;
-  // Measured collapsed-header height (see this file's own top-of-file
-  // comment) — flush at the header's own bottom edge, no overlap.
-  top: $collapsed-header-height;
-
-  @include mixins.breakpoint-up(lg) {
-    top: $collapsed-header-height-lg;
-  }
+  // --header-height-collapsed (_tokens.scss) — flush at the header's own
+  // bottom edge, no overlap. Already breakpoint-scoped, no separate lg+
+  // override needed (see .coverBand's own comment above).
+  top: var(--header-height-collapsed);
   left: 0;
   right: 0;
   height: 2px;
@@ -593,23 +352,11 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
 }
 
 // --- Body (Portable Text) ------------------------------------------------
-.body {
-  padding-top: var(--space-7);
-  font-family: var(--font-body);
-  font-size: var(--fs-article-body-sm);
-  line-height: var(--lh-article-body-sm);
-  color: var(--color-text);
-
-  @include mixins.breakpoint-up(md) {
-    font-size: var(--fs-article-body);
-    line-height: var(--lh-article-body);
-  }
-
-  > :first-child {
-    margin-top: 0;
-  }
-}
-
+// .body (the typographic wrapper) moved to ReadingArea.module.scss — see
+// the "Reading area, TOC, reading column, body typography" comment
+// earlier in this file. Everything below (.paragraph/.h2/.h3/etc.) is
+// this ROUTE'S OWN renderer output (articlePortableText.tsx) — deliberately
+// not moved, and not shared with the pillar's own component set.
 .paragraph {
   margin: var(--space-5) 0 0;
 }
@@ -805,112 +552,6 @@ $collapsed-header-height-lg: 3.32rem; // 53.09px, lg+
 }
 
 // --- Related posts (item 5) -------------------------------------------------
-// Fifth pass: moved out of the 660px reading column entirely — full
-// container width, larger cards, 3 across at md+ (was cramped 3-into-660px
-// before). "3 most recent, excluding this one" — no category/tag matching
-// (see relatedArticlesQuery's own comment in queries.ts for why: 370 of
-// 468 articles have no tags at all).
-.relatedSection {
-  margin-top: var(--space-9);
-  padding-top: var(--space-8);
-  padding-bottom: var(--space-9);
-  border-top: 1px solid var(--color-hairline);
-}
-
-.relatedInner {
-  @include mixins.container;
-}
-
-.relatedHeading {
-  margin: 0 0 var(--space-6);
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-synthesis: none;
-  font-size: var(--fs-h2);
-  line-height: var(--lh-h2);
-  color: var(--color-text);
-}
-
-.relatedGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-7);
-
-  @include mixins.breakpoint-up(md) {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
-  }
-}
-
-.relatedCard {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-
-  @include mixins.focus-ring;
-}
-
-// Item 7 — overflow:hidden here is what clips the image's hover scale to
-// the frame: the frame itself never resizes (transform only ever applies
-// to .relatedCardImg below), so there's no layout shift and the card's
-// own footprint never changes size.
-.relatedCardImage {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-l);
-  overflow: hidden;
-  background: var(--color-sand);
-  margin-bottom: var(--space-4);
-}
-
-// 1.05 scale (reduced from an earlier 1.08 pass — reported too strong),
-// 450ms — slow enough to read as a deliberate, considered motion rather
-// than a snap, not so slow it feels sluggish on a small card.
-// cubic-bezier(0.22, 1, 0.36, 1) ("ease-out-quint"-shaped: fast start,
-// long soft settle) reused for both the image scale and the title colour
-// below, so the two read as one choreographed hover rather than two
-// unrelated transitions.
-.relatedCardImg {
-  object-fit: cover;
-  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.relatedCardTitle {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-synthesis: none;
-  font-size: var(--fs-h3);
-  line-height: 1.3;
-  color: var(--color-text);
-  text-wrap: balance;
-  transition: color 450ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-// Hover-capable pointers only (mouse/trackpad) — a touch tap would
-// otherwise leave the card stuck in its hover state with no corresponding
-// "un-hover" gesture.
-@media (hover: hover) {
-  .relatedCard:hover .relatedCardTitle {
-    color: var(--color-accent-hover);
-  }
-
-  .relatedCard:hover .relatedCardImg {
-    transform: scale(1.05);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .relatedCardImg,
-  .relatedCardTitle {
-    transition: none;
-  }
-}
-
-.relatedCardDate {
-  display: block;
-  margin-top: var(--space-3);
-  font-family: var(--font-body);
-  font-size: var(--fs-small);
-  color: var(--color-text-muted);
-}
+// .relatedSection/.relatedInner/.relatedHeading/.relatedGrid/.relatedCard*
+// extracted to the shared src/components/RelatedArticlesGrid.module.scss
+// (reuse pass) — see RelatedArticlesGrid.tsx's own comment.

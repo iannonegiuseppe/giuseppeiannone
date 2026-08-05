@@ -15,11 +15,14 @@ import { NAV_ROUTE_KEYS } from "../../paths";
 //   that file's own comment on why "aree" is deliberately absent from
 //   this list).
 // - "reference": a reference to a real page document. Restricted to
-//   pillarPage/subtopicPage/article — the only content types with a
-//   working hrefFor() resolution today (see paths.ts). "service" is
-//   deliberately excluded: this codebase has no servicePath() convention
-//   yet, and inventing one here would mean either a broken link or a
-//   new routing convention this pass wasn't asked to create.
+//   pillarPage/subtopicPage/article/page — the only content types with a
+//   working hrefFor() resolution today (see paths.ts). Root-namespace
+//   pass added `page` (the universal page type) so Giuseppe can put his
+//   own new page in the header/footer himself, same self-serve reasoning
+//   as the type itself. "service" is deliberately still excluded: this
+//   codebase has no servicePath() convention yet, and inventing one here
+//   would mean either a broken link or a new routing convention this
+//   pass wasn't asked to create.
 const ROUTE_KEY_OPTIONS = NAV_ROUTE_KEYS.map((entry) => ({
   title: entry.studioLabel,
   value: entry.key,
@@ -76,7 +79,12 @@ export const navLink = defineType({
       title: "Page",
       description: "Only used when link type is Page reference.",
       type: "reference",
-      to: [{ type: "pillarPage" }, { type: "subtopicPage" }, { type: "article" }],
+      to: [
+        { type: "pillarPage" },
+        { type: "subtopicPage" },
+        { type: "article" },
+        { type: "page" },
+      ],
       hidden: ({ parent }: { parent?: NavLinkParent }) => parent?.linkType !== "reference",
       validation: (Rule) =>
         Rule.custom((value: { _ref?: string } | undefined, context) => {

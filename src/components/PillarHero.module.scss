@@ -1,0 +1,241 @@
+@use "../styles/mixins";
+
+// Corrected pass — the real site is dark-by-default now (src/app/[locale]/
+// layout.tsx's own blocking inline script sets data-theme="dark"
+// unconditionally on every route; "production has no light variant to
+// branch on anymore" per that script's own comment). "Dark" for this
+// hero is therefore just the page's own ambient background — no local
+// background/color override needed at all. Caught via direct contrast
+// measurement (not assumed): an earlier version of this file force-fed a
+// --color-accent-contrast-derived text color, which on THIS theme resolves
+// to --color-bg (near-black, correct for gold BUTTON text, wrong for
+// ivory section text) — measured 2.98:1 against the scrim, failing even
+// the 3:1 large-text floor. Fixed by reading the theme-invariant
+// --light-base-bg token instead (see .heroContent below), same token the
+// scrim's own arithmetic is verified against.
+// Refinement pass, item 2 — height is now controlled by the parent
+// .heroViewport flex column (page.module.scss): this fills whatever
+// space is left after PillarFactsStrip's own intrinsic height, so
+// Hero+Facts always sum to exactly one viewport height. min-height:0
+// is the standard flex-item fix (without it, a flex item's automatic
+// min-height defaults to its CONTENT's height, which can force the
+// container taller than its own 100dvh budget on a short viewport — see
+// this pass's own report on what happens at a genuinely short 390
+// viewport).
+//
+// Centring fix — padding-top ALONE (the previous version) reserves the
+// header's height only at the top, which shrinks align-items:center's
+// usable box to [header-height, bandHeight] instead of [0, bandHeight].
+// Centering within that shrunk, asymmetric box puts the content's own
+// center at (bandHeight + header-height) / 2 — measured live at
+// +57px BELOW the band's true geometric center (bandHeight/2), not
+// above it (57px ≈ header-height/2, 114px/2, confirming the mechanism).
+// padding-bottom: var(--header-height) added below makes the reservation
+// symmetric: the usable box becomes [header-height, bandHeight -
+// header-height], and a symmetric shrink doesn't move its own center —
+// (header-height + (bandHeight - 2·header-height)/2) reduces to
+// bandHeight/2 exactly, independent of header-height. Content still gets
+// AT LEAST header-height of clearance above it (the box's own top edge
+// never sits higher than that), so the header-collision guard this
+// padding existed for is unchanged — it's now symmetric, not removed.
+// The bottom padding reserves no real element (nothing sits there); it's
+// pure counterweight so the center stays put. If a page's content is
+// tall enough to not fit in the resulting shrunk box, .heroViewport's own
+// min-height (not height, page.module.scss) already lets the whole
+// column grow to fit rather than overlap — unaffected by this change.
+//
+// overflow:hidden clips .heroImage's own intro scale-up (item 6) to this
+// box's bounds, so the zoomed-in image never visibly overflows it.
+.heroBand {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  padding-top: var(--header-height);
+  padding-bottom: var(--header-height);
+}
+
+// Refinement pass, item 6 — starts at 1.08x and settles to natural size
+// over 1.6s. Both chosen by eye (no exact reference to measure against):
+// 1.08 reads as a considered, restrained zoom rather than a dramatic one;
+// 1.6s sits inside the 1-2s window and reads as a slow, deliberate
+// settle rather than a snap. Reuses the SAME cubic-bezier(0.22, 1, 0.36, 1)
+// ease-out-quint-shaped curve RelatedArticlesGrid.module.scss's own card
+// hover already uses — this site's established "considered, not
+// snappy" motion curve — rather than inventing a new one.
+// transform-only (no width/height/top/left), so no layout shift or
+// reflow — the animation runs entirely on the compositor thread.
+@keyframes heroImageIntro {
+  from {
+    transform: scale(1.08);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+.heroImage {
+  object-fit: cover;
+  z-index: 0;
+  transform-origin: center;
+  animation: heroImageIntro 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  // Suppressed entirely, not just shortened — final scale (1), no motion.
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+// Scrim arithmetic — reused verbatim from the blog article route's own
+// cover header (article.module.scss's .coverScrim), not recomputed:
+// color-mix(--light-base-text 75%, transparent) over a pure-white source
+// composites to ~rgb(98,96,94); --light-base-bg text (#f6f3ee) on that
+// composite measures 5.65:1 — clears both the 4.5:1 body floor and the
+// 3:1 large-heading floor with real margin. Same worst-case reasoning:
+// heroImage may be anything an editor uploads, so this is sized against
+// the worst realistic case, not the current sample. Re-verified live
+// against an actual solid-white test image this pass (this pass's own
+// report has the measured composite/ratio).
+.heroScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--light-base-text) 75%, transparent);
+}
+
+// Refinement pass, item 3 — soft transition from the hero image into the
+// facts strip's dark surface. "The sampled deciles from the Chi sono
+// work" turned out to live in a chat artifact, not this repo (confirmed
+// with the client after searching docs/ and the full git history turned
+// up nothing) — re-derived below, same formula, and written down here so
+// the next person doesn't have to re-derive them a second time either.
+// C2-smooth (smootherstep, not a plain linear ramp — a linear gradient
+// has non-zero slope at both endpoints, which is exactly what reads as a
+// Mach band/grey haze per chiSonoBlock.module.scss's own account of that
+// earlier project mistake). Endpoints are both EXISTING tokens (no new
+// color): var(--light-base-text), the scrim's own base hue, fading to
+// var(--color-bg), the ambient dark background the facts strip itself
+// sits on with no fill of its own — so the gradient's own bottom edge is
+// invisible against what's immediately below it.
+//
+// Sampled values — smootherstep S(t) = 6t⁵ - 15t⁴ + 10t³, at each decile
+// of t (unrounded, then the rounded % actually used as each gradient
+// stop's color-mix amount below):
+//   t=0.0 -> S=0.00000  (0%)
+//   t=0.1 -> S=0.00856  (1%)
+//   t=0.2 -> S=0.05792  (6%)
+//   t=0.3 -> S=0.16308  (16%)
+//   t=0.4 -> S=0.31744  (32%)
+//   t=0.5 -> S=0.50000  (50%)
+//   t=0.6 -> S=0.68256  (68%)
+//   t=0.7 -> S=0.83692  (84%)
+//   t=0.8 -> S=0.94208  (94%)
+//   t=0.9 -> S=0.99144  (99%)
+//   t=1.0 -> S=1.00000  (100%)
+// Stops are placed at even 10% POSITION intervals with each stop's own
+// color-mix PERCENTAGE set to the S(t) value above instead of a linear
+// 0/10/20.../100 — the standard technique for expressing a non-linear
+// easing curve as a CSS gradient, since gradient stops themselves only
+// support linear interpolation between two adjacent stops; sampling the
+// curve at fine-grained intervals and using linear segments between
+// THOSE samples is what actually approximates the smooth curve.
+//
+// Short, per instruction: --space-9 (96px) — enough to read as a
+// deliberate transition, not long enough to smear across the frame the
+// way the earlier long ramps did.
+.heroFade {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  height: var(--space-9);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-bg) 1%, transparent) 10%,
+    color-mix(in srgb, var(--color-bg) 6%, transparent) 20%,
+    color-mix(in srgb, var(--color-bg) 16%, transparent) 30%,
+    color-mix(in srgb, var(--color-bg) 32%, transparent) 40%,
+    color-mix(in srgb, var(--color-bg) 50%, transparent) 50%,
+    color-mix(in srgb, var(--color-bg) 68%, transparent) 60%,
+    color-mix(in srgb, var(--color-bg) 84%, transparent) 70%,
+    color-mix(in srgb, var(--color-bg) 94%, transparent) 80%,
+    color-mix(in srgb, var(--color-bg) 99%, transparent) 90%,
+    var(--color-bg) 100%
+  );
+}
+
+// --light-base-bg (theme-invariant ivory), not the ambient --color-text:
+// this scope's job is "stay legible over a scrim on an arbitrary photo,
+// regardless of which theme is active" — the same guarantee the article
+// cover header's own text color relies on. It also happens to read
+// correctly with no heroImage at all (flat ambient dark background,
+// ivory-on-near-black, far past the 5.65:1 floor already proven for the
+// harder scrim case).
+//
+// The generic tokens the nested Breadcrumbs component reads (--color-
+// text-muted for .current, --color-hairline for the "/" separator,
+// mixins.link's --color-accent/-accent-hover for "Home") are reassigned
+// here too — a real gap caught via live measurement against the actual
+// anxiety.jpg photo once real content existed: the ambient dark theme's
+// own champagne-gold link color measured only 3.19:1 against this
+// lighter (photo-mixed, not pure-black) scrim composite, and the muted
+// crumb 4.46:1 — both short of the 4.5:1 floor. Same "one uniform ivory
+// value, hierarchy via weight/underline not color" discipline as the
+// h1/kicker/standfirst below, now applied consistently to every text
+// role in this scope rather than three of the four.
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: 44rem;
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+  text-align: center;
+
+  --color-text-muted: var(--light-base-bg);
+  --color-hairline: color-mix(in srgb, var(--light-base-bg) 40%, transparent);
+  --color-accent: var(--light-base-bg);
+  --color-accent-hover: color-mix(in srgb, var(--light-base-bg) 80%, transparent);
+}
+
+.breadcrumbs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+}
+
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--light-base-bg);
+}
+
+.title {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--light-base-bg);
+  text-wrap: balance;
+}
+
+.titleEmphasis {
+  font-style: italic;
+}
+
+.standfirst {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--light-base-bg);
+}

@@ -7,6 +7,38 @@ that, then delete the line here.
 
 ## Must fix before launch
 
+- **At launch: flip `seo.noIndex` off on exactly 6 documents** —
+  `homePage-it`, `homePage-en`, `pillarPage-anxiety-it`,
+  `pillarPage-anxiety-en`, `subtopicPage-panic-it`,
+  `subtopicPage-panic-en`. Until then, the sitemap stays empty of them
+  and each one keeps serving `noindex`. All 468 `article` documents are
+  already `noIndex: false` (untouched, not gated) and are correctly
+  included in the sitemap as of this pass.
+  - **`siteSettings-it`/`-en` are ALSO `noIndex: true` — leave them.**
+    Not part of the 6. Confirmed by reading `buildMetadata()`
+    (`src/sanity/seo.ts`): it never reads `siteSeo.noIndex`, only each
+    page's own `seo.noIndex`. The field is inert — flipping it does
+    nothing, and NOT flipping it does nothing either. It can stay
+    exactly as it is, at launch and after; don't spend time on it and
+    don't mistake it for one of the 6 that actually matter.
+  - **One-time cleanup, not a recurring trap:** the schema's `noIndex`
+    field (`src/sanity/schemaTypes/objects/seo.ts`) has
+    `initialValue: false` — confirmed by all 468 articles already being
+    `false` with nobody having touched them individually. New documents
+    are born indexable, not hidden; flipping the 6 above is a finite
+    action.
+  - **Reverse warning, same fact from the other side:** because nothing
+    inherits the gate automatically, any NEW `pillarPage`/`subtopicPage`
+    (or another `homePage`, unlikely as that is) created between now and
+    launch will be born **indexable** — the opposite of gated. If
+    pre-launch content like that gets added, someone has to set
+    `noIndex: true` on it by hand, the same way it was apparently done
+    for the original 6, or it goes live in search before it's meant to.
+  - Reversal (the 6 real gates only): in Studio, open each document →
+    SEO → turn off "Hide from search engines." Re-run/redeploy so the
+    sitemap and each page's own `<meta name="robots">` pick it up.
+    Delete this entry once done.
+
 - **Profilo (Chi sono full-bleed rebuild) copy (homePage-it/-en) is
   DRAFT, not approved.** `scripts/patch-profilo-copy.ts` — new `profilo`
   field group (eyebrow, heading, headingEmphasisWord, three paragraphs).
@@ -193,18 +225,19 @@ that, then delete the line here.
 
 ## Found during this pass, needs reconciling (not fixed here — outside this task's scope)
 
-- **EN gate: inconsistent state.** `src/app/[locale]/page.tsx:220`
+- **EN gate: partially reconciled.** `src/app/[locale]/page.tsx:220`
   documents "EN GATE LIFTED" (the EN homepage now has real, translated
   content and the hardcoded IT redirect + hreflang suppression were
   removed there; `proxy.ts` confirms it — no gate logic remains there
-  either). But `src/app/sitemap.ts:62` and `src/sanity/presentationLocations.ts:62,86`
-  still carry comments and logic treating "the temporary EN gate" as
-  active — the sitemap still excludes the EN homepage entirely, and
-  presentationLocations still assumes it should redirect EN to IT. These
-  three files were meant to be updated in lockstep (per page.tsx's own
-  comment) but sitemap.ts/presentationLocations.ts appear to have been
-  missed. Worth a dedicated pass to confirm and fix — flagging rather
-  than changing, since it's outside what this pass was asked to do.
+  either). `src/app/sitemap.ts` carried the same stale special case
+  (excluded the EN homepage entirely) — **fixed in the sitemap pass**:
+  the EN-specific `continue`/alternates carve-out is gone, homePage now
+  emits both locales like every other type here (moot in practice right
+  now since `homePage-{it,en}` both carry `seo.noIndex: true` regardless
+  — see the noIndex entry below). `src/sanity/presentationLocations.ts:62,86`
+  still carries the old assumption (EN should redirect to IT) — still
+  unreconciled, still outside what either pass was asked to do. Worth a
+  dedicated look.
 
 ## Intentionally parked — do not delete in a future cleanup
 

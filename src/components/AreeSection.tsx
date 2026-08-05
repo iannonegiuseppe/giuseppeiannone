@@ -8,14 +8,19 @@ import {
   StressIcon,
 } from "./icons/aree";
 import { RevealOnScroll } from "./RevealOnScroll";
-import { areaPath, type Locale } from "@/sanity/paths";
 import styles from "./AreeSection.module.scss";
 
+// Area-fold pass — `_key` (Sanity array-item key), not `_id`: these rows
+// now live inside homePage.aree.items, an array field, not their own
+// `area` documents (see that type's own schema comment). `slug` dropped
+// entirely — see this pass's own report for why (empty on all 12 source
+// documents, backed by no route, and a future individual-area page will
+// almost certainly be a pillarPage reference, an architecturally
+// different mechanism this field never fed anyway).
 export type AreaRow = {
-  _id: string;
+  _key: string;
   title: string;
   descriptor: string;
-  slug?: string;
 };
 
 // Card-grid rebuild pass: fixed icon per grid POSITION (order 1-6), not
@@ -29,37 +34,34 @@ const ICONS = [AnsiaIcon, PanicoIcon, DepressioneIcon, SessualiIcon, StressIcon,
 
 // Card-grid rebuild pass: supersedes the previous typographic-list
 // version entirely (hairline-divider rows -> six equal cards). Server
-// component still: no data resolution beyond title/descriptor/slug
-// already projected by areasQuery, so no client-side interactivity is
+// component still: no data resolution beyond title/descriptor already
+// projected by homePage's own fetch, so no client-side interactivity is
 // needed beyond CSS-only :hover/:focus-visible (no JS state at all) plus
 // the existing RevealOnScroll reveal (see that file's own comment for the
 // stagger mechanism reused here, not reinvented).
 //
-// Conditional interactivity, now two states per card (was three):
-// - slug set -> real <a> (matches ChiSonoSection.tsx's own storyLink
-//   pattern: plain <a>, not next/link, for a route that doesn't exist
-//   yet; see areaPath's own comment in sanity/paths.ts). Full link
-//   behavior: cursor, focus ring on the whole card, restrained hover.
-// - no slug -> a fully plain, non-interactive card. The previous
-//   "previewHover" demo state (faking a link's hover reaction on a
-//   non-interactive row) is REMOVED, not carried over — it directly
-//   contradicts this pass's own explicit requirement that non-interactive
-//   cards must never imply clickability. The `areeSection.previewHover`
-//   Sanity field itself still exists (out of scope to remove a schema
-//   field in a component pass) but is no longer read here — see this
-//   pass's own report and docs/pre-launch.md's updated entry.
+// Area-fold pass — every card is now always the plain, non-interactive
+// shape. The conditional link branch (slug set -> real <a>) is REMOVED,
+// not kept dormant for later: `slug` no longer exists on this data at
+// all (dropped from the schema — see AreaRow's own comment), and a
+// future individual-area page will almost certainly be a pillarPage
+// reference, an architecturally different mechanism from the bare
+// areaPath()/slug string this branch used — reviving THIS branch
+// wouldn't have saved that future work, so there's nothing to keep it
+// ready for. The previous "previewHover" demo state (faking a link's
+// hover reaction on a non-interactive row) was already removed in an
+// earlier pass, for the same reason: non-interactive cards must never
+// imply clickability.
 export function AreeSection({
   kicker,
   title,
   intro,
   areas,
-  locale,
 }: {
   kicker: string;
   title: string;
   intro?: string;
   areas?: AreaRow[];
-  locale: Locale;
 }) {
   return (
     <section
@@ -80,30 +82,11 @@ export function AreeSection({
 
       <ul className={styles.areeGrid} role="list">
         {areas?.map((area, index) => {
-          const isLink = Boolean(area.slug);
           const Icon = ICONS[index % ICONS.length]!;
           const number = String(index + 1).padStart(2, "0");
 
-          const cardContent = (
-            <>
-              <span className={styles.areeCardTop}>
-                <span className={styles.areeCardIcon}>
-                  <Icon />
-                </span>
-                {/* Decorative position marker, not a heading — the card's
-                    real accessible name is its title below (and, for
-                    linked cards, the <a>'s own aria-label). */}
-                <span className={styles.areeCardNumber} aria-hidden="true">
-                  {number}
-                </span>
-              </span>
-              <span className={styles.areeCardTitle}>{area.title}</span>
-              <span className={styles.areeCardDescriptor}>{area.descriptor}</span>
-            </>
-          );
-
           return (
-            <li key={area._id} className={styles.areeGridItem} role="listitem">
+            <li key={area._key} className={styles.areeGridItem} role="listitem">
               {/* Deterministic stagger — array index, not Math.random()/
                   Date.now() (SSG hydration) — same --*-delay-index pattern
                   AnimatedDivider already uses for its own sweep stagger,
@@ -114,17 +97,20 @@ export function AreeSection({
                 className={styles.areeCardReveal}
                 style={{ "--card-delay-index": index } as CSSProperties}
               >
-                {isLink ? (
-                  <a
-                    href={areaPath(locale, area.slug!)}
-                    aria-label={area.title}
-                    className={`${styles.areeCard} ${styles.areeCardLink}`}
-                  >
-                    {cardContent}
-                  </a>
-                ) : (
-                  <div className={styles.areeCard}>{cardContent}</div>
-                )}
+                <div className={styles.areeCard}>
+                  <span className={styles.areeCardTop}>
+                    <span className={styles.areeCardIcon}>
+                      <Icon />
+                    </span>
+                    {/* Decorative position marker, not a heading — the
+                        card's real accessible name is its title below. */}
+                    <span className={styles.areeCardNumber} aria-hidden="true">
+                      {number}
+                    </span>
+                  </span>
+                  <span className={styles.areeCardTitle}>{area.title}</span>
+                  <span className={styles.areeCardDescriptor}>{area.descriptor}</span>
+                </div>
               </RevealOnScroll>
             </li>
           );

@@ -38,7 +38,7 @@ export function FaqSection({
   locale: string;
   items?: FaqItemDoc[];
 }) {
-  // Same locale-narrowing convention as [pillarSlug]/page.tsx (typedLocale)
+  // Same locale-narrowing convention as [slug]/page.tsx (typedLocale)
   // — paths.ts's Locale union is "it" | "en", params.locale is a plain
   // string at the route boundary.
   const typedLocale = locale as "it" | "en";

@@ -6,6 +6,13 @@ import { languageField } from "../lib/languageField";
 // a link to the existing contact section, not a second form. Standalone
 // singleton (owner call, same reasoning as areeSection/chiSonoSection:
 // this isn't a homePage field group).
+//
+// Homepage-fold pass: DEPRECATED — superseded by homePage.ctaBridge (same
+// four fields: title/titleEmphasis/body/linkLabel). hidden: true removes
+// this from the Studio structure tree, global search, and "create new"
+// menu (same mechanism qualification.ts/chiSonoSection.ts/areeSection.ts
+// already use). Content copied, not moved — this document and its data
+// are untouched, just no longer read by anything.
 function textField(name: string, title: string) {
   return defineField({
     name,
@@ -30,8 +37,9 @@ function stringField(name: string, title: string, options?: { required?: boolean
 
 export const ctaBridgeSection = defineType({
   name: "ctaBridgeSection",
-  title: "CTA bridge (homepage)",
+  title: "CTA bridge (homepage) — DEPRECATED, no longer rendered (see Home page → CTA bridge)",
   type: "document",
+  hidden: () => true,
   fields: [
     stringField("title", "Title"),
     stringField(

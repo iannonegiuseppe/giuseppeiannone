@@ -1,0 +1,85 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// Corrected pass — the real site is dark-by-default now (src/app/[locale]/
+// layout.tsx's own blocking inline script sets data-theme="dark"
+// unconditionally on every route). Section 1-3 (Hero + Facts strip +
+// Recognition, per the pillar brief's own "inside the same section") is
+// therefore just the page's own AMBIENT dark background — no explicit
+// fill needed at all. An earlier version of this file painted an explicit
+// accent fill here, modeled on what turned out to be a stale mental map
+// of which real sections are still dark (Hope/Footer) — caught via live
+// contrast measurement (2.98:1, failing), not by re-reading comments
+// harder. See PillarHero.module.scss's own comment for the fuller account.
+//
+// No padding-block here anymore — refinement pass, item 11. That
+// `padding-block: var(--space-6)` was the "unwanted top gap": 32px that
+// was neither correctly clearing the fixed header (--header-height is
+// 100-114px, not 32px) nor serving any other purpose, just generic
+// spacing nobody asked for. Header clearance now lives where it actually
+// belongs — PillarHero.module.scss's own .heroContent — so the image
+// itself can still bleed to the true top of the viewport while only the
+// TEXT gets pushed down to clear the fixed header, the same split
+// article.module.scss's own .coverBand/.coverHeaderContent already use.
+.darkBand {
+}
+
+// Refinement pass, item 2 — Hero + Facts strip together fill one
+// viewport height. dvh primary (accounts for mobile browser chrome
+// showing/hiding, the actual "visible" height), vh then lvh as fallbacks
+// for browsers that don't support dvh — written in ascending-support
+// order (vh: universal; lvh: newer, "largest possible" viewport, closer
+// to dvh's own ceiling than plain vh is; dvh: newest, truly dynamic) so
+// an unsupported value is simply ignored by the CSS parser and the last
+// SUPPORTED one wins, per normal cascade rules — not a media-query
+// feature check.
+//
+// min-height, not height (correction — a fixed height caused a real,
+// measured bug: at 390 width below ~720px of viewport height, the
+// hero's own text content is naturally taller than the space left after
+// the facts strip, and a hard `height` forced it to overflow ITS OWN
+// box, overlapping the fixed header above it, confirmed live). With
+// min-height instead: at or above the content's natural height, this
+// behaves identically (flex:1 below still fills the exact leftover
+// space, same as a fixed height would); below that threshold, the
+// container simply grows to fit its own content instead of forcing an
+// overlap, and the PAGE scrolls — correct behavior, not a compromise,
+// per this pass's own decision. Re-verified live at 667px height and in
+// landscape (this pass's own report has both).
+//
+// flex column: PillarHero is flex:1 (fills whatever's left, down to its
+// own content minimum), PillarFactsStrip keeps its own intrinsic height.
+// Recognition deliberately sits OUTSIDE this wrapper (a sibling of it
+// inside .darkBand) — only Hero+Facts are pinned to viewport height, per
+// the brief.
+.heroViewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100lvh;
+  min-height: 100dvh;
+}
+
+// Sections 4-7 (Body, FAQ, Related articles, Contact) are the deliberate
+// LIGHT interlude inside this now-dark-default page — same mechanism the
+// blog article route's own .page already uses (tone.light-island-surface),
+// reused verbatim rather than a second implementation. ContactBlock's own
+// .contactLightWrap independently re-applies the same mixin one level
+// deeper (contactBlock.module.scss) — redundant but harmless where they
+// overlap, and required here regardless since Body/FAQ/RelatedArticlesGrid
+// have no such wrapper of their own.
+.lightIsland {
+  @include tone.light-island-surface;
+}
+
+// --- Body (section 4) — extraction pass ------------------------------------
+// .readingArea/.tocWrapper/.column/.body moved to the shared
+// src/components/ReadingArea.tsx + ReadingArea.module.scss, which this
+// route now renders through directly (page.tsx) instead of keeping a
+// second copy. That copy had already drifted from the article route's own
+// version — this route's .readingArea used to carry its own
+// padding-block: var(--space-8), which the article route never had; that
+// extra 64px was the reason this route's TOC and reading text started
+// visibly lower than the article's. Removed by construction: the shared
+// component has no such rule, matching the article (the reference)
+// exactly. See ReadingArea.module.scss for the current values.

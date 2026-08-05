@@ -59,6 +59,14 @@ function stringField(
 // fully intact deliberately (not deleted, not cleared) — same precedent
 // this file's own top comment already set for the OLDER homePage.chiSono
 // field group it itself superseded.
+//
+// Homepage-fold pass: hidden: true removes this from the Studio
+// structure tree, global search, and "create new" menu (same mechanism
+// qualification.ts already uses) — its own five paragraphs are Giuseppe's
+// own writing and exist nowhere else (they're planned for the future Chi
+// sono page), so this is hidden, not deleted or folded — unlike
+// areeSection/ctaBridgeSection (same pass), whose content moved into
+// homePage as new field groups instead.
 export const chiSonoSection = defineType({
   name: "chiSonoSection",
   title: "Chi sono section (homepage) — DEPRECATED, no longer rendered (see homePage.profilo)",
@@ -66,6 +74,7 @@ export const chiSonoSection = defineType({
     "Orphaned as of the design-lab-to-production migration — no longer rendered on the real " +
     "homepage, superseded by homePage.profilo. Left intact, not deleted; still real client copy.",
   type: "document",
+  hidden: () => true,
   fields: [
     stringField("kicker", "Kicker"),
     stringField("title", "Title"),

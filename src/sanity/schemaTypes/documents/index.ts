@@ -14,6 +14,7 @@ import { headerSettings } from "./headerSettings";
 import { homePage } from "./homePage";
 import { locationPage } from "./locationPage";
 import { methodPage } from "./methodPage";
+import { page } from "./page";
 import { pillarPage } from "./pillarPage";
 import { pricePage } from "./pricePage";
 import { qualification } from "./qualification";
@@ -53,6 +54,11 @@ export const documentTypes = [
   blogIndexSection,
   // Exactly two: Milan, Monza (protected like singletons in Step 7)
   locationPage,
+  // Root-namespace pass: the universal page type — see its own file's
+  // comment. Registered near pillarPage/locationPage since all three are
+  // "a document that is a real page," not because it shares their
+  // protection/singleton status (it doesn't).
+  page,
   // Knowledge base / content
   pillarPage,
   subtopicPage,

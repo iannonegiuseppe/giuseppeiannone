@@ -6,9 +6,10 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
+import { ReadingArea } from "@/components/ReadingArea";
+import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
 import { sanityFetch } from "@/sanity/client";
 import { ArticleProgress } from "./ArticleProgress";
-import { ArticleToc } from "./ArticleToc";
 import { getArticleBySlug, getArticleSlugs } from "@/sanity/articles";
 import { getArticleTrail } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
@@ -52,14 +53,6 @@ interface ContactSectionCopy {
   googleProfileLabel?: string;
 }
 
-interface RelatedArticle {
-  _id: string;
-  title: string;
-  slug: string;
-  cover?: (SanityImage & { alt?: string }) | undefined;
-  publishedAt: string | null;
-}
-
 function getChiSonoPortrait(locale: string) {
   return sanityFetch<ChiSonoPortrait | null>(chiSonoPortraitQuery, { locale }, [
     "chiSonoSection",
@@ -71,7 +64,7 @@ function getContactSectionCopy(locale: string) {
 }
 
 function getRelatedArticles(locale: string, excludeSlug: string) {
-  return sanityFetch<RelatedArticle[]>(
+  return sanityFetch<RelatedArticleDoc[]>(
     relatedArticlesQuery,
     { locale, excludeSlug },
     ["article"],
@@ -214,6 +207,40 @@ export default async function ArticlePage({
   const contactPhotoUrl = "/design-lab/photos/09.webp";
   const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
 
+  // Fuller author section at the end of the article body: portrait, name,
+  // credentials, bio, link. Seventh pass, item 4 — bio wired from
+  // chiSonoSection.paragraphs (buildAuthorBio, above), verbatim, both
+  // it/en. siteSettings.author.bio is still just a placeholder ("[Segnaposto
+  // IT — biografia. Testo non definitivo, non clinico.]") and stays unused
+  // here for that reason. Passed into ReadingArea's own afterBody slot
+  // (extraction pass) — article-only content, rendered inside .column
+  // after .body, same position it always had.
+  const endAuthorBlock = authorName ? (
+    <div className={styles.endAuthor}>
+      <div className={styles.endAuthorInner}>
+        {chiSono?.portrait && portraitDims ? (
+          <Image
+            src={urlFor(chiSono.portrait).width(240).height(240).url()}
+            alt=""
+            width={120}
+            height={120}
+            className={styles.endAuthorPortrait}
+          />
+        ) : null}
+        <div className={styles.endAuthorText}>
+          <p className={styles.endAuthorName}>{authorName}</p>
+          {authorJobTitle ? (
+            <p className={styles.endAuthorCredentials}>{authorJobTitle}</p>
+          ) : null}
+          {authorBio ? <p className={styles.endAuthorBio}>{authorBio}</p> : null}
+          <Link href={chiSonoHref} className={styles.endAuthorLink}>
+            {locale === "en" ? "More about me" : "Scopri di più su di me"}
+          </Link>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       {/* Item 6 — rendered as a sibling BEFORE .page, not inside it: .page
@@ -304,54 +331,24 @@ export default async function ArticlePage({
           ) : null}
         </div>
       </div>
-      {/* Eighth pass, item 2 — the author block moved back INSIDE .column
-          (was a full-width section below .readingArea entirely): it
-          belongs at the end of the article body, aligned with the text
-          measure, not spanning the full container. Contact form and
-          related posts stay full width below, unchanged. */}
-      <div className={styles.readingArea}>
-        <div className={styles.tocWrapper}>
-          <ArticleToc headings={tocHeadings} />
-        </div>
-        <div className={styles.column}>
-          <div className={styles.body} id={ARTICLE_BODY_ID}>
-            <PortableText value={data.body as never} components={components} />
-          </div>
-
-          {/* Fuller author section at the end of the article body:
-              portrait, name, credentials, bio, link. Seventh pass, item 4
-              — bio now wired from chiSonoSection.paragraphs
-              (buildAuthorBio, above), verbatim, both it/en.
-              siteSettings.author.bio is still just a placeholder
-              ("[Segnaposto IT — biografia. Testo non definitivo, non
-              clinico.]") and stays unused here for that reason. */}
-          {authorName ? (
-            <div className={styles.endAuthor}>
-              <div className={styles.endAuthorInner}>
-                {chiSono?.portrait && portraitDims ? (
-                  <Image
-                    src={urlFor(chiSono.portrait).width(240).height(240).url()}
-                    alt=""
-                    width={120}
-                    height={120}
-                    className={styles.endAuthorPortrait}
-                  />
-                ) : null}
-                <div className={styles.endAuthorText}>
-                  <p className={styles.endAuthorName}>{authorName}</p>
-                  {authorJobTitle ? (
-                    <p className={styles.endAuthorCredentials}>{authorJobTitle}</p>
-                  ) : null}
-                  {authorBio ? <p className={styles.endAuthorBio}>{authorBio}</p> : null}
-                  <Link href={chiSonoHref} className={styles.endAuthorLink}>
-                    {locale === "en" ? "More about me" : "Scopri di più su di me"}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      {/* Extraction pass — .readingArea/.tocWrapper/.column/.body now live
+          in the shared ReadingArea component (src/components/ReadingArea.
+          tsx), which the pillar route also renders through. Article keeps
+          its own renderer (articlePortableText.tsx) and passes the
+          rendered result in as children — ReadingArea never imports
+          next-sanity or knows which component map produced it. endAuthor
+          goes in via afterBody (same position inside .column it always
+          had — see that prop's own comment on ReadingArea.tsx). No
+          topOffset passed — this route's header is always collapsed
+          (forceCollapsed) by the time the TOC is visible, which is exactly
+          ReadingArea's own default (--header-height-collapsed). */}
+      <ReadingArea
+        headings={tocHeadings}
+        bodyId={ARTICLE_BODY_ID}
+        afterBody={endAuthorBlock}
+      >
+        <PortableText value={data.body as never} components={components} />
+      </ReadingArea>
 
       {/* Item 4 — the real, shared ContactBlock (photo column + form side
           by side), the exact component/props the homepage's own
@@ -378,49 +375,11 @@ export default async function ArticlePage({
           relatedArticlesQuery's own comment (370/468 articles have no
           tags) for why an honest recency-based list is what's here, not a
           similarity engine. */}
-      {related.length > 0 ? (
-        <div className={styles.relatedSection}>
-          <div className={styles.relatedInner}>
-            <h2 className={styles.relatedHeading}>
-              {locale === "en" ? "More from the blog" : "Altri articoli dal blog"}
-            </h2>
-            <div className={styles.relatedGrid}>
-              {related.map((item) => {
-                const dims = item.cover ? imageDimensions(item.cover) : null;
-                return (
-                  <Link
-                    key={item._id}
-                    href={articlePath(typedLocale, item.slug)}
-                    className={styles.relatedCard}
-                  >
-                    <div className={styles.relatedCardImage}>
-                      {item.cover && dims ? (
-                        <Image
-                          src={urlFor(item.cover).width(800).url()}
-                          alt=""
-                          fill
-                          sizes="(min-width: 48rem) 33vw, 100vw"
-                          className={styles.relatedCardImg}
-                        />
-                      ) : null}
-                    </div>
-                    <p className={styles.relatedCardTitle}>{item.title}</p>
-                    {item.publishedAt ? (
-                      <time className={styles.relatedCardDate} dateTime={item.publishedAt}>
-                        {new Date(item.publishedAt).toLocaleDateString(locale, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </time>
-                    ) : null}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <RelatedArticlesGrid
+        items={related}
+        locale={locale}
+        heading={locale === "en" ? "More from the blog" : "Altri articoli dal blog"}
+      />
       </main>
     </>
   );
