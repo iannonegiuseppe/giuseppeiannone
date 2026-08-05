@@ -271,10 +271,17 @@ typography are acceptable.
 
 ### 10.8 Photography standard
 
-Real photography only. No stock imagery, no AI-generated likenesses.
-The client's own commissioned session photographs are permitted
-(decision of 24.07.2026, agreed with the client); photographs of
-unrelated models presented as clients are not.
+Stock photography is permitted (decision of 05.08.2026, agreed with the
+client — supersedes the earlier "real photography only, no stock
+imagery" position). The client's own commissioned session photographs
+remain permitted too (decision of 24.07.2026, agreed with the client).
+
+Two things stay prohibited regardless of source, unchanged from the
+original decision:
+
+- Staged imagery depicting therapy sessions, or people presented as
+  clients.
+- AI-generated portraits of Giuseppe.
 
 ### 10.9 One focal point per section
 
