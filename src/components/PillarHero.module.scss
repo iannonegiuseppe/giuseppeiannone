@@ -54,6 +54,18 @@
 // correctly with no heroImage at all (flat ambient dark background,
 // ivory-on-near-black, far past the 5.65:1 floor already proven for the
 // harder scrim case).
+//
+// The generic tokens the nested Breadcrumbs component reads (--color-
+// text-muted for .current, --color-hairline for the "/" separator,
+// mixins.link's --color-accent/-accent-hover for "Home") are reassigned
+// here too — a real gap caught via live measurement against the actual
+// anxiety.jpg photo once real content existed: the ambient dark theme's
+// own champagne-gold link color measured only 3.19:1 against this
+// lighter (photo-mixed, not pure-black) scrim composite, and the muted
+// crumb 4.46:1 — both short of the 4.5:1 floor. Same "one uniform ivory
+// value, hierarchy via weight/underline not color" discipline as the
+// h1/kicker/standfirst below, now applied consistently to every text
+// role in this scope rather than three of the four.
 .heroContent {
   position: relative;
   z-index: 2;
@@ -61,6 +73,11 @@
   margin-inline: auto;
   padding-inline: var(--space-5);
   text-align: center;
+
+  --color-text-muted: var(--light-base-bg);
+  --color-hairline: color-mix(in srgb, var(--light-base-bg) 40%, transparent);
+  --color-accent: var(--light-base-bg);
+  --color-accent-hover: color-mix(in srgb, var(--light-base-bg) 80%, transparent);
 }
 
 .breadcrumbs {

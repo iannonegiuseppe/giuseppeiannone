@@ -40,13 +40,21 @@ export function PillarHero({
   heroImage?: (SanityImage & { alt?: string }) | undefined;
 }) {
   const dims = heroImage ? imageDimensions(heroImage) : null;
+  // Capped at the source's own natural width — never upscale (same
+  // reasoning as the article route's own requestWidth, portableTextComponents.tsx's
+  // image renderer). No .height() alongside it: this is `fill` +
+  // object-fit:cover, so the browser does all the actual cropping
+  // responsively — asking Sanity to ALSO crop server-side to a fixed
+  // height was a real bug (forced an unrelated 16:9 ratio onto whatever
+  // aspect the source actually is, on top of the upscale).
+  const requestWidth = dims ? Math.min(dims.width, 2400) : undefined;
 
   return (
     <div className={styles.heroBand}>
       {heroImage && dims ? (
         <Image
-          src={urlFor(heroImage).width(2400).height(1350).url()}
-          alt=""
+          src={urlFor(heroImage).width(requestWidth!).url()}
+          alt={heroImage.alt ?? ""}
           fill
           sizes="100vw"
           className={styles.heroImage}
