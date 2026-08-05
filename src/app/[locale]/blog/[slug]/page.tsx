@@ -6,9 +6,10 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
+import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
+import { ScrollTrackingToc } from "@/components/ScrollTrackingToc";
 import { sanityFetch } from "@/sanity/client";
 import { ArticleProgress } from "./ArticleProgress";
-import { ArticleToc } from "./ArticleToc";
 import { getArticleBySlug, getArticleSlugs } from "@/sanity/articles";
 import { getArticleTrail } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
@@ -52,14 +53,6 @@ interface ContactSectionCopy {
   googleProfileLabel?: string;
 }
 
-interface RelatedArticle {
-  _id: string;
-  title: string;
-  slug: string;
-  cover?: (SanityImage & { alt?: string }) | undefined;
-  publishedAt: string | null;
-}
-
 function getChiSonoPortrait(locale: string) {
   return sanityFetch<ChiSonoPortrait | null>(chiSonoPortraitQuery, { locale }, [
     "chiSonoSection",
@@ -71,7 +64,7 @@ function getContactSectionCopy(locale: string) {
 }
 
 function getRelatedArticles(locale: string, excludeSlug: string) {
-  return sanityFetch<RelatedArticle[]>(
+  return sanityFetch<RelatedArticleDoc[]>(
     relatedArticlesQuery,
     { locale, excludeSlug },
     ["article"],
@@ -311,7 +304,7 @@ export default async function ArticlePage({
           related posts stay full width below, unchanged. */}
       <div className={styles.readingArea}>
         <div className={styles.tocWrapper}>
-          <ArticleToc headings={tocHeadings} />
+          <ScrollTrackingToc headings={tocHeadings} topOffset="3.32rem" />
         </div>
         <div className={styles.column}>
           <div className={styles.body} id={ARTICLE_BODY_ID}>
@@ -378,49 +371,11 @@ export default async function ArticlePage({
           relatedArticlesQuery's own comment (370/468 articles have no
           tags) for why an honest recency-based list is what's here, not a
           similarity engine. */}
-      {related.length > 0 ? (
-        <div className={styles.relatedSection}>
-          <div className={styles.relatedInner}>
-            <h2 className={styles.relatedHeading}>
-              {locale === "en" ? "More from the blog" : "Altri articoli dal blog"}
-            </h2>
-            <div className={styles.relatedGrid}>
-              {related.map((item) => {
-                const dims = item.cover ? imageDimensions(item.cover) : null;
-                return (
-                  <Link
-                    key={item._id}
-                    href={articlePath(typedLocale, item.slug)}
-                    className={styles.relatedCard}
-                  >
-                    <div className={styles.relatedCardImage}>
-                      {item.cover && dims ? (
-                        <Image
-                          src={urlFor(item.cover).width(800).url()}
-                          alt=""
-                          fill
-                          sizes="(min-width: 48rem) 33vw, 100vw"
-                          className={styles.relatedCardImg}
-                        />
-                      ) : null}
-                    </div>
-                    <p className={styles.relatedCardTitle}>{item.title}</p>
-                    {item.publishedAt ? (
-                      <time className={styles.relatedCardDate} dateTime={item.publishedAt}>
-                        {new Date(item.publishedAt).toLocaleDateString(locale, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </time>
-                    ) : null}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <RelatedArticlesGrid
+        items={related}
+        locale={locale}
+        heading={locale === "en" ? "More from the blog" : "Altri articoli dal blog"}
+      />
       </main>
     </>
   );
