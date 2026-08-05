@@ -447,7 +447,17 @@ export const rootSlugQuery = defineQuery(`
       standfirst,
       titleEmphasisWord,
       factsStrip,
-      recognition,
+      recognition{
+        items[]{
+          _key,
+          quote,
+          label,
+          "subtopic": subtopic->{
+            _id, _type, title, "slug": slug.current,
+            "parentSlug": parentPillar->slug.current
+          }
+        }
+      },
       "faqItems": faqItems[]->{ _id, question, answer },
       "relatedArticles": relatedArticles[]->{
         _id, title, "slug": slug.current, cover, publishedAt

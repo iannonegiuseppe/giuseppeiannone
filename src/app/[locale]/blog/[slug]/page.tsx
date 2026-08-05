@@ -6,8 +6,8 @@ import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
 import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
+import { ReadingArea } from "@/components/ReadingArea";
 import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
-import { ScrollTrackingToc } from "@/components/ScrollTrackingToc";
 import { sanityFetch } from "@/sanity/client";
 import { ArticleProgress } from "./ArticleProgress";
 import { getArticleBySlug, getArticleSlugs } from "@/sanity/articles";
@@ -207,6 +207,40 @@ export default async function ArticlePage({
   const contactPhotoUrl = "/design-lab/photos/09.webp";
   const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
 
+  // Fuller author section at the end of the article body: portrait, name,
+  // credentials, bio, link. Seventh pass, item 4 — bio wired from
+  // chiSonoSection.paragraphs (buildAuthorBio, above), verbatim, both
+  // it/en. siteSettings.author.bio is still just a placeholder ("[Segnaposto
+  // IT — biografia. Testo non definitivo, non clinico.]") and stays unused
+  // here for that reason. Passed into ReadingArea's own afterBody slot
+  // (extraction pass) — article-only content, rendered inside .column
+  // after .body, same position it always had.
+  const endAuthorBlock = authorName ? (
+    <div className={styles.endAuthor}>
+      <div className={styles.endAuthorInner}>
+        {chiSono?.portrait && portraitDims ? (
+          <Image
+            src={urlFor(chiSono.portrait).width(240).height(240).url()}
+            alt=""
+            width={120}
+            height={120}
+            className={styles.endAuthorPortrait}
+          />
+        ) : null}
+        <div className={styles.endAuthorText}>
+          <p className={styles.endAuthorName}>{authorName}</p>
+          {authorJobTitle ? (
+            <p className={styles.endAuthorCredentials}>{authorJobTitle}</p>
+          ) : null}
+          {authorBio ? <p className={styles.endAuthorBio}>{authorBio}</p> : null}
+          <Link href={chiSonoHref} className={styles.endAuthorLink}>
+            {locale === "en" ? "More about me" : "Scopri di più su di me"}
+          </Link>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       {/* Item 6 — rendered as a sibling BEFORE .page, not inside it: .page
@@ -297,54 +331,24 @@ export default async function ArticlePage({
           ) : null}
         </div>
       </div>
-      {/* Eighth pass, item 2 — the author block moved back INSIDE .column
-          (was a full-width section below .readingArea entirely): it
-          belongs at the end of the article body, aligned with the text
-          measure, not spanning the full container. Contact form and
-          related posts stay full width below, unchanged. */}
-      <div className={styles.readingArea}>
-        <div className={styles.tocWrapper}>
-          <ScrollTrackingToc headings={tocHeadings} topOffset="3.32rem" />
-        </div>
-        <div className={styles.column}>
-          <div className={styles.body} id={ARTICLE_BODY_ID}>
-            <PortableText value={data.body as never} components={components} />
-          </div>
-
-          {/* Fuller author section at the end of the article body:
-              portrait, name, credentials, bio, link. Seventh pass, item 4
-              — bio now wired from chiSonoSection.paragraphs
-              (buildAuthorBio, above), verbatim, both it/en.
-              siteSettings.author.bio is still just a placeholder
-              ("[Segnaposto IT — biografia. Testo non definitivo, non
-              clinico.]") and stays unused here for that reason. */}
-          {authorName ? (
-            <div className={styles.endAuthor}>
-              <div className={styles.endAuthorInner}>
-                {chiSono?.portrait && portraitDims ? (
-                  <Image
-                    src={urlFor(chiSono.portrait).width(240).height(240).url()}
-                    alt=""
-                    width={120}
-                    height={120}
-                    className={styles.endAuthorPortrait}
-                  />
-                ) : null}
-                <div className={styles.endAuthorText}>
-                  <p className={styles.endAuthorName}>{authorName}</p>
-                  {authorJobTitle ? (
-                    <p className={styles.endAuthorCredentials}>{authorJobTitle}</p>
-                  ) : null}
-                  {authorBio ? <p className={styles.endAuthorBio}>{authorBio}</p> : null}
-                  <Link href={chiSonoHref} className={styles.endAuthorLink}>
-                    {locale === "en" ? "More about me" : "Scopri di più su di me"}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      {/* Extraction pass — .readingArea/.tocWrapper/.column/.body now live
+          in the shared ReadingArea component (src/components/ReadingArea.
+          tsx), which the pillar route also renders through. Article keeps
+          its own renderer (articlePortableText.tsx) and passes the
+          rendered result in as children — ReadingArea never imports
+          next-sanity or knows which component map produced it. endAuthor
+          goes in via afterBody (same position inside .column it always
+          had — see that prop's own comment on ReadingArea.tsx). No
+          topOffset passed — this route's header is always collapsed
+          (forceCollapsed) by the time the TOC is visible, which is exactly
+          ReadingArea's own default (--header-height-collapsed). */}
+      <ReadingArea
+        headings={tocHeadings}
+        bodyId={ARTICLE_BODY_ID}
+        afterBody={endAuthorBlock}
+      >
+        <PortableText value={data.body as never} components={components} />
+      </ReadingArea>
 
       {/* Item 4 — the real, shared ContactBlock (photo column + form side
           by side), the exact component/props the homepage's own

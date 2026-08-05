@@ -4,34 +4,81 @@
   padding-block: var(--space-6) var(--space-8);
 }
 
+// Refinement pass, item 5 — space-between (not center + wrap) spreads
+// the 4 items across the FULL container width: first item's left edge
+// sits at the container's own left edge, last item's right edge at the
+// container's own right edge, the two middle items evenly spaced between
+// — genuine full-width distribution, not a centered cluster. flex-wrap
+// kept only as a safety net for a future 4th+ item at very narrow
+// widths; at the current 4-item count it only ever engages below the
+// point where 4 items can't fit on one line at all.
 .factsList {
   @include mixins.container;
-  margin: 0;
+  // No margin:0 here — real bug, found via live measurement (this pass's
+  // own report): mixins.container's own margin-inline:auto is what
+  // centers this box in the viewport, and a later `margin: 0` in this
+  // SAME rule silently cancelled it (same-rule declaration order, later
+  // wins) — the space-between distribution below was working correctly
+  // the whole time, just inside a box pinned flush-left instead of
+  // centered. dl's own default browser margin (the reason margin:0
+  // seemed needed) is already zeroed by the global reset (globals.scss's
+  // `* { margin: 0; }`), so nothing here needs it restated.
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-6) var(--space-8);
+  justify-content: space-between;
+  gap: var(--space-5) var(--space-6);
 }
 
+// Refinement pass, item 4 — vertical-rule dividers removed, icon added
+// (react-icons now approved and installed — see PillarFactsStrip.tsx's
+// own comment for which icon and why). Row layout: icon beside the
+// label/value column, not stacked above it.
 .fact {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding-left: var(--space-5);
-  border-left: 1px solid var(--color-hairline);
+  align-items: flex-start;
+  gap: var(--space-3);
   text-align: left;
-
-  &:first-child {
-    padding-left: 0;
-    border-left: none;
-  }
 }
 
+// --color-accent (champagne on this dark-default route) — same accent
+// role the breadcrumb link already uses in the hero just above this
+// section, not a new meaning for the token. Measures 7.17:1 against the
+// ambient --color-bg (tokens.scss's own re-verified dark-theme table),
+// far past the 3:1 non-text-UI floor.
+.factIcon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.125rem; // optical alignment with the label's own cap-height
+  color: var(--color-accent);
+}
+
+.factText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+// Refinement pass, item 5 — bigger type: label was 0.75rem/factValue was
+// --fs-body (1rem); now --fs-small (0.875rem, +16.7%) and --fs-body-lg
+// (1.125rem, +12.5%) respectively — both existing type-scale tokens, not
+// new sizes invented for this.
+// Weight pass — was --font-weight-bold (700), read as heavy next to the
+// facts strip's own --fs-body-lg value below it. Stepped to
+// --font-weight-regular (400): the lightest weight this project actually
+// loads for Source Sans 3 (layout.tsx's own next/font config lists only
+// 400/500/700 — a true Light/Thin (300) cut isn't fetched at all, so
+// setting 300 here would just fall back to the nearest loaded weight,
+// i.e. render identically to 400 anyway). Contrast is a color
+// computation only, unaffected by weight: still 8.32:1 (measured live,
+// unchanged from the 700 version) against the ambient dark surface, well
+// past the 4.5:1 floor for this 14px text even accounting for a thinner
+// stroke reading quieter than the ratio alone suggests.
 .factLabel {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-regular);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -40,6 +87,6 @@
 .factValue {
   margin: 0;
   font-family: var(--font-body);
-  font-size: var(--fs-body);
+  font-size: var(--fs-body-lg);
   color: var(--color-text);
 }

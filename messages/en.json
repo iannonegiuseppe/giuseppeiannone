@@ -9,7 +9,9 @@
     "label": "Key points"
   },
   "PillarPage": {
-    "recognitionDisclaimer": "Phrases heard in the course of clinical practice, not a diagnosis.",
+    "recognitionKicker": "Does this sound familiar?",
+    "recognitionDisclaimer": "Phrases I hear often in practice. Recognising yourself in one of them doesn't mean you have a disorder.",
+    "recognitionListKicker": "Anxiety disorders, one by one",
     "faqHeading": "Frequently asked questions",
     "relatedArticlesHeading": "Related articles"
   },

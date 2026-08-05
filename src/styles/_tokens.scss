@@ -871,3 +871,38 @@ $z-index: (
     --header-height: 7.125rem; // 114px, desktop rest-state header height
   }
 }
+
+// Collapsed-state counterpart to --header-height above — same measured-
+// not-derived reasoning (HeaderInteractive.module.scss's collapsed rule
+// only sets padding-block, 0.625rem/0.375rem; the actual rendered height
+// also depends on the logo/nav row's own font-metric-driven content
+// height, which padding arithmetic alone can't predict precisely — see
+// --header-height's own comment above for the identical justification on
+// the rest state). Previously measured once and hardcoded as
+// $collapsed-header-height/-lg directly inside article.module.scss (the
+// only route with a permanently-collapsed header, so the only one that
+// had needed the number) — promoted here so a second consumer (ReadingArea's
+// own sticky TOC offset, needed once the pillar route's header reaches
+// this same collapsed state on scroll) reads the one declared value
+// instead of a second hardcoded copy that could silently drift from this
+// one if the header's collapsed padding/content ever changes.
+//
+// HeaderInteractive.module.scss's own collapsed rule does NOT read this
+// token — it produces the height (via padding-block), it doesn't consume
+// a target height, and forcing an explicit height there risks clipping
+// content that padding+intrinsic-sizing currently fits exactly. The two
+// are therefore verified equal (checked live: header's actual
+// getBoundingClientRect() height while collapsed measures 53.09px,
+// matching --header-height-collapsed's own lg+ value below exactly), not
+// mechanically locked — same relationship --header-height already has
+// with the header's own REST-state padding, an existing, accepted pattern
+// on this token, not a new kind of fragility.
+:root {
+  --header-height-collapsed: 4rem; // 64px, below lg
+}
+
+@media (min-width: #{breakpoint(lg)}) {
+  :root {
+    --header-height-collapsed: 3.32rem; // 53.09px, lg+
+  }
+}

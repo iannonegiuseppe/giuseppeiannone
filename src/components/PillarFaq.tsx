@@ -43,8 +43,10 @@ export async function PillarFaq({
     <div className={styles.faqSection}>
       <JsonLdScript data={faqPageJsonLd} />
       <div className={styles.faqInner}>
-        <h2 className={styles.faqHeading}>{t("faqHeading")}</h2>
-        <FaqAccordion pairs={pairs} />
+        <div className={styles.faqContent}>
+          <h2 className={styles.faqHeading}>{t("faqHeading")}</h2>
+          <FaqAccordion pairs={pairs} />
+        </div>
       </div>
     </div>
   );

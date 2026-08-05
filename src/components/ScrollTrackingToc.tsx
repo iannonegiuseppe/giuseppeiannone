@@ -43,15 +43,15 @@ const ACTIVE_OFFSET_PX = 120;
 // over.
 export function ScrollTrackingToc({
   headings,
-  // The sticky nav's `top` value. Article route passes its own
-  // permanently-collapsed-header offset (3.32rem, see that route's own
-  // $collapsed-header-height-lg); callers with a normal (non-forced-
-  // collapsed) header should pass "var(--header-height)" or omit this to
-  // get that same generic default.
-  topOffset = "var(--header-height)",
+  // The sticky nav's `top` value. Required, no default here — this
+  // component's sole caller is ReadingArea.tsx, which owns the actual
+  // default (--header-height-collapsed, _tokens.scss) so there's exactly
+  // one place that value is declared, not a second one sitting here
+  // unreachable and free to go stale.
+  topOffset,
 }: {
   headings: TocHeading[];
-  topOffset?: string;
+  topOffset: string;
 }) {
   const lenisRef = useLenisRef();
   const [activeId, setActiveId] = useState<string | null>(null);

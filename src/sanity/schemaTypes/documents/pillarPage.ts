@@ -112,7 +112,7 @@ export const pillarPage = defineType({
       name: "recognition",
       title: "Recognition",
       description:
-        "Short first-person phrases Giuseppe has actually heard in practice — displayed two per row. Not a diagnosis; the page adds a fixed disclaimer line beneath these automatically. Leave empty to hide this section entirely.",
+        "Short first-person phrases Giuseppe has actually heard in practice — a staggered composition, not a grid. Not a diagnosis; the page adds a fixed disclaimer line beneath these automatically. Leave empty to hide this section entirely.",
       type: "object",
       fields: [
         defineField({
@@ -121,8 +121,61 @@ export const pillarPage = defineType({
           type: "array",
           of: [
             {
-              type: "string",
-              validation: (Rule) => Rule.custom(deontologyCheck),
+              type: "object",
+              name: "recognitionItem",
+              fields: [
+                defineField({
+                  name: "quote",
+                  title: "Quote",
+                  type: "string",
+                  validation: (Rule) => Rule.required().custom(deontologyCheck),
+                }),
+                // Recognition rebuild pass — the disorder name shown
+                // beneath each quote (e.g. "Agorafobia"). Always rendered
+                // as text; becomes a link only once `subtopic` below is
+                // also set. Required: every quote in the source draft
+                // names one, and the brief's own recognition rebuild
+                // needs it rendered now, not deferred.
+                defineField({
+                  name: "label",
+                  title: "Label (disorder name)",
+                  type: "string",
+                  validation: (Rule) => Rule.required().custom(deontologyCheck),
+                }),
+                // The label above becomes a link to that subtopic's own
+                // page once subtopic pages exist for the anxiety area.
+                // Optional and empty on every item today (no subtopic
+                // pages exist yet) — when set, the label renders as a
+                // link instead of plain text; when absent, plain text.
+                // subtopicPage only (not pillarPage/article): this label
+                // always names one specific disorder, never a broader
+                // topic.
+                defineField({
+                  name: "subtopic",
+                  title: "Links to (subtopic)",
+                  description:
+                    "Optional. Leave empty until the matching subtopic page exists — the label renders as plain text either way, becoming a link only once this is set.",
+                  type: "reference",
+                  to: [{ type: "subtopicPage" }],
+                }),
+              ],
+              preview: {
+                select: { quote: "quote", label: "label", subtopicTitle: "subtopic.title" },
+                prepare({
+                  quote,
+                  label,
+                  subtopicTitle,
+                }: {
+                  quote?: string;
+                  label?: string;
+                  subtopicTitle?: string;
+                }) {
+                  return {
+                    title: label ? `${label} — ${quote ?? ""}` : (quote ?? ""),
+                    subtitle: subtopicTitle ? `→ ${subtopicTitle}` : "not linked yet",
+                  };
+                },
+              },
             },
           ],
           validation: (Rule) => Rule.min(2),

@@ -1,0 +1,86 @@
+@use "../styles/mixins";
+
+// Extraction pass — values below are copied verbatim from the blog
+// article route's own article.module.scss (.readingArea/.column/
+// .tocWrapper/.body), which remains the reference; this file is now the
+// single source both routes render from. Article's own comment history
+// (kept in article.module.scss's git blame, not repeated here) explains
+// why each number is what it is — TOC container width, the 50rem column
+// cap, the 15rem/1fr grid split. This pass changes none of them, only
+// where they live.
+//
+// Below lg: a plain wrapper, .column behaves as normal block flow.
+.readingArea {
+  @include mixins.breakpoint-up(lg) {
+    @include mixins.container;
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    column-gap: var(--space-7);
+  }
+}
+
+// --- Reading column ------------------------------------------------------
+// Below lg: 660px content width (max-width includes padding, border-box —
+// see the padding-inline comment below). At lg+: fills the grid's 1fr
+// track, capped at 50rem (800px) — an explicitly accepted trade-off on
+// the article route (chars-per-line past the ideal range at 1440, per
+// that file's own report), inherited here unchanged rather than
+// re-litigated.
+.column {
+  width: 100%;
+  max-width: calc(41.25rem + 2 * var(--space-5)); // 660px content + 24px/side padding
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 2;
+    max-width: 50rem;
+    padding-inline: 0;
+  }
+}
+
+// --- Table of contents (lg+ only) -----------------------------------------
+// .tocWrapper is the actual grid item — it carries the grid-column
+// placement and the margin-top that aligns the TOC's natural (pre-scroll)
+// start with the body's first paragraph (.body's own padding-top,
+// directly below — same token, so the two can't drift apart again).
+// .toc itself (ScrollTrackingToc.module.scss, nested one level inside)
+// carries only the sticky mechanics — no margin, so `top` alone
+// determines the pinned position. See ScrollTrackingToc.tsx's own
+// comment for why margin-top has to live on this non-sticky wrapper
+// rather than on the sticky element itself (a real bug on the article
+// route before this was split into two elements).
+//
+// tocWrapper must not get align-self:start — position:sticky's stick
+// range is bounded by its containing block's height, which for .toc is
+// this wrapper. Left at the default (stretch) so the wrapper fills the
+// full grid row height, matching .column's own (much taller) content.
+.tocWrapper {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+    grid-column: 1;
+    margin-top: var(--space-7);
+  }
+}
+
+// --- Body typographic rhythm ----------------------------------------------
+// padding-top is what .tocWrapper's own margin-top (above) aligns
+// against — both var(--space-7), not a coincidence.
+.body {
+  padding-top: var(--space-7);
+  font-family: var(--font-body);
+  font-size: var(--fs-article-body-sm);
+  line-height: var(--lh-article-body-sm);
+  color: var(--color-text);
+
+  @include mixins.breakpoint-up(md) {
+    font-size: var(--fs-article-body);
+    line-height: var(--lh-article-body);
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+}

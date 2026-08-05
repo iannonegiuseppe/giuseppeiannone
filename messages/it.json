@@ -9,7 +9,9 @@
     "label": "In breve"
   },
   "PillarPage": {
-    "recognitionDisclaimer": "Frasi ascoltate nel corso della pratica clinica, non una diagnosi.",
+    "recognitionKicker": "Ti riconosci?",
+    "recognitionDisclaimer": "Frasi che sento spesso in studio. Riconoscersi in una di queste non significa avere un disturbo.",
+    "recognitionListKicker": "I disturbi d'ansia, uno per uno",
     "faqHeading": "Domande frequenti",
     "relatedArticlesHeading": "Articoli correlati"
   },

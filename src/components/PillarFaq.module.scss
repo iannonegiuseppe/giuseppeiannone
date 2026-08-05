@@ -4,9 +4,44 @@
   padding-block: var(--space-8);
 }
 
+// Refinement pass, item 9 — was `@include mixins.container; max-width:
+// 50rem;`, which CENTERS a 50rem block inside the full container
+// (82.5rem) — its own left edge landed somewhere in the middle of the
+// page, matching neither the body's reading column (offset left, past
+// the 15rem TOC track) nor the full container edge. Fixed by choosing
+// alignment, not centering: at lg+ this now uses the EXACT SAME grid
+// shape as .readingArea/.column (page.module.scss) — 15rem empty first
+// track, content in the second — so this section's own left edge lands
+// on the identical x-position the body text's own left edge already
+// does. Below lg (no TOC, no offset to match) it's simply centered in
+// the container, same as before.
 .faqInner {
   @include mixins.container;
+
+  @include mixins.breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    column-gap: var(--space-7);
+  }
+}
+
+.faqContent {
   max-width: 50rem;
+  margin-inline: auto;
+
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 2;
+    max-width: 50rem;
+    // margin-inline:auto (base rule, unchanged at lg+ — same pattern
+    // .column itself uses) is what actually matters here: real bug found
+    // via live measurement (this pass's own report) — without it, a grid
+    // item narrower than its own track (50rem max-width inside a 936px/
+    // 58.5rem track at 1440) defaults to CSS Grid's own start-alignment,
+    // landing flush against the track's own left edge (x=396 measured)
+    // instead of centered within it the way .column (body text) already
+    // is via its own margin-inline:auto (x=464 measured) — a 68px
+    // mismatch, exactly what read as "misaligned."
+  }
 }
 
 // §10.1 fix — bumped from --fs-h2 to --fs-h2-lg, one of the two sections

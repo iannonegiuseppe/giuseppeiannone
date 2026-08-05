@@ -181,28 +181,31 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
+      data-theme="dark"
       className={`${ebGaramond.variable} ${sourceSans3.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
-        {/* Stage 2c — dark-canvas fix, same mechanism DesignLabHomepage.tsx
-            already used: a tiny BLOCKING inline script, first thing in
-            body, sets data-theme="dark" on <html> before the browser's
-            first paint — synchronous inline scripts run during HTML
-            parsing, before rendering proceeds, so there's no flash of the
-            light background first. This one attribute is what activates
-            _tokens.scss's :root[data-theme="dark"] block (see that file's
-            own "Canvas-background fix" comment), which is what makes
-            <body>'s existing background-color: var(--color-bg) rule
-            (globals.scss, untouched) resolve dark. Unlike design-lab's own
-            version, this one is unconditional — production has no light
-            variant to branch on anymore, every route under this layout
-            goes dark. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.dataset.theme="dark"`,
-          }}
-        />
+        {/* Stage 2c dark-canvas fix, corrected — data-theme="dark" is now a
+            plain static SSR'd attribute on <html> above, not a blocking
+            inline script. The script version worked for the very first
+            page load (synchronous scripts run during HTML parsing, before
+            paint) but broke on every LOCALE SWITCH after that: [locale] is
+            a dynamic segment, so switching locale remounts this layout's
+            subtree, and React re-creates the script element via
+            `.innerHTML` assignment rather than the browser's HTML parser —
+            script content set that way never executes. Confirmed live
+            (this pass's own report): data-theme stayed null and the page
+            stayed light-themed indefinitely after a locale switch, no
+            self-correction. Since this attribute was never actually
+            conditional in production ("no light variant to branch on
+            anymore" — the comment this replaces said as much), there was
+            no reason for it to be script-driven at all; a static attribute
+            is simpler AND correct on every navigation type, because it's
+            just normal SSR'd markup, not something that has to "happen"
+            client-side at all. Unlike design-lab's own dark/light toggle
+            (DesignLabHomepage.tsx), which stays script-based since it's
+            genuinely conditional there. */}
         {personJsonLd ? <JsonLdScript data={personJsonLd} /> : null}
         {medicalBusinessJsonLd ? (
           <JsonLdScript data={medicalBusinessJsonLd} />

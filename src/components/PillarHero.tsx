@@ -68,6 +68,7 @@ export function PillarHero({
           for the arithmetic, reused verbatim from the blog article route's
           own cover header. */}
       {heroImage && dims ? <div className={styles.heroScrim} aria-hidden="true" /> : null}
+      {heroImage && dims ? <div className={styles.heroFade} aria-hidden="true" /> : null}
       <div className={styles.heroContent}>
         <div className={styles.breadcrumbs}>
           <Breadcrumbs trail={trail} />

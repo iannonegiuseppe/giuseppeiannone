@@ -5,9 +5,57 @@
   @include mixins.link;
 }
 
+// --- Vertical rhythm (refinement pass, item 8) ----------------------------
+// Root cause: the global reset (globals.scss's own `* { margin: 0; }`)
+// zeroes every element's margin by default, and this file's block/list
+// renderers had className={undefined} on h2/h3/paragraph/list/listItem
+// (no matching rule existed here at all) — so nothing ever re-added it.
+// The article route's own renderer (articlePortableText.tsx +
+// article.module.scss) already solved this; these values are copied
+// verbatim from that file so the two routes' rhythm agrees exactly
+// (measured live, both routes, this pass's own report has the numbers).
+.h2 {
+  margin: var(--space-8) 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.h3 {
+  margin: var(--space-6) 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.paragraph {
+  margin: var(--space-5) 0 0;
+}
+
+.list {
+  margin: var(--space-5) 0 0;
+  padding-left: var(--space-6);
+}
+
+.listItem {
+  margin: var(--space-2) 0 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 // --- Blockquote --------------------------------------------------------
 .blockquote {
-  margin: 0;
+  margin: var(--space-6) 0 0;
   padding-left: var(--space-5);
   border-left: 1px solid var(--color-accent);
   font-style: italic; // Lato's real italic cut is loaded — not faux-slanted
@@ -16,6 +64,7 @@
 
 // --- Image ---------------------------------------------------------------
 .image {
+  margin: var(--space-6) 0 0;
   width: 100%;
   height: auto;
   border-radius: var(--radius-l);
@@ -23,8 +72,15 @@
 
 // Pillar template pass — only used when an image block has a caption; a
 // bare image (the common case) renders with no wrapping <figure>.
+// Refinement pass, item 8 — the top margin moves here (was on .image
+// itself) when wrapped, so the figure's outer edge is what sits the
+// standard gap below the previous block, not a doubled/nested offset.
 .imageFigure {
-  margin: 0;
+  margin: var(--space-6) 0 0;
+
+  .image {
+    margin: 0;
+  }
 }
 
 .imageCaption {
@@ -36,7 +92,12 @@
 }
 
 // --- Key takeaways ---------------------------------------------------------
+// Refinement pass, item 8 — same rhythm fix as h2/paragraph/etc above,
+// applied to the object block types too: each gets the same --space-6
+// top margin blockquote/image now use, so nothing in this file's
+// remaining output sits flush against whatever came before it.
 .keyTakeaways {
+  margin: var(--space-6) 0 0;
   padding: var(--space-5);
   background: var(--color-accent-soft);
   border-radius: var(--radius-m);
@@ -60,6 +121,7 @@
 
 // --- FAQ accordion -------------------------------------------------------
 .faqBlock {
+  margin: var(--space-6) 0 0;
   display: flex;
   flex-direction: column;
 }
@@ -131,6 +193,7 @@
 
 // --- CTA block -----------------------------------------------------------
 .ctaBlock {
+  margin: var(--space-6) 0 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -175,6 +238,7 @@
 
 // --- Cards -----------------------------------------------------------------
 .cardGrid {
+  margin: var(--space-6) 0 0;
   @include mixins.grid-auto(16rem);
   list-style: none;
   padding: 0;
@@ -184,5 +248,6 @@
 // relatedTopics — cap its width so a single card doesn't stretch the full
 // content measure.
 .standaloneCard {
+  margin: var(--space-6) 0 0;
   max-width: 24rem;
 }

@@ -8,8 +8,8 @@ import { PillarFactsStrip, type FactsStripData } from "@/components/PillarFactsS
 import { PillarFaq, type PillarFaqItem } from "@/components/PillarFaq";
 import { PillarHero } from "@/components/PillarHero";
 import { PillarRecognition, type RecognitionData } from "@/components/PillarRecognition";
+import { ReadingArea } from "@/components/ReadingArea";
 import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
-import { ScrollTrackingToc } from "@/components/ScrollTrackingToc";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
@@ -247,31 +247,45 @@ export default async function RootSlugPage({
             below — no border/shadow, matching this site's own established
             tonal-change convention. */}
         <section className={styles.darkBand}>
-          <PillarHero
-            trail={trail}
-            heroKicker={resolved.data.heroKicker ?? ""}
-            title={resolved.data.title}
-            titleEmphasisWord={resolved.data.titleEmphasisWord}
-            standfirst={resolved.data.standfirst ?? ""}
-            heroImage={resolved.data.heroImage}
-          />
-          <PillarFactsStrip factsStrip={resolved.data.factsStrip} />
+          {/* Refinement pass, item 2 — Hero + Facts strip are pinned to
+              exactly one viewport height together (.heroViewport); Recognition
+              sits below, unconstrained, still on the same ambient dark
+              background as a sibling. */}
+          <div className={styles.heroViewport}>
+            <PillarHero
+              trail={trail}
+              heroKicker={resolved.data.heroKicker ?? ""}
+              title={resolved.data.title}
+              titleEmphasisWord={resolved.data.titleEmphasisWord}
+              standfirst={resolved.data.standfirst ?? ""}
+              heroImage={resolved.data.heroImage}
+            />
+            <PillarFactsStrip factsStrip={resolved.data.factsStrip} />
+          </div>
           <PillarRecognition locale={locale} recognition={resolved.data.recognition} />
         </section>
 
         {/* Sections 4-7: Body, FAQ, Related articles, Contact — the
             deliberate light interlude inside this dark-default page, same
             tone.light-island-surface mechanism the blog article route's
-            own .page already uses (reused, not forked). */}
+            own .page already uses (reused, not forked). Extraction pass —
+            the reading area itself now renders through the shared
+            ReadingArea component (src/components/ReadingArea.tsx), the
+            same one the article route uses. No topOffset passed here
+            either (diagnosis pass corrected the earlier assumption that
+            this route's normal header needed a different value): this
+            route's header isn't forceCollapsed, but the reading area sits
+            far enough down the page that scrollY is always well past the
+            150px scroll-collapse threshold by the time the TOC pins — the
+            header is collapsed by then regardless, same height as the
+            article's permanently-collapsed one, so ReadingArea's own
+            default (--header-height-collapsed) is correct here too. No
+            afterBody: the pillar has nothing equivalent to the article's
+            end-of-post author block. */}
         <div className={styles.lightIsland}>
-          <div className={styles.readingArea}>
-            <div className={styles.tocWrapper}>
-              <ScrollTrackingToc headings={headings} />
-            </div>
-            <div className={styles.column}>
-              <PortableText value={resolved.data.body as never} components={components} />
-            </div>
-          </div>
+          <ReadingArea headings={headings}>
+            <PortableText value={resolved.data.body as never} components={components} />
+          </ReadingArea>
 
           <PillarFaq locale={locale} items={resolved.data.faqItems} />
 

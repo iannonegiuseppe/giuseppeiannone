@@ -388,6 +388,19 @@
   font-weight: var(--font-weight-bold);
 }
 
+// Diagnosis — this rule was written fresh for the tone-mid fork
+// (aecbb97, "move Footer to tone-mid surface with weighted hierarchy")
+// instead of being copied from the real Footer.module.scss's own
+// .labFooterBottomBar, and the rewrite dropped flex-direction: row from
+// the md+ breakpoint — only align-items changed, so this stayed
+// column (stacked) at every width, including 1440, where it read as an
+// unwanted wrap. Not an overflow: measured live, copyright (248px) +
+// locale link (16px) together need under 300px, against 488px actually
+// available in this row at 1440 (1224px container minus the emergency
+// block's own 736px) — there was never a space problem to solve.
+// column-gap (not the base rule's row-gap, which only applies to the
+// stacked mobile layout) is new here — the base rule never defined a
+// horizontal gap since it never previously laid out horizontally.
 .bottomBar {
   display: flex;
   flex-direction: column;
@@ -395,7 +408,9 @@
   align-items: flex-start;
 
   @include mixins.breakpoint-up(md) {
+    flex-direction: row;
     align-items: flex-end;
+    column-gap: var(--space-4);
   }
 }
 

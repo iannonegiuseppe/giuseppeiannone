@@ -36,18 +36,27 @@ export async function getPortableTextComponents(
   return {
     block: {
       h2: ({ children, value }) => (
-        <h2 id={value._key ? headingIds?.get(value._key) : undefined}>
+        <h2 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h2}>
           {children}
         </h2>
       ),
       h3: ({ children, value }) => (
-        <h3 id={value._key ? headingIds?.get(value._key) : undefined}>
+        <h3 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h3}>
           {children}
         </h3>
       ),
+      normal: ({ children }) => <p className={styles.paragraph}>{children}</p>,
       blockquote: ({ children }) => (
         <blockquote className={styles.blockquote}>{children}</blockquote>
       ),
+    },
+    list: {
+      bullet: ({ children }) => <ul className={styles.list}>{children}</ul>,
+      number: ({ children }) => <ol className={styles.list}>{children}</ol>,
+    },
+    listItem: {
+      bullet: ({ children }) => <li className={styles.listItem}>{children}</li>,
+      number: ({ children }) => <li className={styles.listItem}>{children}</li>,
     },
     marks: {
       link: ({ value, children }) => {
