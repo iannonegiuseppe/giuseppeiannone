@@ -1,0 +1,24 @@
+@use "../styles/mixins";
+
+.faqSection {
+  padding-block: var(--space-8);
+}
+
+.faqInner {
+  @include mixins.container;
+  max-width: 50rem;
+}
+
+// §10.1 fix — bumped from --fs-h2 to --fs-h2-lg, one of the two sections
+// (alongside Recognition) chosen to carry display scale for a cold
+// reader, per this pass's own report; Body and Related deliberately stay
+// as they are.
+.faqHeading {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+  color: var(--color-text);
+}

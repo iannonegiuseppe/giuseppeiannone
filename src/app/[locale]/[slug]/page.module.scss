@@ -1,0 +1,69 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// Corrected pass — the real site is dark-by-default now (src/app/[locale]/
+// layout.tsx's own blocking inline script sets data-theme="dark"
+// unconditionally on every route). Section 1-3 (Hero + Facts strip +
+// Recognition, per the pillar brief's own "inside the same section") is
+// therefore just the page's own AMBIENT dark background — no explicit
+// fill needed at all, which is also why .darkBand carries no rules here:
+// it exists only as a grouping/spacing hook, not a color override. An
+// earlier version of this file painted an explicit accent fill here,
+// modeled on what turned out to be a stale mental map of which real
+// sections are still dark (Hope/Footer) — caught via live contrast
+// measurement (2.98:1, failing), not by re-reading comments harder. See
+// PillarHero.module.scss's own comment for the fuller account.
+.darkBand {
+  padding-block: var(--space-6);
+}
+
+// Sections 4-7 (Body, FAQ, Related articles, Contact) are the deliberate
+// LIGHT interlude inside this now-dark-default page — same mechanism the
+// blog article route's own .page already uses (tone.light-island-surface),
+// reused verbatim rather than a second implementation. ContactBlock's own
+// .contactLightWrap independently re-applies the same mixin one level
+// deeper (contactBlock.module.scss) — redundant but harmless where they
+// overlap, and required here regardless since Body/FAQ/RelatedArticlesGrid
+// have no such wrapper of their own.
+.lightIsland {
+  @include tone.light-island-surface;
+}
+
+// --- Body (section 4) — sticky TOC + reading column, same grid shape as
+// the blog article route's own .readingArea/.column (article.module.scss)
+// — not reused directly (that file's own version is bound to the article
+// route's forced-collapsed header math via .toc's sticky top offset,
+// already extracted separately into ScrollTrackingToc's own topOffset
+// prop), just the same proven column/measure numbers.
+.readingArea {
+  padding-block: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    @include mixins.container;
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    column-gap: var(--space-7);
+  }
+}
+
+.tocWrapper {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+    grid-column: 1;
+  }
+}
+
+.column {
+  width: 100%;
+  max-width: calc(41.25rem + 2 * var(--space-5));
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 2;
+    max-width: 50rem;
+    padding-inline: 0;
+  }
+}

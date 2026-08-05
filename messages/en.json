@@ -8,6 +8,11 @@
   "KeyTakeaways": {
     "label": "Key points"
   },
+  "PillarPage": {
+    "recognitionDisclaimer": "Phrases heard in the course of clinical practice, not a diagnosis.",
+    "faqHeading": "Frequently asked questions",
+    "relatedArticlesHeading": "Related articles"
+  },
   "Hero": {
     "cta": "Book a first consultation",
     "areeLabel": "Why reach out",

@@ -21,6 +21,20 @@
   border-radius: var(--radius-l);
 }
 
+// Pillar template pass — only used when an image block has a caption; a
+// bare image (the common case) renders with no wrapping <figure>.
+.imageFigure {
+  margin: 0;
+}
+
+.imageCaption {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
 // --- Key takeaways ---------------------------------------------------------
 .keyTakeaways {
   padding: var(--space-5);

@@ -1,0 +1,47 @@
+@use "../styles/mixins";
+
+.recognition {
+  @include mixins.container;
+  padding-block: var(--space-8);
+}
+
+.grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-7) var(--space-8);
+  }
+}
+
+.item {
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-hairline);
+}
+
+// §10.1 fix — this section carries no heading of its own (per the brief:
+// quotes, then a quiet disclaimer line, nothing else), so the quotes
+// themselves are the section's largest text. Bumped from --fs-h3 to
+// --fs-h2-lg — one of the two sections (alongside FAQ) chosen to carry
+// display scale for a cold reader, per this pass's own report; Body and
+// Related deliberately stay as they are.
+.quote {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+  color: var(--color-text);
+}
+
+.disclaimer {
+  margin: var(--space-7) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}

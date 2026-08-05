@@ -56,6 +56,18 @@ export const portableText = defineType({
           initialValue: false,
           hidden: true,
         }),
+        // Pillar template pass — optional, shared by every document type
+        // that uses this portableText type. Not rendered as a caption on
+        // every route: today only src/sanity/portableTextComponents.tsx
+        // (pillar/subtopic/page) renders it; the article route's own
+        // separate renderer (articlePortableText.tsx) is untouched and
+        // simply ignores this field if it's ever filled in on an article.
+        defineField({
+          name: "caption",
+          title: "Caption",
+          description: "Optional. Shown beneath the image, in the muted/italic style.",
+          type: "string",
+        }),
       ],
     }),
     defineArrayMember({ type: "keyTakeaways" }),

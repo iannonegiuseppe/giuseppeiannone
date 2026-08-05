@@ -74,15 +74,31 @@ export async function getPortableTextComponents(
     types: {
       image: ({ value }) => {
         const dims = imageDimensions(value) ?? { width: 4, height: 3 };
-        return (
+        // Pillar template pass — capped at the source's own natural width
+        // (same reasoning as the article route's own requestWidth: Sanity's
+        // image API will happily upscale a narrow source on request, which
+        // is exactly the blur the pillar brief's "never upscale past
+        // natural width" rule rules out).
+        const requestWidth = Math.min(dims.width, 2000);
+        const caption = typeof value.caption === "string" ? value.caption : undefined;
+        const img = (
           <Image
-            src={urlFor(value).width(2000).url()}
+            src={urlFor(value).width(requestWidth).url()}
             alt={value.alt ?? ""}
             width={dims.width}
             height={dims.height}
             sizes="(min-width: 64rem) 40rem, 100vw"
             className={styles.image}
           />
+        );
+
+        if (!caption) return img;
+
+        return (
+          <figure className={styles.imageFigure}>
+            {img}
+            <figcaption className={styles.imageCaption}>{caption}</figcaption>
+          </figure>
         );
       },
       keyTakeaways: ({ value }) => (

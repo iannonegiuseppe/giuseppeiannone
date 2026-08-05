@@ -442,6 +442,16 @@ export const rootSlugQuery = defineQuery(`
     "pillar": *[_type == "pillarPage" && language == $locale && slug.current == $slug][0]{
       _id,
       title,
+      heroImage,
+      heroKicker,
+      standfirst,
+      titleEmphasisWord,
+      factsStrip,
+      recognition,
+      "faqItems": faqItems[]->{ _id, question, answer },
+      "relatedArticles": relatedArticles[]->{
+        _id, title, "slug": slug.current, cover, publishedAt
+      },
       ${bodyProjection},
       seo,
       medicalEntityType,

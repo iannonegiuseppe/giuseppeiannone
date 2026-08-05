@@ -8,6 +8,11 @@
   "KeyTakeaways": {
     "label": "In breve"
   },
+  "PillarPage": {
+    "recognitionDisclaimer": "Frasi ascoltate nel corso della pratica clinica, non una diagnosi.",
+    "faqHeading": "Domande frequenti",
+    "relatedArticlesHeading": "Articoli correlati"
+  },
   "Hero": {
     "cta": "Prenota un primo colloquio",
     "areeLabel": "Perché rivolgersi",

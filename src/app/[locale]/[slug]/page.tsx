@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import type { Image as SanityImage } from "sanity";
+import { ContactBlock } from "@/components/ContactBlock";
+import { PillarFactsStrip, type FactsStripData } from "@/components/PillarFactsStrip";
+import { PillarFaq, type PillarFaqItem } from "@/components/PillarFaq";
+import { PillarHero } from "@/components/PillarHero";
+import { PillarRecognition, type RecognitionData } from "@/components/PillarRecognition";
+import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
+import { ScrollTrackingToc } from "@/components/ScrollTrackingToc";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
-  buildFaqPageJsonLd,
   buildMedicalWebPageJsonLd,
-  extractFaqEntries,
   type MedicalEntityType,
 } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
@@ -18,13 +24,28 @@ import { getSiteUrl } from "@/sanity/metadata";
 import type { AlternateEntry } from "@/sanity/paths";
 import { pagePath, pillarLocalizedPaths, pillarPath } from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
-import { pageSlugsQuery, pillarSlugsQuery, rootSlugQuery } from "@/sanity/queries";
+import {
+  contactSectionQuery,
+  pageSlugsQuery,
+  pillarSlugsQuery,
+  relatedArticlesQuery,
+  rootSlugQuery,
+} from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import { TableOfContents } from "@/sanity/TableOfContents";
+import styles from "./page.module.scss";
 
 interface PillarPageData {
   _id: string;
   title: string;
+  heroImage?: (SanityImage & { alt?: string }) | undefined;
+  heroKicker?: string;
+  standfirst?: string;
+  titleEmphasisWord?: string;
+  factsStrip?: FactsStripData;
+  recognition?: RecognitionData;
+  faqItems?: PillarFaqItem[];
+  relatedArticles?: RelatedArticleDoc[];
   body: unknown;
   seo?: SeoFields;
   medicalEntityType?: MedicalEntityType;
@@ -42,6 +63,43 @@ interface GenericPageData {
 type ResolvedRootDoc =
   | { kind: "pillar"; data: PillarPageData }
   | { kind: "page"; data: GenericPageData };
+
+interface ContactSectionCopy {
+  contactSection?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    photoCaption?: string;
+  };
+  googleProfileLabel?: string;
+}
+
+function getContactSectionCopy(locale: string) {
+  return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
+}
+
+// Fills any slots pillarPage.relatedArticles left open (up to 3 total)
+// with the same recency-ordered fallback the blog article page's own
+// related-posts section already uses — no tag matching (370/468 articles
+// have no tags, see relatedArticlesQuery's own comment). Dedupes by _id so
+// an article already explicitly picked never appears twice.
+async function getRelatedArticlesWithFallback(
+  locale: string,
+  explicit: RelatedArticleDoc[],
+): Promise<RelatedArticleDoc[]> {
+  if (explicit.length >= 3) return explicit.slice(0, 3);
+
+  const fallback = await sanityFetch<RelatedArticleDoc[]>(
+    relatedArticlesQuery,
+    { locale, excludeSlug: "" },
+    ["article"],
+  );
+
+  const explicitIds = new Set(explicit.map((doc) => doc._id));
+  const fill = fallback.filter((doc) => !explicitIds.has(doc._id));
+
+  return [...explicit, ...fill].slice(0, 3);
+}
 
 // Root-namespace pass — resolves ONE slug against BOTH root-level
 // document types in a single request (rootSlugQuery), rather than trying
@@ -153,35 +211,97 @@ export default async function RootSlugPage({
   const components = await getPortableTextComponents(locale, headingIds);
 
   if (resolved.kind === "pillar") {
+    const [siteSettings, contactCopy, related] = await Promise.all([
+      getSiteSettings(locale),
+      getContactSectionCopy(locale),
+      getRelatedArticlesWithFallback(locale, resolved.data.relatedArticles ?? []),
+    ]);
+
     const medicalWebPageJsonLd = buildMedicalWebPageJsonLd({
       url: pageUrl,
       name: resolved.data.title,
       description: resolved.data.seo?.metaDescription,
       medicalEntityType: resolved.data.medicalEntityType,
     });
-    const faqEntries = extractFaqEntries(resolved.data.body);
-    const faqPageJsonLd = faqEntries.length > 0 ? buildFaqPageJsonLd(faqEntries) : undefined;
+
+    const contactSection = contactCopy?.contactSection;
+    // Same hardcoded design-lab asset the blog article page's own
+    // ContactBlock invocation uses — see that route's page.tsx for the
+    // full reasoning (matches the homepage's actual portrait, which is
+    // itself hardcoded, not CMS-sourced).
+    const contactPhotoUrl = "/design-lab/photos/09.webp";
+    const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+    const t = await getTranslations({ locale, namespace: "PillarPage" });
+    const relatedArticlesHeading = t("relatedArticlesHeading");
 
     return (
       <main>
         <JsonLdScript data={breadcrumbJsonLd} />
         <JsonLdScript data={medicalWebPageJsonLd} />
-        {faqPageJsonLd ? <JsonLdScript data={faqPageJsonLd} /> : null}
-        <Breadcrumbs trail={trail} />
-        <h1>{resolved.data.title}</h1>
-        <TableOfContents locale={locale} headings={headings} />
-        <PortableText value={resolved.data.body as never} components={components} />
+
+        {/* Sections 1-3: Hero, Facts strip, Recognition — one continuous
+            band, per this pass's own brief ("inside the same section").
+            No explicit dark fill: the page is dark by default (see
+            page.module.scss's own comment) — this is just the ambient
+            background. Single hard, flat junction into the light island
+            below — no border/shadow, matching this site's own established
+            tonal-change convention. */}
+        <section className={styles.darkBand}>
+          <PillarHero
+            trail={trail}
+            heroKicker={resolved.data.heroKicker ?? ""}
+            title={resolved.data.title}
+            titleEmphasisWord={resolved.data.titleEmphasisWord}
+            standfirst={resolved.data.standfirst ?? ""}
+            heroImage={resolved.data.heroImage}
+          />
+          <PillarFactsStrip factsStrip={resolved.data.factsStrip} />
+          <PillarRecognition locale={locale} recognition={resolved.data.recognition} />
+        </section>
+
+        {/* Sections 4-7: Body, FAQ, Related articles, Contact — the
+            deliberate light interlude inside this dark-default page, same
+            tone.light-island-surface mechanism the blog article route's
+            own .page already uses (reused, not forked). */}
+        <div className={styles.lightIsland}>
+          <div className={styles.readingArea}>
+            <div className={styles.tocWrapper}>
+              <ScrollTrackingToc headings={headings} />
+            </div>
+            <div className={styles.column}>
+              <PortableText value={resolved.data.body as never} components={components} />
+            </div>
+          </div>
+
+          <PillarFaq locale={locale} items={resolved.data.faqItems} />
+
+          <RelatedArticlesGrid
+            items={related}
+            locale={locale}
+            heading={relatedArticlesHeading}
+          />
+
+          <ContactBlock
+            kicker={contactSection?.kicker ?? ""}
+            heading={contactSection?.heading ?? ""}
+            headingEmphasisWord={contactSection?.headingEmphasisWord}
+            photoCaption={contactSection?.photoCaption ?? ""}
+            googleProfileLabel={contactCopy?.googleProfileLabel ?? ""}
+            googleProfileUrl={siteSettings?.googleProfileUrl}
+            locale={typedLocale}
+            photoUrl={contactPhotoUrl}
+            photoAlt={contactPhotoAlt}
+          />
+        </div>
       </main>
     );
   }
 
-  // "page" branch — the universal page type (Step 4 of this pass). No
-  // medicalWebPageJsonLd/faqPageJsonLd here: those assert medical-schema
-  // semantics (medicalEntityType, a FAQPage) that don't apply to an
-  // arbitrary Giuseppe-authored page (e.g. a page about his book) — only
-  // the generic BreadcrumbList markup carries over. Untestable against
-  // live content until the page type's schema exists (Step 4); re-verify
-  // once it does.
+  // "page" branch — the universal page type (root-namespace pass). No
+  // medicalWebPageJsonLd here: it asserts medical-schema semantics
+  // (medicalEntityType) that don't apply to an arbitrary Giuseppe-authored
+  // page — only the generic BreadcrumbList markup carries over. Untouched
+  // by this pass, still the simpler pre-existing layout.
   return (
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
