@@ -138,6 +138,7 @@ export const chiSonoSectionQuery = defineQuery(`
     heroLocations,
     whatIWorkWith,
     howIWork,
+    timeline,
     paragraphs,
     pullQuote,
     portrait,

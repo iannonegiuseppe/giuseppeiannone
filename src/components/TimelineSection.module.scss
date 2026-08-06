@@ -1,0 +1,207 @@
+@use "../styles/mixins";
+
+// Chi sono timeline pass — the page's ONE dark section. No tone mixin
+// applied here at all: this section simply never opts into
+// light-island-surface (unlike everything else new on this page), so
+// --color-bg/-text/-text-muted/-accent/-hairline all resolve to the
+// site's own native dark-theme values, same as any other un-wrapped
+// section on the site. Contained (mixins.container), not full-bleed —
+// no content reason to bleed here, unlike the mosaic.
+.timeline {
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding-block: var(--space-9);
+}
+
+.header {
+  @include mixins.container;
+  margin-bottom: var(--space-7);
+}
+
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heading {
+  max-width: 34rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.grid {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 14rem 1fr;
+    gap: var(--space-9);
+  }
+}
+
+// Rail column only participates in the grid ≥lg — below that, the rail
+// itself is never rendered into the layout flow (see .railColumn's
+// display:none), and each entry shows its own year/place inline instead
+// (.entryMeta) so the information isn't lost, just relocated.
+.railColumn {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.rail {
+  position: sticky;
+}
+
+.railList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.railLink {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  text-decoration: none;
+  border-left: 1px solid var(--color-hairline);
+  padding-left: var(--space-3);
+  transition: border-color 300ms ease;
+
+  // Inactive by default: muted, not faint — --color-text-faint fails the
+  // 4.5:1 body floor by design (docs/design-direction.md §10, "never
+  // small captions or labels"), and a year/place line is exactly that
+  // register. --color-text-muted measured instead (see this pass's own
+  // report for the number).
+  color: var(--color-text-muted);
+
+  &[data-active="true"] {
+    color: var(--color-text);
+    border-left-color: var(--color-accent);
+  }
+}
+
+.railYear {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.railPlace {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  scroll-margin-top: var(--space-7);
+}
+
+// Inline year/place — always in the DOM (not just a mobile fallback via
+// CSS display toggling), so it's there below lg where .railColumn is
+// display:none. Kept visible at every width for consistency rather than
+// hidden ≥lg to avoid saying the same year/place twice; it's a single
+// small line, repeating it costs nothing and there's no clean way to
+// hide it ONLY when the sticky rail is actually visibly aligned with
+// this exact entry without JS.
+.entryMeta {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.entryYear {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+}
+
+// Was missing entirely on first build — TimelineSection.tsx already
+// referenced styles.entryPlace, but with no matching rule the class
+// compiled to `undefined` and the span rendered with no class attribute
+// at all, silently inheriting .entryMeta's own muted color instead
+// (visually harmless — same color either way — but not an explicit
+// rule, and a class the component references should exist). Same
+// --color-text-muted as .railLink's own inactive state, for the same
+// "small label register, not the 4.5:1-failing faint token" reason.
+.entryPlace {
+  color: var(--color-text-muted);
+}
+
+.entryKicker {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.entryTitle {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+}
+
+.entryImageFrame {
+  margin: 0 0 var(--space-4);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.entryImage {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.entryBody {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text);
+  max-width: 42rem;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.entryQuote {
+  margin: var(--space-4) 0 0;
+  max-width: 38rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--fs-body-lg);
+  line-height: 1.5;
+  color: var(--color-accent-hover);
+}

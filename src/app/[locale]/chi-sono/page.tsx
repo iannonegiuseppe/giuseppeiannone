@@ -4,6 +4,7 @@ import { AreaMosaic, type AreaMosaicItem } from "@/components/AreaMosaic";
 import { ContactBlock } from "@/components/ContactBlock";
 import { DiplomiSlider } from "@/components/DiplomiSlider";
 import { PortraitHero } from "@/components/PortraitHero";
+import { TimelineSection, type TimelineEntryData } from "@/components/TimelineSection";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch } from "@/sanity/client";
 import { resolveDiplomiLabItems } from "@/sanity/diplomi";
@@ -48,6 +49,7 @@ interface ChiSonoData {
   heroLocations?: string;
   whatIWorkWith?: WhatIWorkWithData;
   howIWork?: HowIWorkData;
+  timeline?: TimelineEntryData[];
   paragraphs?: string[];
   pullQuote?: string;
   portrait?: { asset?: unknown; alt?: string };
@@ -242,8 +244,18 @@ export default async function ChiSonoPage({
             </div>
           </div>
         ) : null}
+      </div>
 
-        {/* Section 4: Qualifications — unchanged, DiplomiSlider verbatim. */}
+      {/* Section 4: Timeline — the page's one dark section (pass 2 of 4).
+          Deliberately OUTSIDE the light-island wrapper above and the one
+          below: this is the only new content on the page that stays on
+          the site's own native dark theme rather than opting into
+          light-island-surface. See TimelineSection.module.scss's own
+          comment. */}
+      <TimelineSection entries={chiSono?.timeline ?? []} />
+
+      <div className={styles.lightIsland}>
+        {/* Section 5: Qualifications — unchanged, DiplomiSlider verbatim. */}
         <section className={styles.qualifications} aria-labelledby="chi-sono-diplomi-heading">
           <DiplomiSlider
             headingId="chi-sono-diplomi-heading"
@@ -257,7 +269,7 @@ export default async function ChiSonoPage({
           />
         </section>
 
-        {/* Section 5: Contact — unchanged. */}
+        {/* Section 6: Contact — unchanged. */}
         <ContactBlock
           kicker={contactSection?.kicker ?? ""}
           heading={contactSection?.heading ?? ""}

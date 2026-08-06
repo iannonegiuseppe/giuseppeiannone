@@ -150,6 +150,60 @@ export const chiSonoSection = defineType({
         }),
       ],
     }),
+    // Chi sono timeline pass (pass 2 of 4) — the page's one dark section.
+    // Eight entries; year is OPTIONAL and deliberately empty on 6 of the
+    // 8 (only Siena 2001 and the 2016 Albo/registration date are known
+    // today — see this pass's own report). pullQuote/image are both
+    // optional per entry — image especially: none supplied yet for any
+    // entry, so every entry in this rollout has an empty image, and the
+    // template must not leave a gap when that's true (see
+    // TimelineSection.tsx's own conditional render).
+    defineField({
+      name: "timeline",
+      title: "Timeline",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "timelineEntry",
+          fields: [
+            stringField("place", "Place"),
+            stringField(
+              "year",
+              "Year (optional — leave empty until confirmed; the rail shows the place alone when empty)",
+              { required: false },
+            ),
+            stringField("kicker", "Kicker"),
+            stringField("title", "Title"),
+            defineField({
+              name: "body",
+              title: "Body paragraphs",
+              type: "array",
+              of: [{ type: "text", rows: 3, validation: (Rule) => Rule.required().custom(deontologyCheck) }],
+              validation: (Rule) => Rule.min(1),
+            }),
+            textField("pullQuote", "Pull quote (optional, EB Garamond italic)", { rows: 3, required: false }),
+            defineField({
+              name: "image",
+              title: "Image (optional)",
+              type: "image",
+              options: { hotspot: true },
+              fields: [defineField({ name: "alt", title: "Alternative text", type: "string" })],
+            }),
+          ],
+          preview: {
+            select: { title: "title", place: "place", year: "year" },
+            prepare({ title, place, year }: { title?: string; place?: string; year?: string }) {
+              return {
+                title: title ?? "",
+                subtitle: year ? `${year} — ${place ?? ""}` : (place ?? ""),
+              };
+            },
+          },
+        },
+      ],
+      validation: (Rule) => Rule.min(1),
+    }),
     // --- Fields below are unchanged by the opening pass. `paragraphs` in
     // particular stays exactly as it is: the article footer's author bio
     // (buildAuthorBio, blog/[slug]/page.tsx) reads it through its own
