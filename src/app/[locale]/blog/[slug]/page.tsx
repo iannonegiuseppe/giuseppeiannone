@@ -18,7 +18,7 @@ import { imageDimensions, urlFor } from "@/sanity/image";
 import { buildBlogPostingJsonLd, buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
-import { articlePath, articlesPath, homePath } from "@/sanity/paths";
+import { aboutPath, articlePath, articlesPath } from "@/sanity/paths";
 import { chiSonoPortraitQuery, contactSectionQuery, relatedArticlesQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import styles from "./article.module.scss";
@@ -180,13 +180,11 @@ export default async function ArticlePage({
   const readingMinutes = getReadingTimeMinutes(data.body);
 
   const portraitDims = chiSono?.portrait ? imageDimensions(chiSono.portrait) : null;
-  // Chi sono has no standalone route yet (PREVIEW-GATE — see
-  // headerNavItems.ts's own PREVIEW_GATE_ANCHOR_OVERRIDES): every other
-  // "chi sono" link on the live site today resolves to this same
-  // homepage anchor, not a dedicated page, so the author name matches
-  // that existing behavior rather than linking somewhere nothing else on
-  // the site currently links.
-  const chiSonoHref = `${homePath(typedLocale)}#chi-sono`;
+  // Chi sono build pass — points at the real /chi-sono, /en/about-me
+  // page now that it exists (was a homepage #chi-sono anchor before that
+  // route was built; the header nav's own PREVIEW_GATE_ANCHOR_OVERRIDES
+  // was reversed for this same reason, see headerNavItems.ts).
+  const chiSonoHref = aboutPath(typedLocale);
   // Seventh pass, item 4 — sourced from chiSonoSection.paragraphs (see
   // buildAuthorBio's own comment), fetched per-locale by the same
   // chiSonoPortraitQuery already used for the avatar above. Both it/en

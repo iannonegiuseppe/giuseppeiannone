@@ -64,7 +64,7 @@ const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "artic
 
 // PREVIEW-GATE (temporary), "metodo" only now — reversed for "chi-sono"
 // (Chi sono build pass): that route is real now
-// (src/app/[locale]/chi-sono/page.tsx, src/app/[locale]/about/page.tsx),
+// (src/app/[locale]/chi-sono/page.tsx, src/app/[locale]/about-me/page.tsx),
 // so its entry is gone from this map per this comment's own
 // previously-stated reversal instructions — ROUTE_KEY_MAP's real-route
 // resolution below (aboutPath) now resolves it, unchanged code, exactly
