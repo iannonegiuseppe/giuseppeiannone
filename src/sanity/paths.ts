@@ -63,8 +63,16 @@ export function areaPath(locale: Locale, slug: string): string {
 // these routes exist yet (built in Steps 5/7); the paths are fixed here
 // now so the header/footer/locale switcher can reference the correct
 // eventual URL from the start.
+// Chi sono build pass — EN slug changed from the original "/en/about" to
+// "/en/about-me". "About" alone reads as generic corporate boilerplate
+// (About Us, About the company); this page is a single practitioner's own
+// origin story, not an institutional profile — "about-me" says that
+// before the visitor even clicks. Safe to change now (not yet launched;
+// noIndex still true, no route existed to have been indexed or linked)
+// — singletonPathFns/NAV_ROUTE_KEYS/reservedSlugs.ts all derive from this
+// function, so nothing else needed updating.
 export function aboutPath(locale: Locale): string {
-  return locale === "it" ? "/chi-sono" : "/en/about";
+  return locale === "it" ? "/chi-sono" : "/en/about-me";
 }
 
 export function methodPath(locale: Locale): string {

@@ -36,7 +36,13 @@ export function PillarHero({
   heroKicker: string;
   title: string;
   titleEmphasisWord?: string;
-  standfirst: string;
+  // Chi sono pass — optional now: that route has no field equivalent to
+  // a pillar's own standfirst (chiSonoSection's closest candidate, the
+  // pull quote, is explicitly placed in the body instead — see that
+  // route's own page.tsx comment), so this renders kicker + title only
+  // rather than inventing a lead line. Every existing pillar page still
+  // passes a real standfirst and is unaffected.
+  standfirst?: string;
   heroImage?: (SanityImage & { alt?: string }) | undefined;
 }) {
   const dims = heroImage ? imageDimensions(heroImage) : null;
@@ -75,7 +81,7 @@ export function PillarHero({
         </div>
         <p className={styles.kicker}>{heroKicker}</p>
         <h1 className={styles.title}>{renderEmphasis(title, titleEmphasisWord)}</h1>
-        <p className={styles.standfirst}>{standfirst}</p>
+        {standfirst ? <p className={styles.standfirst}>{standfirst}</p> : null}
       </div>
     </div>
   );

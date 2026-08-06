@@ -10,9 +10,21 @@
 // where they live.
 //
 // Below lg: a plain wrapper, .column behaves as normal block flow.
+//
+// Chi sono pass — split into two rules. Every caller gets the container
+// treatment at lg+ (max-width/centering); only a caller with 3+ headings
+// (data-toc="true", set by ReadingArea.tsx) also gets the two-column
+// grid. Without it, .column's own max-width + margin-inline:auto (below)
+// centers it in the full container width instead of a 1fr track next to
+// an empty TOC gutter — see ReadingArea.tsx's own comment on hasToc.
 .readingArea {
   @include mixins.breakpoint-up(lg) {
     @include mixins.container;
+  }
+}
+
+.readingArea[data-toc="true"] {
+  @include mixins.breakpoint-up(lg) {
     display: grid;
     grid-template-columns: 15rem 1fr;
     column-gap: var(--space-7);

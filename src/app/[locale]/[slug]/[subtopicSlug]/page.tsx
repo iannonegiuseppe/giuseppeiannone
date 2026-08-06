@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PortableText } from "next-sanity";
 import { setRequestLocale } from "next-intl/server";
-import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
+import type { Image as SanityImage } from "sanity";
+import { ContactBlock } from "@/components/ContactBlock";
+import { PillarFaq, type PillarFaqItem } from "@/components/PillarFaq";
+import { PillarHero } from "@/components/PillarHero";
+import { ReadingArea } from "@/components/ReadingArea";
+import { SubtopicEpigraph } from "@/components/SubtopicEpigraph";
 import { getSubtopicTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
@@ -20,18 +25,38 @@ import {
   subtopicPath,
 } from "@/sanity/paths";
 import { getPortableTextComponents } from "@/sanity/portableTextComponents";
-import { allSubtopicSlugsQuery, subtopicPageQuery } from "@/sanity/queries";
+import { allSubtopicSlugsQuery, contactSectionQuery, subtopicPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
-import { TableOfContents } from "@/sanity/TableOfContents";
+import styles from "./page.module.scss";
 
 interface SubtopicPageData {
   _id: string;
   title: string;
   parentPillarTitle?: string;
+  heroImage?: (SanityImage & { alt?: string }) | undefined;
+  heroKicker?: string;
+  standfirst?: string;
+  titleEmphasisWord?: string;
+  epigraph?: string;
+  faqItems?: PillarFaqItem[];
   body: unknown;
   seo?: SeoFields;
   medicalEntityType?: MedicalEntityType;
   alternates?: AlternateEntry[];
+}
+
+interface ContactSectionCopy {
+  contactSection?: {
+    kicker?: string;
+    heading?: string;
+    headingEmphasisWord?: string;
+    photoCaption?: string;
+  };
+  googleProfileLabel?: string;
+}
+
+function getContactSectionCopy(locale: string) {
+  return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
 function getSubtopicPage(locale: string, pillarSlug: string, slug: string) {
@@ -129,14 +154,62 @@ export default async function SubtopicPage({
   const headingIds = headingIdsByKey(headings);
   const components = await getPortableTextComponents(locale, headingIds);
 
+  const [siteSettings, contactCopy] = await Promise.all([
+    getSiteSettings(locale),
+    getContactSectionCopy(locale),
+  ]);
+  const contactSection = contactCopy?.contactSection;
+  // Same hardcoded design-lab asset the pillar/article routes' own
+  // ContactBlock invocation uses — see [locale]/[slug]/page.tsx's own
+  // comment for the full reasoning.
+  const contactPhotoUrl = "/design-lab/photos/09.webp";
+  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+
   return (
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
       <JsonLdScript data={medicalWebPageJsonLd} />
-      <Breadcrumbs trail={trail} />
-      <h1>{data.title}</h1>
-      <TableOfContents locale={locale} headings={headings} />
-      <PortableText value={data.body as never} components={components} />
+
+      {/* Sections 1-2: Hero, Epigraph — same dark-band/heroViewport
+          mechanism as the pillar route, minus PillarFactsStrip/
+          PillarRecognition (deliberately not part of this template, see
+          this pass's own report). */}
+      <div className={styles.darkBand}>
+        <div className={styles.heroViewport}>
+          <PillarHero
+            trail={trail}
+            heroKicker={data.heroKicker ?? ""}
+            title={data.title}
+            titleEmphasisWord={data.titleEmphasisWord}
+            standfirst={data.standfirst ?? ""}
+            heroImage={data.heroImage}
+          />
+        </div>
+        <SubtopicEpigraph quote={data.epigraph} />
+      </div>
+
+      {/* Sections 3-5: Body, FAQ, Contact — same light-island mechanism
+          as the pillar route. No RelatedArticlesGrid: not part of this
+          template. */}
+      <div className={styles.lightIsland}>
+        <ReadingArea headings={headings}>
+          <PortableText value={data.body as never} components={components} />
+        </ReadingArea>
+
+        <PillarFaq locale={locale} items={data.faqItems} />
+
+        <ContactBlock
+          kicker={contactSection?.kicker ?? ""}
+          heading={contactSection?.heading ?? ""}
+          headingEmphasisWord={contactSection?.headingEmphasisWord}
+          photoCaption={contactSection?.photoCaption ?? ""}
+          googleProfileLabel={contactCopy?.googleProfileLabel ?? ""}
+          googleProfileUrl={siteSettings?.googleProfileUrl}
+          locale={typedLocale}
+          photoUrl={contactPhotoUrl}
+          photoAlt={contactPhotoAlt}
+        />
+      </div>
     </main>
   );
 }

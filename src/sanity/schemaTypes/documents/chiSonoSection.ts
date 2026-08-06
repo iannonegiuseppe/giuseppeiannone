@@ -2,22 +2,25 @@ import { defineField, defineType } from "sanity";
 import { deontologyCheck } from "../lib/deontologyValidator";
 import { languageField } from "../lib/languageField";
 
-// Chi sono section pass: a homepage TEASER between Diplomi and Areas —
-// NOT the future full /chi-sono page (aboutPath in sanity/paths.ts),
-// which stays unbuilt this pass (see storyLink's own description, and
-// headerNavItems.ts's PREVIEW_GATE_ANCHOR_OVERRIDES comment for why the
-// header's "Chi sono" nav link still anchor-scrolls here rather than
-// routing to that future page — this section owns id="chi-sono" for
-// exactly that reason). Standalone singleton (owner call), not a
-// homePage field group — same singletonListItem/SINGLETON_TYPES
-// treatment as aboutPage/methodPage/pricePage, but with its own
-// structured fields (title/paragraphs/portrait/etc.) rather than
-// defineSimplePageType's generic title+body+seo shape, since this
-// section's layout (sticky portrait, pull-quote, signature) needs
-// individually addressable fields, not one Portable Text blob. The
-// OLDER homePage.chiSono field group + ChiSonoOverlap.tsx (a different,
-// pre-existing shape) are superseded by this — left registered/orphaned,
-// not deleted, same precedent as diploma/qualification before it.
+// Chi sono build pass: this document is now the real source for the
+// full /chi-sono, /en/about-me page (src/app/[locale]/chi-sono/page.tsx,
+// src/app/[locale]/about/page.tsx) — un-hidden, un-deprecated. It's ALSO
+// still the source of the homepage's portrait/paragraphs used elsewhere
+// (chiSonoPortraitQuery, the article route's end-of-post author block) —
+// unchanged by this pass. What it is NOT: the homepage's own Chi sono
+// TEASER, which reads homePage.profilo instead (a separate, shorter,
+// professional-facts-only rewrite — see that field's own schema comment
+// for why it's independent rather than a reuse of this document).
+// Standalone singleton (owner call), not a homePage field group — same
+// singletonListItem/SINGLETON_TYPES treatment as aboutPage/methodPage/
+// pricePage, but with its own structured fields (title/paragraphs/
+// portrait/etc.) rather than defineSimplePageType's generic
+// title+body+seo shape, since this section's layout (sticky portrait,
+// pull-quote, signature) needs individually addressable fields, not one
+// Portable Text blob. The OLDER homePage.chiSono field group + the
+// retired ChiSonoOverlap.tsx (a different, pre-existing shape) are
+// superseded by this — left registered/orphaned, not deleted, same
+// precedent as diploma/qualification before it.
 function textField(
   name: string,
   title: string,
@@ -51,30 +54,21 @@ function stringField(
   });
 }
 
-// DEPRECATED as of the design-lab-to-production migration: homePage.profilo
-// is now the rendered Chi sono source on the real homepage (ChiSonoBlock,
-// a full-bleed rebuild with its own shorter, professional-facts-only
-// copy) — this document type's own 5-paragraph personal-story content is
-// real, finished client copy, just no longer rendered anywhere. Left
-// fully intact deliberately (not deleted, not cleared) — same precedent
-// this file's own top comment already set for the OLDER homePage.chiSono
-// field group it itself superseded.
-//
-// Homepage-fold pass: hidden: true removes this from the Studio
-// structure tree, global search, and "create new" menu (same mechanism
-// qualification.ts already uses) — its own five paragraphs are Giuseppe's
-// own writing and exist nowhere else (they're planned for the future Chi
-// sono page), so this is hidden, not deleted or folded — unlike
-// areeSection/ctaBridgeSection (same pass), whose content moved into
-// homePage as new field groups instead.
+// Chi sono build pass: un-hidden and un-deprecated — this is now the
+// live source for the full /chi-sono, /en/about-me page. homePage.profilo
+// (the homepage's own shorter teaser) is untouched and stays the
+// homepage's rendered source, per this pass's own explicit instruction
+// not to touch it — the two coexist deliberately, see this file's own
+// top comment for the overlap-avoidance approach the page component
+// itself takes (only paragraphs 1-2 + a trimmed paragraph 5 render there,
+// never the three paragraphs profilo already shows verbatim).
 export const chiSonoSection = defineType({
   name: "chiSonoSection",
-  title: "Chi sono section (homepage) — DEPRECATED, no longer rendered (see homePage.profilo)",
+  title: "Chi sono page",
   description:
-    "Orphaned as of the design-lab-to-production migration — no longer rendered on the real " +
-    "homepage, superseded by homePage.profilo. Left intact, not deleted; still real client copy.",
+    "The full personal story (origin, training, portrait) for the /chi-sono, /en/about-me page. " +
+    "Not the homepage's own shorter Chi sono teaser — see homePage.profilo for that.",
   type: "document",
-  hidden: () => true,
   fields: [
     stringField("kicker", "Kicker"),
     stringField("title", "Title"),
@@ -117,8 +111,9 @@ export const chiSonoSection = defineType({
       name: "storyLink",
       title: "Story link",
       description:
-        "Optional — set once the future full Chi sono page exists (not built this pass). " +
-        "When empty, the homepage section renders no link at all.",
+        "Unused by this document itself — the homepage's own teaser (a separate section, " +
+        "reading homePage.profilo) is what would show a link to this page, not a field here. " +
+        "Left as-is, not repurposed.",
       type: "slug",
     }),
     defineField({
@@ -126,6 +121,11 @@ export const chiSonoSection = defineType({
       title: "Show signature",
       type: "boolean",
       initialValue: true,
+    }),
+    defineField({
+      name: "seo",
+      title: "SEO",
+      type: "seo",
     }),
     languageField(),
   ],

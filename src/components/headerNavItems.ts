@@ -62,22 +62,18 @@ const ROUTE_KEY_MAP = new Map(NAV_ROUTE_KEYS.map((entry) => [entry.key, entry]))
 // root-namespace pass) added alongside hrefFor's own new branch.
 const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "article", "page"]);
 
-// PREVIEW-GATE (temporary) for "chi-sono" only now: it normally resolves
-// to its own dedicated route (aboutPath — /chi-sono, not yet built) via
-// ROUTE_KEY_MAP below. For the duration of this gate it instead scrolls
-// to the placeholder section page.tsx renders at id="chi-sono" (see that
-// file's own PREVIEW-GATE comment — the same section ChiSonoOverlap
-// normally occupies). Reversal for chi-sono: delete its entry from this
-// map and the resolveHref lookup below; ROUTE_KEY_MAP's own real-route
-// resolution underneath is completely untouched and takes back over
-// immediately.
+// PREVIEW-GATE (temporary), "metodo" only now — reversed for "chi-sono"
+// (Chi sono build pass): that route is real now
+// (src/app/[locale]/chi-sono/page.tsx, src/app/[locale]/about/page.tsx),
+// so its entry is gone from this map per this comment's own
+// previously-stated reversal instructions — ROUTE_KEY_MAP's real-route
+// resolution below (aboutPath) now resolves it, unchanged code, exactly
+// as that original comment said it would.
 //
-// "metodo" is no longer part of the gate — JourneySection (un-gated) now
-// owns id="metodo" for real, permanently, not as a placeholder stand-in.
-// Its entry stays in this map because scrolling to a same-page anchor
-// IS metodo's actual intended behavior now, not a temporary shim.
+// "metodo" stays: JourneySection (un-gated) owns id="metodo" for real,
+// permanently, not as a placeholder stand-in — scrolling to a same-page
+// anchor IS metodo's actual intended behavior, not a temporary shim.
 const PREVIEW_GATE_ANCHOR_OVERRIDES = new Map<string, string>([
-  ["chi-sono", "chi-sono"],
   ["metodo", "metodo"],
 ]);
 

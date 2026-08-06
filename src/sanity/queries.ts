@@ -139,7 +139,38 @@ export const chiSonoSectionQuery = defineQuery(`
     portrait,
     "portraitLqip": portrait.asset->metadata.lqip,
     storyLink,
-    signatureEnabled
+    signatureEnabled,
+    seo
+  }
+`);
+
+// Chi sono build pass — the qualifications section on /chi-sono, /en/
+// about-me reuses homePage.diplomi.* verbatim (the same real qualification
+// list already shown on the homepage; not new content, so not part of
+// the paragraph-overlap concern the page's own body copy has to avoid).
+// Narrow-select, same convention as contactSectionQuery just above —
+// this route has no use for the rest of homePage's fields.
+export const chiSonoDiplomiQuery = defineQuery(`
+  *[_type == "homePage" && language == $locale][0]{
+    diplomi{
+      kicker,
+      heading,
+      headingEmphasisWord,
+      intro,
+      alboLine,
+      items[]{
+        _key,
+        year,
+        title,
+        institution,
+        tier,
+        document,
+        "documentLqip": document.asset->metadata.lqip,
+        scan,
+        scanRedacted,
+        "scanLqip": scan.asset->metadata.lqip
+      }
+    }
   }
 `);
 
@@ -494,6 +525,12 @@ export const subtopicPageQuery = defineQuery(`
     _id,
     title,
     "parentPillarTitle": parentPillar->title,
+    heroImage,
+    heroKicker,
+    standfirst,
+    titleEmphasisWord,
+    epigraph,
+    "faqItems": faqItems[]->{ _id, question, answer },
     ${bodyProjection},
     seo,
     medicalEntityType,

@@ -133,6 +133,18 @@ upheld in every schema added later:
   `createImageUrlBuilder`) — the rule is about `.fetch()` calls, not the
   export.
 
+## Sanity Studio verification
+
+`/studio` is behind auth (Google/GitHub/email login) — there are no headless
+credentials, so a `structure.ts` (desk) change can't be screenshotted or driven
+by a browser tool. This is expected, not a bug to work around. Fallback: run the
+exact GROQ query the resolver itself uses (e.g. a `parentPillar._ref` lookup for
+nested desk items) directly against the dataset via `@sanity/client`, and confirm
+the shape matches what the desk tree should show — this proves the data layer,
+not rendered pixels. Pair it with a `_rev` snapshot before/after to prove the
+verification itself made no writes, then ask the owner to confirm the visual
+result once they're logged in.
+
 The working tree is authoritative. Never revert or overwrite existing code that appears intentional without asking — manual edits by the owner are expected.
 
 ## Commit conventions

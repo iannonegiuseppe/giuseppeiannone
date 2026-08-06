@@ -50,11 +50,28 @@ export function ReadingArea({
   afterBody?: ReactNode;
   children: ReactNode;
 }) {
+  // Chi sono pass — chiSonoSection's body is plain prose with no h2/h3
+  // structure at all, so headings is always empty there, and
+  // ScrollTrackingToc already refuses to render under 3 (its own
+  // `if (headings.length < 3) return null`). Left alone, that meant an
+  // empty .tocWrapper still occupying the grid's 15rem column — no TOC,
+  // but a dead gutter to the left of the text. hasToc mirrors that same
+  // threshold here so the GRID itself can be skipped, not just the nav
+  // inside it: .readingArea drops to a plain (still containered, still
+  // lg+-centered) block, and .column's own existing max-width + auto
+  // inline margins center it in the freed space — the same behavior
+  // .column already has below lg, just extended upward. Article and
+  // pillar both always pass 3+ headings today, so data-toc="true" (the
+  // existing grid) is what they've always gotten — unaffected.
+  const hasToc = headings.length >= 3;
+
   return (
-    <div className={styles.readingArea}>
-      <div className={styles.tocWrapper}>
-        <ScrollTrackingToc headings={headings} topOffset={topOffset} />
-      </div>
+    <div className={styles.readingArea} data-toc={hasToc ? "true" : undefined}>
+      {hasToc ? (
+        <div className={styles.tocWrapper}>
+          <ScrollTrackingToc headings={headings} topOffset={topOffset} />
+        </div>
+      ) : null}
       <div className={styles.column}>
         <div className={styles.body} id={bodyId}>
           {children}

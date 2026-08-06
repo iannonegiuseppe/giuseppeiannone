@@ -1,0 +1,37 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// No facts strip on this route (Chi sono has no per-topic facts to
+// show) — PillarHero's own .heroBand (PillarHero.module.scss, untouched)
+// already has flex:1/min-height:0 baked in, expecting a flex parent. As
+// the ONLY flex item here (not one of two, as on the pillar route),
+// flex:1 still resolves correctly: a lone flex item with flex:1 grows to
+// fill 100% of the flex container's cross space regardless of whether it
+// has a sibling to share with — no fix needed, confirmed live (this
+// pass's own screenshots).
+.heroViewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100lvh;
+  min-height: 100dvh;
+}
+
+// Reading area + qualifications + contact — one continuous light
+// interlude below the dark hero, same tone.light-island-surface
+// mechanism the pillar/article routes both already use.
+.lightIsland {
+  @include tone.light-island-surface;
+}
+
+// Plain container + block spacing for DiplomiSlider — that component sets
+// no width/centering of its own (see diplomiSlider.module.scss), the
+// caller always provides it. Deliberately NOT homepage's own
+// sectionWrapperStyles.section (mixins.container + a hairline bottom
+// border) — that border is the homepage's own between-section rhythm
+// device; this route separates sections with space alone, matching
+// ReadingArea/ContactBlock's own established convention here.
+.qualifications {
+  @include mixins.container;
+  padding-block: var(--space-9);
+}

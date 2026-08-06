@@ -1,0 +1,34 @@
+@use "../styles/mixins";
+
+// Sits directly below PillarHero inside the same dark band (the ambient
+// page background, no fill of its own — same reasoning as PillarHero.
+// module.scss's own .heroBand comment). Deliberately not a fork of
+// RecognitionConstellation's per-item .quote treatment (that component's
+// three-tier size hierarchy exists to differentiate SIX quotes at once;
+// a subtopic has exactly one, so it just gets the constellation's own
+// "large" tier size directly) — same italic-display voice, no quote
+// marks, position/weight carry it, per that component's own established
+// convention.
+.epigraph {
+  @include mixins.container;
+  padding-block: var(--space-8) var(--space-9);
+  text-align: center;
+}
+
+.quote {
+  margin: 0 auto;
+  max-width: 44rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  // --fs-h2 is already a fluid clamp() token (see _tokens.scss) — no
+  // breakpoint step needed, same as every other type-scale consumer in
+  // this codebase.
+  font-size: var(--fs-h2);
+  line-height: 1.3;
+  // --light-base-bg (theme-invariant ivory), not --color-text — this
+  // band sits on the page's own ambient dark fill (no heroImage scrim
+  // involved here, epigraph is always below the hero band), same
+  // contrast reasoning as PillarHero.module.scss's own text roles.
+  color: var(--light-base-bg);
+}

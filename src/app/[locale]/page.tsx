@@ -13,7 +13,8 @@ import { SignatureMark } from "@/components/Logo";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
-import { imageDimensions, urlFor } from "@/sanity/image";
+import { resolveDiplomiLabItems, type QualificationItemData } from "@/sanity/diplomi";
+import { urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
 import {
   homePageQuery,
@@ -85,22 +86,6 @@ import { SignatureBandTuned } from "@/components/SignatureBandTuned";
 // still pending on both, per that pass's own instruction (do not touch).
 // import { FormazioneBand } from "@/components/FormazioneBand";
 // import { PricingSection } from "@/components/PricingSection";
-
-interface QualificationItemData {
-  _key: string;
-  year: string;
-  title: string;
-  institution: string;
-  tier: "titolo" | "formazione_continua";
-  document?: SanityImage;
-  documentLqip?: string;
-  // Privacy-gate pair — see homePage.ts's own comment on these two fields
-  // and DiplomiSlider.tsx's own comment on the interactivity logic that
-  // reads them exclusively (never `document` above).
-  scan?: SanityImage;
-  scanRedacted?: boolean;
-  scanLqip?: string;
-}
 
 interface HomePageData {
   title?: string;
@@ -438,32 +423,13 @@ export default async function Home({
   // addition, not a pre-existing catalog entry.
   const tHero = await getTranslations({ locale, namespace: "Hero" });
 
-  // Privacy-gate pass, copied verbatim from DesignLabHomepage.tsx (see
-  // that file's own comment for the full reasoning): interactivity is
-  // computed HERE, server-side, from scan + scanRedacted — never left to
-  // the client to infer, and never read from `document` (the older,
-  // separate field this array item type also carries). lightboxUrl is a
-  // URL STRING built with urlFor (free string construction, not a network
-  // request); scanLqip is a tiny inline base64 data URI already present in
-  // the page's own JSON payload.
-  const diplomiLabItems: DiplomiLabItem[] = (homePage?.diplomi?.items ?? []).map((item) => {
-    const interactive = Boolean(item.scan) && item.scanRedacted === true;
-    const dims = item.scan ? imageDimensions(item.scan) : null;
-    return {
-      id: item._key,
-      year: item.year,
-      title: item.title,
-      institution: item.institution,
-      interactive,
-      scanLqip: interactive ? item.scanLqip : undefined,
-      lightboxUrl:
-        interactive && item.scan
-          ? urlFor(item.scan).width(2000).quality(82).format("webp").url()
-          : undefined,
-      width: dims?.width ?? 1400,
-      height: dims?.height ?? 1980,
-    };
-  });
+  // Chi sono pass — extracted to src/sanity/diplomi.ts's own
+  // resolveDiplomiLabItems, now the one place this gate is computed
+  // (scan + scanRedacted, never `document`, the older separate field this
+  // array item type also carries) — the Chi sono page needed the exact
+  // same logic for its own qualifications section and a duplicated copy
+  // would have been free to drift from this one.
+  const diplomiLabItems: DiplomiLabItem[] = resolveDiplomiLabItems(homePage?.diplomi?.items);
 
   // Stage 2c — hero background-video poster, fallback chain per explicit
   // instruction: homePage.hero.backgroundVideoPoster if set, else the

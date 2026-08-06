@@ -1,4 +1,5 @@
 import type { StructureBuilder, StructureResolver } from "sanity/structure";
+import type { StructureResolverContext } from "sanity/structure";
 
 // Singletons: exactly one document PER LANGUAGE, linked as an it/en
 // translation pair by @sanity/document-internationalization. Fixed pane
@@ -63,12 +64,96 @@ export const TRANSLATABLE_TYPES = new Set([
 ]);
 
 const DEFAULT_LOCALE = "it";
+const API_VERSION = "2026-07-05";
 
 function singletonListItem(S: StructureBuilder, typeId: string, title: string) {
   return S.listItem()
     .id(typeId)
     .title(title)
     .child(S.document().schemaType(typeId).documentId(`${typeId}-${DEFAULT_LOCALE}`));
+}
+
+// Desk consolidation pass — same "fixed pane, bootstraps its own first
+// document" mechanism as singletonListItem above, generalized to an
+// explicit document id rather than always assuming `${typeId}-it`. Used
+// below for locationPage, which needs TWO fixed panes (Milan, Monza),
+// not one — singletonListItem can't express that (it hardcodes exactly
+// one id per type). Pointing at an id that doesn't exist yet is not a
+// write: Sanity shows an empty, pre-addressed create form, exactly how
+// methodPage/pricePage/contactPage/faqPage already bootstrap today with
+// zero documents (verified — count() was 0 for all four before this
+// pass, and they already work this way).
+function fixedDocListItem(
+  S: StructureBuilder,
+  typeId: string,
+  docId: string,
+  title: string,
+) {
+  return S.listItem()
+    .id(docId)
+    .title(title)
+    .child(S.document().schemaType(typeId).documentId(docId));
+}
+
+// Desk consolidation pass — a pillar's own row in Pages. Resolves to its
+// ITALIAN document by fixed id (see "Locale pairing" note below for why),
+// using S.documentListItem so the row's own label/media always tracks
+// that document's current title field live — unlike singletonListItem's
+// hardcoded string, this drifts correctly if Giuseppe ever renames a
+// pillar's title in Studio, with nothing here to keep in sync by hand.
+//
+// The child pane is overridden (not the default "open the document
+// editor" a bare documentListItem would give) to an ASYNC list: "Edit
+// page" first, then — only when at least one exists — a divider and one
+// row per subtopicPage whose `parentPillar` reference points at this
+// exact document. This is the reference-driven nesting from the Stage 1
+// report: no new field, resolved at render time via a live GROQ query
+// (a read, not a write) against `parentPillar._ref`. Every pillar gets
+// this identical treatment, including the four with zero subtopics today
+// (relazioni/sessuali/stress/trauma) — their pane is just "Edit page"
+// alone, no divider — so nothing here needs touching again the day a
+// subtopic gets added under one of them; the query already covers it.
+//
+// Click budget: Pages → area row → "Edit page" (or a subtopic row) = 3
+// clicks to any editor, same as every other entry in this file.
+//
+// Subtopic ordering inside the pane is alphabetical by title
+// (`order(title asc)`) — the "deliberate order, not alphabetical" brief
+// was about the TOP-LEVEL Pages list (Home, then areas, then ordinary
+// pages), not about a pillar's own children; alphabetical here needs no
+// manual upkeep as subtopics are added, unlike a hardcoded child order
+// would.
+function pillarWithSubtopics(
+  S: StructureBuilder,
+  context: StructureResolverContext,
+  pillarId: string,
+) {
+  return S.documentListItem()
+    .id(pillarId)
+    .schemaType("pillarPage")
+    .child(async () => {
+      const client = context.getClient({ apiVersion: API_VERSION });
+      const subtopics: { _id: string }[] = await client.fetch(
+        `*[_type == "subtopicPage" && language == $locale && parentPillar._ref == $pillarId] | order(title asc){ _id }`,
+        { locale: DEFAULT_LOCALE, pillarId },
+      );
+
+      const items: Parameters<ReturnType<StructureBuilder["list"]>["items"]>[0] = [
+        S.listItem()
+          .id(`${pillarId}-edit`)
+          .title("Edit page")
+          .child(S.document().schemaType("pillarPage").documentId(pillarId)),
+      ];
+
+      if (subtopics.length > 0) {
+        items.push(S.divider());
+        for (const subtopic of subtopics) {
+          items.push(S.documentListItem().id(subtopic._id).schemaType("subtopicPage"));
+        }
+      }
+
+      return S.list().title("Area").items(items);
+    });
 }
 
 // Root-namespace pass — desk restructure, organized by what each thing
@@ -89,68 +174,120 @@ function singletonListItem(S: StructureBuilder, typeId: string, title: string) {
 // tree — these three are no longer reachable through normal desk
 // browsing at all, only via Vision or a direct document URL. Their
 // documents and data are untouched; see each schema file's own comment
-// for why (chiSonoSection: irreplaceable copy, hidden not folded;
-// areeSection/ctaBridgeSection: superseded, folded AND hidden).
-export const structure: StructureResolver = (S) =>
+// for why (areeSection/ctaBridgeSection: superseded, folded AND hidden).
+//
+// chiSonoSection correction: the comment above was written for an
+// earlier state and is now stale where it names chiSonoSection —
+// verified live: chiSonoSection.ts's own `hidden: () => true` was
+// already removed in a later "Chi sono build pass" (it's now the real
+// source for the live /chi-sono, /en/about-me route), but nobody added
+// its list item back to this file, so it stayed unreachable from the
+// desk by omission rather than by the hidden flag. Fixed below — Pages
+// → "Chi sono" now points at chiSonoSection, the actual live content.
+//
+// Desk consolidation pass — everything that IS a page (single "Pages"
+// group, areas carry their subtopics as children, both locales resolve
+// through one Italian row per page — see pillarWithSubtopics/
+// fixedDocListItem above) now replaces the old three-way Homepage/Real
+// pages/Knowledge Base split. Three deliberate departures from a literal
+// carry-over of the old "Real pages" group, each decided with the owner
+// before this pass:
+//
+// - aboutPage: LEFT UNLISTED, same as qualification/area (hidden types
+//   below). It's a generic title+body type with zero documents and no
+//   route reads it — the live Chi sono content is chiSonoSection, not
+//   this. Listing aboutPage would offer Giuseppe a second "About page"
+//   that edits nothing real. Not touched at the schema level (still a
+//   registered, unhidden type — just never added to this tree), so if a
+//   future pass ever wants it back, that's a one-line addition here, not
+//   a schema change. VESTIGIAL — do not re-add without first confirming
+//   something actually renders it.
+// - faqItem ("FAQ questions", 94 documents): moved OUT of Pages and into
+//   Reference data below. It has no route and no URL of its own — it's
+//   reference data reused by three consumers (pillarPage.faqItems,
+//   subtopicPage.faqItems, faqPage.faqs), structurally identical to
+//   sede/diploma/service already there. Leaving it in Pages would put 94
+//   non-pages inside a group whose entire point is "only pages."
+// - locationPage ("Sedi (pagine)", 0 documents today): added near the
+//   bottom of Pages, its own nested pane with two FIXED panes (Milan,
+//   Monza) via fixedDocListItem, same bootstrap-from-empty mechanism
+//   singletonListItem already relies on elsewhere in this file. No
+//   locationPage document exists yet and no id convention existed for it
+//   before this pass (checked: no seed script, nothing hardcoded
+//   anywhere) — "locationPage-milano-it"/"locationPage-monza-it" are
+//   PROPOSED here, following the same `{type}-{area}-{locale}` shape
+//   already established for pillarPage/subtopicPage during their own
+//   rollout. Whichever document actually gets saved through this pane
+//   first is what fixes the real id going forward — nothing has been
+//   written by this pass. Labelled "Sedi (pagine)", not "Sedi" alone, so
+//   it can't be confused with the `sede` reference-data type in the
+//   group below (same city information, different type: sede feeds the
+//   homepage's map/pins, locationPage is a dedicated per-city page).
+//
+// Locale pairing: every fixed-id row in Pages (Home page, each area, the
+// singleton ordinary pages, Sedi) resolves straight to its ITALIAN
+// document — @sanity/document-internationalization does not offer a
+// structure-builder API to collapse an it/en pair into one row (checked:
+// its plugin config here only wires document-level actions and an
+// in-editor language banner), so this is the practical equivalent: one
+// row per logical page instead of two, with the plugin's own already-
+// installed in-document language switcher reaching the English sibling
+// from inside whichever Italian document you open. The one place this
+// doesn't apply is `page` (the universal type, "(other pages)" below) —
+// it has no fixed, known set of ids to hardcode against (zero documents
+// exist today, and future ones are arbitrary), so it stays a genuine
+// S.documentTypeListItem, which WILL show it/en siblings as flat rows
+// once real `page` documents exist. FUTURE WORK, not built here (nothing
+// to build against zero documents): swap it for
+// S.documentList().filter('_type == "page" && language == "it"') the
+// same way, once that type actually has content worth de-duplicating.
+//
+// Create-button labels: the global "+ New document" button (top nav,
+// untouched by this pass) already lists every creatable type — a scoped
+// "+" specific to the Pages pane isn't something a manually-composed
+// S.list() gets for free in structure builder (only a single-type list
+// gets an automatic create button), and building one would mean going
+// beyond this file. Client-facing labels the owner approved and wants on
+// record for whenever the underlying schema titles are next touched for
+// another reason (NOT applied here — Stage 2 of this pass is
+// structure.ts only, and a schema `title:` edit is out of scope):
+//   pillarPage   "Pillar page"   -> "Area page"
+//   subtopicPage "Subtopic page" -> "Sub-area page"
+//   page         "Page"          -> "Simple page"
+//   faqItem      "FAQ item"      -> "FAQ question"
+export const structure: StructureResolver = (S, context) =>
   S.list()
     .title("Content")
     .items([
-      // Homepage-fold pass: areeSection and ctaBridgeSection folded into
-      // homePage as field groups (Aree section / CTA bridge, inside Home
-      // page's own edit form) — their old standalone list items removed
-      // from here. chiSonoSection was ALSO removed from this group, not
-      // folded: hidden from the desk entirely now (schema hidden: true,
-      // same as qualification), reachable only via Vision/a direct
-      // document URL — its five paragraphs are Giuseppe's own writing,
-      // kept intact for the future Chi sono page, just no longer listed
-      // anywhere in this tree.
-      //
-      // Area-fold pass (later): `area` folded too — its 6+6 rows now
-      // live inside homePage.aree.items, editable alongside the Aree
-      // section's own kicker/title/intro in the same document (see
-      // homePage.ts's own schema comment for why folding cost nothing —
-      // slug was empty on all 12 documents and backed by no route). Its
-      // list item removed from here the same way; the type itself is now
-      // `hidden: () => true`, same mechanism as the other three. This
-      // group now contains exactly Home page — nothing else.
       S.listItem()
-        .title("Homepage")
+        .title("Pages")
         .child(
           S.list()
-            .title("Homepage")
-            .items([singletonListItem(S, "homePage", "Home page")]),
-        ),
-      // Real pages: every document type whose job is to BE a page with
-      // its own URL. FAQ page + its questions nest together, same
-      // "root + its dependent list" shape Homepage uses above (questions
-      // only ever feed faqPage.faqs, unlike Sedi/Diplomi/Services, which
-      // are genuinely reused elsewhere — see Reference data below).
-      // `page` is the new universal type (Step 4 of this pass) — a plain
-      // list here, not a singleton, since there can be any number of them.
-      S.listItem()
-        .title("Real pages")
-        .child(
-          S.list()
-            .title("Real pages")
+            .title("Pages")
             .items([
-              singletonListItem(S, "aboutPage", "About page"),
-              singletonListItem(S, "methodPage", "Method page"),
-              singletonListItem(S, "pricePage", "Pricing page"),
-              singletonListItem(S, "contactPage", "Contact page"),
-              singletonListItem(S, "faqPage", "FAQ page"),
-              S.documentTypeListItem("faqItem").title("FAQ questions"),
-              S.documentTypeListItem("locationPage").title("Locations (Milan, Monza)"),
-              S.documentTypeListItem("page").title("Pages"),
-            ]),
-        ),
-      S.listItem()
-        .title("Knowledge Base")
-        .child(
-          S.list()
-            .title("Knowledge Base")
-            .items([
-              S.documentTypeListItem("pillarPage").title("Pillar pages"),
-              S.documentTypeListItem("subtopicPage").title("Subtopics"),
+              singletonListItem(S, "homePage", "Home page"),
+              pillarWithSubtopics(S, context, "pillarPage-anxiety-it"),
+              pillarWithSubtopics(S, context, "pillarPage-panic-it"),
+              pillarWithSubtopics(S, context, "pillarPage-relazioni-it"),
+              pillarWithSubtopics(S, context, "pillarPage-sessuali-it"),
+              pillarWithSubtopics(S, context, "pillarPage-stress-it"),
+              pillarWithSubtopics(S, context, "pillarPage-trauma-it"),
+              singletonListItem(S, "chiSonoSection", "Chi sono"),
+              singletonListItem(S, "methodPage", "Metodo"),
+              singletonListItem(S, "pricePage", "Prezzi"),
+              singletonListItem(S, "contactPage", "Contatti"),
+              singletonListItem(S, "faqPage", "FAQ"),
+              S.listItem()
+                .title("Sedi (pagine)")
+                .child(
+                  S.list()
+                    .title("Sedi (pagine)")
+                    .items([
+                      fixedDocListItem(S, "locationPage", "locationPage-milano-it", "Milano"),
+                      fixedDocListItem(S, "locationPage", "locationPage-monza-it", "Monza"),
+                    ]),
+                ),
+              S.documentTypeListItem("page").title("Altre pagine"),
             ]),
         ),
       S.listItem()
@@ -166,8 +303,10 @@ export const structure: StructureResolver = (S) =>
       // Reference data: entities reused across other content rather than
       // pages in their own right. sede != locationPage — sede feeds the
       // homepage's Sedi scene (city/addresses/map pins); locationPage is
-      // a dedicated per-city PAGE (Real pages, above). Easy to confuse by
-      // name, deliberately filed apart by what each one is.
+      // a dedicated per-city PAGE (Pages, above). Easy to confuse by
+      // name, deliberately filed apart by what each one is. faqItem
+      // joins this group as of this pass (see the comment block above
+      // this resolver for why it moved out of Pages).
       S.listItem()
         .title("Reference data")
         .child(
@@ -177,6 +316,7 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem("sede").title("Sedi"),
               S.documentTypeListItem("diploma").title("Diplomi"),
               S.documentTypeListItem("service").title("Services"),
+              S.documentTypeListItem("faqItem").title("FAQ questions"),
             ]),
         ),
       S.divider(),

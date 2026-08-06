@@ -1,0 +1,25 @@
+@use "../../../../styles/tone";
+
+// Subtopic template pass — same dark-band/light-island split as the
+// pillar route's own page.module.scss (that file's own comments have the
+// full reasoning: dark-by-default site, no explicit fill needed, light
+// island via tone.light-island-surface reused verbatim). Narrower here:
+// .heroViewport wraps PillarHero ALONE (no PillarFactsStrip sibling to
+// pin against), which PillarHero.module.scss's own flex:1 already
+// supports without any change — a single flex child in a min-height
+// column simply fills it, so this is the same mechanism, not a fork of
+// it.
+.darkBand {
+}
+
+.heroViewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100lvh;
+  min-height: 100dvh;
+}
+
+.lightIsland {
+  @include tone.light-island-surface;
+}
