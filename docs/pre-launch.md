@@ -39,22 +39,6 @@ that, then delete the line here.
     sitemap and each page's own `<meta name="robots">` pick it up.
     Delete this entry once done.
 
-- **Trauma pillar page (`pillarPage-trauma-it`/`-en`) is missing its EMDR
-  FAQ.** `scripts/populate-pillar-trauma.ts` — the "Fai EMDR?" / "Do you
-  do EMDR?" question was in the source draft
-  (`contents/pillar-trauma-bozza.md`) with a bracketed placeholder answer
-  ("è la domanda più cercata su questo tema e va risposta con
-  precisione"), left unanswered per the standing "leave bracketed fields
-  empty rather than invent a value" rule — `faqItem.answer` is required,
-  so the question was omitted entirely rather than saved with a partial
-  or invented answer. Both locales currently ship 5 of the draft's 6 FAQ
-  questions; nothing references the missing 6th, so there's no dangling
-  link to fix, only a question to add. Reversal: once Giuseppe confirms
-  whether/how he practises EMDR, create `faqItem-trauma-6-it`/`-en` (+
-  their `translation.metadata` pairing, same pattern as
-  `faqItem-trauma-1` through `-5`) and append the reference to both
-  `pillarPage-trauma-it/-en`'s `faqItems` array. Delete this line once
-  done.
 - **Profilo (Chi sono full-bleed rebuild) copy (homePage-it/-en) is
   DRAFT, not approved.** `scripts/patch-profilo-copy.ts` — new `profilo`
   field group (eyebrow, heading, headingEmphasisWord, three paragraphs).
@@ -123,24 +107,6 @@ that, then delete the line here.
   §9-checked via the actual `deontologyCheck` validator for IT; EN checked
   by hand. Reversal: once Giuseppe reviews and approves (or rewrites) both
   languages, delete this line.
-- **Tariffe copy (homePage-it/-en) is DRAFT, not approved.**
-  `scripts/patch-tariffe-copy.ts` + `scripts/patch-tariffe-footnote.ts` +
-  `scripts/patch-tariffe-details-line.ts` — `tariffe` field group
-  (eyebrow, heading, the two pricing rows, `detailsItems` — a single
-  flowing details line, one phrase per practical fact, replacing an
-  earlier 4-column label/value block that itself replaced the original
-  layout — plus `detrazioneFootnote`, unchanged since it was first added:
-  the deduction's traceable-payment condition, always rendered below the
-  details line so the fact is never presented as unconditional).
-  Deliberately separate from `prezzi` (the real, still-gated
-  `PricingSection.tsx`, whose own layout is explicitly an open decision)
-  — see `homePage.ts`'s own comment on `tariffe` for why. The 4th
-  `detailsItems` entry (the 19% deduction fact) is the one item on the
-  whole schema validated with `deontologyCheckAllowingSymbols(["%"])`
-  instead of the plain `deontologyCheck` — see that helper's own comment
-  in `deontologyValidator.ts` for why. §9-checked via the actual
-  validator for IT; EN checked by hand. Reversal: once Giuseppe reviews
-  and approves (or rewrites) both languages, delete this line.
 - **Leaflet map attribution is hidden.** `src/app/[locale]/globals.scss`
   — `.leaflet-control-attribution { display: none !important; }`,
   commented `TEMPORARY — preview only`. Attribution is a licence
