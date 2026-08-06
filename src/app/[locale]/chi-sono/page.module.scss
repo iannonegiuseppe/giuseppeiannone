@@ -1,36 +1,147 @@
 @use "../../../styles/mixins";
 @use "../../../styles/tone";
 
-// No facts strip on this route (Chi sono has no per-topic facts to
-// show) — PillarHero's own .heroBand (PillarHero.module.scss, untouched)
-// already has flex:1/min-height:0 baked in, expecting a flex parent. As
-// the ONLY flex item here (not one of two, as on the pillar route),
-// flex:1 still resolves correctly: a lone flex item with flex:1 grows to
-// fill 100% of the flex container's cross space regardless of whether it
-// has a sibling to share with — no fix needed, confirmed live (this
-// pass's own screenshots).
-.heroViewport {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-height: 100lvh;
-  min-height: 100dvh;
-}
-
-// Reading area + qualifications + contact — one continuous light
-// interlude below the dark hero, same tone.light-island-surface
-// mechanism the pillar/article routes both already use.
+// Chi sono opening pass — the old dark full-bleed hero band
+// (.heroViewport, PillarHero) is gone: the new hero is contained, portrait
+// to the side, not a monument-style photo band, so there's no reason for
+// the page to open on the dark ambient background any more. The whole
+// page now starts light from the top — one continuous
+// tone.light-island-surface scope, same mechanism the pillar/article
+// routes already use for their OWN light interlude, just starting
+// earlier here since there's no dark section above it to interlude
+// below.
 .lightIsland {
   @include tone.light-island-surface;
 }
 
+// "Di cosa mi occupo" — heading/intro/closing text stay in the normal
+// container; AreaMosaic breaks out to full-bleed on its own (see that
+// component's own module.scss).
+.whatIWorkWith {
+  @include mixins.container;
+  padding-top: var(--space-9);
+}
+
+.whatIWorkWithHeading {
+  max-width: 40rem;
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.whatIWorkWithClosing {
+  @include mixins.container;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-9);
+}
+
+// The page's first shift from factual to personal voice — EB Garamond
+// italic, same display face/italic-accent treatment every other quote-
+// like line on the site already uses (PillarHero's own titleEmphasis,
+// RecognitionConstellation's own quote voice), not a new typographic
+// device.
+.closingLine {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: 1.4;
+  color: var(--color-accent);
+}
+
+// "Come lavoro" — sand surface, IN the container (not full-bleed).
+// NOT --color-sand: that token is theme-reassigned (light theme #f1ece2,
+// dark theme #16261F — confirmed by reading _tokens.scss directly after
+// this rendered as a near-black box first try) and this page's ambient
+// theme is dark; tone.light-island-surface (wrapping this whole page,
+// see .lightIsland above) never reassigns --color-sand itself, only
+// --color-bg/-text/etc, so inside that scope --color-sand still resolves
+// to the GLOBAL dark value. --light-base-hairline is already scoped
+// correctly for a light surface (same family as --light-base-bg this
+// whole page already sits on) and is warm/close to --color-sand's own
+// light-theme value — reused as a background fill here rather than its
+// usual border role, no new token added.
+.howIWork {
+  @include mixins.container;
+  padding-block: var(--space-9);
+}
+
+.howIWorkSurface {
+  background: var(--light-base-hairline);
+  border-radius: var(--radius-l);
+  padding: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    padding: var(--space-9);
+  }
+}
+
+.howIWorkHeading {
+  max-width: 34rem;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.howIWorkIntro {
+  max-width: 34rem;
+  margin: 0 0 var(--space-8);
+  color: var(--color-text-muted);
+}
+
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.part {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 4rem 1fr;
+  }
+}
+
+// A large, quiet chapter mark — well below the heading in weight, a
+// muted step, not an infographic counter. --color-text-faint (ivory-on-
+// dark faint token) doesn't apply here (this is a light surface); the
+// closest equivalent muted role on this surface is --color-text-muted,
+// dropped further via opacity so it stays decorative rather than reading
+// as body text.
+.partNumber {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: 1;
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.partTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--font-weight-regular);
+}
+
+.partBody :global(p) {
+  margin: 0 0 var(--space-3);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 // Plain container + block spacing for DiplomiSlider — that component sets
 // no width/centering of its own (see diplomiSlider.module.scss), the
-// caller always provides it. Deliberately NOT homepage's own
-// sectionWrapperStyles.section (mixins.container + a hairline bottom
-// border) — that border is the homepage's own between-section rhythm
-// device; this route separates sections with space alone, matching
-// ReadingArea/ContactBlock's own established convention here.
+// caller always provides it. Unchanged by this pass.
 .qualifications {
   @include mixins.container;
   padding-block: var(--space-9);

@@ -1,29 +1,53 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AreaMosaic, type AreaMosaicItem } from "@/components/AreaMosaic";
 import { ContactBlock } from "@/components/ContactBlock";
 import { DiplomiSlider } from "@/components/DiplomiSlider";
-import { PillarHero } from "@/components/PillarHero";
-import { ReadingArea } from "@/components/ReadingArea";
+import { PortraitHero } from "@/components/PortraitHero";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch } from "@/sanity/client";
 import { resolveDiplomiLabItems } from "@/sanity/diplomi";
 import { buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
-import { aboutPath } from "@/sanity/paths";
+import { aboutPath, type Locale } from "@/sanity/paths";
 import portableTextStyles from "@/sanity/portableTextComponents.module.scss";
 import {
   chiSonoDiplomiQuery,
+  chiSonoMosaicQuery,
   chiSonoSectionQuery,
   contactSectionQuery,
 } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import styles from "./page.module.scss";
 
+interface WhatIWorkWithData {
+  kicker?: string;
+  heading?: string;
+  intro?: string[];
+  closingLine?: string;
+}
+
+interface HowIWorkPart {
+  title?: string;
+  body?: string[];
+}
+
+interface HowIWorkData {
+  kicker?: string;
+  heading?: string;
+  intro?: string;
+  parts?: HowIWorkPart[];
+}
+
 interface ChiSonoData {
   kicker?: string;
   title?: string;
   titleEmphasisWord?: string;
+  heroStandfirst?: string;
+  heroLocations?: string;
+  whatIWorkWith?: WhatIWorkWithData;
+  howIWork?: HowIWorkData;
   paragraphs?: string[];
   pullQuote?: string;
   portrait?: { asset?: unknown; alt?: string };
@@ -56,15 +80,8 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-// "Non sono un tuttologo — e lo considero un punto di forza." is the only
-// clause of paragraph 5 NOT already on the homepage (its first two
-// sentences are homePage.profilo's own third paragraph, word for word —
-// see this route's own top comment on the overlap). Selects, doesn't
-// rewrite — same technique the article route's own buildAuthorBio/
-// firstSentence already uses in the opposite direction.
-function lastSentence(paragraph: string): string {
-  const sentences = paragraph.split(/(?<=[.!?])\s+/).filter(Boolean);
-  return sentences[sentences.length - 1] ?? paragraph;
+function getMosaicItems(locale: string) {
+  return sanityFetch<AreaMosaicItem[]>(chiSonoMosaicQuery, { locale }, ["pillarPage"]);
 }
 
 export async function generateMetadata({
@@ -91,26 +108,17 @@ export async function generateMetadata({
   });
 }
 
-// Chi sono build pass — reads chiSonoSection directly, not the aboutPage
-// document type. aboutPage (defineSimplePageType) is a generic title +
-// Portable Text body + SEO shape with zero documents ever created against
-// it — it has no portrait, no pull quote, no kicker, none of the
-// individually-addressable fields this page's own layout needs, and using
-// it would mean either inventing a document from scratch (with no real
-// content to put in the body beyond what chiSonoSection already holds
-// verbatim) or storing the SAME real client copy in two places. chiSonoSection
-// already has real, finished content in exactly the shape this page uses.
-//
-// Overlap handling (explicit instruction: don't repeat homePage.profilo's
-// three paragraphs verbatim) — checked directly, paragraph by paragraph:
-// chiSonoSection.paragraphs[2] and [3] are profilo's paragraphs 1 and 2,
-// word for word. paragraphs[4]'s first two sentences are profilo's
-// paragraph 3, word for word; only its closing sentence ("Non sono un
-// tuttologo...") isn't on the homepage. This page therefore renders only
-// paragraphs[0] and [1] (the origin story — Siena, the panic attack,
-// Amsterdam — which exists nowhere else on the site), the pull quote
-// inline, and paragraphs[4] trimmed to its one non-duplicate sentence.
-// paragraphs[2]/[3] are not rendered here at all.
+// Chi sono opening pass (pass 1 of 4) — replaces the page's old top
+// (PillarHero + paragraphs[0]/[1] + pullQuote + trimmed paragraphs[4])
+// with the new Hero / "Di cosa mi occupo" / "Come lavoro" sections. What
+// used to render there is gone from THIS route, but chiSonoSection.
+// paragraphs itself is untouched in the schema and still populated — the
+// article footer's author bio (buildAuthorBio, blog/[slug]/page.tsx)
+// reads it through its own independent query and keeps working
+// unmodified. DiplomiSlider ("Quattordici anni di formazione", today's
+// closest thing to "the timeline") and ContactBlock below are left
+// exactly as they rendered before this pass — untouched, per instruction,
+// reserved for a later pass.
 export default async function ChiSonoPage({
   params,
 }: {
@@ -118,10 +126,11 @@ export default async function ChiSonoPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const typedLocale = locale as "it" | "en";
+  const typedLocale = locale as Locale;
 
-  const [chiSono, diplomiData, contactCopy, siteSettings] = await Promise.all([
+  const [chiSono, mosaicItems, diplomiData, contactCopy, siteSettings] = await Promise.all([
     sanityFetch<ChiSonoData | null>(chiSonoSectionQuery, { locale }, ["chiSonoSection"]),
+    getMosaicItems(locale),
     sanityFetch<DiplomiData | null>(chiSonoDiplomiQuery, { locale }, ["homePage"]),
     getContactSectionCopy(locale),
     getSiteSettings(locale),
@@ -134,59 +143,107 @@ export default async function ChiSonoPage({
   const breadcrumbJsonLd = buildBreadcrumbListJsonLd(trail, siteUrl);
 
   const tDiplomi = await getTranslations({ locale, namespace: "Diplomi" });
+  const tChiSono = await getTranslations({ locale, namespace: "ChiSono" });
   const diplomiLabItems = resolveDiplomiLabItems(diplomiData?.diplomi?.items);
 
   const contactSection = contactCopy?.contactSection;
   const contactPhotoUrl = "/design-lab/photos/09.webp";
   const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
 
-  const paragraphs = chiSono?.paragraphs ?? [];
-  const closingSentence = paragraphs[4] ? lastSentence(paragraphs[4]) : undefined;
+  const whatIWorkWith = chiSono?.whatIWorkWith;
+  const howIWork = chiSono?.howIWork;
+  const parts = howIWork?.parts ?? [];
 
   return (
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
 
-      {/* Section 1: Hero — reuses PillarHero as-is. No facts strip on this
-          route (see page.module.scss's own comment on .heroViewport for
-          the flex-sibling question); no standfirst (chiSonoSection has no
-          field for one — see PillarHero.tsx's own comment on why that
-          prop is now optional). */}
-      <div className={styles.heroViewport}>
-        <PillarHero
+      <div className={styles.lightIsland}>
+        {/* Section 1: Hero — contained, portrait to the side. Replaces
+            the old full-bleed PillarHero. */}
+        <PortraitHero
           trail={trail}
-          heroKicker={chiSono?.kicker ?? ""}
+          kicker={chiSono?.kicker ?? ""}
           title={chiSono?.title ?? ""}
           titleEmphasisWord={chiSono?.titleEmphasisWord}
-          heroImage={chiSono?.portrait as never}
+          standfirst={chiSono?.heroStandfirst}
+          locationsLine={chiSono?.heroLocations}
+          portrait={chiSono?.portrait as never}
         />
-      </div>
 
-      <div className={styles.lightIsland}>
-        {/* Section 2: Body — reuses ReadingArea. chiSonoSection stores
-            plain prose, not Portable Text, so there's no PortableText call
-            here — just plain <p>/<blockquote> tags carrying
-            portableTextComponents.module.scss's own .paragraph/.blockquote
-            classes (the same rhythm pillar/article body copy already
-            uses, borrowed directly rather than re-declared). No headings
-            at all (see this route's own report on the TOC-minimum
-            question) — ReadingArea's own hasToc check collapses the TOC
-            gutter accordingly. */}
-        <ReadingArea headings={[]}>
-          {paragraphs[0] ? <p className={portableTextStyles.paragraph}>{paragraphs[0]}</p> : null}
-          {paragraphs[1] ? <p className={portableTextStyles.paragraph}>{paragraphs[1]}</p> : null}
-          {chiSono?.pullQuote ? (
-            <blockquote className={portableTextStyles.blockquote}>{chiSono.pullQuote}</blockquote>
-          ) : null}
-          {closingSentence ? <p className={portableTextStyles.paragraph}>{closingSentence}</p> : null}
-        </ReadingArea>
+        {/* Section 2: "Di cosa mi occupo" — heading/intro in the
+            container, then the full-bleed area mosaic, then the closing
+            paragraph and the italic voice-shift line. */}
+        {whatIWorkWith ? (
+          <>
+            <div className={styles.whatIWorkWith}>
+              {whatIWorkWith.kicker ? (
+                <p className={portableTextStyles.paragraph}>{whatIWorkWith.kicker}</p>
+              ) : null}
+              {whatIWorkWith.heading ? (
+                <h2 className={styles.whatIWorkWithHeading}>{whatIWorkWith.heading}</h2>
+              ) : null}
+              {(whatIWorkWith.intro ?? []).slice(0, -1).map((paragraph, index) => (
+                <p key={index} className={portableTextStyles.paragraph}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
 
-        {/* Section 3: Qualifications — reuses DiplomiSlider verbatim,
-            reading the SAME homePage.diplomi data the homepage itself
-            shows (not new content — the qualification list itself isn't
-            part of the paragraph-overlap concern). scan/scanRedacted gate
-            now lives in src/sanity/diplomi.ts's resolveDiplomiLabItems,
-            shared with the homepage instead of duplicated. */}
+            <AreaMosaic
+              items={mosaicItems}
+              locale={typedLocale}
+              subtopicCountLabel={(count) => tChiSono("subtopicCount", { count })}
+            />
+
+            <div className={styles.whatIWorkWithClosing}>
+              {(whatIWorkWith.intro ?? []).slice(-1).map((paragraph, index) => (
+                <p key={index} className={portableTextStyles.paragraph}>
+                  {paragraph}
+                </p>
+              ))}
+              {whatIWorkWith.closingLine ? (
+                <p className={styles.closingLine}>{whatIWorkWith.closingLine}</p>
+              ) : null}
+            </div>
+          </>
+        ) : null}
+
+        {/* Section 3: "Come lavoro" — sand surface, in the container.
+            Numbered parts, chapter marks not an infographic; a part with
+            no real content yet (the bracketed "Fra un incontro e
+            l'altro" / "Between sessions") is simply absent from the
+            array — see the population script's own comment. */}
+        {howIWork && parts.length > 0 ? (
+          <div className={styles.howIWork}>
+            <div className={styles.howIWorkSurface}>
+              {howIWork.kicker ? (
+                <p className={portableTextStyles.paragraph}>{howIWork.kicker}</p>
+              ) : null}
+              {howIWork.heading ? <h2 className={styles.howIWorkHeading}>{howIWork.heading}</h2> : null}
+              {howIWork.intro ? <p className={styles.howIWorkIntro}>{howIWork.intro}</p> : null}
+              <div className={styles.parts}>
+                {parts.map((part, index) => (
+                  <div key={part.title ?? index} className={styles.part}>
+                    <span className={styles.partNumber} aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      {part.title ? <h3 className={styles.partTitle}>{part.title}</h3> : null}
+                      <div className={styles.partBody}>
+                        {(part.body ?? []).map((paragraph, paragraphIndex) => (
+                          <p key={paragraphIndex}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Section 4: Qualifications — unchanged, DiplomiSlider verbatim. */}
         <section className={styles.qualifications} aria-labelledby="chi-sono-diplomi-heading">
           <DiplomiSlider
             headingId="chi-sono-diplomi-heading"
@@ -200,12 +257,7 @@ export default async function ChiSonoPage({
           />
         </section>
 
-        {/* Section 4: Contact — reuses ContactBlock, same props shape as
-            the pillar/article routes. No related-articles section (owner
-            call: a bio page listing blog posts read as odd — flagged in
-            this pass's own earlier report, not built here). No
-            PillarRecognition (built for symptom quotes, not biographical
-            content). */}
+        {/* Section 5: Contact — unchanged. */}
         <ContactBlock
           kicker={contactSection?.kicker ?? ""}
           heading={contactSection?.heading ?? ""}

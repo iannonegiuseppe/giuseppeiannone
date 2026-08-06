@@ -77,6 +77,87 @@ export const chiSonoSection = defineType({
       "Title — emphasized word (must match one word from the title above exactly, case-sensitive; leave empty for no emphasis)",
       { required: false },
     ),
+    // Chi sono opening pass (pass 1 of 4) — hero rebuild. Portrait moves
+    // from a full-bleed background (PillarHero, the old top of this page)
+    // to a contained side-by-side layout (PortraitHero) — see that
+    // component's own file for why a new one was needed. kicker/title/
+    // titleEmphasisWord above are unchanged and still feed the new hero
+    // directly; these two are additive.
+    textField("heroStandfirst", "Hero — standfirst (one line)", { rows: 2 }),
+    stringField("heroLocations", "Hero — locations line (e.g. \"Milano, Monza, Cernusco sul Naviglio\")"),
+    // "Di cosa mi occupo" — heading/intro/closing sit in the container;
+    // the area mosaic between them is NOT authored here, it's derived
+    // live from pillarPage documents (title/slug/heroImage/subtopic
+    // count) so a new area appears automatically — see AreaMosaic.tsx.
+    defineField({
+      name: "whatIWorkWith",
+      title: '"Di cosa mi occupo" section',
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        defineField({
+          name: "intro",
+          title: "Intro paragraphs",
+          description: "Short first-person paragraphs, rendered in order before the area mosaic.",
+          type: "array",
+          of: [{ type: "text", rows: 3, validation: (Rule) => Rule.required().custom(deontologyCheck) }],
+          validation: (Rule) => Rule.min(1),
+        }),
+        stringField(
+          "closingLine",
+          "Closing line (italic, personal voice — the page's first shift from factual to personal)",
+        ),
+      ],
+    }),
+    // "Come lavoro" — kicker/heading/intro plus numbered parts. Each
+    // part's own chapter number is presentational (array position),
+    // not a stored field. A part with no real answer yet (e.g. "Fra un
+    // incontro e l'altro", still bracketed in the draft as of this pass)
+    // is simply left out of the array — never rendered as an empty part.
+    defineField({
+      name: "howIWork",
+      title: '"Come lavoro" section',
+      type: "object",
+      fields: [
+        stringField("kicker", "Kicker"),
+        stringField("heading", "Heading"),
+        textField("intro", "Intro", { rows: 2 }),
+        defineField({
+          name: "parts",
+          title: "Parts",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              name: "howIWorkPart",
+              fields: [
+                stringField("title", "Part title"),
+                defineField({
+                  name: "body",
+                  title: "Part body (paragraphs)",
+                  type: "array",
+                  of: [{ type: "text", rows: 3, validation: (Rule) => Rule.required().custom(deontologyCheck) }],
+                  validation: (Rule) => Rule.min(1),
+                }),
+              ],
+              preview: {
+                select: { title: "title" },
+              },
+            },
+          ],
+          validation: (Rule) => Rule.min(1),
+        }),
+      ],
+    }),
+    // --- Fields below are unchanged by the opening pass. `paragraphs` in
+    // particular stays exactly as it is: the article footer's author bio
+    // (buildAuthorBio, blog/[slug]/page.tsx) reads it through its own
+    // independent query (chiSonoPortraitQuery) — nothing here deletes,
+    // renames, or repurposes it, so that stays working unmodified.
+    // `pullQuote` is reserved for a later pass (the page's own dedicated
+    // quote section, not the same thing as whatIWorkWith.closingLine
+    // above, which is new content specific to that section). ---
     defineField({
       name: "paragraphs",
       title: "Paragraphs",

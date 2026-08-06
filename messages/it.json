@@ -27,7 +27,8 @@
     "viewDocumentSuffix": "vedi il documento"
   },
   "ChiSono": {
-    "storyLinkLabel": "Leggi la mia storia"
+    "storyLinkLabel": "Leggi la mia storia",
+    "subtopicCount": "{count, plural, one {# sottotema} other {# sottotemi}}"
   },
   "Video": {
     "wrapperAriaLabel": "Video: {title}"

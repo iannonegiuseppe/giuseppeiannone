@@ -82,6 +82,33 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
   borders. Reference tokens/mixins only.
 - Media queries are mobile-first, expressed via the breakpoint mixins — not raw
   `@media` queries with hand-written widths.
+- **Inside `tone.light-island-surface` (or `tone-mid-surface`), only the tokens
+  that mixin explicitly reassigns are safe to use — every other token still
+  resolves to the site's ambient DARK theme value**, because the mixin doesn't
+  touch the `:root` cascade, it just locally overrides a specific list of custom
+  properties. Found live (chi-sono opening pass): `var(--color-sand)` inside a
+  light island rendered near-black, because `--color-sand` is theme-flipped
+  (`#f1ece2` light / `#16261F` dark) and isn't one of the properties the mixin
+  reassigns.
+  - **Covered** (safe, already re-pointed to the light-theme value):
+    `--color-bg`, `--color-text`, `--color-text-muted`, `--color-hairline`,
+    `--color-line`, `--color-focus`, `--color-accent`, `--color-accent-hover`,
+    `--color-accent-contrast` (plus a few component-specific ones —
+    `--hope-section-bg`, `--hope-emphasis-color`, `--divider-glow`).
+  - **NOT covered** (still resolves to the dark-theme literal inside a light
+    island — check `_tokens.scss` for both `:root` values before using any of
+    these there): `--color-surface`, `--color-surface-tint`,
+    `--color-surface-raised`, `--color-sand`, `--color-sand-deep`,
+    `--color-greige`, `--color-accent-light`, `--color-accent-deep`,
+    `--color-accent-gradient-light`/`-dark`, `--color-accent-soft`,
+    `--color-amber`, `--color-gold-bronze`, `--color-photo-backdrop`,
+    `--color-glass-*`, `--color-glow*`, `--color-text-faint`,
+    `--color-hairline-strong`.
+  - For a surface fill inside a light island, reach for a `--light-base-*`
+    token directly (`--light-base-bg`, `--light-base-hairline`,
+    `--light-base-line`, `--light-base-accent`/`-accent-hover`) — these are
+    theme-invariant by construction, not reassigned per-scope, so they can't
+    have this problem.
 
 ## i18n routing
 

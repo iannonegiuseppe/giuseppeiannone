@@ -27,7 +27,8 @@
     "viewDocumentSuffix": "view the document"
   },
   "ChiSono": {
-    "storyLinkLabel": "Read my story"
+    "storyLinkLabel": "Read my story",
+    "subtopicCount": "{count, plural, one {# subtopic} other {# subtopics}}"
   },
   "Video": {
     "wrapperAriaLabel": "Video: {title}"

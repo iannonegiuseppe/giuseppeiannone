@@ -134,6 +134,10 @@ export const chiSonoSectionQuery = defineQuery(`
     kicker,
     title,
     titleEmphasisWord,
+    heroStandfirst,
+    heroLocations,
+    whatIWorkWith,
+    howIWork,
     paragraphs,
     pullQuote,
     portrait,
@@ -141,6 +145,23 @@ export const chiSonoSectionQuery = defineQuery(`
     storyLink,
     signatureEnabled,
     seo
+  }
+`);
+
+// Chi sono opening pass — the "Di cosa mi occupo" area mosaic. Derived
+// live from pillarPage documents, not authored on chiSonoSection itself
+// (see that field group's own schema comment) — a new area appears here
+// automatically, nothing to update on this page when one ships.
+// subtopicCount is only ever rendered for the anxiety tile today (see
+// AreaMosaic.tsx), but computed for every pillar here rather than special-
+// cased in the query, so it's already correct if that changes later.
+export const chiSonoMosaicQuery = defineQuery(`
+  *[_type == "pillarPage" && language == $locale]{
+    _id,
+    title,
+    "slug": slug.current,
+    heroImage,
+    "subtopicCount": count(*[_type == "subtopicPage" && language == $locale && parentPillar._ref == ^._id])
   }
 `);
 
