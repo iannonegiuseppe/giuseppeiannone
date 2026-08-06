@@ -1,0 +1,27 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// Prezzi build pass — pricePage has no hero fields (defineSimplePageType:
+// title + body + seo only, see pricePage.ts), so unlike the pillar/
+// subtopic/chi-sono routes there's no dark hero band before the light
+// content — this page IS the light island, starting right below the
+// fixed header. Same tone.light-island-surface mechanism those routes
+// already use for their own light section, just applied to the whole
+// page instead of a lower portion of it.
+.lightIsland {
+  @include tone.light-island-surface;
+}
+
+.header {
+  @include mixins.container;
+  padding-top: var(--header-height);
+  padding-bottom: var(--space-6);
+}
+
+.title {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+}

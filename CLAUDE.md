@@ -133,6 +133,34 @@ upheld in every schema added later:
   `createImageUrlBuilder`) — the rule is about `.fetch()` calls, not the
   export.
 
+## Singleton page routes
+
+- **One route folder per locale, not a shared dynamic dispatcher.** Chi sono
+  (`chi-sono/` + `about-me/`), Prezzi (`prezzi/` + `pricing/`), and the rest of
+  the fixed singleton pages (Metodo, Contatti, FAQ) each get their own literal
+  folder per translated slug — the non-English-slug folder re-exports the
+  other's `generateMetadata`/`default` wholesale (see `about-me/page.tsx` or
+  `pricing/page.tsx`) rather than duplicating logic. A single
+  `[locale]/[singletonSlug]/page.tsx` reading a slug→type map was considered
+  and rejected: these are five fixed, known pages, each with its own schema
+  shape and its own template — a dispatcher doesn't reduce that work, it just
+  moves the same branching into one file instead of five, while putting the
+  one already-working, already-verified route (Chi sono) at risk for no
+  benefit. Reconsider only if a sixth+ singleton makes the duplication itself
+  the actual maintenance cost, not before.
+- **Build a singleton's `localizedPaths` from its path function
+  (`src/sanity/paths.ts`), never from an `alternates`/`translation.metadata`
+  projection.** Chi sono's `generateMetadata` passes
+  `{ it: aboutPath("it"), en: aboutPath("en") }` directly — no document
+  lookup in the chain. This is what a fixed page needs: the URL is already
+  known in code, so there's nothing to gain from deriving it via
+  `translation.metadata`, and doing so is what caused chi-sono's own
+  canonical-resolves-to-"/" bug (silently falls back to `"/"` when that
+  metadata document doesn't exist yet — confirmed live: zero
+  `translation.metadata` documents exist for any singleton type today, and
+  chi-sono's canonical/hreflang are still correct, because they never depend
+  on one). Every singleton page must follow this pattern from day one.
+
 ## Sanity Studio verification
 
 `/studio` is behind auth (Google/GitHub/email login) — there are no headless

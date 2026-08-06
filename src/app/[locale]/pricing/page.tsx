@@ -1,22 +1,8 @@
-import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
-import { PreviewPlaceholderPage } from "@/components/PreviewPlaceholderPage";
-import { resolveRobots } from "@/sanity/metadata";
-
-// PREVIEW-GATE (temporary) route — English slug for pricePath's EN
-// output (/en/pricing). See PreviewPlaceholderPage.tsx's own comment.
-// Reversal: delete this folder once the real Pricing page is built.
-export const metadata: Metadata = {
-  title: "Pricing | Giuseppe Iannone",
-  robots: resolveRobots(true),
-};
-
-export default async function PricingPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-  return <PreviewPlaceholderPage locale={locale} />;
-}
+// EN-slug folder for pricePath's own "/en/pricing" output — same
+// dual-folder pattern as chi-sono/about-me, contact/contatti (one literal
+// folder per locale's translated slug; next-intl's routing here doesn't
+// auto-translate path segments). Re-exports the real implementation
+// wholesale rather than duplicating it: this route's content and
+// behavior are locale-driven (the `locale` param), not folder-driven, so
+// there is nothing route-specific left to write here.
+export { generateMetadata, default } from "../prezzi/page";

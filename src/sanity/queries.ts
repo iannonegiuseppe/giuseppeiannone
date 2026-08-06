@@ -625,6 +625,17 @@ export const contactSectionQuery = defineQuery(`
   }
 `);
 
+// Prezzi build pass — pricePage is a defineSimplePageType singleton
+// (title + portableText body + seo, nothing else), same narrow-select
+// shape as every other singleton query here.
+export const pricePageQuery = defineQuery(`
+  *[_type == "pricePage" && language == $locale][0]{
+    title,
+    ${bodyProjection},
+    seo
+  }
+`);
+
 // Blog index redesign pass — hero + closing editorial copy for the /blog
 // listing (its own singleton, blogIndexSection.ts).
 export const blogIndexQuery = defineQuery(`
