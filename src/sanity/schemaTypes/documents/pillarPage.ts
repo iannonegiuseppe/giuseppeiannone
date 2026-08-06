@@ -115,6 +115,20 @@ export const pillarPage = defineType({
         "Short first-person phrases Giuseppe has actually heard in practice — a staggered composition, not a grid. Not a diagnosis; the page adds a fixed disclaimer line beneath these automatically. Leave empty to hide this section entirely.",
       type: "object",
       fields: [
+        // Pillar rollout pass — companion to isDraft above. Two pages
+        // (stress, trauma) shipped with author-drafted quotes, and the
+        // standard disclaimer ("Frasi che sento spesso in studio" / "Phrases
+        // I hear often in practice") would misrepresent them as things
+        // Giuseppe has actually heard. Optional: every other page leaves
+        // this empty and keeps rendering the standard PillarPage.recognitionDisclaimer
+        // message catalog string unchanged (see PillarRecognition.tsx).
+        defineField({
+          name: "leadInOverride",
+          title: "Lead-in override",
+          description:
+            "Replaces the standard \"Phrases I hear often in practice\" disclaimer for this page only. Leave empty unless the quotes above aren't yet Giuseppe's own words.",
+          type: "string",
+        }),
         defineField({
           name: "items",
           title: "Phrases",
@@ -158,20 +172,46 @@ export const pillarPage = defineType({
                   type: "reference",
                   to: [{ type: "subtopicPage" }],
                 }),
+                // Pillar rollout pass — Studio-only marker, never read by
+                // any component: two pages (stress, trauma) shipped with
+                // author-drafted phrases in place of Giuseppe's own words,
+                // because he hasn't provided any for those two areas yet
+                // (see the pillar rollout's own report). This flag is
+                // what makes them findable in Studio for later
+                // replacement — the preview.prepare below surfaces it in
+                // the list view — without printing any "draft" marker on
+                // the live page itself, where a quote and a bracketed
+                // caveat could never coexist cleanly.
+                defineField({
+                  name: "isDraft",
+                  title: "Drafted, not Giuseppe's own words",
+                  description:
+                    "Studio-only flag, never shown on the live page. Set when this quote is a placeholder written by someone else, pending Giuseppe's own phrasing.",
+                  type: "boolean",
+                  initialValue: false,
+                }),
               ],
               preview: {
-                select: { quote: "quote", label: "label", subtopicTitle: "subtopic.title" },
+                select: {
+                  quote: "quote",
+                  label: "label",
+                  subtopicTitle: "subtopic.title",
+                  isDraft: "isDraft",
+                },
                 prepare({
                   quote,
                   label,
                   subtopicTitle,
+                  isDraft,
                 }: {
                   quote?: string;
                   label?: string;
                   subtopicTitle?: string;
+                  isDraft?: boolean;
                 }) {
+                  const title = label ? `${label} — ${quote ?? ""}` : (quote ?? "");
                   return {
-                    title: label ? `${label} — ${quote ?? ""}` : (quote ?? ""),
+                    title: isDraft ? `[BOZZA] ${title}` : title,
                     subtitle: subtopicTitle ? `→ ${subtopicTitle}` : "not linked yet",
                   };
                 },

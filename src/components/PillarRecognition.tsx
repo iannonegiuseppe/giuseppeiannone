@@ -13,6 +13,7 @@ export interface RecognitionItemData {
 
 export interface RecognitionData {
   items?: RecognitionItemData[];
+  leadInOverride?: string;
 }
 
 // Emphasis-word selection — automatic, not authored. Picking the first
@@ -139,7 +140,7 @@ export async function PillarRecognition({
           <span className={styles.kickerRule} aria-hidden="true" />
           {t("recognitionKicker")}
         </p>
-        <p className={styles.leadIn}>{t("recognitionDisclaimer")}</p>
+        <p className={styles.leadIn}>{recognition?.leadInOverride ?? t("recognitionDisclaimer")}</p>
       </div>
       <RecognitionConstellation items={quoteItems} />
       <RecognitionSubtopicList kicker={t("recognitionListKicker")} items={subtopicItems} />

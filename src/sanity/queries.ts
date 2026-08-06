@@ -448,6 +448,7 @@ export const rootSlugQuery = defineQuery(`
       titleEmphasisWord,
       factsStrip,
       recognition{
+        leadInOverride,
         items[]{
           _key,
           quote,
