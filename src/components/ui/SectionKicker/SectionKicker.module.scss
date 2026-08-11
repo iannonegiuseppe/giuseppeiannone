@@ -1,0 +1,55 @@
+// Shared kicker-rule wrapper. Geometry and colour copied byte for byte
+// from the six pre-existing "kicker + rule" implementations already in
+// this codebase — contactBlock.module.scss's own comment names all six
+// as byte-identical: .kickerRule (chiSonoBlock.module.scss),
+// .headingKickerRule (diplomiSlider.module.scss, locationsMarquee.
+// module.scss), .locationsKickerRule (sediSection.module.scss),
+// .pricingKickerRule (pricingBlock.module.scss), .contactKickerRule
+// (contactBlock.module.scss) — width: 2.5rem, height: 1px,
+// background: var(--color-line). Verified directly against
+// contactBlock.module.scss and diplomiSlider.module.scss before writing
+// this, not retyped from memory.
+//
+// var(--color-line) is one of the tokens light-island-surface reassigns
+// (to --light-base-line) — so this one component reads correctly on
+// both the light-island scope and the dark ambient scope with no prop.
+//
+// Kicker-text colour pass — color: var(--color-accent) added here, on
+// .wrap itself, not per-caller. Checked every real caller first (not
+// assumed safe): every one of them — LightPortraitHero (/faq, /blog),
+// ChiSonoCredentials, TimelineSection, PublicationsVariants,
+// ChiSonoHowIWorkVariants, ChiSonoBodyBlocks, chi-sono/page.tsx's own
+// whatIWorkWithKicker — already independently sets color: var(--color-
+// accent) on ITS OWN wrapping element (a <p> ancestor of this <span>).
+// This component's own top comment ("ChiSonoCredentials' own taupe") is
+// stale — that caller uses --color-accent today, not a separate taupe
+// value; not corrected here, out of scope. Adding the same value here,
+// on the shared span itself, is therefore a no-op for every existing
+// caller (their own inherited value already matched) and fixes the one
+// real gap: /prezzi's own three kickers, which set no color at all.
+// --color-accent is already the right token for BOTH grounds with zero
+// extra logic: light-island-surface reassigns it to --light-base-accent
+// (#7e6b5b, 4.58:1 against #F6F3EE — measured, see this pass's own
+// report), the ambient dark theme leaves it as the real accent gold
+// (#c29a5e) — same property, ONE declaration, no tone prop, no per-page
+// override, no raw hex.
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-accent);
+}
+
+// aria-hidden (set on the element in index.tsx) plus pointer-events:none
+// here — explicit requirement for this new shared component, not part
+// of the six source files (none of them set pointer-events on their own
+// rule spans; added here since a purely decorative dash should never be
+// a hit target).
+.rule {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1px;
+  background: var(--color-line);
+  pointer-events: none;
+}

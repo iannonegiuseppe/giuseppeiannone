@@ -1,0 +1,152 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Extracted verbatim from blogIndex.module.scss's own hero rules — see
+// LightPortraitHero.tsx's own top comment for what changed (kicker rule
+// now via SectionKicker, one new opt-in .heroMetaLine class) and what
+// didn't (every other rule below is a byte-for-byte copy, including the
+// comments explaining each measurement/decision — this is the same
+// component, just given its own file so a second caller can use it).
+
+.hero {
+  @include tone.light-island-surface;
+}
+
+.heroInner {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1.15fr;
+    gap: var(--space-9);
+    align-items: stretch;
+    min-height: 42rem;
+  }
+}
+
+.heroText {
+  order: 2;
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    order: 1;
+    align-self: center;
+    padding-block: var(--space-10);
+  }
+}
+
+.kickerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+  text-wrap: balance;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: var(--fs-display-lg);
+  }
+}
+
+.heroTitleEmphasis {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-accent);
+}
+
+.heroIntro {
+  margin: var(--space-5) 0 0;
+  max-width: 34rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// New, /faq-only (opt-in prop, blog never passes it) — same typographic
+// step as .heroIntro, distinguished only by colour (accent, not muted) so
+// a computed fact ("39 questions across 10 topics") reads as a small
+// stat line under the intro paragraph, not a second sentence of prose.
+.heroMetaLine {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-hover);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroVisual {
+  position: relative;
+  order: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 20rem;
+  margin-inline: auto;
+  padding-top: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    order: 2;
+    max-width: none;
+    margin-inline: 0;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding-top: 0;
+  }
+}
+
+.heroVisualFrame {
+  position: relative;
+  width: 100%;
+  // --hero-visual-scale is opt-in (set inline per-caller, see
+  // LightPortraitHero.tsx's photoScale prop) — unset falls back to 1, so
+  // callers that don't pass it (blog) render byte-for-byte identical to
+  // before this existed.
+  max-width: calc(22rem * var(--hero-visual-scale, 1));
+
+  @include mixins.breakpoint-up(lg) {
+    max-width: calc(34rem * var(--hero-visual-scale, 1));
+  }
+}
+
+.heroVisualGlow {
+  position: absolute;
+  inset: 10% 10% 0 10%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-accent) 22%, transparent) 0%,
+    transparent 70%
+  );
+  filter: blur(2.5rem);
+  z-index: 0;
+}
+
+.heroVisualImg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+}

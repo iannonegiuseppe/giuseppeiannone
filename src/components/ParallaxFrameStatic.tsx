@@ -31,13 +31,18 @@ export function ParallaxFrameStatic({
   aspect,
   imageUrl,
   imageAlt,
+  className,
 }: {
   aspect?: string;
   imageUrl: string;
   imageAlt?: string;
+  className?: string;
 }) {
   return (
-    <div className={styles.spaceParallaxFrame} style={{ "--space-parallax-aspect": aspect } as CSSProperties}>
+    <div
+      className={className ? `${styles.spaceParallaxFrame} ${className}` : styles.spaceParallaxFrame}
+      style={{ "--space-parallax-aspect": aspect } as CSSProperties}
+    >
       <Image
         src={imageUrl}
         alt={imageAlt ?? ""}

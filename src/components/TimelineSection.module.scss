@@ -1,21 +1,73 @@
 @use "../styles/mixins";
 
-// Chi sono timeline pass — the page's ONE dark section. No tone mixin
-// applied here at all: this section simply never opts into
-// light-island-surface (unlike everything else new on this page), so
-// --color-bg/-text/-text-muted/-accent/-hairline all resolve to the
-// site's own native dark-theme values, same as any other un-wrapped
-// section on the site. Contained (mixins.container), not full-bleed —
-// no content reason to bleed here, unlike the mosaic.
+// Chi sono timeline rebuild — pinning removed (see TimelineSection.tsx's
+// own comment for why). No tone mixin: this section never opts into
+// light-island-surface, so --color-bg/-text/-text-muted/-accent/-hairline
+// all resolve to the site's own native dark-theme values, same as every
+// other un-wrapped dark section on the site (Hero, the parallax divider,
+// "Come lavoro").
+//
+// padding-top unchanged (calc(var(--space-band-y) / 2)) — the gap above
+// the first card doesn't involve this at all (the header sits AFTER
+// this padding, inside the section; only its own margin-bottom and the
+// sticky's centring reach the first card).
+//
+// padding-bottom is deliberately NOT the same value. Measured live,
+// gap-above (description -> first card) = header's margin-bottom (32px)
+// + the sticky's centring gap; gap-below (last card -> next section) =
+// that SAME centring gap + this padding-bottom + a 24px contribution
+// that isn't padding at all — it's CSS margin-collapse from
+// Publications' own first child (a shared portableTextComponents
+// paragraph, margin-top: 24px, bubbling up through .publications and
+// .lightIslandBottom since neither has padding/border to stop the
+// collapse). That 24px is real and outside this file's reach without
+// editing a component shared by every portable-text block on the site,
+// so it's accounted for here instead: padding-bottom = header's
+// margin-bottom (32px) minus that 24px = var(--space-2) (8px), which
+// makes gap-below equal gap-above exactly (both reduce to centring-gap
+// + 32px once the 24px collapse and this 8px combine back to 32px) —
+// see this pass's own report for the measured before/after.
 .timeline {
   background: var(--color-bg);
   color: var(--color-text);
-  padding-block: var(--space-9);
+  padding-top: calc(var(--space-band-y) / 2);
+  padding-bottom: var(--space-2);
 }
 
+// margin-bottom halved var(--space-8) -> var(--space-6) (64px -> 32px) —
+// flagged live alongside .timeline's own padding-block above as part of
+// the same "too large a gap" complaint (this is the header-to-first-card
+// half of it, the .routePinSticky centring gap below is the other).
 .header {
   @include mixins.container;
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
+}
+
+// Route pins the whole header into its own sticky unit alongside the
+// rail/stage (TimelineRoutePinned.tsx's own .routePinHeader) at
+// lg+/motion-allowed, so THIS copy — otherwise always-visible — would
+// double up there. Same toggle shape as .routeFallback/.routePinWrap in
+// TimelineVariants.module.scss: hidden at lg+, restored under reduced
+// motion (matching the pin itself being force-disabled there). Below
+// lg, or for every other variant (this class is only ever applied when
+// variant === "route"), this header stays exactly as it always was.
+.headerHiddenForRoutePin {
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: block !important;
+  }
+}
+
+// Preview-only wrapper for the three query-param-driven layout
+// variants (TimelineCaseFile/TimelineRoute/TimelinePulse — see
+// TimelineSection.tsx's own TimelineVariant dispatch). Same container
+// width as .layout below; not reused as .header, which is scoped to
+// the kicker/heading area specifically.
+.preview {
+  @include mixins.container;
 }
 
 .kicker {
@@ -37,123 +89,216 @@
   line-height: var(--lh-h2);
 }
 
-.grid {
+// Italic comes from the caller, not from ShimmerText itself (that
+// component's own .shimmer class has no font-style) — same pattern
+// WelcomeBlock.module.scss's own .welcomeEmphasis uses. font-weight:400
+// declared explicitly, not inherited: EB Garamond (--font-display) has a
+// real italic face, and this codebase has been bitten before by a
+// synthesised bold-italic fallback when weight wasn't pinned (see
+// diplomiSlider.module.scss's own "EB Garamond, font-weight 400
+// EXPLICITLY" comment for the same fix applied to a heading, not an
+// emphasis span).
+.headingEmphasis {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.description {
+  max-width: 34rem;
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+}
+
+// --- Layout: rail | entries ------------------------------------------------
+// Below lg: plain container, rail hidden, entries stack (single column).
+// At lg+: two-track grid — rail (220px, fixed, per this pass's own brief)
+// | entries (the remainder).
+//
+// column-gap is SMALLER at the lg-only tier (1024-1279px, var(--space-7))
+// than at xl+ (var(--space-9)): a real bug, caught live, not assumed —
+// at 1024 the full rail(220) + gap(96) + image(420) + entry's own
+// image-text gap(64) left only ~128px for the text column, wrapping
+// "Un'esperienza a cui non sapevo dare un nome" one or two words per
+// line. Freeing width here (paired with the matching image-width and
+// entry-gap steps below) brings that back to a comfortable ~300px+ —
+// verified this pass's own report. xl+ (1280px, where 1440 already
+// measured comfortably at 424px) is untouched.
+.layout {
   @include mixins.container;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-7);
 
   @include mixins.breakpoint-up(lg) {
-    grid-template-columns: 14rem 1fr;
-    gap: var(--space-9);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+
+  @include mixins.breakpoint-up(xl) {
+    column-gap: var(--space-9);
   }
 }
 
-// Rail column only participates in the grid ≥lg — below that, the rail
-// itself is never rendered into the layout flow (see .railColumn's
-// display:none), and each entry shows its own year/place inline instead
-// (.entryMeta) so the information isn't lost, just relocated.
-.railColumn {
+.entries {
+  display: flex;
+  flex-direction: column;
+}
+
+// --- Rail (TimelineRail.tsx) ------------------------------------------------
+.rail {
   display: none;
 
   @include mixins.breakpoint-up(lg) {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
   }
-}
-
-.rail {
-  position: sticky;
 }
 
 .railList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .railLink {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  display: block;
   text-decoration: none;
-  border-left: 1px solid var(--color-hairline);
-  padding-left: var(--space-3);
-  transition: border-color 300ms ease;
-
-  // Inactive by default: muted, not faint — --color-text-faint fails the
-  // 4.5:1 body floor by design (docs/design-direction.md §10, "never
-  // small captions or labels"), and a year/place line is exactly that
-  // register. --color-text-muted measured instead (see this pass's own
-  // report for the number).
-  color: var(--color-text-muted);
-
-  &[data-active="true"] {
-    color: var(--color-text);
-    border-left-color: var(--color-accent);
-  }
-}
-
-.railYear {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
 }
 
 .railPlace {
+  display: block;
   font-family: var(--font-body);
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  transition: color 300ms ease, font-size 300ms ease;
 }
 
-.entries {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-9);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.railLink[data-active="true"] .railPlace {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
 }
 
-.entry {
-  scroll-margin-top: var(--space-7);
+.railMeta {
+  display: block;
+  margin-top: var(--space-2);
 }
 
-// Inline year/place — always in the DOM (not just a mobile fallback via
-// CSS display toggling), so it's there below lg where .railColumn is
-// display:none. Kept visible at every width for consistency rather than
-// hidden ≥lg to avoid saying the same year/place twice; it's a single
-// small line, repeating it costs nothing and there's no clean way to
-// hide it ONLY when the sticky rail is actually visibly aligned with
-// this exact entry without JS.
-.entryMeta {
-  display: flex;
-  gap: var(--space-3);
-  margin: 0 0 var(--space-3);
+.railYear {
+  display: inline;
+  margin-right: var(--space-2);
   font-family: var(--font-body);
   font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-muted);
 }
 
-.entryYear {
+.railKicker {
+  display: inline;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-accent);
 }
 
-// Was missing entirely on first build — TimelineSection.tsx already
-// referenced styles.entryPlace, but with no matching rule the class
-// compiled to `undefined` and the span rendered with no class attribute
-// at all, silently inheriting .entryMeta's own muted color instead
-// (visually harmless — same color either way — but not an explicit
-// rule, and a class the component references should exist). Same
-// --color-text-muted as .railLink's own inactive state, for the same
-// "small label register, not the 4.5:1-failing faint token" reason.
-.entryPlace {
-  color: var(--color-text-muted);
+// --- Entry (TimelineEntry.tsx) ---------------------------------------------
+// Below lg: stacked (place label above image above text). At lg+: a
+// fixed-width 2-column grid, image | text — .entryText's grid-column is
+// EXPLICIT (not left to auto-placement), which is what keeps its x-
+// position identical whether or not .entryImage is rendered for a given
+// entry (see TimelineEntry.tsx's own comment — this is the actual fix for
+// "the text column jumps left when there's no image").
+//
+// --timeline-image-width is a local custom property (not a new global
+// token) so .entryImage's own width (below) can't drift from this grid's
+// own column value — both breakpoint tiers set it once, here.
+//
+// lg-only tier (1024-1279px): image narrower (320px) and the gap tighter
+// (var(--space-6)) than xl+ — a real bug, caught live: at 1024 the full
+// 420px image + var(--space-8) gap + the .layout gap + the 220px rail
+// left only ~128px for text, wrapping one or two words per line. xl+
+// (1280px+, where 1440 already measured a comfortable 424px text column)
+// keeps the brief's own 420px/var(--space-8) values unchanged.
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  @include mixins.breakpoint-up(lg) {
+    display: grid;
+    --timeline-image-width: 20rem; // 320px, lg-only
+    grid-template-columns: var(--timeline-image-width) 1fr;
+    column-gap: var(--space-6);
+  }
+
+  @include mixins.breakpoint-up(xl) {
+    --timeline-image-width: 26.25rem; // 420px, per this pass's own brief
+    column-gap: var(--space-8);
+  }
+}
+
+// Chapter separation: a hairline plus real space above it, on every
+// entry after the first (the first entry sits directly under the
+// section header, no leading rule). var(--space-9) both sides of the
+// rule (96px + 96px = 192px of separation) — judged by eye against the
+// mosaic/parallax elsewhere on this page, not the smallest gap that
+// still reads as "separate": this section carries five/six standalone
+// chapters and needed to feel like it, not like one continuous scroll.
+.entryDivider {
+  border-top: 1px solid var(--color-hairline);
+  margin-top: var(--space-9);
+  padding-top: var(--space-9);
+}
+
+// Visible below lg only — at lg+ the rail already shows the place name,
+// repeating it inline would be redundant.
+.entryPlaceMobile {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+// Same 4:3 ratio at every breakpoint. Width reads --timeline-image-width
+// (set on .entry, above) rather than repeating the 320px/420px literals a
+// second time — the two can't drift apart. Identical dimensions across
+// every entry AT A GIVEN breakpoint is what's guaranteed (and was
+// verified live): 320x240 at 1024, 420x315 at 1440, entry-to-entry. Below
+// lg it scales to the full stacked column width, same ratio, same crop
+// behaviour (object-fit: cover on .entryImagePhoto) — a deliberately
+// different display size for a deliberately different layout, not a
+// broken one.
+.entryImage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 1;
+    width: var(--timeline-image-width);
+  }
+}
+
+.entryImagePhoto {
+  object-fit: cover;
+}
+
+.entryText {
+  min-width: 0;
+
+  @include mixins.breakpoint-up(lg) {
+    grid-column: 2;
+  }
 }
 
 .entryKicker {
@@ -170,26 +315,14 @@
   margin: 0 0 var(--space-4);
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  font-size: var(--fs-h3);
-  line-height: 1.3;
-}
-
-.entryImageFrame {
-  margin: 0 0 var(--space-4);
-  border-radius: var(--radius-m);
-  overflow: hidden;
-}
-
-.entryImage {
-  width: 100%;
-  height: auto;
-  display: block;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
 }
 
 .entryBody {
   margin: 0 0 var(--space-3);
   color: var(--color-text);
-  max-width: 42rem;
+  max-width: 34rem;
 
   &:last-of-type {
     margin-bottom: 0;
@@ -197,11 +330,34 @@
 }
 
 .entryQuote {
-  margin: var(--space-4) 0 0;
-  max-width: 38rem;
+  margin: var(--space-6) 0 0;
+  max-width: 34rem;
+  border-left: 2px solid var(--color-accent);
+  padding-left: var(--space-5);
   font-family: var(--font-display);
   font-style: italic;
-  font-size: var(--fs-body-lg);
-  line-height: 1.5;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   color: var(--color-accent-hover);
+}
+
+// --- Reveal-on-scroll (TimelineEntry.tsx) -----------------------------------
+// Scoped entirely inside this media query: the default (no-motion-
+// preference declared, JS not yet run, or JS disabled) is full opacity /
+// no offset — an unconditionally safe SSR fallback. Only when the
+// visitor's OS reports no reduced-motion preference does the entry start
+// hidden/offset and wait for TimelineEntry.tsx's own IntersectionObserver
+// to flip data-revealed. This is a stronger guarantee than gating in JS
+// alone: even a slow hydration can't cause a flash of hidden content.
+@media (prefers-reduced-motion: no-preference) {
+  .entry {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    transition: opacity 700ms ease, transform 700ms ease;
+  }
+
+  .entry[data-revealed="true"] {
+    opacity: 1;
+    transform: none;
+  }
 }

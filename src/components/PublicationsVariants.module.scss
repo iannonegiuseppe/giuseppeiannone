@@ -1,0 +1,668 @@
+@use "../styles/mixins";
+
+// Preview pass — four proposed designs for "Lavori pubblicati" (see
+// ChiSonoPublications.tsx's own dispatch comment). All light-ivory — no
+// tone mixin needed, this section never leaves the page's own
+// lightIslandBottom wrapper (page.module.scss), so --color-bg/-text/
+// -text-muted/-accent/-hairline already resolve to the light values.
+//
+// Shared header (kicker/title/note) is identical across all four so the
+// comparison is about LAYOUT, not typography — same classes, reused.
+.header {
+  @include mixins.container;
+  padding-top: var(--space-9);
+  margin-bottom: var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.headerText {
+  max-width: 34rem;
+}
+
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.note {
+  margin: 0;
+  max-width: 20rem;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+
+  @include mixins.breakpoint-up(lg) {
+    text-align: right;
+  }
+}
+
+// ============================================================
+// A — GRID: three grouped columns at lg+, one continuous list below it.
+// Closest evolution of the shipped list — the change is putting all
+// three categories side by side instead of stacked, so the section
+// reads as one composed page instead of a long scroll of citations.
+// ============================================================
+.gridWrap {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
+}
+
+.gridColumns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-7);
+    align-items: start;
+  }
+}
+
+.gridGroupLabel {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-hairline);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.gridList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gridItem {
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.gridAuthors {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.gridTitle {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
+}
+
+.gridTitleLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-hairline);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 200ms ease;
+
+  &:hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.gridSource {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+// ============================================================
+// B — CARDS: one unified grid, every citation gets a small group tag
+// on its own card instead of being sorted into three sections. Reads
+// more like a portfolio of work than a bibliography — better if the
+// list keeps growing and grouping-by-3-columns starts feeling arbitrary.
+// ============================================================
+.cardsWrap {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// Dual-tree breakpoint toggle for PublicationsCardsTabs.tsx — same
+// mechanism as the timeline's own pinned/fallback split (two full
+// trees, CSS decides which renders; never both at once, so there's no
+// duplicate-content accessibility issue). desktopNav: tabs + a
+// single-cell stacked grid of all three panels (see .tabPanelStack
+// below — this is what kills the reflow jump on tab switch).
+// mobileAccordion: each category's own header + panel, FAQAccordion's
+// exact grid-rows technique (see .accordionPanelWrap below).
+.desktopNav {
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.mobileAccordion {
+  display: block;
+
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+// Single-cell grid stack — all three groups' card grids share ONE grid
+// cell (grid-row/grid-column: 1 on .tabCardPanel below), which is what
+// lets the outgoing and incoming panel overlap and cross-fade during a
+// tab switch (see .tabCardPanel's own opacity transition).
+//
+// align-items: start — a real bug, caught live: without this,
+// align-items defaults to stretch, and every panel in the shared cell
+// gets STRETCHED to the cell's own height — which the grid always
+// auto-sizes to the TALLEST panel among the three, regardless of which
+// is visible. A single-row (2-card) panel was inheriting the two-row
+// (3-card) panel's height and its cards were stretching to fill it —
+// measured live: 405px tall cards that only needed ~190px. start stops
+// that: each panel now sits at its own natural height, top-aligned in
+// the shared cell, unstretched.
+//
+// height + transition — the cell's OWN auto-sizing (still driven by
+// the tallest panel, since that's how CSS grid computes row tracks
+// regardless of align-items) is no longer what determines the VISIBLE
+// height either: JS (PublicationsCardsTabs.tsx's own layout effect)
+// measures the ACTIVE panel's real content height and sets it directly
+// as this element's height, so the container is always exactly as
+// tall as whichever tab is showing — genuinely different per tab now,
+// not forced uniform. overflow: hidden clips the other (shorter or
+// taller) panels' natural height during the animated transition
+// between the two. 320ms cubic-bezier(0.4, 0, 0.2, 1) is not a new
+// value — it's copied from FaqAccordion's own height animation
+// (FaqSection.module.scss's .faqRowPanelWrap), reused for the same
+// reason that pass reused it for the accordion below: one consistent
+// height-animation feel across the component.
+.tabPanelStack {
+  display: grid;
+  align-items: start;
+  overflow: hidden;
+  transition: height 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabPanelStack {
+    transition: none;
+  }
+}
+
+.tabCardPanel {
+  grid-row: 1;
+  grid-column: 1;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+.tabCardPanelActive {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabCardPanel {
+    transition: none;
+  }
+}
+
+.accordionSection {
+  border-top: 1px solid var(--color-hairline);
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.accordionHeading {
+  margin: 0;
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-block: var(--space-5);
+  border: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.accordionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+// Icon + panel animation below are FaqAccordion.tsx's own technique,
+// copied deliberately rather than reinvented (FaqSection.module.scss's
+// .faqRowIcon/.faqRowPanelWrap/.faqRowAnswer) — same two-bar plus that
+// rotates 45deg into an X (not the shrinking-bar plus/minus this block
+// used before), same grid-template-rows 0fr<->1fr height animation,
+// same easing, same opacity-fade-with-delay on the revealed content.
+.accordionIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordionIconBarH,
+.accordionIconBarV {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--color-text);
+}
+
+.accordionIconBarH {
+  width: 0.875rem;
+  height: 0.09375rem;
+  transform: translate(-50%, -50%);
+}
+
+.accordionIconBarV {
+  width: 0.09375rem;
+  height: 0.875rem;
+  transform: translate(-50%, -50%);
+}
+
+.accordionHeader[aria-expanded="true"] .accordionIcon {
+  transform: rotate(45deg);
+}
+
+// Height animation: CSS Grid rows 0fr<->1fr, not max-height (max-height
+// eases unevenly since the transition covers a fixed pixel range
+// regardless of the panel's actual content height — see
+// FaqSection.module.scss's own identical comment on .faqRowPanelWrap).
+.accordionPanelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+}
+
+.accordionPanelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.accordionPanel {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-6);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.accordionPanelWrap[data-open="true"] .accordionPanel {
+  opacity: 1;
+  transition-delay: 40ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accordionPanelWrap,
+  .accordionPanel,
+  .accordionIcon {
+    transition: none;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-6);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
+  background: var(--light-base-bg);
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+
+  &:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--light-base-text) 8%, transparent);
+  }
+}
+
+.cardTag {
+  align-self: flex-start;
+  margin: 0 0 var(--space-4);
+  padding: 0.25rem var(--space-3);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover);
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg, 1.125rem);
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.cardTitleLink {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.cardAuthors {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.cardSource {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+// ============================================================
+// C — TABS: interactive category switch. One group visible at a time,
+// shortest initial visual weight of the four — good if the list is
+// expected to grow well past 7 entries.
+// ============================================================
+.tabsWrap {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
+}
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-7);
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-1);
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 200ms ease, border-color 200ms ease;
+
+  & + & {
+    margin-left: var(--space-5);
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.tabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+// Width-reservation stack (PublicationsCardsTabs.tsx's own tab row
+// only — the standalone Tabs variant below never had this bug, since
+// its own row never changes weight). The active tab's font-weight:bold
+// (above) makes it measurably wider than the same label at regular
+// weight — not a monospace font, so bold glyphs are wider — which
+// shifted every tab to its right whenever the active one changed. A
+// bold, invisible copy of each tab's OWN label sits in the same grid
+// cell as the visible one (single-cell stack, same technique as
+// .tabPanelStack above and the timeline deck's own card stack): the
+// cell's width becomes the wider (bold) version's natural width,
+// always, regardless of which weight is actually visible, so each
+// tab's box never changes size when it becomes active or inactive.
+.tabLabelStack {
+  position: relative;
+  display: grid;
+}
+
+.tabLabelStack > * {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.tabLabelGhost {
+  font-weight: var(--font-weight-bold);
+  visibility: hidden;
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding-inline: 0.375rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent-hover);
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 42rem;
+}
+
+.tabItem {
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--color-hairline);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.tabAuthors {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.tabTitle {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.tabTitleLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-hairline);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color 200ms ease;
+
+  &:hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.tabSource {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+// ============================================================
+// D — LEDGER: one editorial list, all entries numbered in sequence —
+// the most "prestige CV" of the four, largest type, most whitespace.
+// ============================================================
+.ledgerWrap {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
+}
+
+.ledgerList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ledgerItem {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  column-gap: var(--space-6);
+  padding-block: var(--space-7);
+  border-top: 1px solid var(--color-hairline);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 5rem 1fr;
+  }
+}
+
+.ledgerNumber {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--light-base-text) 22%, transparent);
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 2.5rem;
+  }
+}
+
+.ledgerGroup {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.ledgerTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.ledgerTitleLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-hairline);
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color 200ms ease;
+
+  &:hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.ledgerMeta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.ledgerAuthors {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+// ============================================================
+// Shared: closing note under any variant.
+// ============================================================
+.footnote {
+  margin: var(--space-7) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}

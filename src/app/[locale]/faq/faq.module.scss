@@ -1,0 +1,125 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// Revision pass: dark body, following /blog's own construction exactly
+// (blogIndex.module.scss's .listSection comment) — the site's ambient
+// theme IS already dark (:root[data-theme="dark"]), so this doesn't
+// invent a new dark palette, it just stops opting OUT of it. tone-mid-
+// surface (not tone-deep's gradient/grain, not a flat --color-bg) is the
+// same mixin /blog's .listSection uses for its own dark band: on this
+// site's one theme, every one of its reassignments is a self-referential
+// no-op except --color-bg -> --color-surface (#16261F, the "lighter of
+// the two dark tones" /blog's own comment names) — that's the ONLY
+// paint decision here. Section heading/description/question/answer text
+// all already read var(--color-text)/var(--color-text-muted) (see
+// .sectionTitle/.sectionDescription below and FaqSection.module.scss's
+// .faqRowQuestion/.faqRowAnswer) — those tokens were already correct for
+// dark, they just weren't reaching it before because this wrapper opted
+// into light-island-surface instead. The hero above keeps its own light
+// island (LightPortraitHero's internal .hero rule, untouched); ContactBlock
+// below is unconditionally its own light island (ContactBlock.module.scss),
+// so both seams are already handled without any change here.
+.body {
+  @include tone.tone-mid-surface;
+  padding-block: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-9);
+  }
+}
+
+.explorer {
+  @include mixins.container;
+}
+
+// --- Sections ------------------------------------------------------------
+// Revision pass: divider removed. It was a border-bottom on THIS class only
+// (.section, page-scoped to this CSS module — not FaqSection.module.scss's
+// separate .faqRow, which still keeps its own question-level hairlines,
+// untouched, unaffected, shared with the homepage widget and pillar pages).
+// CSS Modules already scope class names per file, so this rule could never
+// have leaked elsewhere; removing it only ever affected /faq's own section
+// list.
+.section {
+  padding-block: var(--space-7);
+}
+
+// Refinement pass: structural realignment. Was a flex row (icon + h2 text
+// on one line, description as a separate sibling starting at the
+// section's own left edge — under the ICON, not under the heading text).
+// Now a 2-column grid: column 1 is the icon, column 2 holds both the h2
+// and the description, so the description's left edge is governed by the
+// SAME grid column the heading text sits in — not a hardcoded
+// padding-left that would drift the moment the icon or heading size
+// changes. Icon is grid-row:1 only (spans just the heading row, per
+// spec), h2 and description both grid-column:2, stacked rows 1/2.
+// column-gap keeps the exact icon-to-text spacing the old flex `gap` used
+// (--space-3, unchanged). align-items:center on the container replicates
+// the flex row's own verified icon/heading vertical alignment (measured
+// 0px offset in the previous pass) — row 2 (description alone in its
+// row) is unaffected by this since it has no row-mate to center against.
+// row-gap (not a margin-bottom on .sectionTitle) carries the h2-to-
+// description spacing — a margin on the h2 grid item would count toward
+// CSS Grid's own auto-height calculation for row 1 (the row the icon
+// shares), inflating that row beyond the heading's own line-box and
+// pushing the icon's centered position down with it. Caught live: an
+// intermediate version using margin-bottom measured a 6px icon offset
+// that didn't exist before this grid restructure — row-gap avoids it
+// entirely, since gap sits between tracks, never inside either track's
+// own sizing box. Re-measured after this fix: 0px again, matching the
+// previous (pre-grid) alignment exactly.
+.sectionHeader {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-3);
+  row-gap: var(--space-3);
+  align-items: center;
+}
+
+// Refinement pass: gap to the description increased one step
+// (--space-2/8px -> --space-3/12px, the next rung on the token scale) —
+// see this pass's own report for the before/after measured values. Lives
+// as .sectionHeader's row-gap now, not a margin here (see that rule's own
+// comment for why).
+.sectionTitle {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+// Decorative only (aria-hidden in the JSX). react-icons renders width/
+// height:1em, but em only resolves against THIS element's own font-size
+// — before the grid restructure the icon was a DOM child of the h2 and
+// inherited --fs-h2 through normal cascade for free; now it's a sibling
+// of the h2 under .sectionHeader (no font-size set there), so without
+// this line it silently fell back to the ambient 16px body size at every
+// viewport (caught live: measured a fixed 16x16px icon at 390, not the
+// responsive 28-36px --fs-h2 clamp it had before this pass). Repeating
+// --fs-h2 directly here, rather than counting on inheritance again, so
+// icon sizing doesn't depend on where the icon happens to sit in the DOM.
+// Colour: --color-accent (champagne gold) — measured 6.07:1 against this
+// section's actual background (#16261F, opaque, not a translucent
+// surface), well past the 3:1 non-text floor; see the earlier pass's own
+// report for the measurement. grid-row:1 confines it to the heading row
+// only, never spanning down into the description's row.
+.sectionIcon {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: var(--fs-h2);
+  color: var(--color-accent);
+}
+
+.sectionDescription {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0 0 var(--space-6);
+  max-width: 40rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}

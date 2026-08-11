@@ -1,21 +1,28 @@
 @use "../../../styles/mixins";
 @use "../../../styles/tone";
 
-// Prezzi build pass — pricePage has no hero fields (defineSimplePageType:
-// title + body + seo only, see pricePage.ts), so unlike the pillar/
-// subtopic/chi-sono routes there's no dark hero band before the light
-// content — this page IS the light island, starting right below the
-// fixed header. Same tone.light-island-surface mechanism those routes
-// already use for their own light section, just applied to the whole
-// page instead of a lower portion of it.
-.lightIsland {
+// /prezzi port pass — ported from the design-lab "C" proposal
+// (src/app/design-lab/prezzi-proposals/c-editoriale/page.module.scss).
+// One real structural difference from that file: no .themeDark wrapper
+// around .darkBand here. That wrapper existed there only because
+// /design-lab's own layout never sets data-theme="dark" on <html> —
+// [locale]/layout.tsx already does, unconditionally, so --tone-deep-accent
+// and every other dark-theme token this section reads already resolve
+// correctly through ordinary inheritance. Verified live via
+// getComputedStyle before shipping this file, not assumed — see this
+// pass's own report.
+.page {
   @include tone.light-island-surface;
 }
 
 .header {
   @include mixins.container;
-  padding-top: var(--header-height);
-  padding-bottom: var(--space-6);
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-7);
+}
+
+.kicker {
+  margin: 0;
 }
 
 .title {
@@ -24,4 +31,330 @@
   font-weight: var(--font-weight-regular);
   font-size: var(--fs-display);
   line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+// --- Spread: prose column + facts card, stacks below lg -------------------
+// Revision 7 — padding-bottom moved one step down the scale (was
+// var(--space-9)) now that the AnimatedDivider between this and the
+// services section is gone (it read as emptiness, not separation —
+// removed entirely, not replaced). Measured gap from this section's own
+// bottom to the services kicker: 129px with the divider present -> see
+// this pass's own report for the after value.
+.spread {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  padding-bottom: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1.6fr 1fr;
+    gap: var(--space-9);
+    align-items: start;
+  }
+}
+
+.proseCol {
+  max-width: 34rem;
+}
+
+.prose {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text);
+
+  & + & {
+    margin-top: var(--space-6);
+  }
+}
+
+// Pull-figures: the fee itself as a typographic anchor, EB Garamond at
+// display scale — same ink colour as body text (var(--color-text)), never
+// the accent token, deliberately: a figure this large in accent gold/
+// bronze would read as a price tag, not a stated fact.
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-7);
+  margin-block: var(--space-6);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.figureNumber {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display-sm);
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.figureCaption {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+// --- Facts card: plain bordered panel, no glass/photo dependency ----------
+.factsCard {
+  padding: var(--space-6);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-m);
+}
+
+.factsCardKicker {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.factsList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.factsItem {
+  & + & {
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-hairline);
+  }
+}
+
+.factsLabel {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.factsValue {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+// --- Services — full-width, one article per service, h2 each -------------
+// Revision 8 — padding-bottom added (was none — the design-lab pass's own
+// "layout fix 2" reasoning, that the dark band's own padding-top already
+// owns the gap before it, held for the BAND but left this section's own
+// last card with nothing keeping its own content off the band). Real
+// padding, not margin — this project's own documented margin-collapse
+// trap across section boundaries (CLAUDE.md's light-island entry)
+// applies here too.
+.services {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
+}
+
+// Revision 3 — kicker + heading above the service cards; this section had
+// neither before. Kicker reuses PricePage.servicesLabel (next-intl —
+// already existed as this section's aria-label, matching the h1's own
+// kicker, which also reads from next-intl on this page) rather than a new
+// Sanity field for a short, repeatable label; the heading itself
+// (servicesHeading) is real editorial copy, Sanity-sourced.
+.servicesKicker {
+  margin: 0;
+}
+
+.servicesHeading {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.servicesIntro {
+  margin: var(--space-5) 0 0;
+  max-width: 40rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
+
+// Revision 11 — row rhythm. Measured live before touching anything:
+// row-gap and column-gap were ALREADY equal (both var(--space-9), 96px)
+// — the visible unevenness wasn't the gap token, it was align-items
+// defaulting to "normal" (stretch, in a grid context), so a short card's
+// own box stretched to match its row's tallest sibling, adding up to
+// 39px of dead space inside the box before the declared row-gap even
+// started. align-items: start fixes that (each card's box now ends
+// where its own content ends) without moving where any card's top edge
+// sits — grid row placement (and therefore the border-top rule across
+// each row) is set by the row track's own start line, never by
+// align-items, so the top rule stays aligned regardless. Verified live,
+// not assumed — see this pass's own report.
+//
+// Revision 12 — row-gap taken one step down the scale (var(--space-9) ->
+// var(--space-8), 96px -> 64px), column-gap left untouched. Equal PIXEL
+// gaps still read as heavier vertically than horizontally, because each
+// row also carries its cards' own border-top rule — a second boundary
+// line the columns don't have — so the same numeric gap reads as more
+// separation. One step was enough (see this pass's own report for the
+// live comparison); rows are still clearly separated, nowhere near
+// merging.
+.servicesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  margin-top: var(--space-6);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-9);
+    row-gap: var(--space-8);
+    align-items: start;
+  }
+}
+
+.service {
+  max-width: 34rem;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.serviceTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+// Revision 2 — the large fee pull-numbers stayed page-wide, but each card's
+// own small fee restatement is gone (the page said 100 €/130 € twice; the
+// second time buried what these cards are actually for). This class now
+// carries EVERY card's duration line — individual/couple show just the
+// duration, sexology/online append the duration-relationship sentence
+// (derivedNote, rewritten this pass to state duration only, never a fee —
+// see pricePage.ts's own updated field description). .serviceFigureRow/
+// -Number/-Caption (the removed fee-number treatment) are gone, not left
+// orphaned — page-local CSS, not shared/shipped content, so there's no
+// "don't delete, might still be referenced elsewhere" precedent to honor.
+// Revision 9 — internal card rhythm tightened one step down the scale
+// each (title->duration was var(--space-3)/12px, now var(--space-2)/8px;
+// duration->paragraph and paragraph->link line were both var(--space-4)/
+// 16px via this same class's own margin-top — now var(--space-3)/12px).
+// Type sizes untouched, gap BETWEEN cards (.servicesGrid's own gap)
+// untouched — only spacing within one card.
+.serviceDerivedNote {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.serviceParagraph {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+
+  a {
+    @include mixins.link;
+  }
+}
+
+// --- Dark band — Welcome/Benvenuto construction, full-bleed ---------------
+// Revision 10 — restructured to match the homepage's Welcome block
+// (welcome.module.scss's own .welcomeOuterMid/.welcomeCard) exactly, not
+// approximated: a flat ground (tone.tone-base-surface — no gradient, no
+// grain; those belonged to the OLD rich-dark-surface/tone-deep-foreground
+// treatment, both dropped) and a lighter RAISED surface carrying all the
+// text (--color-sand-deep, var(--radius-l), var(--shadow-soft) — the same
+// three tokens Welcome's own card uses). Padding-top/-bottom (var(
+// --space-10)/var(--space-9), Revision 5) unchanged — this pass didn't
+// touch the ground's own outer spacing, only what's painted inside it.
+.darkBand {
+  @include tone.tone-base-surface;
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-9);
+}
+
+.darkBandInner {
+  @include mixins.container;
+}
+
+// The raised surface itself — everything textual sits on this, same as
+// Welcome's own .welcomeCard (kicker/heading/paragraph/CTA/signature all
+// live inside that one card, nothing sits directly on the flat ground).
+.darkBandCard {
+  background: var(--color-sand-deep);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-7);
+
+  @include mixins.breakpoint-up(md) {
+    padding: var(--space-8);
+  }
+}
+
+.darkBandKicker {
+  margin: 0;
+}
+
+.darkBandHeading {
+  margin: var(--space-4) 0 0;
+  max-width: 36rem;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--color-text);
+}
+
+.darkBandColumns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  margin-top: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-9);
+  }
+}
+
+.darkBandColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.darkBandBlockHeading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+// --color-text-muted here is the SAME token Welcome's own .welcomeParagraph
+// reads — measured against --color-sand-deep, not assumed safe just
+// because Welcome uses this pairing elsewhere; see this pass's own report.
+.darkBandBlockBody {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
 }

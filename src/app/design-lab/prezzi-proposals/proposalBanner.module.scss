@@ -1,0 +1,68 @@
+@use "../../../styles/mixins";
+
+// Fixed strip, deliberately inverted-video (text/bg swapped from the
+// tokens below it) so it reads as review tooling, not as part of any
+// proposal's own design — existing tokens only, no raw hex, per CLAUDE.md.
+.banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  background: var(--light-base-text);
+  border-bottom: 1px solid var(--light-base-hairline);
+  font-family: var(--font-body);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: var(--space-7);
+  }
+}
+
+// Opt-in (proposal C only, see ProposalBanner.tsx's own hasRealHeader
+// comment) — sits below the real fixed Header instead of overlapping it.
+// --header-height-collapsed is the right token: data-light-hero puts the
+// real header in its collapsed-looking state from first paint on this
+// route, same as /faq and /blog.
+.bannerBelowHeader {
+  top: var(--header-height-collapsed);
+}
+
+.bannerLabel {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.bannerBack {
+  color: var(--light-base-muted);
+  font-size: var(--fs-small);
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--light-base-bg);
+  }
+}
+
+.bannerTitle {
+  color: var(--light-base-bg);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+}
+
+.bannerWeak {
+  margin: 0;
+  color: var(--light-base-accent);
+  font-size: var(--fs-small);
+  max-width: 40rem;
+
+  strong {
+    color: var(--light-base-bg);
+  }
+}

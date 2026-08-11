@@ -1,0 +1,128 @@
+@use "../styles/mixins";
+
+// Dark surface — native ambient theme, no tone wrapper (same "this is
+// just the page's own default background" reasoning PillarHero/Timeline
+// already rely on; the site is dark-by-default everywhere in production).
+.section {
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.header {
+  @include mixins.container;
+  margin-bottom: var(--space-8);
+}
+
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heading {
+  max-width: 34rem;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.intro {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+// Horizontal row — four columns at lg (five for EN's extra "Working in
+// English" part), one column below. Row height driven by content
+// (align-items: start), not stretched to a uniform card height — this is
+// a stagger, not a grid of equal cards.
+.row {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-6);
+  }
+}
+
+.part {
+  position: relative;
+  flex: 1 1 0;
+}
+
+// Stagger — even-numbered columns (index 1, 3 = 2nd, 4th part) offset
+// downward, so the row reads as a considered stagger rather than a table.
+// --space-8 (64px): a clear, deliberate drop without pushing the column
+// out of visual alignment with its neighbours' own content.
+.partOffset {
+  @include mixins.breakpoint-up(lg) {
+    margin-top: var(--space-8);
+  }
+}
+
+// Watermark numeral — "two steps darker than body text" read against this
+// scope's own text ladder (--color-text -> --color-text-muted ->
+// --color-text-faint, two steps down): --color-text-faint is exactly that
+// second step, and its own token comment explicitly permits large-scale
+// decorative use (never small captions/labels, which this isn't — it's a
+// background mark, not read as text). Sits BEHIND the real content via
+// z-index/negative stacking, not layout — .partContent below is a normal
+// in-flow sibling, so the numeral never affects text position.
+.numeral {
+  position: absolute;
+  top: calc(-1 * var(--space-5));
+  left: calc(-1 * var(--space-2));
+  z-index: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  line-height: 1;
+  color: var(--color-text-faint);
+  user-select: none;
+
+  // Below lg the numeral drops to roughly half its full-size scale — at
+  // full size it overwhelms a narrow column (per brief). clamp(6rem,...)
+  // is the "full size" reference; halved here via a smaller clamp rather
+  // than a transform: scale (which would also shrink the letter-spacing/
+  // stroke weight unevenly at fractional zoom levels).
+  @include mixins.breakpoint-up(lg) {
+    font-size: clamp(6rem, 8vw, 9rem);
+  }
+}
+
+.partContent {
+  position: relative;
+  z-index: 1;
+  padding-top: var(--space-7);
+}
+
+.partTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.partBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}

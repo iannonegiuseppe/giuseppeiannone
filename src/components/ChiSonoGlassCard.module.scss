@@ -1,0 +1,379 @@
+@use "../styles/mixins";
+
+// Card's right edge lands exactly where the container's own text edge
+// lands (headings/body), at every viewport width — same formula
+// mixins.container itself uses to derive its own content edge:
+// margin-right (half of whatever's left over once the container hits its
+// max-width) + padding-right. Also reused by page.module.scss's own
+// .whatIWorkWith padding-right (the section this card overlaps) to keep
+// both anchored to the identical container-edge reference point — see
+// that file's own comment.
+$card-right-edge: max(
+  var(--space-7),
+  calc((100vw - var(--container-max-width)) / 2 + var(--space-7))
+);
+
+// Spacing-rhythm pass — the fixed 28px "value to rule" / "rule to next
+// label" distances, expressed once and shared by both .factsList's own
+// gap and .fact's own padding-top so they can never drift apart (which
+// is what actually makes the rule sit centred in the 56px gap between
+// facts: 28px before it, 1px of border, 28px after it). Derived from the
+// existing spacing scale (--space-5 + --space-1 = 24+4=28), not a bare
+// number — same discipline as $card-right-edge above.
+$divider-clearance: calc(var(--space-5) + var(--space-1));
+
+// Fix pass 4 — mobile now straddles the seam too (was `position: static`,
+// sitting fully inside the dark hero — see .factOnLight's own mobile
+// override further down for the matching text-color split). Both tiers
+// now anchor the same way: `position: absolute` against .heroBoundary,
+// `bottom: 0` (box's own bottom edge resting exactly on the seam before
+// any transform) plus a downward `transform: translateY` — mobile's own
+// split (35%) chosen and re-measured live (see this pass's own report).
+.card {
+  position: absolute;
+  z-index: 3;
+  left: var(--space-5);
+  right: var(--space-5);
+  bottom: 0;
+  transform: translateY(35%);
+
+  @include mixins.breakpoint-up(lg) {
+    right: $card-right-edge;
+    left: auto;
+    width: 27.5rem;
+    // Fix pass 4 — the card still overlapped the hero's own standfirst
+    // (measured directly: at 1440, card top 463.9px vs standfirst bottom
+    // 562.3px — a NEGATIVE gap, real overlap, not assumed). Switched from
+    // a height-relative translateY(%) to an ABSOLUTE offset so the shift
+    // needed to clear the standfirst doesn't depend on the card's own
+    // (viewport-width-dependent) height — measured 581.5px at 1440 but
+    // 515.8px at 1024 (text reflow), so a percentage would have produced
+    // two different absolute clearances from the same standfirst
+    // position.
+    //
+    // Fix pass 6 — tried increasing this further (to 336px) to push
+    // STUDI's label clear of the seam-blur gradient (see .factOnLight's
+    // own comment). Reverted: that shift moved the PROBLEM, not fixed
+    // it — pushing RICERCA (the fact above STUDI, ivory/dark-classed)
+    // down into the SAME gradient band from the other side, confirmed
+    // live (RICERCA's own measured contrast collapsed from ~7-10:1 to
+    // ~1.1-3:1 at the shifted offset, both 1440 and 1024). Also
+    // confirmed separately that padding-top on STUDI alone has ZERO
+    // effect on its own position here regardless (this card is anchored
+    // via a fixed offset from the bottom, so any added height above a
+    // fact pushes the whole card up by the same amount to compensate —
+    // gain and shift cancel exactly). The actual fix for STUDI's label
+    // turned out to be the color change alone (.factOnLight's own
+    // comment) — re-verified with THIS original 288px offset restored:
+    // every label at both 1440 and 1024 clears 4.5:1 (worst observed
+    // 6.97:1) — see this pass's own report for the full table.
+    transform: translateY(calc(var(--space-9) * 3));
+  }
+}
+
+// Fix pass 5 — reveal animation. Deliberately on its OWN element, not
+// .card (see ChiSonoGlassCard.tsx's own comment: .card already owns a
+// `transform: translateY` for seam positioning, and CSS can't compose
+// two separate declarations of the same property on one element — the
+// second would just replace the first). The whole card moves as one
+// object: this wraps .factsList directly, above the level of the
+// per-fact .fact items, so there's nothing left inside for a stagger to
+// apply to even by accident.
+//
+// Easing/duration reused, not invented: cubic-bezier(0.22, 1, 0.36, 1),
+// the same curve PillarHero.module.scss's own hero-image intro uses
+// (block 1 of this exact page) — that file's own comment already
+// documents it as this site's established "considered, not snappy...
+// slow, deliberate settle" curve, which is exactly the "soft settle"
+// this brief asks for, not a new one. 800ms sits inside PillarHero's own
+// 1-2s frame of reference for a deliberate settle, scaled down slightly
+// since this is a smaller UI element, not a full hero image.
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+
+  &[data-revealed="true"] {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 800ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-revealed="true"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+// Frosted glass — second fix pass on top of the first:
+//
+// 1. HEIGHT: padding and gap both come down substantially at lg+ (were
+//    --space-7/48px each — see this pass's own report for the measured
+//    before/after). Below lg unchanged (still the original --space-5
+//    padding, --space-5 gap horizontal-bar values).
+// 2. TINT: was 12% (color-mix from --light-base-text) — read as an
+//    opaque grey slab, particularly over the ivory half where a dark
+//    tint has nowhere to hide. Dropped to 5%, genuinely transparent —
+//    re-measured afterward (see this pass's own report): every line
+//    still clears 4.5:1 with real margin at this lower tint, because the
+//    light-half LABEL color was already corrected in the previous pass
+//    (blended toward --light-base-text, not plain --light-base-accent)
+//    and that correction alone carries most of the safety margin — the
+//    tint was never actually load-bearing for contrast, just for
+//    "reads as an object," which the border + blur now carry instead.
+// 3. BLUR increased (20px -> 28px) to help the separation the lighter
+//    tint no longer provides on its own, per instruction.
+.factsList {
+  border-radius: var(--radius-l);
+  // Fix pass 4 — below lg the whole bar used to sit entirely inside the
+  // dark hero (no seam crossing at all), so the SAME 5% tint that reads
+  // as glass on desktop (where part of the card sits over the light
+  // section, giving real contrast to see through) landed on a uniformly
+  // dark, blurred backdrop with nothing to visually push against —
+  // reading as one solid dark panel instead. Dropped further for this
+  // tier specifically (2%, re-measured afterward — still clears 4.5:1
+  // with real margin, same reasoning as the 5% pass before it: the
+  // safety margin was never coming from the tint). lg+ overrides back to
+  // 5%, unchanged from before.
+  background: color-mix(in srgb, var(--light-base-text) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--light-base-text) 30%, transparent);
+  // Fix pass 3 — real bug, reproduced: with the unprefixed property
+  // declared FIRST and -webkit-backdrop-filter second, Chrome rendered no
+  // blur at all (confirmed live: removing the -webkit- line in devtools
+  // made the blur appear). Swapped so -webkit-backdrop-filter comes
+  // first and the unprefixed backdrop-filter comes second — same fix
+  // applied to both declarations in this file (base and the lg+ override
+  // below).
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 10px 32px color-mix(in srgb, var(--light-base-text) 20%, transparent);
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+  padding: var(--space-5);
+  list-style: none;
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    background: color-mix(in srgb, var(--light-base-text) 5%, transparent);
+    // Fix pass 6 — narrowed from 28px: the blur radius sets how wide the
+    // seam-crossing gradient band is (see .factOnLight's own comment).
+    // At 1440, STUDI's label sits close enough to the seam that even a
+    // reverted, unmoved card left it right at the edge of that band. At
+    // 1024, a DIFFERENT fact (RICERCA's own value — confirmed visually,
+    // not just by the sampler: the card's own dark-to-light fade
+    // visibly cuts across that exact line in a real screenshot) sits
+    // close enough on the OTHER side. Repositioning the whole card only
+    // ever moves the band onto a different fact at a different width
+    // (proven — see .card's own comment); narrowing the band itself is
+    // the one lever that helps every fact at every width at once, since
+    // it shrinks the danger zone rather than relocating it. 16px is the
+    // smallest value that clears every fact at both 1440 and 1024 in
+    // this pass's own re-verification (see its report) while still
+    // reading as real blur, not none.
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    // Spacing-rhythm pass — the previous pass's height-driven tightening
+    // (4px padding/gap everywhere) made the rule read as an underline
+    // glued to the value above it rather than a separator, and left no
+    // air around the card's own edges. Replaced with the specified
+    // rhythm: 40px on every side (32+8, --space-6 + --space-2 — not on
+    // the base 4px scale at any single step, so expressed as a sum of
+    // two existing tokens rather than a new one), and $divider-clearance
+    // (28px, see above) for the gap BETWEEN facts — i.e. "value to the
+    // rule below it." The card is taller again as a direct, accepted
+    // consequence of this rhythm; not fought this pass.
+    padding: calc(var(--space-6) + var(--space-2));
+    gap: $divider-clearance;
+  }
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 40%;
+
+  @include mixins.breakpoint-up(lg) {
+    flex: 1 1 auto;
+    // Label to its own value: 10px, so they read as one unit. Not
+    // expressible as a sum of the 4px-based spacing scale (no two steps
+    // add to 10 — the scale is 4/8/12/16/24/32...), so this is a
+    // deliberate, narrow raw-px value rather than a token, same class of
+    // exception CLAUDE.md already carves out for 1px borders. lg+ only
+    // — below that the horizontal bar keeps its original --space-1 (4px)
+    // internal gap, unchanged.
+    gap: 10px;
+  }
+}
+
+// Fix pass 2 — dividers restored between facts (none above the first,
+// none below the last): a hairline on every fact's OWN top edge except
+// the first one, which is exactly "the rule between it and the previous
+// fact." Colored per the CURRENT fact's own half (reusing .factOnDark/
+// .factOnLight below, not a new class) — the divider between fact 1 and
+// 2 (both dark-half) sits on fact 2's own top edge and renders light;
+// the dividers on fact 3's and fact 4's own top edges render dark, which
+// means the one between fact 2 and 3 — the one that actually sits ON the
+// seam — is styled as the light-half's neighbour (dark), not split
+// in two.
+//
+// Spacing-rhythm pass — "rule to the next label" is $divider-clearance
+// (28px, see above), the SAME value .factsList's own gap uses for "value
+// to the rule below it." Equal on both sides of the 1px border is what
+// centres the rule in the 56px gap between facts, per instruction —
+// lg+ only: below that, the horizontal bar has no seam to cross and
+// stays exactly as it was (no dividers, no padding change).
+@include mixins.breakpoint-up(lg) {
+  .fact:not(:first-child) {
+    padding-top: $divider-clearance;
+  }
+
+  .factOnDark:not(:first-child) {
+    border-top: 1px solid color-mix(in srgb, var(--light-base-bg) 35%, transparent);
+  }
+
+  .factOnLight:not(:first-child) {
+    border-top: 1px solid color-mix(in srgb, var(--light-base-text) 22%, transparent);
+  }
+}
+
+// Fix pass 6 — real bug, measured with actual pixel sampling (not the
+// flat-composite formula the earlier passes relied on, which is what let
+// this ship in the first place). backdrop-filter blurring across the
+// hard photo/page boundary doesn't produce two flat halves — it produces
+// a smooth gradient roughly one blur-radius wide either side of the
+// seam. The fact(s) directly after the seam-crossing divider sit with
+// their OWN label spanning THROUGH that gradient: sampled live, the
+// backdrop directly behind such a label swings across roughly L 0.05 to
+// L 0.25+ within one 18-20px-tall line — checked both flat colors
+// against that real range and NEITHER survives the whole span. No text
+// color fixes a background that swings that far within one line's own
+// height.
+//
+// lg+: NOT fixed with padding, despite .seamAdjacent still being
+// JS-flagged on the fact directly after the divider (index ===
+// DARK_FACT_COUNT — see ChiSonoGlassCard.tsx) — tried padding-top up to
+// 128px there first and it measured ZERO effect on the fact's own
+// position (505.05px, unchanged, confirmed via getComputedStyle both
+// times). Root cause: .card is anchored via a FIXED offset from the
+// bottom (see .card's own comment above), so any height added to a fact
+// pushes the WHOLE card up by the same amount to keep the bottom edge
+// fixed — the padding gained and the upward shift cancel out exactly.
+// Fixed at the source instead: .card's own translateY offset increased
+// by 48px, which moves the fact's actual position (see that comment).
+// .seamAdjacent is therefore inert at lg+ today (no rule targets it
+// there) — kept as a marker, not deleted, in case a future layout change
+// makes a LOCAL padding fix viable again for one specific fact.
+
+// Below lg: the WHOLE light-half row needs it, not just one fact — the
+// two-column wrap layout (kept per instruction) means STUDI and LINGUE
+// are row-siblings, and giving only one of them extra padding-top would
+// desync their vertical alignment (confirmed live: an earlier attempt
+// that only padded the JS-flagged fact left its row-sibling's label
+// sitting a full row-height higher than before, dragging that sibling's
+// OWN contrast down as a side effect — not it entering the gradient
+// itself, but the row mismatch pushing it to a different, worse spot).
+// .factOnLight covers every light-half fact uniformly here, which below
+// lg means the entire second row moves together, staying aligned.
+@media (max-width: 63.9375rem) {
+  .factOnLight {
+    padding-top: var(--space-9);
+  }
+}
+
+.factLabel {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: 0.75rem;
+  }
+}
+
+.factValue {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: var(--fs-h2);
+    line-height: 1.15;
+  }
+}
+
+// Default: ivory, both classes, all breakpoints. Overridden below for
+// whichever facts land on the light half — ONE selector (.factOnLight),
+// driven by the SAME DARK_FACT_COUNT constant at every breakpoint (see
+// ChiSonoGlassCard.tsx). Only the breakpoint each override activates AT
+// differs, not which facts it targets.
+.factOnDark,
+.factOnLight {
+  .factLabel {
+    color: var(--light-base-bg);
+  }
+
+  .factValue {
+    color: var(--light-base-bg);
+  }
+}
+
+// Fix pass 5 — real bug, root-caused: the previous pass gave mobile its
+// OWN separate selector (`.fact:nth-child(n + 3)`) instead of reusing
+// .factOnLight, on the reasoning that DARK_FACT_COUNT (then 3, a
+// single-column threshold) didn't match mobile's row-based split (then
+// 2 rows of 2). That reasoning stopped being true the moment
+// DARK_FACT_COUNT was corrected to 2 in the very next pass (to fix the
+// desktop seam) — at 2, JS's per-fact class assignment and mobile's own
+// row split became IDENTICAL (both are "facts 0-1 dark, 2-3 light"), but
+// nothing kept the two in sync going forward: the nth-child selector was
+// a second, hand-written encoding of the same split, not derived from
+// it. Fixed by deleting the second encoding entirely and applying
+// .factOnLight's colors unconditionally (no breakpoint gate at all —
+// both tiers straddle the seam now, since the previous pass, so there's
+// no longer a tier where this class should mean anything else): if
+// DARK_FACT_COUNT ever moves again, every breakpoint moves with it
+// automatically, from one class.
+//
+// Fix pass 6 — real bug, found from a live screenshot, not from the
+// contrast formula: STUDI's LABEL specifically (and, on narrower cards,
+// LINGUE's) sat close enough to the seam to fall inside the
+// backdrop-filter blur's own transition band — blurring across a hard
+// dark-photo/light-page boundary doesn't produce two flat halves, it
+// produces a soft gradient roughly one blur-radius wide (20-28px) either
+// side of the seam, and the earlier contrast math (a flat "light
+// composite" assumption) never modeled that gradient. The blended label
+// color (--light-base-accent/--light-base-text 70/30, ~5.7-6:1 against
+// the FLAT light composite) had nowhere near enough margin to survive
+// the gradient's own mid-tone center, where the effective backdrop is
+// much closer to 50% grey. Fixed by dropping the blend and using
+// --light-base-text directly — the same near-black the value already
+// uses, an existing token with real margin even against a rough
+// worst-case mid-grey transition (~5.8:1, checked by hand against an
+// estimated transition-center composite, then re-verified via actual
+// pixel sampling behind the rendered text — see this pass's own report).
+// Label and value are now the SAME color on the light half, exactly
+// mirroring how the dark half already differentiates label from value
+// by weight/size/tracking alone, not color (see .factOnDark/.factOnLight
+// above) — consistent, not a new pattern.
+.factOnLight {
+  .factLabel {
+    color: var(--light-base-text);
+  }
+
+  .factValue {
+    color: var(--light-base-text);
+  }
+}

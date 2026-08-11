@@ -49,17 +49,60 @@
     background-color 250ms ease,
     backdrop-filter 250ms ease;
 
+  // Header-over-light-hero pass: `body:has([data-light-hero]) &` used to
+  // be a second branch sharing THIS rule's own 55% value — split out
+  // below (own comment there for why) once 55% turned out to be
+  // calibrated for a dark photo behind the glass, not a light hero.
+  // Every other rule in this file that still reads only
+  // `&[data-collapsed="true"]` (padding, signature width, nav-link size)
+  // stays a single shared declaration with its own `:has()` branch —
+  // this is the one property where the two cases now need different
+  // numbers, not the whole recipe.
   &[data-collapsed="true"] {
     background: color-mix(in srgb, var(--color-bg) 55%, transparent);
     backdrop-filter: blur(28px);
     // -webkit-backdrop-filter: blur(28px);
   }
 
+  // Contrast-fix pass: 55% (above) was measured against the homepage's
+  // dark photo hero — composited over a LIGHT hero instead, 45% of that
+  // light color bleeds through the glass and ivory text drops to 3.64:1,
+  // below the 4.5:1 AA floor (measured live). Retuned against the actual
+  // worst case, not assumed: with the header hidden, screenshotted the
+  // raw hero pixels it sits over at 1440/1024/390 on both /faq and
+  // /blog, and found the lightest pixel anywhere in that strip is
+  // #f6f3ee (246,243,238) — the flat cream hero fill itself, not the
+  // portrait (the photo never gets brighter than the field around it at
+  // any tested width). Tested density in 1% steps from 50-100%, then
+  // 0.1% steps around the crossover: the exact mathematical minimum is
+  // 61.2% (4.504:1); every whole percent below 62% still fails (61%
+  // measures 4.474:1). 62% is the lowest whole-percent value that clears
+  // 4.5:1 against that pixel, at 4.626:1 — real but deliberately thin
+  // margin, not padded further, since the brief was "the lowest density
+  // that reaches 4.5:1," not a target ratio.
+  //
+  // Blur unchanged (still 28px) and no border/shadow/solid fallback
+  // added — this is a density change only. Applies for this page's
+  // entire scroll range once matched, not just at rest: `:has()` can't
+  // tell "still over the hero" from "scrolled past it into the dark
+  // .body section" apart, but that's harmless here — 62% only improves
+  // on 55%'s own already-comfortable 14.37:1 over dark content, never
+  // hurts it. Higher specificity than the plain rule above (`body` adds
+  // one element to the count), so it wins whenever both would otherwise
+  // apply — confirmed via the CSS spec's own :has() specificity rule
+  // (the argument's specificity, not a flat pseudo-class point), not
+  // assumed from source order.
+  body:has([data-light-hero]) & {
+    background: color-mix(in srgb, var(--color-bg) 62%, transparent);
+    backdrop-filter: blur(28px);
+  }
+
   // Fallback for browsers without backdrop-filter support: solid ivory at
   // 97%, per spec — a blur-less glass isn't legible over the hero photo,
   // so this can't just degrade to "no background."
   @supports not (backdrop-filter: blur(1px)) {
-    &[data-collapsed="true"] {
+    &[data-collapsed="true"],
+    body:has([data-light-hero]) & {
       background: color-mix(in srgb, var(--color-bg) 97%, transparent);
     }
   }
@@ -139,7 +182,8 @@
 // only re-expressed via the new mechanism, not re-tuned. Desktop moves
 // to this round's new 6px target (was round 3's 8px) — "the bar is
 // still tall" is what this whole diagnostic pass is about.
-.labHeader[data-collapsed="true"] .labHeaderInner {
+.labHeader[data-collapsed="true"] .labHeaderInner,
+body:has([data-light-hero]) .labHeader .labHeaderInner {
   padding-block: 0.625rem; // 10px, mobile tier
 
   @include mixins.breakpoint-up(lg) {
@@ -192,7 +236,8 @@
   }
 }
 
-.labHeader[data-collapsed="true"] .labHeaderSignature {
+.labHeader[data-collapsed="true"] .labHeaderSignature,
+body:has([data-light-hero]) .labHeader .labHeaderSignature {
   @include mixins.breakpoint-up(lg) {
     width: 7.8125rem; // 125px, collapsed — mirrors the old 24px->17px rest/collapsed ratio
   }
@@ -276,7 +321,8 @@
 // unrelated number. font-weight isn't set here — it cascades from the
 // updated (now regular, 400) .labHeaderNavLink rule above, so both
 // states carry the lighter weight automatically.
-.labHeader[data-collapsed="true"] .labHeaderNavLink {
+.labHeader[data-collapsed="true"] .labHeaderNavLink,
+body:has([data-light-hero]) .labHeader .labHeaderNavLink {
   font-size: 0.9375rem; // 15px (was 13px)
 }
 
@@ -480,7 +526,13 @@
 // from .labHeaderCta's own base rule now that the button is solid at
 // every scroll position (header/hero restyle pass) — removed rather than
 // left as an inert duplicate.
-.labHeaderCta[data-collapsed="true"] {
+// Header-over-light-hero pass: the button carries its own data-collapsed
+// (written alongside the header's, HeaderInteractive.tsx) and needed the
+// same second selector branch — without it, on a light-hero page the bar
+// goes collapsed but the CTA stays sized for rest, which is exactly the
+// "only the header is styled" mismatch this pass was flagged to avoid.
+.labHeaderCta[data-collapsed="true"],
+body:has([data-light-hero]) .labHeaderCta {
   // Revision round 3, item 1 / round 4 retune: true compact collapsed
   // variant, desktop only — reuses the SAME data-collapsed hard-threshold
   // switch already driving the color swap above ("interpolated/switched

@@ -71,3 +71,8 @@ docs/**/*.png
 public/**/*.mov
 public/**/*.mp4
 public/**/*.webm
+
+# source scans containing PII (codice fiscale, home address) awaiting
+# redaction/review — never committed, see contents/redacted/ for the
+# redacted exports this generates
+/contents/

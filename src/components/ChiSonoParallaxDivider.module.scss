@@ -1,0 +1,111 @@
+@use "../styles/mixins";
+
+.divider {
+  position: relative;
+  overflow: hidden;
+}
+
+// Overrides ParallaxFrameStatic's own aspect-ratio: 10/4 (576px tall at
+// a 1440px viewport) with an explicit height per breakpoint, capped at
+// 450px max on desktop — see ChiSonoParallaxDivider.tsx's own comment
+// on the `short` prop. Re-asserted under prefers-reduced-motion: reduce,
+// since ParallaxFrameStatic.module.scss's own reduced-motion rule sets
+// height: auto for that mode.
+.shortFrame {
+  height: 220px;
+
+  @include mixins.breakpoint-up(md) {
+    height: 320px;
+  }
+
+  @include mixins.breakpoint-up(lg) {
+    height: 450px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    height: 220px;
+
+    @include mixins.breakpoint-up(md) {
+      height: 320px;
+    }
+
+    @include mixins.breakpoint-up(lg) {
+      height: 450px;
+    }
+  }
+}
+
+// Scrim arithmetic reused verbatim from PillarHero.module.scss's own
+// .heroScrim (same worst-case reasoning: this placeholder image may be
+// swapped later, so it's sized against a worst-case bright source, not
+// today's actual sample): color-mix(--light-base-text 75%, transparent)
+// composites to ~rgb(98,96,94) over a pure-white source; --light-base-bg
+// text on that composite measures ~5.65:1, clearing both the 4.5:1 body
+// floor and the 3:1 large-heading floor with real margin.
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--light-base-text) 75%, transparent);
+}
+
+.content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding-inline: var(--space-5);
+}
+
+.line1 {
+  margin: 0;
+  max-width: 40rem;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--light-base-bg);
+  text-wrap: balance;
+}
+
+// Corrected via direct measurement, same class of bug PillarHero.
+// module.scss's own .heroContent comment already documents finding once:
+// the brief calls for the accent color here, but champagne
+// (--color-accent, #c29a5e) measured only ~2.4:1 against this scrim's
+// own worst-case composite (75% --light-base-text over a bright/white
+// source — the same worst-case PillarHero tests against, since imageUrl
+// may be swapped later), well under the 4.5:1 floor. Same fix PillarHero
+// already applies for exactly this reason: ivory (--light-base-bg),
+// italic carrying the emphasis instead of a color change.
+.emphasis {
+  font-style: italic;
+  color: var(--light-base-bg);
+}
+
+.line2 {
+  margin: 0;
+  max-width: 34rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--light-base-bg);
+}
+
+// Same fix as .emphasis above — champagne fails at ~2.4:1 against this
+// scrim's worst-case composite; ivory at reduced opacity (85%, still
+// clearing 4.5:1 — see this pass's own report) keeps a visual "quieter
+// than the headline" step without the color that doesn't hold contrast.
+.marker {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--light-base-bg) 85%, transparent);
+}

@@ -57,6 +57,19 @@ export interface ContactChannel {
   order: number;
 }
 
+// /prezzi proposals pass (design-lab scratch route) — the first reader of
+// this field. Schema has existed since Stage-something with nothing
+// consuming it (siteSettings.ts's own comment: "Nothing reads these
+// fields yet"); this interface/query addition is purely additive to the
+// shared siteSettings fetch, no existing consumer's shape changes.
+export interface PricingFields {
+  individualFee: number;
+  individualDurationMin: number;
+  coupleFee: number;
+  coupleDurationMin: number;
+  currency: string;
+}
+
 interface SiteSettingsData {
   title: string;
   seo?: SeoFields;
@@ -72,6 +85,7 @@ interface SiteSettingsData {
   emergencyContacts?: EmergencyContact[];
   googleProfileUrl?: string;
   carePathway?: PathwayStep[];
+  pricing?: PricingFields;
 }
 
 export function getSiteSettings(locale: string) {

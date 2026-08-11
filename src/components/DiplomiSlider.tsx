@@ -83,6 +83,14 @@ export function DiplomiSlider({
   intro,
   alboLine,
   closeLabel,
+  redactionNote,
+  cardAffordance,
+  cardAriaSuffix,
+  cardPrevLabel,
+  cardNextLabel,
+  trackLabel,
+  lightboxPrevLabel,
+  lightboxNextLabel,
   items,
 }: {
   headingId: string;
@@ -92,6 +100,14 @@ export function DiplomiSlider({
   intro?: string;
   alboLine?: string;
   closeLabel: string;
+  redactionNote: string;
+  cardAffordance: string;
+  cardAriaSuffix: string;
+  cardPrevLabel: string;
+  cardNextLabel: string;
+  trackLabel: string;
+  lightboxPrevLabel: string;
+  lightboxNextLabel: string;
   items: DiplomiLabItem[];
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
@@ -191,7 +207,7 @@ export function DiplomiSlider({
           <button
             type="button"
             className={styles.iconButton}
-            aria-label="Qualifica precedente"
+            aria-label={cardPrevLabel}
             disabled={!canScrollPrev}
             onClick={() => scrollByOneCard(-1)}
           >
@@ -202,7 +218,7 @@ export function DiplomiSlider({
           <button
             type="button"
             className={styles.iconButton}
-            aria-label="Qualifica successiva"
+            aria-label={cardNextLabel}
             disabled={!canScrollNext}
             onClick={() => scrollByOneCard(1)}
           >
@@ -226,7 +242,7 @@ export function DiplomiSlider({
           data-overflow={hasOverflow ? "true" : "false"}
           role="list"
           tabIndex={0}
-          aria-label="Formazione e qualifiche"
+          aria-label={trackLabel}
         >
           {items.map((item) =>
             item.interactive ? (
@@ -239,7 +255,7 @@ export function DiplomiSlider({
                   type="button"
                   className={styles.card}
                   data-interactive="true"
-                  aria-label={`${item.institution}, ${item.year} — vedi il titolo`}
+                  aria-label={`${item.institution}, ${item.year} ${cardAriaSuffix}`}
                   onClick={() => openLightboxFor(item)}
                 >
                   <p className={styles.yearWatermark} aria-hidden="true">
@@ -266,7 +282,7 @@ export function DiplomiSlider({
                     <span className={styles.cardTitle}>{item.title}</span>
                     {/* Persistent, not hover-only — this is what tells a
                         touch user the card is tappable at all. */}
-                    <span className={styles.cardAffordance}>Vedi il titolo →</span>
+                    <span className={styles.cardAffordance}>{cardAffordance}</span>
                   </span>
                 </button>
               </li>
@@ -293,7 +309,14 @@ export function DiplomiSlider({
         </ul>
       </div>
 
-      <QualificationLightboxLab ref={lightboxRef} items={interactiveItems} closeLabel={closeLabel} />
+      <QualificationLightboxLab
+        ref={lightboxRef}
+        items={interactiveItems}
+        closeLabel={closeLabel}
+        redactionNote={redactionNote}
+        prevLabel={lightboxPrevLabel}
+        nextLabel={lightboxNextLabel}
+      />
     </>
   );
 }

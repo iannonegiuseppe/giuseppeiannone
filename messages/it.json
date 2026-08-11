@@ -24,7 +24,15 @@
     "prevLabel": "Diploma precedente",
     "nextLabel": "Diploma successivo",
     "closeLabel": "Chiudi",
-    "viewDocumentSuffix": "vedi il documento"
+    "viewDocumentSuffix": "vedi il documento",
+    "redactionNote": "Alcuni dati personali sono stati oscurati.",
+    "cardAffordance": "Vedi il titolo →",
+    "cardAriaSuffix": "— vedi il titolo",
+    "cardPrevLabel": "Qualifica precedente",
+    "cardNextLabel": "Qualifica successiva",
+    "trackLabel": "Formazione e qualifiche",
+    "lightboxPrevLabel": "Documento precedente",
+    "lightboxNextLabel": "Documento successivo"
   },
   "ChiSono": {
     "storyLinkLabel": "Leggi la mia storia",
@@ -59,5 +67,13 @@
     "description": "Si è verificato un errore imprevisto. Riprova o torna alla home.",
     "retry": "Riprova",
     "backHome": "Torna alla home"
+  },
+  "FaqPage": {
+    "kicker": "Domande frequenti"
+  },
+  "PricePage": {
+    "kicker": "Prezzi",
+    "atAGlance": "In sintesi",
+    "servicesLabel": "Servizi"
   }
 }

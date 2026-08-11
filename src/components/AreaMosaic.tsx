@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { Image as SanityImage } from "sanity";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import { pillarPath, type Locale } from "@/sanity/paths";
@@ -22,6 +23,25 @@ export interface AreaMosaicItem {
 // the key doesn't, so one order array covers both languages.
 const AREA_ORDER = ["anxiety", "panic", "stress", "relazioni", "coppia", "sessuali", "trauma"];
 const DOUBLE_KEY = "anxiety";
+
+// Uneven-mosaic pass — desktop tile positions, named to match
+// AreaMosaic.module.scss's own grid-template-areas (3 explicit rows,
+// anxiety a true 2-col×2-row dominant tile top-left; the other six in
+// two distinct sizes — four 1×1, two 2×1 — arranged so no two rows read
+// the same). Assigned via a CSS custom property rather than one class
+// per area: seven fixed positions on a shared template is exactly what
+// grid-area/var() is for, and it keeps this file from growing seven
+// near-identical SCSS classes. Mobile ignores this entirely — see
+// .tile's own breakpoint-gated rule.
+const AREA_GRID_SLOT: Record<string, string> = {
+  anxiety: "anx",
+  panic: "pan",
+  stress: "str",
+  relazioni: "rel",
+  coppia: "cop",
+  sessuali: "ses",
+  trauma: "tra",
+};
 
 function keyFromId(id: string): string {
   return id.replace(/^pillarPage-/, "").replace(/-(it|en)$/, "");
@@ -48,7 +68,8 @@ export function AreaMosaic({
   return (
     <div className={styles.mosaic}>
       {ordered.map((item) => {
-        const isDouble = keyFromId(item._id) === DOUBLE_KEY;
+        const key = keyFromId(item._id);
+        const isDouble = key === DOUBLE_KEY;
         const dims = item.heroImage ? imageDimensions(item.heroImage) : null;
         const requestWidth = dims ? Math.min(dims.width, 1600) : undefined;
         const href = pillarPath(locale, item.slug);
@@ -58,6 +79,7 @@ export function AreaMosaic({
             key={item._id}
             href={href}
             className={`${styles.tile} ${isDouble ? styles.tileDouble : ""}`}
+            style={{ "--tile-area": AREA_GRID_SLOT[key] } as CSSProperties}
           >
             {item.heroImage && requestWidth ? (
               <Image

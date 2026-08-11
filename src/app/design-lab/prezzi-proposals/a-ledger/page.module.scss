@@ -1,0 +1,79 @@
+@use "../../../../styles/mixins";
+@use "../../../../styles/tone";
+
+.page {
+  @include tone.light-island-surface;
+}
+
+.header {
+  @include mixins.container;
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-8);
+  max-width: 42rem;
+}
+
+.kicker {
+  margin: 0;
+}
+
+.title {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+.subhead {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// --- Facts: plain definition list, one hairline rule between rows ---------
+.factsSection {
+  padding-bottom: var(--space-9);
+}
+
+.factsGrid {
+  @include mixins.container;
+  margin: 0;
+}
+
+.factRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--color-hairline);
+
+  @include mixins.breakpoint-up(sm) {
+    grid-template-columns: 12rem 1fr;
+    gap: var(--space-6);
+  }
+
+  &:last-child {
+    border-bottom: 1px solid var(--color-hairline);
+  }
+}
+
+.factLabel {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.factValue {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+}

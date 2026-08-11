@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PortableText } from "next-sanity";
 import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
+import { LightPortraitHero } from "@/components/LightPortraitHero";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
 import {
@@ -43,25 +44,6 @@ function getContactSectionCopy(locale: string) {
 // is the honest, non-forked choice here too.
 const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
 const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
-
-// Splits a heading on its CMS-flagged emphasis word — same inline
-// technique ContactBlock.tsx/HeroOverlap.tsx already use, not a new
-// pattern.
-function renderHeadingWithEmphasis(
-  heading: string,
-  emphasisWord: string | undefined,
-  emphasisClassName: string | undefined,
-) {
-  const index = emphasisWord ? heading.indexOf(emphasisWord) : -1;
-  if (!emphasisWord || index === -1) return heading;
-  return (
-    <>
-      {heading.slice(0, index)}
-      <em className={emphasisClassName}>{emphasisWord}</em>
-      {heading.slice(index + emphasisWord.length)}
-    </>
-  );
-}
 
 function formatDate(publishedAt: string | null, locale: string) {
   if (!publishedAt) return null;
@@ -253,8 +235,6 @@ export async function BlogIndexView({
       getSiteSettings(locale),
     ]);
 
-  const portraitDims = heroPortrait?.photo ? imageDimensions(heroPortrait.photo) : null;
-
   // Item — featured article is the single most recent article, page 1
   // only (order is already publishedAt desc, so articles[0] IS the most
   // recent on page 1; on later pages there is no "most recent" article to
@@ -269,43 +249,17 @@ export async function BlogIndexView({
     <>
       <BlogPaginationScrollReset />
       <main className={styles.page}>
-        {/* 1. HERO — light ivory */}
-        <section className={styles.hero}>
-          <div className={`container ${styles.heroInner}`}>
-            <div className={styles.heroText}>
-              <p className={styles.kickerRow}>
-                <span className={styles.kickerRule} aria-hidden="true" />
-                <span className={styles.kicker}>{blogIndex?.kicker ?? "Blog"}</span>
-              </p>
-              <h1 className={styles.heroTitle}>
-                {blogIndex?.heading
-                  ? renderHeadingWithEmphasis(
-                      blogIndex.heading,
-                      blogIndex.headingEmphasisWord,
-                      styles.heroTitleEmphasis,
-                    )
-                  : "Blog"}
-              </h1>
-              {blogIndex?.intro ? <p className={styles.heroIntro}>{blogIndex.intro}</p> : null}
-            </div>
-            <div className={styles.heroVisual} aria-hidden="true">
-              <div className={styles.heroVisualFrame}>
-                <div className={styles.heroVisualGlow} />
-                {heroPortrait?.photo && portraitDims ? (
-                  <Image
-                    src={urlFor(heroPortrait.photo).width(900).url()}
-                    alt=""
-                    width={portraitDims.width}
-                    height={portraitDims.height}
-                    sizes="(min-width: 64rem) 34rem, 60vw"
-                    className={styles.heroVisualImg}
-                    priority
-                  />
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 1. HERO — light ivory. Extracted to LightPortraitHero.tsx
+            (/faq build pass, shared with that page) — see that file's own
+            top comment for exactly what did and didn't change. */}
+        <LightPortraitHero
+          kicker={blogIndex?.kicker ?? "Blog"}
+          heading={blogIndex?.heading ?? "Blog"}
+          headingEmphasisWord={blogIndex?.headingEmphasisWord}
+          intro={blogIndex?.intro}
+          photo={heroPortrait?.photo}
+          priority
+        />
 
         {/* 2. DARK SECTION — featured + grid + pagination */}
         <section id={BLOG_LIST_SECTION_ID} className={styles.listSection}>

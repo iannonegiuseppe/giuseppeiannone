@@ -1,15 +1,24 @@
 @use "../../../../styles/mixins";
 @use "../../../../styles/tone";
 
-// This route's header is permanently collapsed (HeaderInteractive.tsx's
-// own forceCollapsed) — measurably shorter than the generic --header-
-// height token (114px/100px, the header's REST-state size). The collapsed
-// height now lives as its own token, --header-height-collapsed
-// (_tokens.scss, next to --header-height) — promoted out of this file
-// (where it used to be two hardcoded SCSS variables) once ReadingArea's
-// own sticky TOC offset needed the same value: one declared number,
-// not a second copy to keep in sync by hand. .progressTrack/.coverBand
-// below read the token directly now.
+// Header-over-light-hero pass: this route's header is NOT collapsed
+// anymore — forceCollapsed (HeaderInteractive.tsx) is gone, and this
+// route never rendered LightPortraitHero, so it gets no :has() collapse
+// either (correctly: its own dark photo cover plus .coverScrim already
+// keep the header's transparent-at-rest state legible — see that
+// pass's own report). It genuinely rests at the header's REST-state
+// height now, so .coverBand's padding-top (below) reserves
+// --header-height, not --header-height-collapsed. .coverBand is the
+// one fixed here because it's visible from scroll position 0, when the
+// header is provably still at REST height. --header-height-collapsed
+// itself is untouched and still used by .progressTrack below and by
+// ReadingArea's sticky TOC offset — both were out of scope for this
+// fix (not asked for, not verified here) and may be worth a similar
+// look separately: the scroll listener still runs on this route
+// (unchanged), so whether their own fixed offset ever visibly
+// mismatches the header's actual height during the scroll window
+// before COLLAPSE_AT_PX is genuinely fires is not something this pass
+// checked.
 
 // Reading frame pass — ivory light-island on a dark-default site, same
 // mechanism every homepage light block uses (Metodo, Hope, FAQ, etc.):
@@ -69,35 +78,35 @@
   // against, so "no cover" never under-shoots legibility.
   background: var(--light-base-text);
   // Seventh pass, item 2 — content centred on BOTH axes now, not just
-  // horizontally. padding-top reserves EXACTLY the fixed header's own
-  // measured collapsed height (see this file's own top-of-file comment)
-  // — no extra breathing-room addition — and padding-bottom is 0, so
-  // align-items:center splits ALL of the remaining space evenly above and
-  // below the content. A real bug caught by direct measurement (not
-  // assumed): the first version of this rule reserved var(--header-height)
-  // (the REST-state token, 114px/100px — much taller than this route's
-  // actually-collapsed header) PLUS an extra var(--space-5) top and
-  // var(--space-7) bottom "breathing room" left over from the pre-
-  // centring layout, which made the two centring gaps measure unequal
-  // once you included those extras in the total (204.77px top vs 114.78px
-  // bottom at 1440) — centred WITHIN the reserved region, but the reserved
-  // region itself was asymmetric. Fixed by reserving only the header's own
-  // real footprint and letting flex distribute literally everything else.
+  // horizontally. padding-top reserves the fixed header's own real
+  // footprint plus a real gap below it — no extra breathing-room beyond
+  // that one gap — and padding-bottom is 0, so align-items:center splits
+  // ALL of the remaining space evenly above and below the content.
   //
-  // Safe against clipping at any height: this element has no overflow
-  // constraint and no fixed height (min-height is a floor only, per this
-  // class's own comment above), so if centred content plus the reserved
-  // header space is taller than the 21:9 floor, the band simply grows to
-  // fit — checked at 390 (this pass's own report has the measured result),
-  // where the band is naturally short and the header content is
-  // relatively tall; it fits with room to spare, no growth needed there.
+  // Header-over-light-hero pass: was var(--header-height-collapsed),
+  // correct back when forceCollapsed pinned this route's header to that
+  // height unconditionally. That's gone (see this file's own top-of-file
+  // comment) — the header genuinely rests at var(--header-height) here
+  // now (114px/100px), so that's what this reserves. Using the existing
+  // token, not a new one or a hardcoded 113px: --header-height already
+  // existed for exactly this purpose (_tokens.scss, "Header height (Hero
+  // — full-height pass)"), just wasn't the one this rule happened to
+  // read.
+  //
+  // Follow-up: reserving EXACTLY --header-height measured flush (0px) at
+  // 390 — correct today, but flush isn't clearance: any rounding, any
+  // device with a different rem base, and the header overlaps the
+  // breadcrumb row again. + var(--space-2) (8px) is the real gap, one
+  // token off the standard spacing scale, not a hand-picked px value —
+  // already used elsewhere in this same file for a small, real (not
+  // breathing-room) gap (see .listItem/.endAuthorBio above). Measured
+  // resulting gap at 390/1024/1440 in this pass's own report.
   display: flex;
   align-items: center;
-  // --header-height-collapsed is itself breakpoint-scoped (_tokens.scss,
-  // same mechanism as --header-height) — no separate lg+ override needed
-  // here anymore, the custom property already resolves to the right value
-  // at each width.
-  padding-top: var(--header-height-collapsed);
+  // --header-height is itself breakpoint-scoped (_tokens.scss) — no
+  // separate lg+ override needed here, the custom property already
+  // resolves to the right value at each width.
+  padding-top: calc(var(--header-height) + var(--space-2));
   padding-bottom: 0;
 }
 

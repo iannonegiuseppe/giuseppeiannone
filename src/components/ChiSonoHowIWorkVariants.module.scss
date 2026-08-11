@@ -1,0 +1,736 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Five proposed designs for "Come lavoro." CORRECTED — this used to
+// hardcode #22423A, docs/design-direction.md §2's ORIGINAL pre-restyle
+// accent, on the theory that it was still "the documented brand green."
+// That token doesn't exist live: the taupe/ivory restyle replaced it
+// sitewide, and #22423A matches neither the footer (--color-surface,
+// #16261F, live-measured rgb(22,38,31)) nor any other real dark band.
+// page.tsx's own comment on this section says "Come lavoro" should
+// "resume the same ambient background as blocks 5-6" (the timeline,
+// which uses --color-bg, #081512, live-measured rgb(8,21,18)) — i.e.
+// no new color was ever supposed to be introduced here. <html> already
+// carries data-theme="dark" site-wide (src/app/[locale]/layout.tsx),
+// so --color-bg/--color-surface/--color-text/--color-text-muted are
+// already the real ambient dark tokens everywhere else on this page —
+// this mixin now just aliases them under the --howiwork-* names the
+// five variants already reference, instead of reinventing a green.
+// --color-text-muted's own contrast is already verified in
+// _tokens.scss's own comment (8.31:1 on --color-bg, 7.29:1 on
+// --color-surface) — no local re-tuning needed.
+@mixin green-surface {
+  --howiwork-bg: var(--color-bg);
+  --howiwork-bg-raised: var(--color-surface);
+  --howiwork-text: var(--color-text);
+  --howiwork-text-muted: var(--color-text-muted);
+  --howiwork-hairline: var(--color-hairline);
+  background: var(--howiwork-bg);
+  color: var(--howiwork-text);
+}
+
+// Shared header — kicker/heading/intro, identical markup/classes
+// across all five so the comparison is about the PARTS layout, not
+// the header treatment.
+.header {
+  @include mixins.container;
+  margin-bottom: var(--space-8);
+}
+
+// CORRECTED — was color: var(--howiwork-text); opacity: 0.85 (ink at
+// 85%), not the accent token every other kicker on the page uses
+// (ChiSonoCredentials/ChiSonoBodyBlocks/TimelineSection/
+// PublicationsCardsTabs all read var(--color-accent) directly). Blocks
+// is the only live variant (.blocksHeader, light-island-surface scope),
+// where --color-accent already resolves to the correct light-appropriate
+// value — no local alias needed.
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heading {
+  max-width: 34rem;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+// EXPERIMENTAL — see HowIWorkColorBlocks.tsx's own comment; Task 3b live
+// contrast check, not yet confirmed safe to ship. Same caller-side
+// italic pattern as TimelineSection.module.scss's own .headingEmphasis
+// (font-weight:400 explicit, EB Garamond synthesis fix).
+.headingEmphasis {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.intro {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--howiwork-text-muted);
+}
+
+// ============================================================
+// A — STAGGER: closest to the previously-shipped layout (large ghost
+// numerals, staggered columns), re-themed onto the brand green.
+// ============================================================
+.staggerSection {
+  @include green-surface;
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.staggerRow {
+  @include mixins.container;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-6);
+  }
+}
+
+.staggerPart {
+  position: relative;
+  flex: 1 1 0;
+}
+
+.staggerPartOffset {
+  @include mixins.breakpoint-up(lg) {
+    margin-top: var(--space-8);
+  }
+}
+
+.staggerNumeral {
+  position: absolute;
+  top: calc(-1 * var(--space-5));
+  left: calc(-1 * var(--space-2));
+  z-index: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  line-height: 1;
+  color: color-mix(in srgb, var(--howiwork-text) 16%, transparent);
+  user-select: none;
+
+  @include mixins.breakpoint-up(lg) {
+    font-size: clamp(6rem, 8vw, 9rem);
+  }
+}
+
+.staggerContent {
+  position: relative;
+  z-index: 1;
+  padding-top: var(--space-7);
+}
+
+.staggerTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.staggerBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--howiwork-text-muted);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============================================================
+// B — CARDS: four bordered cards on a lighter green fill
+// (--howiwork-bg-raised), small numeral badge instead of a giant
+// watermark — a more contained, structured read than the stagger.
+// ============================================================
+.cardsSection {
+  @include green-surface;
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.cardsGrid {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+.cardsCard {
+  padding: var(--space-7);
+  background: var(--howiwork-bg-raised);
+  border: 1px solid var(--howiwork-hairline);
+  border-radius: var(--radius-m);
+}
+
+.cardsBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: var(--space-5);
+  border-radius: 50%;
+  border: 1px solid var(--howiwork-hairline);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+}
+
+.cardsTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.cardsBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--howiwork-text-muted);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============================================================
+// C — PATH: a dashed vertical line with a node per step, reinforcing
+// "how the process unfolds" as a literal connected sequence rather
+// than independent columns. Vertical at every breakpoint (not
+// horizontal-at-lg) — the four parts are real different lengths (2,
+// 4, 3, 2 paragraphs), and a horizontal line with uneven column
+// heights reads worse than a simple vertical one that just gets taller.
+// ============================================================
+.pathSection {
+  @include green-surface;
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.pathWrap {
+  @include mixins.container;
+  position: relative;
+  max-width: 42rem;
+}
+
+.pathList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pathLine {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 0;
+  border-left: 1px dashed var(--howiwork-hairline);
+}
+
+.pathItem {
+  position: relative;
+  padding: 0 0 var(--space-8) var(--space-8);
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.pathNode {
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--howiwork-bg);
+  border: 1.5px solid var(--howiwork-text);
+}
+
+.pathTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.pathBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--howiwork-text-muted);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============================================================
+// D — SPLIT: editorial 2-column — header sticky on the left, the four
+// parts as a plain divided list on the right. Doesn't reuse the shared
+// .header/.kicker/.heading/.intro (those assume a full-width top
+// block; this one lives in a narrower sticky column and needs its own
+// sizing).
+// ============================================================
+.splitSection {
+  @include green-surface;
+  padding-block: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.splitGrid {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: minmax(0, 20rem) 1fr;
+    gap: var(--space-9);
+  }
+}
+
+.splitHeader {
+  @include mixins.breakpoint-up(lg) {
+    position: sticky;
+    top: calc(var(--header-height-collapsed) + var(--space-6));
+    align-self: start;
+  }
+}
+
+.splitKicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.splitHeading {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.splitIntro {
+  margin: 0;
+  color: var(--howiwork-text-muted);
+}
+
+.splitList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.splitItem {
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--howiwork-hairline);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.splitTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.splitBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--howiwork-text-muted);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============================================================
+// E — BLOCKS: full-bleed 2x2 color-block grid. CORRECTED — section
+// background and tile gradients used to be built from a hand-invented
+// local green (see green-surface's own comment for the live-measured
+// proof #22423A matches no real token). Now: section background is
+// --howiwork-bg, which aliases the real ambient --color-bg (#081512,
+// live-measured on the timeline's own dark passage). Tile gradients are
+// copied directly from TimelineVariants.module.scss's own .gradA/.gradB/
+// .gradC (the route deck's city cards) — same two-layer radial-glow-
+// over-linear-base technique, same real tokens (--color-accent/
+// -accent-hover for the glow, --color-surface/--color-bg for the base),
+// just four position/angle variations instead of three. Contrast must
+// be measured behind the actual text, not "brightest pixel in the
+// tile": that scan also catches the 1px ivory .blocksTile hairline
+// border at the very top edge, the brightest thing in the tile by far,
+// but 64px+ of padding keeps it away from any real text — see each
+// rule's own report for the real numbers.
+.blocksSection {
+  // No longer a single dark wrapper — the heading block moved to ivory
+  // (.blocksHeader, below); only .blocksGrid (the four cards) stays on
+  // the dark ambient background now. Needs a real declaration: an empty
+  // ruleset compiles to no CSS at all, which meant css-loader dropped
+  // the class from this module's exports entirely (confirmed live —
+  // styles.blocksSection resolved to undefined, so the <section> had no
+  // class attribute). position:relative is a harmless, meaningful
+  // default for a wrapping section, not a no-op filler.
+  position: relative;
+}
+
+// Heading block moved to ivory — kicker/heading/intro sit on the same
+// light-island tokens Hope/Credentials/Metodo use (tone.light-island-
+// surface), matching the light passage immediately above (Publications,
+// inside page.tsx's lightIslandMiddle); only the four cards below stay
+// dark. Top padding removed entirely: that light passage above already
+// supplies the section-to-section gap via the sitewide vertical-rhythm
+// mixin ("each section brings the gap that follows it") — this block's
+// own top padding on top of that doubled it.
+//
+// CORRECTED — split into two elements. mixins.container and tone.
+// light-island-surface used to both sit on .blocksHeader itself, which
+// meant the ivory background was painted on the SAME box the container
+// mixin constrains to --container-max-width — the ivory only ever
+// covered the container's own width, leaving green strips at both
+// viewport edges (live-measured: ivory box x=60..1380 on a 1440px
+// viewport, not 0..1440). .blocksHeaderSurface is now the plain,
+// unconstrained block that carries the background/color (naturally
+// full-width — .blocksSection has no ancestor max-width, same reason
+// .blocksGrid/.blocksTile already render edge-to-edge); .blocksHeader
+// nested inside it keeps only the container (text width + centering).
+.blocksHeaderSurface {
+  @include tone.light-island-surface;
+}
+
+.blocksHeader {
+  @include mixins.container;
+  --howiwork-text: var(--color-text);
+  --howiwork-text-muted: var(--color-text-muted);
+  padding-block: 0 var(--space-8);
+}
+
+.blocksGrid {
+  @include green-surface;
+  display: grid;
+  grid-template-columns: 1fr;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(2, 1fr);
+    // Positioning context for .field/.vignette/.seamCross/.grain below —
+    // each is position:absolute; inset:0, so they need this to anchor
+    // against the grid container itself rather than escaping to the
+    // nearest OTHER positioned ancestor. Gated here (not left
+    // unconditional) so nothing changes below md even though this
+    // property alone has no visual effect on its own.
+    position: relative;
+  }
+}
+
+// ============================================================
+// Continuous gradient field (md+ only) — replaces each card painting
+// its own copy of the same gradient stack (the same bright corner
+// repeating four times) with ONE field hoisted to the grid container.
+// Below md: untouched, each .blocksTile keeps its own per-card
+// background exactly as before (see .blocksTile's own comment).
+//
+// z-index stack, bottom to top, all inside .blocksGrid: .field (0) ->
+// .vignette (1) -> .seamCross (2) -> .grain (3) -> the four .blocksTile
+// cards (4). Every layer here lives on <li aria-hidden> siblings of the
+// real card <li>s (HowIWorkColorBlocks.tsx), position:absolute so they
+// sit outside CSS Grid's own auto-placement and just overlay the
+// container's full box regardless of DOM order.
+//
+// .field: the single sheen + base gradient. Values copied directly from
+// the old tile 1 (nth-child(1)) — that tile's own light source was
+// already the upper-left region ("at 12% 0%"), matching where the
+// combined light should read for the whole block; reused verbatim
+// rather than inventing a new position/colour, just applied once
+// instead of four times.
+.field {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 140% at 12% 0%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 55%),
+      linear-gradient(155deg, color-mix(in srgb, var(--color-surface) 55%, var(--color-bg) 45%) 0%, var(--color-bg) 100%);
+  }
+}
+
+// .vignette: HONESTY NOTE — no per-card vignette exists anywhere in this
+// file today (checked directly, not from memory: the old .blocksTile
+// background was exactly two layers, a radial sheen and a linear base,
+// both already folded into .field above). There is nothing to "take"
+// and re-derive. Built new instead — corner-darkening only, independent
+// of .field's own diagonal light direction, using --color-bg (already
+// the darkest token in this component's own palette, not a new colour).
+// Ellipse sized in percentages so it scales with the container rather
+// than a fixed px shape; verified live at 1440 and 1024 (very different
+// aspect ratios — see this pass's own report) rather than assumed.
+.vignette {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(
+      135% 135% at 78% 82%,
+      transparent 35%,
+      color-mix(in srgb, var(--color-bg) 40%, transparent) 100%
+    );
+  }
+}
+
+// .seamCross: two 1px hairlines at the grid's own dividing lines — the
+// 2x2 reading has to survive now that each tile no longer has its own
+// tonal boundary. grid-template-columns is repeat(2, 1fr) with no gap
+// set, so the columns split at exactly 50% (verified live, not assumed
+// — see this pass's own report) and the row boundary is wherever
+// BlocksEqualHeight's own equal-height JS lands, also 50% by
+// construction (two equal rows). color-mix(var(--color-line) 45%,
+// transparent) per instruction, not a new colour.
+.seamCross {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      background: color-mix(in srgb, var(--color-line) 45%, transparent);
+    }
+
+    // Vertical hairline, column boundary.
+    &::before {
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 1px;
+    }
+
+    // Horizontal hairline, row boundary.
+    &::after {
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+    }
+  }
+}
+
+// .grain: reused verbatim from chiSonoBlock.module.scss's own .grain
+// (opacity 0.045, mix-blend-mode: overlay, the same feTurbulence data
+// URI) — copied from that file directly, not retyped from memory.
+// Uniform over the whole block, no gradient/mask of its own, which is
+// exactly why one copy here replaces what would otherwise still be four
+// identical per-card copies.
+.grain {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0.045;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+// Tiles stay full-bleed (edge to edge, no container) so the color
+// blocks themselves read as a full-bleed grid — but the TEXT inside
+// them was sitting at the tile's own space-6/-7 padding only, which
+// left it 60px closer to the viewport edge than mixins.container's own
+// content edge on a 1440px viewport (live-measured: text x=48px vs.
+// container's own text x=108px). Fixed with extra inline padding on
+// the grid's two edge columns, equal to the container's own centering
+// margin + inset — same 100vw/negative-margin math Footer.module.scss's
+// own full-bleed .labFooter already uses elsewhere in this codebase,
+// applied here as padding instead of a margin trick since the
+// background must stay full-bleed while only the text inset changes.
+// Below `md` the grid is a single column, so every tile is both the
+// first and last column — .blocksTile's own base padding-inline
+// already gets this treatment symmetrically, no odd/even split needed
+// until the grid actually becomes two columns.
+.blocksTile {
+  position: relative;
+  overflow: hidden;
+  padding-block: var(--space-8);
+  padding-inline: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-6));
+  border-top: 1px solid var(--howiwork-hairline);
+
+  @include mixins.breakpoint-up(md) {
+    padding-block: var(--space-9);
+    padding-inline: var(--space-7);
+
+    &:nth-child(odd) {
+      padding-left: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-7));
+    }
+
+    &:nth-child(even) {
+      padding-right: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-7));
+    }
+  }
+
+  &:nth-child(1) {
+    background:
+      radial-gradient(120% 140% at 12% 0%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 55%),
+      linear-gradient(155deg, color-mix(in srgb, var(--color-surface) 55%, var(--color-bg) 45%) 0%, var(--color-bg) 100%);
+  }
+
+  &:nth-child(2) {
+    background:
+      radial-gradient(130% 150% at 88% 100%, color-mix(in srgb, var(--color-accent-hover) 20%, transparent), transparent 55%),
+      linear-gradient(200deg, color-mix(in srgb, var(--color-surface) 78%, var(--color-bg) 22%) 0%, var(--color-bg) 100%);
+  }
+
+  &:nth-child(3) {
+    background:
+      radial-gradient(150% 170% at 50% -10%, color-mix(in srgb, var(--color-accent) 32%, transparent), transparent 60%),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 96%, var(--color-accent) 6%) 0%, var(--color-bg) 100%);
+  }
+
+  &:nth-child(4) {
+    background:
+      radial-gradient(140% 160% at 0% 100%, color-mix(in srgb, var(--color-accent-hover) 22%, transparent), transparent 58%),
+      linear-gradient(165deg, color-mix(in srgb, var(--color-surface) 65%, var(--color-bg) 35%) 0%, var(--color-bg) 100%);
+  }
+
+  // md+: the four per-card gradients above are replaced by .field/
+  // .vignette/.seamCross/.grain, hoisted to .blocksGrid. Cancelled here
+  // specifically per nth-child (not on a bare .blocksTile rule) since
+  // .blocksTile:nth-child(N) is more specific than plain .blocksTile —
+  // a bare override at any position in the source would still lose the
+  // cascade to the rules above. Coming after them in source, at matching
+  // specificity, is what makes this win. z-index:4 puts the real cards
+  // above the new hoisted layers; scoped to md+ only, since below md
+  // there's no field/vignette/etc. to stack against in the first place.
+  @include mixins.breakpoint-up(md) {
+    &:nth-child(1),
+    &:nth-child(2),
+    &:nth-child(3),
+    &:nth-child(4) {
+      background: none;
+      z-index: 4;
+    }
+  }
+}
+
+// Watermark, centered behind the text — was top:-space-4/right:space-3,
+// which put it in the top-right corner and let it visibly overflow the
+// tile's own top edge. Centering with position:absolute + inset:0 +
+// flex keeps it as background texture regardless of tile size, instead
+// of a fixed corner offset that only happened to fit some tiles.
+//
+// Enlarged 1.5x (was clamp(5rem, 20vw, 9rem), now clamp(7.5rem, 30vw,
+// 13.5rem)) per instruction. A flat opacity increase alongside that
+// couldn't work: at this size the numeral spans the full tile and
+// genuinely sits under the body text (not just near a corner like
+// before), and --howiwork-text-muted is itself 72%-alpha — measuring
+// body text's REAL composited color (not its nominal CSS color) against
+// the numeral+gradient background, a flat color-mix at 20% opacity
+// already failed AA on 2 of 4 tiles (4.36-4.76:1), and the old 16%
+// itself would have failed post-enlargement too (modeled: 3.94-4.70:1)
+// — the size increase alone ate the old value's entire margin. Simply
+// lowering opacity to compensate (10% flat gets all 4 tiles passing,
+// 4.82-6.06:1) would mean SHIPPING A FAINTER numeral than before, the
+// opposite of what was asked. mix-blend-mode: soft-light instead of a
+// flat color-mix alpha: soft-light lightens a dark background much less
+// aggressively than normal alpha compositing does, so a much higher
+// nominal mix (40%, 2.5x the old 16%) still clears AA with real margin
+// on every tile — verified live, alpha-composited body text vs. true
+// numeral+gradient background: 4.63-6.17:1 (worst case tile 3, whose
+// gradient is already the brightest of the four).
+.blocksNumeral {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(7.5rem, 30vw, 13.5rem);
+  line-height: 1;
+  color: color-mix(in srgb, var(--howiwork-text) 40%, transparent);
+  mix-blend-mode: soft-light;
+  user-select: none;
+}
+
+.blocksContent {
+  position: relative;
+  z-index: 1;
+}
+
+.blocksTitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+}
+
+.blocksBody p {
+  margin: 0 0 var(--space-3);
+  color: var(--howiwork-text-muted);
+  max-width: 32rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}

@@ -80,6 +80,55 @@ export const siteSettings = defineType({
       title: "P.IVA",
       type: "string",
     }),
+    // Single source of truth for fees — individual and couple sessions,
+    // each with its own fee and duration (they differ; both apply
+    // identically online and in every studio location, so no per-mode
+    // split is needed here). Numbers stay numbers — formatting (currency
+    // symbol, "min" vs "minuti") happens at render, in one helper, not
+    // baked into the CMS value. Translated as part of this document's
+    // it/en pair, like everything else in Site settings (languageField()
+    // below) — not a second, ad hoc localisation scheme.
+    // Nothing reads these fields yet — that's expected: they exist so
+    // the next fee change is one edit instead of finding every place a
+    // number was typed by hand.
+    defineField({
+      name: "pricing",
+      title: "Pricing",
+      type: "object",
+      fields: [
+        defineField({
+          name: "individualFee",
+          title: "Individual session fee",
+          type: "number",
+          validation: (Rule) => Rule.required().positive(),
+        }),
+        defineField({
+          name: "individualDurationMin",
+          title: "Individual session duration (minutes)",
+          type: "number",
+          validation: (Rule) => Rule.required().positive(),
+        }),
+        defineField({
+          name: "coupleFee",
+          title: "Couple session fee",
+          type: "number",
+          validation: (Rule) => Rule.required().positive(),
+        }),
+        defineField({
+          name: "coupleDurationMin",
+          title: "Couple session duration (minutes)",
+          type: "number",
+          validation: (Rule) => Rule.required().positive(),
+        }),
+        defineField({
+          name: "currency",
+          title: "Currency",
+          type: "string",
+          initialValue: "EUR",
+          validation: (Rule) => Rule.required(),
+        }),
+      ],
+    }),
     defineField({
       name: "seo",
       title: "Default SEO",

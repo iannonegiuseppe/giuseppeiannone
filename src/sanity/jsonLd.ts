@@ -55,6 +55,67 @@ export function buildPersonJsonLd({
   };
 }
 
+// /prezzi structured-data pass — one Service node per session type.
+// provider is a full, embedded Person object (built via buildPersonJsonLd,
+// same function/same data layout.tsx's own sitewide Person uses), not an
+// @id reference to that sitewide node — matches this file's own
+// established, explicitly-documented convention (see buildBlogPostingJsonLd's
+// comment above: "each page's structured data is self-contained... without
+// needing to also fetch the layout's own markup"). Deliberately Service,
+// not Product/Offer-as-top-level — this is a professional service in a
+// regulated profession, not a retail good. No aggregateRating/review
+// anywhere in this file — never add one here.
+interface ServiceArea {
+  name: string;
+}
+
+interface ServiceOfferFields {
+  price: number;
+  priceCurrency: string;
+}
+
+export function buildServiceJsonLd({
+  name,
+  description,
+  url,
+  provider,
+  areaServed,
+  offers,
+}: {
+  name: string;
+  description?: string;
+  url: string;
+  provider: ReturnType<typeof buildPersonJsonLd>;
+  areaServed: ServiceArea[];
+  offers: ServiceOfferFields | ServiceOfferFields[];
+}) {
+  const offerList = Array.isArray(offers) ? offers : [offers];
+  // buildPersonJsonLd always stamps its own top-level @context (correct
+  // when it's the sitewide, standalone Person layout.tsx emits) — nested
+  // here as an embedded node, that @context is redundant and inconsistent
+  // with how buildBlogPostingJsonLd's own embedded author is written
+  // (no @context on the nested node, since it inherits the parent's).
+  // Stripped here, not in buildPersonJsonLd itself, since that function's
+  // other, standalone caller still needs it.
+  const { "@context": _providerContext, ...embeddedProvider } = provider;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name,
+    description,
+    url,
+    serviceType: "Psychotherapy",
+    provider: embeddedProvider,
+    areaServed: areaServed.map((area) => ({ "@type": "Place", name: area.name })),
+    offers: offerList.map((offer) => ({
+      "@type": "Offer",
+      price: offer.price,
+      priceCurrency: offer.priceCurrency,
+    })),
+  };
+}
+
 interface LocationFields {
   title: string;
   address?: string;

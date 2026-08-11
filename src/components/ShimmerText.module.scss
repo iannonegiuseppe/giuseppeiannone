@@ -63,6 +63,54 @@
     --shimmer-highlight: var(--color-accent-hover);
   }
 
+  // /faq hero pass — inside a light-island-surface scope (LightPortraitHero's
+  // own [data-light-hero] marker), the default formula above is wrong: it
+  // reads --color-surface, a token light-island-surface does NOT reassign
+  // (see CLAUDE.md's own "Styling" section — that token still resolves to
+  // the site's ambient dark literal here), so the color-mix would silently
+  // pull toward a dark surface instead of a light one. The site's own gold
+  // accent (--color-accent ~2.35:1, --color-accent-hover highlight ~1.46:1
+  // resolved on the ambient/dark palette) also fails 4.5:1 against this
+  // hero's #F6F3EE background outright — measured, not assumed. Fix for
+  // both problems at once: inside this scope, shimmer between the two
+  // tokens light-island-surface DOES reassign (--color-accent ->
+  // --light-base-accent #7e6b5b, 4.58:1; --color-accent-hover ->
+  // --light-base-accent-hover #715c52, 5.66:1 — both measured against
+  // #F6F3EE, both clear 4.5:1). Highlight reads darker than base here
+  // (inverted from the dark-theme branch above) because on a light ground,
+  // AA-passing bronze can't get any lighter and still hold contrast.
+  :global([data-light-hero]) & {
+    --shimmer-highlight: var(--color-accent-hover);
+  }
+
+  // /prezzi proposal C pass — inside a tone-deep scope (rich-dark-surface,
+  // _tone.scss), --color-accent isn't a color at all: that mixin hijacks it
+  // to hold the section's OWN multi-layer background gradient (see its own
+  // comment). Both `color: var(--color-accent)` above AND the `--color-
+  // accent` references inside the gradient-image below are therefore
+  // invalid here — confirmed live, not assumed: first render had this text
+  // render fully invisible (blank gap), traced to exactly this. tone-deep's
+  // own dedicated accent-TEXT role is --tone-deep-accent (_tone.scss's own
+  // tone-deep-foreground comment says as much) — every --color-accent
+  // reference this component makes needs the same substitution here, not
+  // just the highlight custom property the two branches above only needed.
+  :global([data-tone="deep"]) & {
+    color: var(--tone-deep-accent);
+
+    @supports (background-clip: text) or (-webkit-background-clip: text) {
+      background-image: linear-gradient(
+        90deg,
+        var(--tone-deep-accent) 0%,
+        var(--tone-deep-accent) 40%,
+        var(--shimmer-highlight) 50%,
+        var(--tone-deep-accent) 60%,
+        var(--tone-deep-accent) 100%
+      );
+    }
+
+    --shimmer-highlight: var(--tone-deep-accent-small);
+  }
+
   &[data-in-view="true"] {
     @supports (background-clip: text) or (-webkit-background-clip: text) {
       animation-play-state: running;

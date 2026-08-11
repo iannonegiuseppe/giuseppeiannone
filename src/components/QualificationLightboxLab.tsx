@@ -29,8 +29,14 @@ export type QualificationLightboxLabHandle = {
 // and the image is capped ~2000px + mounted only once `everOpened`.
 export const QualificationLightboxLab = forwardRef<
   QualificationLightboxLabHandle,
-  { items: DiplomiLabItem[]; closeLabel: string }
->(function QualificationLightboxLab({ items, closeLabel }, ref) {
+  {
+    items: DiplomiLabItem[];
+    closeLabel: string;
+    redactionNote: string;
+    prevLabel: string;
+    nextLabel: string;
+  }
+>(function QualificationLightboxLab({ items, closeLabel, redactionNote, prevLabel, nextLabel }, ref) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -152,7 +158,7 @@ export const QualificationLightboxLab = forwardRef<
             <button
               type="button"
               className={`${styles.navButton} ${styles.navButtonPrev}`}
-              aria-label="Documento precedente"
+              aria-label={prevLabel}
               onClick={() => goTo(index - 1)}
             >
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -162,7 +168,7 @@ export const QualificationLightboxLab = forwardRef<
             <button
               type="button"
               className={`${styles.navButton} ${styles.navButtonNext}`}
-              aria-label="Documento successivo"
+              aria-label={nextLabel}
               onClick={() => goTo(index + 1)}
             >
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -196,8 +202,10 @@ export const QualificationLightboxLab = forwardRef<
           </p>
           {/* Load-bearing, not decorative: explains the black bars on the
               scan as deliberate redaction, not damage or a rendering
-              error. */}
-          <p className={styles.captionNote}>Alcuni dati personali sono stati oscurati.</p>
+              error. messages/{it,en}.json's Diplomi.redactionNote, resolved
+              server-side by the caller — same convention as closeLabel
+              above (this file's own top comment). */}
+          <p className={styles.captionNote}>{redactionNote}</p>
         </div>
       </div>
     </dialog>

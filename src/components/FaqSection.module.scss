@@ -310,6 +310,19 @@
   transition-delay: 40ms;
 }
 
+// Opt-in modifier (FaqAccordion's `answerWidth="full"` prop — currently
+// /faq only): answer text spans the full panel width, flush with the
+// question row's own left edge, no character cap. A compound selector
+// (specificity 0,2,0) beats .faqRowAnswer's own shorthand `padding`
+// (0,1,0) for padding-left specifically, while top/right/bottom stay
+// whatever .faqRowAnswer already set — this only overrides the one
+// longhand, not the whole shorthand. FaqSection.tsx/PillarFaq.tsx never
+// pass answerWidth, so this class never applies to their rows.
+.faqRowAnswer.faqRowAnswerFull {
+  max-width: none;
+  padding-left: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .faqRowPanelWrap,
   .faqRowAnswer,

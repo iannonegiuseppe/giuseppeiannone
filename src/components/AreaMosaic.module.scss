@@ -9,14 +9,26 @@
 // design-lab-only --vw100 scrollbar-width variant — that fix isn't wired
 // into the real site's root layout, so it would just silently no-op here;
 // simpler to use the plain 100vw everyone else already ships with).
-// Row height is a fixed grid-auto-rows value, NOT per-tile aspect-ratio —
-// real bug caught live (first build): with aspect-ratio driving each
-// tile's own height independently, anxiety's 2-column-wide tile computed
-// TALLER than its 1-column row-mates at the same ratio, leaving them
-// short with dead space beneath inside a taller shared row track. A
-// fixed row height makes every tile in a row the same height regardless
-// of column span; each tile's photo then covers whatever box it's given
-// (object-fit: cover on .tileImage) rather than dictating it.
+// Row height is a fixed track size, NOT per-tile aspect-ratio — real bug
+// caught live (first build): with aspect-ratio driving each tile's own
+// height independently, anxiety's wide tile computed TALLER than its
+// row-mates at the same ratio, leaving them short with dead space
+// beneath inside a taller shared row track. A fixed row height makes
+// every tile in a row the same height regardless of span; each tile's
+// photo then covers whatever box it's given (object-fit: cover on
+// .tileImage) rather than dictating it.
+//
+// Uneven-mosaic pass — desktop moves from "anxiety spans 2 columns,
+// everything else 1×1" (still near-uniform: same row height as its
+// neighbours, so the size difference barely read) to an explicit
+// 4-col×3-row grid-template-areas: anxiety a true 2×2 tile, top-left,
+// exactly 4× the area of the smallest tile — "twice the width and twice
+// the height", not just twice the width. The other six fill the
+// remaining 8 cells in two distinct sizes (four 1×1, two 2×1 — "rel" and
+// "ses" each span a full 2-column row segment) so no row repeats the
+// same tile-size pattern as another. Each tile's own visual slot is set
+// by AreaMosaic.tsx via the --tile-area custom property (see .tile
+// below) rather than one SCSS class per area.
 .mosaic {
   display: grid;
   grid-template-columns: 1fr;
@@ -26,7 +38,11 @@
 
   @include mixins.breakpoint-up(lg) {
     grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: min(26vw, 380px);
+    grid-template-rows: repeat(3, min(18vw, 260px));
+    grid-template-areas:
+      "anx anx pan str"
+      "anx anx rel rel"
+      "cop ses ses tra";
   }
 }
 
@@ -36,20 +52,27 @@
   align-items: flex-end;
   overflow: hidden;
   // No gap/border/rules between tiles — they meet flush, per spec.
+
+  @include mixins.breakpoint-up(lg) {
+    grid-area: var(--tile-area);
+  }
 }
 
 // Mobile: one column, anxiety spans 2 ROW tracks (taller, same width as
 // every other now-full-width tile) — still first (array order,
 // unchanged by breakpoint) and visibly larger via height, since width
-// alone can't carry the hierarchy once every tile is full-width.
-// Desktop: spans 2 COLUMN tracks instead, same row height as its
-// row-mates (grid-auto-rows above), reading larger via width.
-.tileDouble {
-  grid-row: span 2;
-
-  @include mixins.breakpoint-up(lg) {
-    grid-row: span 1;
-    grid-column: span 2;
+// alone can't carry the hierarchy once every tile is full-width. Scoped
+// to strictly below lg (a real max-width query, not a breakpoint-up
+// override) — real bug caught live: overriding this back to `grid-row:
+// unset` inside breakpoint-up(lg) came AFTER .tile's own grid-area rule
+// in source order, so the shorthand's row-span from .tile lost the
+// cascade and anxiety collapsed to one row on desktop, same height as
+// its neighbours. A max-width query removes the rule entirely above lg
+// instead of fighting it, so .tile's grid-area is the only thing
+// touching placement there.
+@media (max-width: 63.9375rem) {
+  .tileDouble {
+    grid-row: span 2;
   }
 }
 

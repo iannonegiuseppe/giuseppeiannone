@@ -1,0 +1,83 @@
+@use "../../../../styles/mixins";
+@use "../../../../styles/tone";
+
+.page {
+  @include tone.light-island-surface;
+}
+
+.header {
+  @include mixins.container;
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-8);
+  max-width: 42rem;
+}
+
+.kicker {
+  margin: 0;
+}
+
+.title {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+}
+
+.subhead {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+// --- Steps: numeral rail + content, left-aligned rule between steps -------
+.steps {
+  @include mixins.container;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--space-9);
+  max-width: 44rem;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: var(--space-5);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+
+  @include mixins.breakpoint-up(sm) {
+    grid-template-columns: 4rem 1fr;
+  }
+
+  &:last-child {
+    border-bottom: 1px solid var(--color-hairline);
+  }
+}
+
+.stepNumeral {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+.stepTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+.stepBody {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+  max-width: 34rem;
+}

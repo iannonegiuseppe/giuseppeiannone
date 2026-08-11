@@ -1,0 +1,702 @@
+@use "../styles/mixins";
+
+// Preview pass — three alternate layouts for the timeline section
+// (Case File / Route / Pulse), proposed as design directions and now
+// wired up for real, in-page comparison via a query param (see
+// TimelineSection.tsx's own variant dispatch). NOT the shipped
+// default — that stays TimelineEntry.tsx/TimelineRail.tsx, completely
+// untouched. This file only backs these three preview variants.
+//
+// Gradient system: each entry renders as its own card, gradient
+// cycling through three presets (place-keyed — the same city always
+// gets the same preset across all three layouts, so comparing them
+// stays apples-to-apples). Built from the page's own real dark-theme
+// tokens via color-mix, not new literal hex — --color-surface stepped
+// toward --color-bg for the base tone, --color-accent/-accent-hover
+// for the glow, at low alpha. Contrast for text sitting ON a card was
+// verified against each gradient's own brightest point, not just its
+// base tone (see .cf-kicker/.route-title-place's own comments below
+// for why they use --color-accent-hover / a dedicated --ink-soft
+// rather than the page's plain --color-text-muted, which fell under
+// AA there).
+.gradA,
+.gradB,
+.gradC {
+  // 60/40 toward accent-hover — visibly dimmer than full --color-text
+  // (the point of a "soft" secondary tone) while still solid, not
+  // translucent, so it can't fall under AA on a bright card the way
+  // --color-text-muted's own alpha-composited value did.
+  --ink-soft: color-mix(in srgb, var(--color-text) 60%, var(--color-accent-hover) 40%);
+}
+.gradA {
+  background:
+    radial-gradient(120% 140% at 12% 0%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 55%),
+    linear-gradient(155deg, color-mix(in srgb, var(--color-surface) 55%, var(--color-bg) 45%) 0%, var(--color-bg) 100%);
+}
+.gradB {
+  background:
+    radial-gradient(130% 150% at 88% 100%, color-mix(in srgb, var(--color-accent-hover) 20%, transparent), transparent 55%),
+    linear-gradient(200deg, color-mix(in srgb, var(--color-surface) 78%, var(--color-bg) 22%) 0%, var(--color-bg) 100%);
+}
+.gradC {
+  background:
+    radial-gradient(150% 170% at 50% -10%, color-mix(in srgb, var(--color-accent) 32%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 96%, var(--color-accent) 6%) 0%, var(--color-bg) 100%);
+}
+
+.card {
+  border: 1px solid color-mix(in srgb, var(--color-hairline) 60%, transparent);
+  border-radius: var(--radius-m);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.28);
+}
+
+// Shared by every image container across the three variants below —
+// position:relative for next/image's fill mode, a neutral fill visible
+// while the image loads.
+.imageFrame {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+.imagePhoto {
+  object-fit: cover;
+}
+
+// Applied ONLY to the currently-active entry's dot (see
+// TimelinePulse.tsx) — every other dot stays still.
+@media (prefers-reduced-motion: no-preference) {
+  .pulseAnimate {
+    animation: timelinePulse 2.6s ease-in-out infinite;
+  }
+}
+@keyframes timelinePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.35); }
+}
+
+// ============================================================
+// CASE FILE — margin tab outside the card, quote as a dashed
+// marginal annotation.
+//
+// Motion pass — "pulled from the file": the tab fades in fractionally
+// before its card (a physical read order: you see the tab, then the
+// folder opens), the card itself settles in with a slight scale +
+// upward drift, and the tab is given a small negative overlap onto the
+// card's own left edge (z-index'd above it) so it reads as a real tab
+// sticking out of a folder rather than a label floating beside a box —
+// that overlap is a LAYOUT choice, not an animation, so it holds
+// regardless of motion preference. See TimelineCaseFileEntry.tsx for
+// the reveal state (useRevealOnScroll, shared with the shipped default
+// and TimelineRouteEntry.tsx — one hook, not tripled).
+//
+// The image gets a scoped `position: sticky` INSIDE its own entry row
+// — not the viewport-locking, section-wide pin the original timeline
+// was rebuilt to remove. Its containing block is `.cfRow` (this one
+// entry's own height), so it can never inflate total scroll height:
+// it pins only for as long as this entry's own (short) text column is
+// taller than the image, then releases with the row exactly like any
+// other in-flow content. Verified live — see this pass's own report.
+.cfList { display: flex; flex-direction: column; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.cfEntry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  @include mixins.breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 0 var(--space-4);
+    align-items: start;
+  }
+}
+.cfTab {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+
+  @include mixins.breakpoint-up(lg) {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    padding-top: var(--space-6);
+    position: relative;
+    z-index: 1;
+    margin-right: -0.75rem;
+  }
+}
+.cfCard { position: relative; padding: var(--space-6) var(--space-6); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cfTab {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+    transition: opacity 450ms ease, transform 450ms ease;
+  }
+  .cfEntry[data-revealed="true"] .cfTab {
+    opacity: 1;
+    // lg+'s own resting transform (rotate(180deg)) must be restored
+    // explicitly — "none" would also cancel that, un-rotating the tab.
+    transform: none;
+
+    @include mixins.breakpoint-up(lg) {
+      transform: rotate(180deg);
+    }
+  }
+  .cfCard {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.97);
+    transition: opacity 650ms ease 120ms, transform 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms;
+  }
+  .cfEntry[data-revealed="true"] .cfCard {
+    opacity: 1;
+    transform: none;
+  }
+}
+.cfKicker {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  // --color-accent alone fell under AA against gradB/gradC's own
+  // brightest point (measured 2.9-3.2:1) — accent-hover (gold-light)
+  // holds 4.6:1+ at every preset's peak, re-verified.
+  color: var(--color-accent-hover);
+}
+.cfTitle { margin: 0 0 var(--space-4); font-family: var(--font-display); font-size: var(--fs-h3); line-height: 1.25; }
+.cfBody { margin: 0 0 var(--space-3); max-width: 40rem; line-height: 1.7; color: var(--color-text); font-size: 0.9375rem; }
+.cfBody:last-of-type { margin-bottom: 0; }
+.cfRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+
+  @include mixins.breakpoint-up(lg) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+.cfImage {
+  flex: 0 0 8rem;
+  width: 8rem;
+  aspect-ratio: 1;
+  border-radius: 4px;
+
+  @include mixins.breakpoint-up(lg) {
+    position: sticky;
+    top: calc(var(--header-height-collapsed) + var(--space-4));
+    align-self: flex-start;
+  }
+}
+.cfNote {
+  margin-top: var(--space-4);
+  max-width: 34rem;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed color-mix(in srgb, var(--color-hairline) 130%, var(--color-text) 10%);
+  border-radius: 4px;
+}
+.cfNoteTag {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft, var(--color-text-muted));
+}
+.cfNote p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--color-accent-hover);
+}
+
+// ============================================================
+// ROUTE — dashed route line + dot marker outside the card, city
+// name as the card's own headline.
+//
+// Motion pass — "stops on a map": cards overlap like a fanned stack of
+// postcards (small negative margin-top + an alternating hand-set tilt
+// per card — a LAYOUT choice via --tilt, held regardless of motion
+// preference, not part of the animation itself), later cards painting
+// over earlier ones by plain DOM order (no z-index juggling needed).
+// Each card slides in from the left + fades on scroll-reveal, settling
+// into its own resting tilt rather than dead level. The route line
+// draws itself top-to-bottom as the list scrolls through the viewport,
+// via a scroll-driven CSS animation (animation-timeline: view() — no
+// JS, no scroll listener) gated behind @supports + reduced-motion; on
+// a browser without support (or with reduced motion on) it's simply
+// the fully-visible static dashed line it already was. Dots fill solid
+// once their own entry has been revealed, marking "stops visited."
+//
+// Pin + parallax pass — two more effects, both DELIBERATELY scoped to
+// stay inside the "wall" the original pinned timeline hit (see
+// TimelineSection.tsx's own top comment: entries forced into one
+// 100vh box, section blew out to 5 viewport-heights of scroll):
+//   - PIN: each dot (.routeMarker::before) is position:sticky, not the
+//     whole entry. Its containing block is that ONE entry's own
+//     (already tall, now-overlapping) card — it holds its vertical
+//     position while that card's content scrolls past beside it, then
+//     releases naturally when the entry ends. Bounded by real content
+//     height, same principle as .cfImage's own sticky image — it can
+//     never inflate total scroll length.
+//   - PARALLAX: the whole photo frame drifts a few pixels vertically
+//     against the surrounding text as its card scrolls through the
+//     viewport (animation-timeline: view() again) — a transform-only
+//     effect, zero added layout height, same "can't inflate scroll
+//     length" property as the pin above.
+//     First attempt animated an OVERSIZED inner image within a fixed
+//     frame instead (the classic "pan inside a clipped window" version
+//     of parallax) — abandoned after live verification (screenshot
+//     diffing the image at three scroll positions, byte-identical
+//     every time) showed it silently not animating at all. Root cause,
+//     isolated with a throwaway probe element: animation-timeline:
+//     view() reliably drives transform on a normal element on this
+//     page (confirmed: 0px -> 12px -> 113px across scroll), but not on
+//     next/image's `fill`-mode <img> once its own inline height/inset
+//     had to be fought with !important to oversize it — the two
+//     apparently don't compose. Rather than chase that further, the
+//     frame itself (a plain, normal-flow, non-`fill`-fighting element)
+//     animates instead — reliable, verified the same way, and still a
+//     legitimate, commonly-used parallax variant.
+.routeWrap { position: relative; }
+.routeList { display: flex; flex-direction: column; gap: var(--space-6); margin: 0; padding: 0; list-style: none; }
+.routeLine {
+  position: absolute;
+  left: 0.85rem;
+  top: var(--space-6);
+  bottom: var(--space-6);
+  width: 0;
+  border-left: 1px dashed var(--color-hairline);
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .routeLine {
+      clip-path: inset(0 0 100% 0);
+      animation: routeLineDraw linear both;
+      animation-timeline: view();
+    }
+  }
+}
+@keyframes routeLineDraw {
+  to {
+    clip-path: inset(0 0 0% 0);
+  }
+}
+.routeEntry {
+  display: flex;
+  flex-direction: column;
+
+  @include mixins.breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: 1.75rem 1fr;
+    column-gap: var(--space-3);
+    align-items: start;
+  }
+}
+.routeEntry:not(:first-child) {
+  @include mixins.breakpoint-up(lg) {
+    margin-top: -1.5rem;
+  }
+}
+.routeMarker { display: none; justify-content: center; padding-top: 2.35rem; }
+.routeMarker::before {
+  content: "";
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-accent);
+  transition: background 300ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    position: sticky;
+    top: calc(var(--header-height-collapsed) + var(--space-6));
+  }
+}
+.routeEntry[data-revealed="true"] .routeMarker::before {
+  background: var(--color-accent);
+}
+@include mixins.breakpoint-up(lg) {
+  .routeMarker { display: flex; }
+}
+.routeCard {
+  position: relative;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  --tilt: 0deg;
+  transform: rotate(var(--tilt));
+}
+.routeEntry:nth-child(odd) .routeCard {
+  --tilt: -0.5deg;
+}
+.routeEntry:nth-child(even) .routeCard {
+  --tilt: 0.5deg;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .routeCard {
+    opacity: 0;
+    transform: translateX(-1.25rem) rotate(var(--tilt));
+    transition: opacity 600ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .routeEntry[data-revealed="true"] .routeCard {
+    opacity: 1;
+    transform: rotate(var(--tilt));
+  }
+}
+.routePlace {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.routeMeta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); margin: var(--space-2) 0 var(--space-4); }
+.routeKicker { font-size: 0.75rem; font-weight: var(--font-weight-bold); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-hover); }
+.routeTitle {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.0625rem;
+  // See .cfKicker's own comment — solid --ink-soft (not translucent
+  // --color-text-muted) so this stays AA-safe on the brightest card.
+  color: var(--ink-soft, var(--color-text-muted));
+}
+.routeCols { display: flex; flex-direction: column; gap: var(--space-5); }
+@include mixins.breakpoint-up(md) {
+  .routeHasImage .routeCols { flex-direction: row; align-items: flex-start; }
+  .routeHasImage .routeColsText { flex: 1 1 auto; min-width: 0; }
+}
+.routeBody { margin: 0 0 var(--space-3); max-width: 38rem; line-height: 1.75; font-size: 0.9375rem; color: var(--color-text); }
+.routeBody:last-of-type { margin-bottom: 0; }
+// --tilt-img keeps the existing static "postcard" rotation as its own
+// named value (same reasoning as .routeCard's own --tilt) so the
+// parallax keyframes below can hold it constant while only animating
+// translateY — one transform property, two independent concerns.
+.routeImage {
+  flex: 0 0 12rem;
+  width: 12rem;
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.35);
+  --tilt-img: -1.2deg;
+  transform: rotate(var(--tilt-img));
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .routeImage {
+      animation: routeParallax linear both;
+      animation-timeline: view();
+    }
+  }
+}
+@keyframes routeParallax {
+  from {
+    transform: rotate(var(--tilt-img)) translateY(-0.75rem);
+  }
+  to {
+    transform: rotate(var(--tilt-img)) translateY(0.75rem);
+  }
+}
+.routeQuote { margin: var(--space-3) 0 0; max-width: 34rem; font-family: var(--font-display); font-style: italic; font-size: 1.0625rem; line-height: 1.6; color: var(--color-accent-hover); }
+
+// ------------------------------------------------------------
+// ROUTE — pinned mode (TimelineRoutePinned.tsx), lg+ and
+// motion-allowed only. .routeFallback (the normal-flow tree above)
+// and .routePinWrap are BOTH always rendered — this pair of rules is
+// the ENTIRE visibility mechanism, same shape as the original
+// TimelinePinned.tsx's own .mobileFlow/.pinnedWrap: below lg, the
+// fallback shows and the pin is off; at lg+ with motion allowed, the
+// pin takes over and the fallback is hidden; reduced motion forces
+// the fallback back on regardless of viewport width, overriding the
+// lg+ rule below via source order + specificity (media query itself
+// isn't "more specific," but it's declared AFTER, and both target the
+// same two properties, so the later one wins — same technique the
+// removed component already relied on).
+.routeFallback {
+  display: block;
+}
+// Reverted — the previous pass's full-bleed break-out (100vw +
+// negative margin) took the deck outside the container every other
+// block on the page respects. Back to sitting inside it, same as
+// .routeFallback.
+.routePinWrap {
+  display: none;
+}
+@include mixins.breakpoint-up(lg) {
+  .routeFallback {
+    display: none;
+  }
+  .routePinWrap {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .routeFallback {
+    display: block !important;
+  }
+  .routePinWrap {
+    display: none !important;
+  }
+}
+
+// Pin the WHOLE unit now — header (TimelineRoutePinned.tsx's own
+// .routePinHeader, rendered as this sticky's first child) + rail/stage
+// together — not just rail/stage with the header left to scroll away
+// above it. That's the actual fix for "the stage sits alone with empty
+// space beneath it": earlier passes centred a FIXED-height stage inside
+// a shorter (or full) 100vh box, which is a gap by construction no
+// matter how that box is sized. Centring is gone; height is back to a
+// plain 100vh (this sticky IS the pinned unit, and the pinned unit
+// should fill the viewport, per this pass's own brief) and
+// padding-block is a small fixed breathing margin, not a derived
+// centring value — header and rail/stage row now simply stack
+// top-to-bottom and the stage (below) stretches to fill whatever
+// vertical space is left, so there's no leftover band under the card
+// at any point in the sequence. See TimelineRoutePinned.tsx's own
+// stickyHeight() comment — it already measures this element's real
+// rendered height rather than assuming window.innerHeight, so this
+// height change needs no JS follow-up.
+.routePinSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-block: var(--space-5);
+  overflow: hidden;
+}
+.routePinHeader {
+  flex-shrink: 0;
+  margin-bottom: var(--space-6);
+}
+// flex: 1 + min-height: 0 — this row (rail | stage) now fills whatever
+// vertical space .routePinHeader doesn't use, instead of being centred
+// as a fixed-height block. min-height: 0 is required here: without it,
+// a grid item nested inside a flex column defaults to its own content's
+// intrinsic minimum height and refuses to shrink below that, which
+// would silently cap how much the stage below can actually grow to
+// fill the row.
+//
+// align-items: stretch was a mistake — it let the stage (a grid cell)
+// stretch to fill this row's own height, which is `flex: 1`-driven from
+// the sticky's leftover space, i.e. the viewport remainder. That's what
+// inflated every card to match. .routePinStage now sizes itself to its
+// tallest card's own content (see that rule's own comment) and this row
+// centres BOTH children — rail and stage — within whatever space `flex:
+// 1` gives it, so leftover vertical space distributes AROUND the
+// content-sized stage, not into it.
+.routePinInner {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  column-gap: var(--space-9);
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+}
+// The rail line + dot markers were dropped when this was first built
+// and are restored here: a dashed line spans the full list (same
+// visual language as .routeLine in the fallback tree), one dot per
+// stop, the active stop's dot filled solid. Line + dots sit in a
+// fixed-width gutter to the left of the place names (padding-left on
+// the list, dots/line positioned into that gutter) rather than
+// overlapping the text.
+.routePinRail {
+  position: relative;
+}
+.routePinRailLine {
+  position: absolute;
+  left: 0.28rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 0;
+  border-left: 1px dashed var(--color-hairline);
+}
+.routePinRailList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0 0 0 1.5rem;
+  list-style: none;
+}
+.routePinRailItem {
+  position: relative;
+}
+.routePinRailItem::before {
+  content: "";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5em;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-accent);
+  transition: background 300ms ease;
+}
+.routePinRailItem[data-active="true"]::before {
+  background: var(--color-accent);
+}
+// A real <button>, not a styled span — clicking jumps to that entry
+// (TimelineRoutePinned.tsx's own jumpTo, Lenis-driven). Reset to look
+// like the plain label it replaced.
+.routePinRailButton {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: color 300ms ease, font-size 300ms ease;
+}
+.routePinRailItem[data-active="true"] .routePinRailButton {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  color: var(--color-text);
+}
+
+// Stage — single-cell grid stack, not the flex-stretch chain the
+// previous two passes used. Every card shares the SAME cell
+// (grid-row/grid-column: 1 on .routePinCard, below) instead of being
+// position: absolute — an out-of-flow absolutely-positioned element
+// contributes nothing to a grid track's auto size, which is exactly
+// why the earlier "content-driven height" attempt didn't actually work
+// out: the stage had nothing in-flow to size itself FROM. In-flow grid
+// items DO contribute, so this grid's one implicit row auto-sizes to
+// the TALLEST card's own natural content height — driven by content,
+// not by the sticky's leftover space (.routePinInner's align-items is
+// center now, not stretch — see that rule's own comment) and NOT by
+// viewport height (confirmed live at 900px and 1100px: same stage
+// height at both, only the space around it changes).
+//
+// align-items: stretch here (the grid default, stated explicitly) is
+// what then stretches every card — including ones shorter than the
+// tallest — to that same resolved row height, so all six are IDENTICAL
+// regardless of their own content length. That's deliberate, not a
+// regression to re-litigate: cards are stacked directly on top of one
+// another, so an unequal one would protrude from behind the active
+// card — the shorter entries carrying some internal dead space below
+// their text is the accepted trade for that.
+//
+// padding: 0.75rem (was the card's own inset) — breathing room on all
+// four sides for a card's ±0.6deg resting tilt, same rotation-clearance
+// reasoning as before, just moved from the card's inset to the stage's
+// padding since the card no longer owns its own box independently of
+// the grid cell.
+.routePinStage {
+  display: grid;
+  align-items: stretch;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+.routePinCard {
+  grid-row: 1;
+  grid-column: 1;
+  padding: var(--space-6);
+}
+// Larger type, scoped to the pinned card ONLY (ancestor selector, not
+// a change to .routeKicker/.routeTitle/.routeBody/.routeQuote
+// themselves) — those classes are shared with the normal-flow fallback
+// via TimelineRouteCardContent.tsx, which must stay visually unchanged.
+// This pass: one more small step on top of the previous pass's kicker
+// 12->14/title 17->22/body 15->18, plus the quote (previously
+// unscoped, inheriting the fallback's 17px) now gets its own override
+// too. Kicker 14->15px, title 22->24px, body 18->19px, quote 17->18px.
+.routePinCard .routeKicker {
+  font-size: 0.9375rem; // 15px
+}
+.routePinCard .routeTitle {
+  font-size: 1.5rem; // 24px
+}
+.routePinCard .routeBody {
+  font-size: 1.1875rem; // 19px
+  line-height: 1.7;
+}
+.routePinCard .routeQuote {
+  font-size: 1.125rem; // 18px
+  line-height: 1.65;
+}
+// Internal spacing between snippets (kicker/title row, body paragraphs,
+// quote) — scoped the same ancestor way, so the fallback's own
+// .routeMeta/.routeCols/.routeBody/.routeQuote spacing (shared via
+// TimelineRouteCardContent.tsx) is untouched. One step up the scale on
+// each: meta's bottom gap before the body 16px -> 24px, the text
+// column's own gap (cols) 24px -> 32px, paragraph-to-paragraph 12px ->
+// 16px, quote's own top gap 12px -> 24px (it needs to read as a
+// distinct, separated element, not a fourth paragraph).
+.routePinCard .routeMeta {
+  margin: var(--space-2) 0 var(--space-6);
+}
+.routePinCard .routeCols {
+  gap: var(--space-6);
+}
+.routePinCard .routeBody {
+  margin-bottom: var(--space-4);
+}
+.routePinCard .routeQuote {
+  margin-top: var(--space-5);
+}
+
+// ============================================================
+// PULSE — heartbeat spine, current entry's dot pulses (client-
+// driven via useActiveScrollId, TimelinePulse.tsx).
+// ============================================================
+.pulseWrap { display: block; @include mixins.breakpoint-up(lg) { display: grid; grid-template-columns: 3.25rem 1fr; } }
+.pulseSpine { position: relative; display: none; @include mixins.breakpoint-up(lg) { display: block; } }
+.pulseSpine svg { position: absolute; inset: 0; height: 100%; width: 100%; }
+.pulseList { display: flex; flex-direction: column; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.pulseEntry { position: relative; padding: var(--space-5) var(--space-6); }
+.pulseDot {
+  position: absolute;
+  left: -3.25rem;
+  top: 2.75rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  display: none;
+
+  @include mixins.breakpoint-up(lg) {
+    display: block;
+  }
+}
+.pulseEntry[data-active="true"] .pulseDot { background: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.pulsePlace {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--ink-soft, var(--color-text-muted));
+}
+.pulseEntry[data-active="true"] .pulsePlace { color: var(--color-accent-hover); }
+.pulseKicker { display: block; margin-bottom: var(--space-2); font-size: 0.75rem; font-weight: var(--font-weight-bold); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-hover); }
+.pulseTitle { margin: 0 0 var(--space-4); font-family: var(--font-display); font-size: var(--fs-h3); line-height: 1.25; }
+.pulseCols { display: flex; flex-direction: column; gap: var(--space-5); }
+@include mixins.breakpoint-up(md) {
+  .pulseHasImage .pulseCols { flex-direction: row; }
+}
+.pulseImage { flex: 0 0 9rem; width: 9rem; aspect-ratio: 4/3; border-radius: 4px; }
+.pulseBody { margin: 0 0 var(--space-3); max-width: 36rem; line-height: 1.7; font-size: 0.9375rem; color: var(--color-text); }
+.pulseBody:last-of-type { margin-bottom: 0; }
+.pulseQuote {
+  margin-top: var(--space-4);
+  max-width: 34rem;
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--color-bg) 35%, transparent);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--color-accent-hover);
+  line-height: 1.55;
+}

@@ -1,25 +1,119 @@
 @use "../../../styles/mixins";
 @use "../../../styles/tone";
 
-// Chi sono opening pass — the old dark full-bleed hero band
-// (.heroViewport, PillarHero) is gone: the new hero is contained, portrait
-// to the side, not a monument-style photo band, so there's no reason for
-// the page to open on the dark ambient background any more. The whole
-// page now starts light from the top — one continuous
-// tone.light-island-surface scope, same mechanism the pillar/article
-// routes already use for their OWN light interlude, just starting
-// earlier here since there's no dark section above it to interlude
-// below.
-.lightIsland {
+// Surface sequence (current, after several reordering passes — see
+// page.tsx's own top comment for the authoritative block-by-block
+// order): DARK (hero) -> LIGHT (lightIslandTop: "Di cosa mi occupo" +
+// mosaic + credentials) -> DARK (parallax divider + timeline, one
+// continuous passage) -> LIGHT (the two alternating blocks, self-
+// contained, own tone.light-island-surface, + lightIslandMiddle:
+// diplomi + publications) -> DARK ("Come lavoro") -> LIGHT
+// (lightIslandBottom: professional details + contact). Three
+// light-island wrappers now (top/middle/bottom), named by position
+// since each wraps a different, non-adjacent stretch of the page.
+.lightIslandTop,
+.lightIslandMiddle,
+.lightIslandBottom {
   @include tone.light-island-surface;
 }
 
+// CORRECTED — .publicationsDividerRule's own margin-bottom (var(--space-8),
+// 64px) is on the LAST child of .lightIslandMiddle, which has no padding/
+// border of its own on that side. A last child's margin-bottom collapses
+// through a padding-less parent (CSS margin collapsing) — confirmed live:
+// .lightIslandMiddle's own rendered box ended exactly at the divider's
+// bottom edge, not 64px below it, so that 64px rendered as the page's
+// dark ambient background showing through, not the ivory light-island
+// fill. 1px of padding is the standard, minimal fix: any non-zero
+// padding/border on that side stops the collapse, containing the full
+// margin inside the ivory box instead of letting it escape.
+.lightIslandMiddle {
+  padding-bottom: 1px;
+}
+
+// Wraps PillarHero (block 1) + ChiSonoGlassCard (block 2): the card is
+// absolutely positioned (at lg+) against THIS box's own bottom edge, not
+// PillarHero's own (PillarHero's .heroBand sets overflow:hidden for its
+// own zooming image — irrelevant here, since the card is a sibling of
+// PillarHero, not a descendant, so that clipping never applies to it).
+.heroBoundary {
+  position: relative;
+}
+
+.heroViewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100lvh;
+  min-height: 100dvh;
+}
+
 // "Di cosa mi occupo" — heading/intro/closing text stay in the normal
-// container; AreaMosaic breaks out to full-bleed on its own (see that
-// component's own module.scss).
+// container; AreaMosaic breaks out to full-bleed on its own.
+//
+// Fix pass — the glass card (ChiSonoGlassCard.module.scss) overlaps this
+// block's own top-right corner, straddling the hero/section seam. Below
+// lg the card doesn't overlap at all (plain horizontal bar, no absolute
+// positioning), so this reservation is lg+ only — the section keeps its
+// full width there, per instruction.
+//
+// padding-right ADDS to (rather than replaces) mixins.container's own
+// padding-inline: var(--space-7) component — 27.5rem is the card's own
+// width (kept in sync by comment cross-reference, same literal value
+// ChiSonoGlassCard.module.scss's own .card rule uses), plus a second
+// var(--space-7) as real clearance. Both this block and the card itself
+// anchor their right edges to the SAME container-content-edge reference
+// point (the card's own $card-right-edge formula is built to land
+// exactly there — see that file's own comment), so the resulting gap
+// between this text's new right edge and the card's left edge works out
+// to exactly var(--space-7) (48px) at any lg+ width, not just 1440 —
+// verified live at both 1440 and 1024 (see this pass's own report).
+//
+// Fix pass 7 — real bug, measured: the previous pass-4/6 padding-top
+// (calc(var(--space-10)*2 + var(--space-6)) = 288px) was sized to clear
+// the CARD's own bottom edge, not to sit the text beside the card — with
+// the card's own position reverted since (see ChiSonoGlassCard.module.scss's
+// own .card comment, fix pass 6), that 288px was never re-derived and
+// left a large empty gap between the seam and the kicker (measured:
+// kicker started 312px below the seam). Dropped to var(--space-8) (64px,
+// an existing token, not a new one) — the same order of magnitude as the
+// header-clearance padding this page's other sections already use, and
+// small enough that the kicker starts close to the seam per instruction.
+// lg+ only, per instruction — below lg this value is untouched
+// (var(--space-9), the base rule below).
+//
+// padding-bottom is NEW this pass, lg+ only: with no padding-bottom at
+// all, the last paragraph's own border-box ended EXACTLY where the
+// mosaic began (measured 0px gap — .paragraph's own class has a
+// margin-TOP only, no trailing margin, so nothing was providing space
+// here). var(--space-8) (64px) matches the padding-top value above.
 .whatIWorkWith {
   @include mixins.container;
   padding-top: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-right: calc(var(--space-7) + 27.5rem + var(--space-7));
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+}
+
+// CORRECTED — whatIWorkWith.kicker used to render through
+// portableTextStyles.paragraph (a plain body-paragraph style, no
+// uppercase/weight/letter-spacing at all — not a kicker treatment).
+// Copied verbatim from the identical existing pattern already used four
+// times on this page (ChiSonoCredentials/ChiSonoBodyBlocks/
+// TimelineSection/PublicationsCardsTabs all read exactly these six
+// declarations, differing only in which token backs the colour — this
+// one uses --color-accent, matching that same majority).
+.whatIWorkWithKicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
 
 .whatIWorkWithHeading {
@@ -31,118 +125,110 @@
   line-height: var(--lh-h2);
 }
 
-.whatIWorkWithClosing {
-  @include mixins.container;
-  padding-top: var(--space-6);
-  padding-bottom: var(--space-9);
-}
-
-// The page's first shift from factual to personal voice — EB Garamond
-// italic, same display face/italic-accent treatment every other quote-
-// like line on the site already uses (PillarHero's own titleEmphasis,
-// RecognitionConstellation's own quote voice), not a new typographic
-// device.
-.closingLine {
-  margin: 0;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--fs-h3);
-  line-height: 1.4;
-  color: var(--color-accent);
-}
-
-// "Come lavoro" — sand surface, IN the container (not full-bleed).
-// NOT --color-sand: that token is theme-reassigned (light theme #f1ece2,
-// dark theme #16261F — confirmed by reading _tokens.scss directly after
-// this rendered as a near-black box first try) and this page's ambient
-// theme is dark; tone.light-island-surface (wrapping this whole page,
-// see .lightIsland above) never reassigns --color-sand itself, only
-// --color-bg/-text/etc, so inside that scope --color-sand still resolves
-// to the GLOBAL dark value. --light-base-hairline is already scoped
-// correctly for a light surface (same family as --light-base-bg this
-// whole page already sits on) and is warm/close to --color-sand's own
-// light-theme value — reused as a background fill here rather than its
-// usual border role, no new token added.
-.howIWork {
+// Plain container + block spacing for DiplomiSlider — that component sets
+// no width/centering of its own, the caller always provides it. Unchanged.
+.qualifications {
   @include mixins.container;
   padding-block: var(--space-9);
 }
 
-.howIWorkSurface {
-  background: var(--light-base-hairline);
-  border-radius: var(--radius-l);
-  padding: var(--space-7);
-
-  @include mixins.breakpoint-up(lg) {
-    padding: var(--space-9);
-  }
+// Publications — restructured for the full rebuild: three grouped sets
+// (journal/book/conference), real citations (authors/title/source).
+.publications {
+  @include mixins.container;
+  padding-bottom: var(--space-9);
 }
 
-.howIWorkHeading {
+// Between "Lavori pubblicati" and "Come lavoro" — the container wrapper
+// AnimatedDivider needs (that component's own width:100% just fills
+// whatever contains it; ContactBlock/CredentialsBand get this for free
+// from an ancestor already in their own tree, this page.tsx call site
+// doesn't have one at this exact point, so it's added here instead).
+.publicationsDivider {
+  @include mixins.container;
+}
+
+// Margin only, no width override — same convention as .contactRule
+// (contactBlock.module.scss) and .credentialsRule (CredentialsBand.
+// module.scss), both margin-only for the identical reason.
+.publicationsDividerRule {
+  margin: var(--space-6) 0 var(--space-8);
+}
+
+.publicationsHeading {
   max-width: 34rem;
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-7);
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
 }
 
-.howIWorkIntro {
-  max-width: 34rem;
-  margin: 0 0 var(--space-8);
-  color: var(--color-text-muted);
-}
+.publicationsGroup {
+  margin-bottom: var(--space-7);
 
-.parts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-7);
-}
-
-.part {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-5);
-
-  @include mixins.breakpoint-up(lg) {
-    grid-template-columns: 4rem 1fr;
-  }
-}
-
-// A large, quiet chapter mark — well below the heading in weight, a
-// muted step, not an infographic counter. --color-text-faint (ivory-on-
-// dark faint token) doesn't apply here (this is a light surface); the
-// closest equivalent muted role on this surface is --color-text-muted,
-// dropped further via opacity so it stays decorative rather than reading
-// as body text.
-.partNumber {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-size: var(--fs-display);
-  line-height: 1;
-  color: var(--color-text-muted);
-  opacity: 0.4;
-}
-
-.partTitle {
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  font-weight: var(--font-weight-regular);
-}
-
-.partBody :global(p) {
-  margin: 0 0 var(--space-3);
-
-  &:last-child {
+  &:last-of-type {
     margin-bottom: 0;
   }
 }
 
-// Plain container + block spacing for DiplomiSlider — that component sets
-// no width/centering of its own (see diplomiSlider.module.scss), the
-// caller always provides it. Unchanged by this pass.
-.qualifications {
-  @include mixins.container;
-  padding-block: var(--space-9);
+.publicationsGroupLabel {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
+
+.publicationsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publicationsItem {
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-4);
+}
+
+.publicationsAuthors {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.publicationsTitle {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.publicationsTitleLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-hairline);
+  text-underline-offset: 0.2em;
+
+  &:hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.publicationsSource {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.publicationsNote {
+  margin: var(--space-6) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+

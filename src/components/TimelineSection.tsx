@@ -1,8 +1,45 @@
-import Image from "next/image";
 import type { Image as SanityImage } from "sanity";
+import { TimelineCaseFile } from "@/components/TimelineCaseFile";
+import { TimelineEntry } from "@/components/TimelineEntry";
+import { TimelinePulse } from "@/components/TimelinePulse";
 import { TimelineRail } from "@/components/TimelineRail";
+import { TimelineRoute } from "@/components/TimelineRoute";
+import { SectionKicker } from "@/components/ui/SectionKicker";
+import { ShimmerText } from "@/components/ShimmerText";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import styles from "./TimelineSection.module.scss";
+
+// Substring-match emphasis, same technique as PillarHero.tsx's own
+// renderEmphasis — duplicated per this codebase's established convention.
+// Hardcoded to "percorso" rather than a new emphasisWord prop: this pass
+// is scoped to exactly this one heading, not a general mechanism, and
+// TimelineSection's own journey data (page.tsx's ChiSonoData.journey)
+// has no emphasisWord field to wire one to without a schema change.
+function renderHeadingWithShimmer(text: string) {
+  const emphasisWord = "percorso";
+  const index = text.indexOf(emphasisWord);
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const after = text.slice(index + emphasisWord.length);
+  return (
+    <>
+      {before}
+      <ShimmerText className={styles.headingEmphasis}>{emphasisWord}</ShimmerText>
+      {after}
+    </>
+  );
+}
+
+// Was a preview-only, query-param-driven switch (?timeline=case-file|
+// route|pulse) letting three proposed layouts be checked in the real
+// page before one replaced the shipped default. Route won — page.tsx
+// now always passes variant="route", no query param involved. The other
+// two branches (TimelineCaseFile/TimelinePulse) and the original
+// TimelineEntry/TimelineRail default (the `undefined` branch below)
+// stay wired up but are unreachable from that one real call site —
+// orphaned, not deleted, same precedent as other superseded content in
+// this codebase (see chiSonoSection.ts's own comment).
+export type TimelineVariant = "case-file" | "route" | "pulse";
 
 export interface TimelineEntryData {
   place?: string;
@@ -14,87 +51,109 @@ export interface TimelineEntryData {
   image?: (SanityImage & { alt?: string }) | undefined;
 }
 
-const ID_PREFIX = "chi-sono-timeline";
-
-// Chi sono timeline pass (pass 2 of 4) — the page's one dark section:
-// sits OUTSIDE the light-island wrapper (see chi-sono/page.tsx, now two
-// separate .lightIsland instances either side of this), on the page's
-// own native dark theme — no tone mixin needed, this section just never
-// opts into the light override the rest of the new top-of-page content
-// uses. Contained, not full-bleed (unlike the mosaic — no content reason
-// to bleed here).
+// Timeline rebuild — pinning, crossfade and the progress counter are gone
+// (see TimelineEntry.tsx/TimelineRail.tsx/TimelineSection.module.scss's
+// own comments; TimelinePinned.tsx itself is deleted). Two attempts at a
+// viewport-pinned crossfade both hit the same wall: entries are genuinely
+// different lengths, so pinning every entry into one 100vh box either
+// clips the tallest or inflates the section to five scroll-heights.
+// Normal document flow instead — each entry is exactly as tall as its own
+// content — with a sticky rail (TimelineRail, reusing the same
+// useActiveScrollId tracking ScrollTrackingToc already uses on the
+// article/pillar routes, not a second scroll tracker) providing the
+// "where am I" orientation a pin used to.
 //
-// Image is optional per entry and none are supplied yet in this
-// rollout — the conditional render below (no wrapper element at all
-// when absent) means a missing image costs zero layout space, not an
-// empty frame.
+// `id`s are index-based (`timeline-entry-N`), assigned here rather than
+// stored in Sanity — anchors are internal-only (rail highlight target),
+// not permalinks anything external depends on, so a stable-per-render
+// index is enough and avoids a schema change.
 export function TimelineSection({
   kicker,
   heading,
+  description,
   entries,
+  variant,
+  locale,
 }: {
   kicker?: string;
   heading?: string;
+  description?: string;
   entries: TimelineEntryData[];
+  variant?: TimelineVariant;
+  locale?: "it" | "en";
 }) {
   if (entries.length === 0) return null;
 
-  const railEntries = entries.map((entry, index) => ({
-    id: `${ID_PREFIX}-${index}`,
-    place: entry.place ?? "",
-    year: entry.year,
-  }));
+  // Request width capped at 900px, not the fixed 420px display size: below
+  // lg the image fills the full stacked column (up to mobile viewport
+  // width), so the source needs headroom beyond the lg+ 420px column.
+  // The 420x315 DISPLAY size (both breakpoints identical) comes from CSS
+  // (.entryImage's fixed width + aspect-ratio, TimelineSection.module.scss)
+  // via object-fit: cover, not from a server-side crop.
+  const resolved = entries.map((entry, index) => {
+    const dims = entry.image ? imageDimensions(entry.image) : null;
+    const requestWidth = dims ? Math.min(dims.width, 900) : undefined;
+    return {
+      id: `timeline-entry-${index}`,
+      place: entry.place ?? "",
+      year: entry.year,
+      kicker: entry.kicker,
+      title: entry.title,
+      body: entry.body ?? [],
+      pullQuote: entry.pullQuote,
+      image:
+        entry.image && dims && requestWidth
+          ? {
+              src: urlFor(entry.image).width(requestWidth).url(),
+              width: dims.width,
+              height: dims.height,
+              alt: entry.image.alt ?? "",
+            }
+          : null,
+    };
+  });
 
   return (
     <section className={styles.timeline} aria-label={heading ?? "Timeline"}>
-      <div className={styles.header}>
-        {kicker ? <p className={styles.kicker}>{kicker}</p> : null}
-        {heading ? <h2 className={styles.heading}>{heading}</h2> : null}
+      {/* Route pins the header into its own sticky unit (see
+          TimelineRoutePinned.tsx) at lg+/motion-allowed — this shared
+          header would otherwise show twice. headerHiddenForRoutePin
+          hides it there ONLY (mirrors .routeFallback/.routePinWrap's own
+          lg+ / reduced-motion toggle), leaving every other variant and
+          the below-lg/reduced-motion route fallback untouched — both
+          still read this exact header in normal flow. */}
+      <div className={`${styles.header} ${variant === "route" ? styles.headerHiddenForRoutePin : ""}`}>
+        {kicker ? (
+          <p className={styles.kicker}>
+            <SectionKicker>{kicker}</SectionKicker>
+          </p>
+        ) : null}
+        {heading ? <h2 className={styles.heading}>{renderHeadingWithShimmer(heading)}</h2> : null}
+        {description ? <p className={styles.description}>{description}</p> : null}
       </div>
 
-      <div className={styles.grid}>
-        <div className={styles.railColumn}>
-          <TimelineRail entries={railEntries} topOffset="calc(var(--header-height-collapsed) + var(--space-6))" />
+      {variant === "case-file" ? (
+        <div className={styles.preview}>
+          <TimelineCaseFile entries={resolved} locale={locale} />
         </div>
-
-        <ol className={styles.entries}>
-          {entries.map((entry, index) => {
-            const dims = entry.image ? imageDimensions(entry.image) : null;
-            const requestWidth = dims ? Math.min(dims.width, 1200) : undefined;
-
-            return (
-              <li key={index} id={`${ID_PREFIX}-${index}`} className={styles.entry}>
-                {/* Mobile/tablet only (rail collapses below lg) — the
-                    year/place the sticky rail shows on desktop, inline
-                    here instead so it's never lost, just relocated. */}
-                <p className={styles.entryMeta}>
-                  {entry.year ? <span className={styles.entryYear}>{entry.year}</span> : null}
-                  <span className={styles.entryPlace}>{entry.place}</span>
-                </p>
-                {entry.kicker ? <p className={styles.entryKicker}>{entry.kicker}</p> : null}
-                {entry.title ? <h3 className={styles.entryTitle}>{entry.title}</h3> : null}
-                {entry.image && dims && requestWidth ? (
-                  <div className={styles.entryImageFrame}>
-                    <Image
-                      src={urlFor(entry.image).width(requestWidth).url()}
-                      alt={entry.image.alt ?? ""}
-                      width={dims.width}
-                      height={dims.height}
-                      className={styles.entryImage}
-                    />
-                  </div>
-                ) : null}
-                {(entry.body ?? []).map((paragraph, paragraphIndex) => (
-                  <p key={paragraphIndex} className={styles.entryBody}>
-                    {paragraph}
-                  </p>
-                ))}
-                {entry.pullQuote ? <p className={styles.entryQuote}>{entry.pullQuote}</p> : null}
-              </li>
-            );
-          })}
-        </ol>
-      </div>
+      ) : variant === "route" ? (
+        <div className={styles.preview}>
+          <TimelineRoute entries={resolved} kicker={kicker} heading={heading} description={description} />
+        </div>
+      ) : variant === "pulse" ? (
+        <div className={styles.preview}>
+          <TimelinePulse entries={resolved} />
+        </div>
+      ) : (
+        <div className={styles.layout}>
+          <TimelineRail entries={resolved} />
+          <div className={styles.entries}>
+            {resolved.map((entry, index) => (
+              <TimelineEntry key={entry.id} {...entry} isFirst={index === 0} />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

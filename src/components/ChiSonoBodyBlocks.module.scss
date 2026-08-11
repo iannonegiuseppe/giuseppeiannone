@@ -1,0 +1,249 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Self-contained light surface — same mixin Credentials (block 6, right
+// before this) already applies to itself; both being flat, identical
+// `--light-base-bg` fills means there's no visible seam between them
+// regardless of whether they share one DOM wrapper or not (verified by
+// reading the mixin: it paints a fixed color, not something that could
+// drift between two separate applications).
+// gap: 0 — was var(--space-9). The two blocks now touch with no vertical
+// space between them: block one's image occupies the top-left quadrant
+// (left half of the viewport, top row), block two's mirrors it into the
+// bottom-right quadrant (right half, bottom row), and with zero gap
+// between the rows those two quadrants meet at a single point — the two
+// IMAGES touch corner to corner on the diagonal, exactly as asked. (The
+// other diagonal — block one's text, bottom-right of block one, and
+// block two's text, top-left of block two — meets at that same point
+// too; it's the image/text checkerboard from the mirror that makes it
+// read as a diagonal rather than a flush shared edge.)
+.wrap {
+  @include tone.light-island-surface;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  // padding-block: var(--space-9);
+}
+
+// Full-bleed 2-column grid (§10.5: the image touches a viewport edge) —
+// same 100vw/negative-margin technique AreaMosaic.module.scss already
+// uses. Text stays readable via its own inline padding (.textCol below),
+// not the shared container mixin, since this element itself is
+// deliberately outside the container.
+.block {
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  display: grid;
+  grid-template-columns: 1fr;
+
+  // min-height: calc(50vw * 9 / 16) — a second real bug, caught live
+  // after the first: even with align-self: start preventing the IMAGE
+  // from stretching (see .imageCol's own comment), the ROW itself was
+  // still auto-sized from BOTH columns' natural content height, and text
+  // (three paragraphs, or the same two paragraphs wrapping into more
+  // lines in a narrower lg-tier column) can need more vertical room than
+  // a 16:9 image does. That left a real, measured 207px gap BETWEEN the
+  // two images at 1024px — the row grew to fit text, and gap: 0 on
+  // .wrap only closes the space between ROWS, not between the images
+  // specifically once a row is taller than its own image. Giving the row
+  // a height matching a 50vw-wide 16:9 image — the same math .imageCol's
+  // own aspect-ratio resolves to — makes the two images touch in the
+  // common case, where text fits inside that height.
+  //
+  // THIRD bug, same root cause, caught live in the Diplomi-scans pass:
+  // `height` (not min-height) is a cap as well as a floor. .textCol has
+  // no fixed height of its own, so when its content genuinely needs more
+  // room than the image-driven row provides (measured: 502px of content
+  // in a 288px row at exactly 1024px, the narrow band right at this
+  // breakpoint where the row is at its shortest lg+ value), it renders
+  // taller than the row regardless — grid stretch sets a minimum, not a
+  // cap — and spills out the bottom, uncontained. For the FIRST block
+  // that overflow paints over the SECOND block's image (z-index: 1 on
+  // .textCol, see below, keeps it readable there rather than hidden
+  // underneath). For the SECOND block — mirrored, the one right before
+  // Diplomi — there is no next block to paint over, so the overflow
+  // landed on the Diplomi heading instead: a real, measured 84px overlap
+  // at 1024px. `min-height` fixes both cases at once: the row still
+  // matches the image's height whenever text fits (so the two images
+  // still touch, unchanged — .imageCol's align-self: start already made
+  // its own sizing independent of the row's height, so this edit doesn't
+  // touch image sizing at all), but now grows to contain taller text
+  // instead of overflowing past its own edge, pushing whatever follows
+  // down instead of painting over it.
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    min-height: calc(50vw * 9 / 16);
+  }
+}
+
+// Mirror: second block, image right/text left — a CSS `order` swap on the
+// same two children rather than a second markup path.
+.blockMirror {
+  @include mixins.breakpoint-up(lg) {
+    .imageCol {
+      order: 2;
+    }
+
+    .textCol {
+      order: 1;
+    }
+  }
+}
+
+// Stagger removed — with the blocks now touching corner to corner on the
+// diagonal (see .wrap's own comment), an offset between image and text
+// worked against that alignment instead of with it. One fixed 16:9 ratio
+// at every breakpoint now (was 4:5 below lg, an auto/height-calc'd box
+// above it) — object-fit: cover on .image crops any source dimensions to
+// fill it. This also removes the old height:calc(100% - stagger) box,
+// which was itself only needed to make room for the stagger.
+//
+// align-self: start (lg+ only, where the grid row exists at all) is
+// load-bearing, not cosmetic — a real bug, caught live: .block's
+// align-items: stretch means both columns stretch to the row's own
+// height, and the row auto-sizes to whichever column's CONTENT is
+// taller. Block two's text (three paragraphs vs. block one's two) needs
+// more height than a 720px-wide 16:9 image does (405px) — so the row
+// grew to fit the text, stretch then forced the image to fill that
+// taller height too, and since aspect-ratio is bidirectional, the
+// browser recomputed the image's WIDTH from that taller height to hold
+// 16:9 — overflowing its own 720px column out to 803px (measured live,
+// spilling 83px past the viewport's right edge). align-self: start lets
+// the row still grow to fit taller text, but stops the image trying to
+// fill that extra height — its own height stays purely a function of
+// its own (column-track) width, exactly 16:9, full stop.
+.imageCol {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+
+  @include mixins.breakpoint-up(lg) {
+    align-self: start;
+  }
+}
+
+.image {
+  object-fit: cover;
+}
+
+// Quote scrim — bottom third only, same non-linear-ramp discipline as
+// PillarHero's own .heroFade (a flat linear gradient reads as a Mach
+// band); a simpler 3-stop version is enough at this scale since the
+// quote itself sits right at the bottom, not spread across the whole
+// fade.
+.imageScrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  height: 60%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--light-base-text) 20%, transparent) 40%,
+    color-mix(in srgb, var(--light-base-text) 75%, transparent) 100%
+  );
+}
+
+.imageQuote {
+  position: absolute;
+  z-index: 2;
+  inset: auto var(--space-6) var(--space-6) var(--space-6);
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: 1.4;
+  color: var(--light-base-bg);
+}
+
+// Text alignment pass — at lg+, the OUTWARD side (away from the image)
+// now lands exactly on the container's own edge, not an arbitrary fixed
+// padding within this full-bleed block's 50vw column. min(100vw, var(
+// --container-max-width)) mirrors what mixins.container itself computes
+// internally (width:100%; max-width:...) — (100vw - that) / 2 is the
+// centering margin a real .container would have at this viewport, plus
+// its own padding-inline (var(--space-7) at lg+) for the content edge.
+// Dropped the old max-width: 36rem — it would have capped the text
+// narrower than the container edge at some viewport widths, undermining
+// the alignment; the container-edge padding already bounds line length
+// on its own (measured ~500-550px available at typical widths, without
+// a second constraint fighting it).
+// The 16:9 image is shorter than the old design's box, so .block's row
+// height (which the text column now stretches to fill, see .block's own
+// comment) is shorter too — display:flex + justify-content:center here
+// is what keeps the text from just filling that height edge to edge;
+// padding-top/-bottom (var(--space-8), real air, not the old space-7)
+// is a floor under that centring, guaranteeing visible space above and
+// below even if a future entry's body copy were short enough that
+// centring alone wouldn't read as intentional.
+// z-index: 1 — a direct consequence of the fixed row height above:
+// giving the row an explicit height (= the image's own height) instead
+// of auto-sizing to content means text CAN outgrow its own row when a
+// block's copy needs more vertical room than a 16:9 image provides at a
+// given width (measured: up to 207px at 1024px — see this pass's own
+// report). Without this, the overflow paints UNDER the next block's
+// image (later in DOM order, same stacking level) and the text is
+// silently hidden — confirmed live, a real content-loss bug, not just a
+// cosmetic one. z-index keeps text always readable above imagery when
+// the two conflict; it does not close the gap between what the text
+// needs and what the image allows, which the report flags explicitly.
+.textCol {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-7) var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+    padding-left: var(--space-9);
+    padding-right: calc((100vw - min(100vw, var(--container-max-width))) / 2 + var(--space-7));
+  }
+}
+
+// Mirrored block: text is on the LEFT now, so the container-edge padding
+// swaps to that side (and the inward gap, toward the image, swaps to the
+// right).
+.blockMirror .textCol {
+  @include mixins.breakpoint-up(lg) {
+    padding-left: calc((100vw - min(100vw, var(--container-max-width))) / 2 + var(--space-7));
+    padding-right: var(--space-9);
+  }
+}
+
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.heading {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+}
+
+.headingEmphasis {
+  font-style: italic;
+  color: var(--color-accent);
+}
+
+.body {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}

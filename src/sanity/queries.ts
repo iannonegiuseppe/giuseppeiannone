@@ -52,7 +52,8 @@ export const siteSettingsQuery = defineQuery(`
     crisisSupportText,
     emergencyContacts,
     googleProfileUrl,
-    carePathway
+    carePathway,
+    pricing
   }
 `);
 
@@ -137,10 +138,17 @@ export const chiSonoSectionQuery = defineQuery(`
     heroStandfirst,
     heroLocations,
     whatIWorkWith,
+    glassCard,
+    parallaxDivider,
     howIWork,
+    credentials,
+    bodyBlocks,
+    journey,
     timeline,
+    publications,
     paragraphs,
     pullQuote,
+    pullQuoteFollowUp,
     portrait,
     "portraitLqip": portrait.asset->metadata.lqip,
     storyLink,
@@ -650,10 +658,59 @@ export const contactSectionQuery = defineQuery(`
 // Prezzi build pass — pricePage is a defineSimplePageType singleton
 // (title + portableText body + seo, nothing else), same narrow-select
 // shape as every other singleton query here.
+const pricePageServiceLinksProjection = `
+  links[]{
+    label,
+    "target": target->{ _id, _type, "slug": slug.current, title }
+  }
+`;
+
+const pricePageServiceProjection = `
+  {
+    title,
+    paragraph1,
+    derivedNote,
+    linkPrefix,
+    ${pricePageServiceLinksProjection},
+    linkSuffix
+  }
+`;
+
 export const pricePageQuery = defineQuery(`
   *[_type == "pricePage" && language == $locale][0]{
     title,
     ${bodyProjection},
+    servicesHeading,
+    servicesIntro,
+    services{
+      "individual": individual${pricePageServiceProjection},
+      "couple": couple${pricePageServiceProjection},
+      "sexology": sexology${pricePageServiceProjection},
+      "online": online${pricePageServiceProjection}
+    },
+    darkBand,
+    facts,
+    seo
+  }
+`);
+
+// FAQ page build pass — faqPage is a real document now (title/intro/
+// sections/seo). "sections[].items" dereferences straight to the real
+// faqItem fields (question/answer) the accordion needs — same "expand
+// the reference at query time" shape pillarPage.faqItems/subtopicPage.
+// faqItems already use, not a second round-trip per section.
+export const faqPageQuery = defineQuery(`
+  *[_type == "faqPage" && language == $locale][0]{
+    title,
+    titleEmphasisWord,
+    intro,
+    photo,
+    sections[]{
+      _key,
+      title,
+      description,
+      items[]->{ _id, question, answer }
+    },
     seo
   }
 `);

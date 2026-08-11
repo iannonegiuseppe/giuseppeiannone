@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { homePath, type Locale } from "@/sanity/paths";
 import type { ContactChannel } from "@/sanity/seo";
@@ -65,59 +64,21 @@ export function HeaderInteractive({
   const dialogRef = useRef<ChannelPickerDialogHandle>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Blog article pass — no prop threads this: Header is rendered once at
-  // the layout level (a sibling of {children}, not its parent), so a page
-  // component can't hand it a per-route prop the ordinary way. Reading the
-  // route here instead. Article covers are unpredictable stock/AI photos
-  // with no baked-in scrim of their own (unlike the homepage hero), so
-  // this route always needs the dark glass treatment, not just past the
-  // scroll threshold.
-  //
-  // Blog index redesign pass — real bug found via screenshot, not
-  // assumed: the match below used to be "/blog/" (trailing slash), which
-  // never matches the bare index routes (/blog, /blog/page/2). The
-  // header's OWN text colour is always var(--color-text) — the site's
-  // root dark-theme ivory, unaffected by a page's own local tone override
-  // (Header renders at the layout level, outside any page's light-island-
-  // surface scope) — so at rest (transparent, not collapsed) it's only
-  // readable over a dark backdrop. The blog index's own hero is light
-  // ivory, not a photo: light text directly on a light background was
-  // invisible. Collapsed state fixes this on ANY page background, not
-  // just photos — its own dark glass paints FIRST, then the light text
-  // sits on top of THAT, so what's behind the glass stops mattering.
-  // Broadened the match to the bare index routes too, not just article
-  // slugs and paginated pages (those already matched "/blog/...").
-  //
-  // Real bug, caught by a failed production build: this used to import
-  // usePathname from "@/i18n/navigation" (next-intl's locale-aware hook,
-  // via createNavigation) for its locale-agnostic matching — but that hook
-  // requires a NextIntlClientProvider ancestor, which only exists inside
-  // src/app/[locale]/layout.tsx. HeaderInteractive is ALSO rendered on
-  // /design-lab/* (DesignLabHomepage renders the real, shared Header —
-  // see that file's own comment), which has no such provider — prerendering
-  // /design-lab/light-mode threw and failed the build. Plain "next/
-  // navigation" usePathname works everywhere (no provider dependency), at
-  // the cost of returning the RAW path including any locale prefix — so
-  // the match below checks both the unprefixed (it) and /en-prefixed
-  // forms explicitly, rather than relying on next-intl to normalize them
-  // into one shape.
-  const pathname = usePathname();
-  const forceCollapsed =
-    pathname === "/blog" ||
-    pathname.startsWith("/blog/") ||
-    pathname === "/en/blog" ||
-    pathname.startsWith("/en/blog/");
-
+  // Header-over-light-hero pass: the pathname-based forceCollapsed check
+  // that used to live here (matching /blog and /en/blog by string) is
+  // gone — /blog's collapsed-at-rest appearance is now driven by the same
+  // `body:has([data-light-hero])` CSS rule /faq uses, keyed off
+  // LightPortraitHero's own marker, not a route list (see that component's
+  // and HeaderInteractive.module.scss's own comments). One real
+  // consequence, not swept under this: /blog/[slug] article pages matched
+  // the OLD check too (their cover photos are unpredictable stock/AI
+  // images with no scrim of their own) but do NOT render LightPortraitHero
+  // — see this pass's own report for whether that route still looks
+  // right without it.
   useEffect(() => {
     const header = headerRef.current;
     const button = buttonRef.current;
     if (!header || !button) return;
-
-    if (forceCollapsed) {
-      header.dataset.collapsed = "true";
-      button.dataset.collapsed = "true";
-      return; // permanently collapsed on this route — no scroll listener needed
-    }
 
     // Reduced-motion: state still tracks scroll, just without an animated
     // transition (the 0ms override lives in sectionsShared.module.scss) —
@@ -154,12 +115,20 @@ export function HeaderInteractive({
       scrollContainer.removeEventListener("scroll", onScroll);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [forceCollapsed]);
+  }, []);
 
-  // SSR/initial-paint value, not just the post-hydration effect above —
-  // avoids a one-frame flash of the transparent state on the article
-  // route before the effect above runs.
-  const initialCollapsed = forceCollapsed ? "true" : "false";
+  // Header-over-light-hero pass: this was `forceCollapsed ? "true" :
+  // "false"`, a real per-route hardcode (matching /blog by pathname) that
+  // gave the SSR'd markup the right initial value on that one route, to
+  // avoid a one-frame flash before the scroll effect above ran. That
+  // route check is gone — the appearance on light-hero pages is now owned
+  // entirely by HeaderInteractive.module.scss's `body:has([data-light-hero])`
+  // rule, which needs no JS and has nothing to flash before. This constant
+  // is what's left once the conditional it used to hold is gone: every
+  // route's true initial scroll-linked state, always "false" at scroll 0.
+  // Kept as a named constant (not inlined below) so both attributes still
+  // read from one place, and so this comment has somewhere to live.
+  const initialCollapsed = "false";
 
   return (
     <>

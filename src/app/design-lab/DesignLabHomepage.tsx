@@ -750,6 +750,14 @@ export async function DesignLabHomepage({
                 intro={homePage?.diplomi?.intro}
                 alboLine={homePage?.diplomi?.alboLine}
                 closeLabel={closeLabel}
+                redactionNote={tDiplomi("redactionNote")}
+                cardAffordance={tDiplomi("cardAffordance")}
+                cardAriaSuffix={tDiplomi("cardAriaSuffix")}
+                cardPrevLabel={tDiplomi("cardPrevLabel")}
+                cardNextLabel={tDiplomi("cardNextLabel")}
+                trackLabel={tDiplomi("trackLabel")}
+                lightboxPrevLabel={tDiplomi("lightboxPrevLabel")}
+                lightboxNextLabel={tDiplomi("lightboxNextLabel")}
                 items={diplomiLabItems}
               />
             </section>

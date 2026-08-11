@@ -109,6 +109,27 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
     `--light-base-line`, `--light-base-accent`/`-accent-hover`) — these are
     theme-invariant by construction, not reassigned per-scope, so they can't
     have this problem.
+  - **The mirror-image trap: a DARK section (`tone.rich-dark-surface`/
+    `tone.tone-deep-foreground`) nested INSIDE a light island resolves to
+    LIGHT values, regardless of `:root[data-theme="dark"]`.** `light-island-
+    surface` reassigns `--color-bg` (and everything `rich-dark-surface`/
+    `tone-deep-foreground` read) on itself for its *entire subtree* — that
+    beats the root theme for anything nested inside it, because CSS custom
+    properties resolve from the nearest ancestor that sets them, not from
+    `:root` once something closer overrides them. Hit twice: first on the
+    `/prezzi` design-lab proposal (blamed on design-lab's own layout never
+    setting `data-theme="dark"` on `<html>` — a real but incomplete
+    diagnosis), then again porting that section to the real `/prezzi`
+    page, where `:root[data-theme="dark"]` unquestionably *was* set and the
+    dark band still rendered near-white — because `.page` (light-island-
+    surface, an ancestor of the dark band) was the actual source, not the
+    root theme. Fix: an explicit `.themeDark` wrapper as an ANCESTOR of the
+    dark section, re-establishing the real dark values at that point in the
+    tree — never applied to the SAME element as `tone-deep-foreground`,
+    which creates a genuine circular custom-property reference
+    (`--color-text` -> `--tone-deep-text` -> `--color-text`, both declared
+    for one element) that resolves to nothing (`getComputedStyle` returns
+    `""`), confirmed live during the design-lab pass.
 
 ## i18n routing
 
