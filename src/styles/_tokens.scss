@@ -283,6 +283,16 @@ $z-index: (
   --light-base-muted: #686058;
   --light-base-hairline: #e7e0d3;
   --light-base-line: #ddd6c9;
+  // Added this pass (Contatti build, phone/email cards): the light theme's
+  // own --color-surface value (#ffffff) — needed because --color-surface
+  // is NOT one of the tokens light-island-surface reassigns (confirmed via
+  // CLAUDE.md's own "NOT covered" list), so a white raised card inside a
+  // light island would otherwise resolve to the ambient DARK theme's own
+  // --color-surface (#16261F) instead. No prior consumer needed a solid
+  // white card on a light island before this; same literal value as this
+  // file's own light :root block, just re-exported, same pattern as every
+  // other --light-base-* token above.
+  --light-base-surface: #ffffff;
 
   // Hope-specific indirection: HopeSection.module.scss's .hopeEmphasis
   // reads this instead of --color-accent-contrast directly, purely so the

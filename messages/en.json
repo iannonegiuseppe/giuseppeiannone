@@ -52,7 +52,9 @@
     "zoomOutLabel": "Zoom out",
     "scrollHintDesktopCtrl": "Use Ctrl + scroll to zoom the map",
     "scrollHintDesktopCmd": "Use ⌘ + scroll to zoom the map",
-    "scrollHintTouch": "Use two fingers to move the map"
+    "scrollHintTouch": "Use two fingers to move the map",
+    "directionsLabel": "Directions",
+    "showOnMapLabel": "Show on map"
   },
   "Footer": {
     "copyright": "© {year} {name} — All rights reserved."

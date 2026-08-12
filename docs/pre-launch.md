@@ -107,14 +107,17 @@ that, then delete the line here.
   §9-checked via the actual `deontologyCheck` validator for IT; EN checked
   by hand. Reversal: once Giuseppe reviews and approves (or rewrites) both
   languages, delete this line.
-- **Leaflet map attribution is hidden.** `src/app/[locale]/globals.scss`
-  — `.leaflet-control-attribution { display: none !important; }`,
-  commented `TEMPORARY — preview only`. Attribution is a licence
-  requirement for the CARTO/OSM tiles the Locations map uses. Reversal:
-  delete the rule.
-- **9 standalone page routes are still placeholder stubs**, each
+- ~~**Leaflet map attribution is hidden.**~~ RESOLVED (Contatti build
+  pass): the `.leaflet-control-attribution { display: none !important; }`
+  rule has been deleted from `src/app/[locale]/globals.scss`. Attribution
+  now renders wherever the map does — verified live on both the homepage's
+  Sedi section and the new `/contatti` page (see that pass's own report
+  for the measured contrast).
+- **7 standalone page routes are still placeholder stubs** (was 9 before
+  the Contatti build pass removed `/contatti`/`/contact` from this list),
+  each
   rendering `PreviewPlaceholderPage` instead of real content: `/prezzi`,
-  `/pricing`, `/faq`, `/contatti`, `/contact`, `/risorse`, `/resources`,
+  `/pricing`, `/faq`, `/risorse`, `/resources`,
   `/privacy`, `/cookie-policy` (see `src/components/PreviewPlaceholderPage.tsx`'s
   own comment for the full list). Note these are the *dedicated* routes
   for these topics — the homepage's own FAQ/Contact/Resources

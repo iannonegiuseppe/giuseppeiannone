@@ -173,6 +173,14 @@ export default async function LocaleLayout({
           telephone: phoneChannel?.value,
           email: emailChannel?.value,
           vatID: siteSettings.piva,
+          // Contatti build pass — page-level hours (Mo-Fr 08:00-21:00),
+          // matching contactPage.hours' own human-readable copy. Not
+          // per-location: see this function's own comment on why.
+          openingHours: {
+            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            opens: "08:00",
+            closes: "21:00",
+          },
         })
       : undefined;
 

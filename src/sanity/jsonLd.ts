@@ -132,6 +132,24 @@ interface LocationFields {
 // source values as buildPersonJsonLd's own telephone/email above. vatID
 // only makes sense here, not on Person — schema.org defines it on
 // Organization/LocalBusiness, not Person.
+// Contatti build pass — openingHoursSpecification added to this SAME
+// sitewide node, not as a second, page-scoped MedicalBusiness emitted
+// from /contatti: this function (and its one call site, layout.tsx) is
+// already the single place this entity is built, so a page-level
+// duplicate would mean two MedicalBusiness nodes describing the same
+// practice on every page that also renders one, which schema.org
+// consumers would have no principled way to reconcile. Page-level (not
+// per-location): he cannot be at four studios at once, so one set of
+// hours describes the whole practice, matching contactPage.hours' own
+// human-readable copy — kept in sync by hand since one is machine
+// dayOfWeek/opens/closes format and the other is display text, and
+// nothing in this schema currently derives one from the other.
+export interface OpeningHours {
+  dayOfWeek: string[];
+  opens: string;
+  closes: string;
+}
+
 export function buildMedicalBusinessJsonLd({
   name,
   siteUrl,
@@ -139,6 +157,7 @@ export function buildMedicalBusinessJsonLd({
   telephone,
   email,
   vatID,
+  openingHours,
 }: {
   name: string;
   siteUrl: string;
@@ -146,6 +165,7 @@ export function buildMedicalBusinessJsonLd({
   telephone?: string;
   email?: string;
   vatID?: string;
+  openingHours?: OpeningHours;
 }) {
   return {
     "@context": "https://schema.org",
@@ -160,6 +180,14 @@ export function buildMedicalBusinessJsonLd({
       name: location.title,
       address: location.address,
     })),
+    openingHoursSpecification: openingHours
+      ? {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: openingHours.dayOfWeek,
+          opens: openingHours.opens,
+          closes: openingHours.closes,
+        }
+      : undefined,
   };
 }
 

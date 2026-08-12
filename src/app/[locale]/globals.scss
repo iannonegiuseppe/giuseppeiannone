@@ -157,9 +157,3 @@ h3 {
   line-height: var(--lh-h3);
   color: var(--color-text);
 }
-
-// TEMPORARY — preview only. Attribution is a licence requirement for
-// CARTO/OSM tiles and MUST be restored before launch. See docs/pre-launch.md.
-.leaflet-control-attribution {
-  display: none !important;
-}

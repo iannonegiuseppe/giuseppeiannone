@@ -676,6 +676,27 @@ const pricePageServiceProjection = `
   }
 `;
 
+// Metodo build pass — methodPage is a real document now (see that schema
+// file's own comment for why it grew out of defineSimplePageType). Every
+// field is a flat/nested-object projection (no dereferences needed) — same
+// narrow, explicit-field convention as contactPageQuery above, not a bare
+// \`...\` spread.
+export const methodPageQuery = defineQuery(`
+  *[_type == "methodPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    lead,
+    split,
+    path,
+    relationship,
+    approach,
+    fitEnding,
+    practical,
+    seo
+  }
+`);
+
 export const pricePageQuery = defineQuery(`
   *[_type == "pricePage" && language == $locale][0]{
     title,
@@ -711,6 +732,41 @@ export const faqPageQuery = defineQuery(`
       description,
       items[]->{ _id, question, answer }
     },
+    seo
+  }
+`);
+
+// Contatti build pass — contactPage is a real document now (see that
+// schema file's own comment for why it grew out of defineSimplePageType).
+// Every field is a flat/object projection (no dereferences needed) —
+// `...` isn't used here so an editor adding a stray field later doesn't
+// silently start rendering somewhere unexpected.
+// Lead-expansion pass — intro is now portable-text blocks; markDefs[]
+// dereferences pillarLink's own "target" reference the same way
+// bodyProjection's own custom-block entries do above (_type == "x" =>
+// {...}) — one projection per mark type, not a generic catch-all.
+export const contactPageQuery = defineQuery(`
+  *[_type == "contactPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    intro[]{
+      ...,
+      markDefs[]{
+        ...,
+        _type == "pillarLink" => {
+          "target": target->{ _id, _type, "slug": slug.current, title }
+        }
+      }
+    },
+    whatsapp,
+    phone,
+    email,
+    hours,
+    appointments,
+    sediKicker,
+    sediHeading,
+    online,
     seo
   }
 `);

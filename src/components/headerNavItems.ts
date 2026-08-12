@@ -62,20 +62,22 @@ const ROUTE_KEY_MAP = new Map(NAV_ROUTE_KEYS.map((entry) => [entry.key, entry]))
 // root-namespace pass) added alongside hrefFor's own new branch.
 const RESOLVABLE_REFERENCE_TYPES = new Set(["pillarPage", "subtopicPage", "article", "page"]);
 
-// PREVIEW-GATE (temporary), "metodo" only now — reversed for "chi-sono"
-// (Chi sono build pass): that route is real now
-// (src/app/[locale]/chi-sono/page.tsx, src/app/[locale]/about-me/page.tsx),
-// so its entry is gone from this map per this comment's own
-// previously-stated reversal instructions — ROUTE_KEY_MAP's real-route
-// resolution below (aboutPath) now resolves it, unchanged code, exactly
-// as that original comment said it would.
+// PREVIEW-GATE (temporary), now empty — reversed for "chi-sono" (Chi sono
+// build pass) and for "metodo" (Metodo build pass), the same way: each
+// route is real now (src/app/[locale]/chi-sono+about-me,
+// src/app/[locale]/metodo+method), so its entry is gone from this map per
+// this comment's own previously-stated reversal instructions —
+// ROUTE_KEY_MAP's real-route resolution below (aboutPath/methodPath) now
+// resolves both, unchanged code, exactly as originally promised.
 //
-// "metodo" stays: JourneySection (un-gated) owns id="metodo" for real,
-// permanently, not as a placeholder stand-in — scrolling to a same-page
-// anchor IS metodo's actual intended behavior, not a temporary shim.
-const PREVIEW_GATE_ANCHOR_OVERRIDES = new Map<string, string>([
-  ["metodo", "metodo"],
-]);
+// Correction to the entry this replaces: it called the homepage-anchor
+// behavior for "metodo" permanent, not a placeholder — true when written,
+// before a real Metodo page was commissioned. It wasn't reversed lightly;
+// see this pass's own report. JourneySection's own id="metodo" anchor is
+// untouched (still real, still there) — only the header nav link's own
+// target changed, same as chi-sono's reversal changed nothing about
+// whatever the homepage used to link to under that label either.
+const PREVIEW_GATE_ANCHOR_OVERRIDES = new Map<string, string>([]);
 
 function resolveHref(locale: Locale, link: NavLinkData): string | undefined {
   if (link.linkType === "reference") {

@@ -52,7 +52,9 @@
     "zoomOutLabel": "Riduci lo zoom",
     "scrollHintDesktopCtrl": "Usa Ctrl + scroll per ingrandire la mappa",
     "scrollHintDesktopCmd": "Usa ⌘ + scroll per ingrandire la mappa",
-    "scrollHintTouch": "Usa due dita per muovere la mappa"
+    "scrollHintTouch": "Usa due dita per muovere la mappa",
+    "directionsLabel": "Indicazioni",
+    "showOnMapLabel": "Mostra sulla mappa"
   },
   "Footer": {
     "copyright": "© {year} {name} — Tutti i diritti riservati."

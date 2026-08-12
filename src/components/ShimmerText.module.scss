@@ -79,6 +79,12 @@
   // #F6F3EE, both clear 4.5:1). Highlight reads darker than base here
   // (inverted from the dark-theme branch above) because on a light ground,
   // AA-passing bronze can't get any lighter and still hold contrast.
+  //
+  // NAMING NOTE (Contatti build pass): despite the name, this attribute's
+  // real meaning is "light island ground" (any tone.light-island-surface
+  // scope, whether or not it's a hero), not "hero" specifically — it is
+  // now also set directly on /contatti's own channels section, which is
+  // not a hero. Do not narrow this selector back to hero-only markup.
   :global([data-light-hero]) & {
     --shimmer-highlight: var(--color-accent-hover);
   }
