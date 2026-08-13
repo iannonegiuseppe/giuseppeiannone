@@ -19,6 +19,13 @@ export const SINGLETON_TYPES = new Set([
   "pricePage",
   "faqPage",
   "contactPage",
+  // Privacy/cookie policy pass: two more singleton pages, unlike aboutPage
+  // (see this file's own "aboutPage: LEFT UNLISTED" comment below) — these
+  // ARE the live routes (/privacy, /cookie-policy), so they get the same
+  // singleton-pane/no-delete-or-duplicate/visible-in-Pages treatment as
+  // methodPage/pricePage/contactPage/faqPage, not aboutPage's hidden one.
+  "privacyPage",
+  "cookiePolicyPage",
   // Chi sono section pass: homepage teaser singleton — see its own
   // schema file's comment for why it's a standalone type rather than a
   // homePage field group.
@@ -277,6 +284,8 @@ export const structure: StructureResolver = (S, context) =>
               singletonListItem(S, "pricePage", "Prezzi"),
               singletonListItem(S, "contactPage", "Contatti"),
               singletonListItem(S, "faqPage", "FAQ"),
+              singletonListItem(S, "privacyPage", "Privacy"),
+              singletonListItem(S, "cookiePolicyPage", "Cookie policy"),
               S.listItem()
                 .title("Sedi (pagine)")
                 .child(

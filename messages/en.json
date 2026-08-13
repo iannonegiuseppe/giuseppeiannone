@@ -60,7 +60,8 @@
     "showOnMapLabel": "Show on map"
   },
   "Footer": {
-    "copyright": "© {year} {name} — All rights reserved."
+    "copyright": "© {year} {name} — All rights reserved.",
+    "cookiePreferences": "Cookie preferences"
   },
   "NotFound": {
     "title": "Page not found",
@@ -80,5 +81,9 @@
     "kicker": "Fees",
     "atAGlance": "At a glance",
     "servicesLabel": "Services"
+  },
+  "LegalPage": {
+    "lastUpdated": "Last updated",
+    "lastUpdatedPlaceholder": "[TO BE CONFIRMED]"
   }
 }

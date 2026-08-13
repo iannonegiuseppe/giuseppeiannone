@@ -6,6 +6,13 @@ import { linkAnnotation } from "./linkAnnotation";
 // required alt text, plus the custom content objects below. Nothing else —
 // don't add marks/styles/blocks here without deliberately revisiting this
 // rule in CLAUDE.md.
+//
+// Privacy/cookie policy pass — that deliberate revisit: contentTable added
+// because the legal pages' source content has real tabular data (a legal-
+// basis table, three cookie tables) that reads worse as a definition list
+// — confirmed against the actual content, not assumed, before adding it.
+// See contentTable.ts's own comment for the exact shape (header row + body
+// rows, plain-string cells, no merging/alignment). Still nothing else.
 export const portableText = defineType({
   name: "portableText",
   title: "Content",
@@ -76,5 +83,6 @@ export const portableText = defineType({
     defineArrayMember({ type: "ctaBlock" }),
     defineArrayMember({ type: "conditionCard" }),
     defineArrayMember({ type: "treatmentCard" }),
+    defineArrayMember({ type: "contentTable" }),
   ],
 });

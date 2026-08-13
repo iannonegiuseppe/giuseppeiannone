@@ -1,16 +1,50 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
-import { PreviewPlaceholderPage } from "@/components/PreviewPlaceholderPage";
-import { resolveRobots } from "@/sanity/metadata";
+import { getTranslations } from "next-intl/server";
+import { LegalPageShell } from "@/components/LegalPageShell";
+import { sanityFetch } from "@/sanity/client";
+import { getPillarTrail } from "@/sanity/breadcrumbs";
+import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
+import { buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
+import { JsonLdScript } from "@/sanity/JsonLdScript";
+import { getSiteUrl } from "@/sanity/metadata";
+import { privacyPath, type Locale } from "@/sanity/paths";
+import { getPortableTextComponents } from "@/sanity/portableTextComponents";
+import { privacyPageQuery } from "@/sanity/queries";
+import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 
-// PREVIEW-GATE (temporary) route — same slug "privacy" for both locales
-// (privacyPath), so this one folder serves /privacy (it) and /en/privacy
-// (en). See PreviewPlaceholderPage.tsx's own comment. Reversal: delete
-// this folder once the real Privacy page is built.
-export const metadata: Metadata = {
-  title: "Privacy | Giuseppe Iannone",
-  robots: resolveRobots(true),
-};
+interface PrivacyPageData {
+  title?: string;
+  lastUpdated?: string;
+  body?: unknown;
+  seo?: SeoFields;
+}
+
+function getPrivacyPage(locale: string) {
+  return sanityFetch<PrivacyPageData | null>(privacyPageQuery, { locale }, ["privacyPage"]);
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const typedLocale = locale as Locale;
+  const [data, siteSettings] = await Promise.all([getPrivacyPage(locale), getSiteSettings(locale)]);
+
+  return await buildMetadata({
+    locale: typedLocale,
+    title: data?.title ?? "",
+    seo: data?.seo,
+    siteName: siteSettings?.title ?? "",
+    siteSeo: siteSettings?.seo,
+    localizedPaths: {
+      it: privacyPath("it"),
+      en: privacyPath("en"),
+    },
+  });
+}
 
 export default async function PrivacyPage({
   params,
@@ -19,5 +53,35 @@ export default async function PrivacyPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <PreviewPlaceholderPage locale={locale} />;
+  const typedLocale = locale as Locale;
+
+  const data = await getPrivacyPage(locale);
+  const t = await getTranslations({ locale, namespace: "LegalPage" });
+
+  const path = privacyPath(typedLocale);
+  const siteUrl = getSiteUrl();
+
+  const trail = await getPillarTrail(typedLocale, data?.title ?? "", path);
+  const breadcrumbJsonLd = buildBreadcrumbListJsonLd(trail, siteUrl);
+
+  const headings = extractHeadings(data?.body);
+  const headingIds = headingIdsByKey(headings);
+  const components = await getPortableTextComponents(locale, headingIds);
+
+  return (
+    <>
+      <JsonLdScript data={breadcrumbJsonLd} />
+      <LegalPageShell
+        trail={trail}
+        title={data?.title ?? ""}
+        lastUpdatedLabel={t("lastUpdated")}
+        lastUpdatedDate={data?.lastUpdated}
+        lastUpdatedPlaceholder={t("lastUpdatedPlaceholder")}
+        locale={locale}
+        headings={headings}
+        body={data?.body}
+        components={components}
+      />
+    </>
+  );
 }

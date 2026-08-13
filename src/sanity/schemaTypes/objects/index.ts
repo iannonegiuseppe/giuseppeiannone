@@ -1,4 +1,5 @@
 import { conditionCard } from "./conditionCard";
+import { contentTable } from "./contentTable";
 import { ctaBlock } from "./ctaBlock";
 import { faqAnswer } from "./faqAnswer";
 import { faqBlock } from "./faqBlock";
@@ -17,6 +18,7 @@ export const objectTypes = [
   ctaBlock,
   conditionCard,
   treatmentCard,
+  contentTable,
   portableText,
   faqAnswer,
   navLink,

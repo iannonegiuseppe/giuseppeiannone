@@ -251,3 +251,86 @@
   margin: var(--space-6) 0 0;
   max-width: 24rem;
 }
+
+// --- Table (contentTable) ---------------------------------------------------
+// Privacy/cookie policy pass. Two nested elements, not one: .tableScroll
+// (the scroll container, not the table itself — a bare `overflow-x: auto`
+// on <table> clips its own box-shadow/outline in some browsers) owns the
+// horizontal overflow; .tableScrollWrap (outside it) owns the fade
+// pseudo-element below, which must NOT scroll with the content — it's
+// fixed to the right edge of the viewport-visible area, a hint that more
+// exists beyond it, not part of the table itself.
+.tableScrollWrap {
+  position: relative;
+  margin: var(--space-6) 0 0;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+// Right-edge fade — ContentTable.tsx toggles data-fade on the wrapper
+// based on real scroll position (hasOverflow && !atEnd; see that file's
+// own comment), so this is invisible both when the table already fits at
+// the current width and once scrolled all the way to its own end. Color
+// fades to --color-bg specifically (not e.g. --color-surface) because
+// this table only ever renders inside a light-island-surface scope
+// (LegalPageShell.tsx), and --color-bg is one of the tokens that mixin
+// actually reassigns to the light value — see CLAUDE.md's own "covered"
+// list.
+.tableScrollWrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.5rem;
+  background: linear-gradient(to right, transparent, var(--color-bg));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.tableScrollWrap[data-fade="true"]::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tableScrollWrap::after {
+    transition: none;
+  }
+}
+
+.table {
+  width: 100%;
+  min-width: 32rem; // forces horizontal scroll below this rather than
+  // crushing four columns into an unreadable width — measured against the
+  // narrowest real table in the source content (the technical-cookies
+  // table, 4 columns).
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  th {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--color-text);
+  }
+
+  tr:first-child th {
+    border-top: 1px solid var(--color-hairline);
+  }
+}

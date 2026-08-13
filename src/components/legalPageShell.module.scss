@@ -1,0 +1,52 @@
+@use "../styles/mixins";
+@use "../styles/tone";
+
+// Privacy/cookie policy pass — same light-island-surface mechanism the
+// article route's own .page already uses (reused, not forked): this is a
+// prose-heavy page that needs to read as light-text-on-light-ground, sitting
+// inside the site's ambient dark default.
+.page {
+  @include tone.light-island-surface;
+  padding-bottom: var(--space-9);
+}
+
+// Same content measure as ReadingArea's own .column (41.25rem + 2×space-5
+// padding below lg, 50rem at lg+), so the header visually lines up with the
+// body underneath it — not a new number, copied from that file.
+.header {
+  width: 100%;
+  max-width: calc(41.25rem + 2 * var(--space-5));
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+  padding-top: var(--space-9);
+  text-align: center;
+
+  @include mixins.breakpoint-up(lg) {
+    max-width: 50rem;
+    padding-inline: 0;
+  }
+}
+
+.breadcrumbs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-synthesis: none;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.meta {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}

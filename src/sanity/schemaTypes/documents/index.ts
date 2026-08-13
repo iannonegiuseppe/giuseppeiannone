@@ -5,6 +5,7 @@ import { article } from "./article";
 import { blogIndexSection } from "./blogIndexSection";
 import { chiSonoSection } from "./chiSonoSection";
 import { contactPage } from "./contactPage";
+import { cookiePolicyPage } from "./cookiePolicyPage";
 import { ctaBridgeSection } from "./ctaBridgeSection";
 import { diploma } from "./diploma";
 import { faqItem } from "./faqItem";
@@ -17,6 +18,7 @@ import { methodPage } from "./methodPage";
 import { page } from "./page";
 import { pillarPage } from "./pillarPage";
 import { pricePage } from "./pricePage";
+import { privacyPage } from "./privacyPage";
 import { qualification } from "./qualification";
 import { sede } from "./sede";
 import { service } from "./service";
@@ -36,6 +38,12 @@ export const documentTypes = [
   pricePage,
   faqPage,
   contactPage,
+  // Privacy/cookie policy pass: two more defineSimplePageType singletons
+  // (title + lastUpdated + body + seo — see simplePage.ts's own comment on
+  // withLastUpdated), grouped with the other singleton pages above rather
+  // than with knowledge-base content below.
+  privacyPage,
+  cookiePolicyPage,
   // Chi sono section pass: homepage teaser singleton (own structured
   // fields, not defineSimplePageType) — see its own file's comment for
   // why it supersedes homePage.chiSono/ChiSonoOverlap.tsx instead of

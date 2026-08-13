@@ -771,6 +771,30 @@ export const contactPageQuery = defineQuery(`
   }
 `);
 
+// Privacy/cookie policy pass — both defineSimplePageType singletons
+// (title + lastUpdated + body + seo). contentTable needs no dereference
+// entry in bodyProjection: unlike faqBlock/relatedTopics/conditionCard/
+// treatmentCard, its headerRow/rows/cells are plain strings, no `->`
+// references, so the projection's own leading `...` already returns it in
+// full.
+export const privacyPageQuery = defineQuery(`
+  *[_type == "privacyPage" && language == $locale][0]{
+    title,
+    lastUpdated,
+    ${bodyProjection},
+    seo
+  }
+`);
+
+export const cookiePolicyPageQuery = defineQuery(`
+  *[_type == "cookiePolicyPage" && language == $locale][0]{
+    title,
+    lastUpdated,
+    ${bodyProjection},
+    seo
+  }
+`);
+
 // Blog index redesign pass — hero + closing editorial copy for the /blog
 // listing (its own singleton, blogIndexSection.ts).
 export const blogIndexQuery = defineQuery(`

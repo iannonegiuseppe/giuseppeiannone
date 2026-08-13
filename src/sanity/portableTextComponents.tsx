@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PortableText, type PortableTextComponents } from "next-sanity";
 import { Card } from "@/components/Card";
 import { ButtonLink } from "@/components/Button";
+import { ContentTable } from "./ContentTable";
 import { imageDimensions, urlFor } from "./image";
 import { hrefFor, type Locale, type ReferencedDoc } from "./paths";
 import styles from "./portableTextComponents.module.scss";
@@ -202,6 +203,21 @@ export async function getPortableTextComponents(
           </div>
         );
       },
+      // Privacy/cookie policy pass — plain header row + body rows, no
+      // merged cells, no per-cell alignment (see contentTable.ts's own
+      // comment). Scrolls horizontally inside its own container at narrow
+      // widths rather than reflowing/stacking — the simplest, most
+      // predictable behavior for genuinely tabular data, and this reading
+      // column already has a fixed max-width the table has no reason to
+      // fight. Delegated to ContentTable.tsx (a client component) for the
+      // scroll-fade affordance, which needs real scroll-position tracking,
+      // not something a server component can do.
+      contentTable: ({ value }) => (
+        <ContentTable
+          headerRow={value.headerRow as string[]}
+          rows={value.rows as { _key: string; cells: string[] }[]}
+        />
+      ),
     },
   };
 }

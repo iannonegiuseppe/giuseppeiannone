@@ -60,7 +60,8 @@
     "showOnMapLabel": "Mostra sulla mappa"
   },
   "Footer": {
-    "copyright": "© {year} {name} — Tutti i diritti riservati."
+    "copyright": "© {year} {name} — Tutti i diritti riservati.",
+    "cookiePreferences": "Preferenze cookie"
   },
   "NotFound": {
     "title": "Pagina non trovata",
@@ -80,5 +81,9 @@
     "kicker": "Prezzi",
     "atAGlance": "In sintesi",
     "servicesLabel": "Servizi"
+  },
+  "LegalPage": {
+    "lastUpdated": "Ultimo aggiornamento",
+    "lastUpdatedPlaceholder": "[DA CONFERMARE]"
   }
 }

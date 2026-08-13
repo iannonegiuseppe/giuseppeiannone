@@ -236,6 +236,20 @@ export async function FooterLab({
                   </li>
                 ) : null,
               )}
+              {/* Privacy/cookie policy pass — plain hardcoded stub, not a
+                  CMS legalNavItems entry: that schema's navLink object has
+                  no free-text URL field (deliberately, so an editor can
+                  never author a broken link — see navLink.ts's own
+                  comment), so it structurally cannot represent a
+                  placeholder that goes nowhere. This one does, on purpose:
+                  the consent banner it's meant to open is a separate pass,
+                  not built yet. INERT until that pass wires up a real
+                  handler — do not ship believing this button works. */}
+              <li>
+                <a href="#" className={styles.linkMuted}>
+                  {t("cookiePreferences")}
+                </a>
+              </li>
             </ul>
             <p className={styles.pivaLine}>P.IVA {piva ?? "[segnaposto]"}</p>
           </div>
