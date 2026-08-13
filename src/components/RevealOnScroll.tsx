@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { observeVisibility } from "./sharedViewportObserver";
-import styles from "./FinalContactSection.module.scss";
+import styles from "./RevealOnScroll.module.scss";
 
 // Generic version of the reveal mechanism first built for PhilosophyBand
 // (itself copied from CarePathway) — extracted here so every Group B
@@ -16,8 +16,8 @@ import styles from "./FinalContactSection.module.scss";
 // private `new IntersectionObserver(...)` per mounted instance — six
 // separate observers just for Aree's own six cards, on top of however
 // many other RevealOnScroll instances exist elsewhere on the same page
-// (CTA bridge, FinalContactSection itself, RecognitionSection's grid).
-// That's exactly the per-instance duplication sharedViewportObserver.ts
+// (CTA bridge, ContactBlock, RecognitionSection's grid). That's exactly
+// the per-instance duplication sharedViewportObserver.ts
 // was built to eliminate for AnimatedDivider/ShimmerText — this file
 // just never got migrated onto it. Now reuses that SAME module-scope
 // singleton instead of adding a third observer construct. One

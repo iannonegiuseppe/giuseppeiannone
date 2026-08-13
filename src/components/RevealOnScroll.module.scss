@@ -1,0 +1,29 @@
+// Moved out of FinalContactSection.module.scss (step 8 of the contact-form
+// merge pass) — this is the shared reveal mechanism RevealOnScroll.tsx
+// toggles for every consumer (ContactBlock, CredentialsBand, AreeSection,
+// RecognitionSection, BlogIndexView, the homepage directly, and others),
+// not private styling for one section. It had already outlived two prior
+// owners named in its own comment (CarePathway, PhilosophyBand) before
+// landing here on FinalContactSection, which is itself now retired — this
+// gives it a home named for what it actually is.
+.pendingReveal {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pendingReveal,
+  .revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
