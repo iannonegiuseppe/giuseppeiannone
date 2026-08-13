@@ -16,12 +16,14 @@ function WelcomeLeftContent({
   authorName,
   authorCredentials,
   authorRegistrationNumber,
+  contactLabel,
 }: {
   areas?: AreaRow[];
   contactDialogRef: React.RefObject<ContactFormDialogHandle | null>;
   authorName: string;
   authorCredentials?: string;
   authorRegistrationNumber?: string;
+  contactLabel: string;
 }) {
   return (
     <>
@@ -45,7 +47,9 @@ function WelcomeLeftContent({
         </ul>
       ) : null}
 
-      {/* §9: "Scrivimi" only — no free-session/urgency framing. */}
+      {/* §9: "Scrivimi"/"Message me" only — no free-session/urgency
+          framing. Reuses Hero.contactLabel (messages/{it,en}.json) — same
+          string as Hero's own trigger button, not a duplicate copy. */}
       <Button
         type="button"
         variant="primary"
@@ -53,7 +57,7 @@ function WelcomeLeftContent({
         className={styles.welcomeCta}
         onClick={() => contactDialogRef.current?.open()}
       >
-        Scrivimi
+        {contactLabel}
       </Button>
 
       {/* §9: identity + registration disclosure only — no
@@ -111,6 +115,8 @@ type WelcomeBlockProps = {
   areas?: AreaRow[];
   locale: Locale;
   closeLabel: string;
+  contactDialogHeading: string;
+  contactLabel: string;
 };
 
 // Consolidation pass: this was a temporary A/B comparison shell (two full
@@ -133,6 +139,8 @@ export function WelcomeBlock({
   areas,
   locale,
   closeLabel,
+  contactDialogHeading,
+  contactLabel,
 }: WelcomeBlockProps) {
   const [revealed, setRevealed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -173,6 +181,7 @@ export function WelcomeBlock({
                 authorName={authorName}
                 authorCredentials={authorCredentials}
                 authorRegistrationNumber={authorRegistrationNumber}
+                contactLabel={contactLabel}
               />
             </div>
           </div>
@@ -206,7 +215,12 @@ export function WelcomeBlock({
         </div>
       </div>
 
-      <ContactFormDialog ref={contactDialogRef} locale={locale} closeLabel={closeLabel} />
+      <ContactFormDialog
+        ref={contactDialogRef}
+        locale={locale}
+        closeLabel={closeLabel}
+        heading={contactDialogHeading}
+      />
     </div>
   );
 }

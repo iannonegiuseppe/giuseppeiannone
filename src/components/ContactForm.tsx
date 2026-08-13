@@ -3,69 +3,103 @@
 import Link from "next/link";
 import { useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Button } from "@/components/Button";
 import { ContactFormInput, ContactFormTextarea } from "./ContactFormField";
 import type { ContactFieldHandle } from "./ContactFormField";
 import { privacyPath, type Locale } from "@/sanity/paths";
 import {
-  validateContact,
   validateContactForm,
+  validateEmail,
   validateNome,
+  validateTelefono,
   type ContactChannel,
   type ContactFormErrors,
   type ContactFormValues,
 } from "@/lib/contact/validation";
+import { contactErrorMessage } from "@/lib/contact/errorMessages";
 import styles from "./ContactForm.module.scss";
 
+// Merge pass — the polymorphic `contact` field (phone-or-email keyed by
+// channel) that used to cause a 400 on every whatsapp/telefonata submission
+// is gone; telefono is a real, transmitted field now (the old "TODO(contact-
+// wiring): telefono is LOCAL STATE ONLY" is resolved). Validation runs
+// through validateContactForm (src/lib/contact/validation.ts) — the SAME
+// function api/contact/route.ts calls, not a separate client dispatch —
+// so client and server can no longer disagree about what's valid. Error
+// PROSE comes from src/lib/contact/errorMessages.ts, the one place
+// bilingual copy lives; validators themselves only ever return codes.
+//
+// Rename pass: this is the ONE contact form now, embedded (via
+// ContactBlock) and modal (via ContactFormDialog). The old, separately-
+// forked plain ContactForm.tsx/ContactFormField.tsx (single polymorphic
+// "contact" field, Italian-only dialog heading) are retired — this file
+// took over their names; it was ContactFormLab.tsx until this pass.
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
-const CHANNEL_OPTIONS: { value: ContactChannel; label: string }[] = [
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "telefonata", label: "Telefonata" },
-  { value: "email", label: "Email" },
-];
-
-// Compact-pass revision: pre-selected so the "Numero" field is visible
-// from the very first paint, not just after a manual choice. A plain
-// non-null useState initializer renders identically during SSR and the
-// initial client render (same as defaultChecked would) — there is no
-// separate client-only effect setting this after hydration, so it's
-// never a pop-in.
 const DEFAULT_CHANNEL: ContactChannel = "whatsapp";
-
-// Error-banner fallback only — hardcoded per this form's own established
-// "code-owned, not CMS" copy convention (see this component's own top
-// comment). Same real number as siteSettings.contactChannels' whatsapp
-// entry (the CMS-driven source everywhere else derives from); duplicated
-// here rather than threaded through as a prop because this form has no
-// other CMS wiring today and this is a plain-text fallback, not a link.
 const WHATSAPP_FALLBACK_DISPLAY = "+39 339 190 1474";
 
-const CHANNEL_PHRASES: Record<ContactChannel, string> = {
-  whatsapp: "su WhatsApp",
-  telefonata: "al telefono",
-  email: "via email",
+const COPY = {
+  it: {
+    fieldLabels: {
+      nome: "Nome",
+      // Reactive: telefono is genuinely required once whatsapp/telefonata
+      // is selected — a static "(facoltativo)" label would tell a visitor
+      // the opposite of what validateTelefono actually enforces.
+      telefonoRequired: "Numero di telefono",
+      telefonoOptional: "Numero (facoltativo)",
+      email: "Email",
+      messaggio: "Se vuoi, scrivi due righe — anche solo un saluto",
+    },
+    channelLegend: "Come preferisci essere ricontattato?",
+    channelOptions: [
+      { value: "whatsapp" as ContactChannel, label: "WhatsApp" },
+      { value: "telefonata" as ContactChannel, label: "Telefonata" },
+      { value: "email" as ContactChannel, label: "Email" },
+    ],
+    consentLinkText: "informativa sulla privacy",
+    submitLabel: "Invia il messaggio",
+    submitLabelBusy: "Invio…",
+    channelPhrases: { whatsapp: "su WhatsApp", telefonata: "al telefono", email: "via email" } as Record<
+      ContactChannel,
+      string
+    >,
+    successMessage: (nome: string, channelPhrase: string) =>
+      `Grazie, ${nome}. Ti ricontatto io ${channelPhrase} — di solito entro [segnaposto — tempo di risposta].`,
+    genericError: `Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
+    honeypotLabel: "Non compilare questo campo",
+  },
+  en: {
+    fieldLabels: {
+      nome: "Name",
+      telefonoRequired: "Phone number",
+      telefonoOptional: "Phone (optional)",
+      email: "Email",
+      messaggio: "If you like, write a few lines — even just hello",
+    },
+    channelLegend: "How would you prefer to be contacted?",
+    channelOptions: [
+      { value: "whatsapp" as ContactChannel, label: "WhatsApp" },
+      { value: "telefonata" as ContactChannel, label: "Phone call" },
+      { value: "email" as ContactChannel, label: "Email" },
+    ],
+    consentLinkText: "privacy policy",
+    submitLabel: "Send the message",
+    submitLabelBusy: "Sending…",
+    channelPhrases: { whatsapp: "on WhatsApp", telefonata: "by phone", email: "by email" } as Record<
+      ContactChannel,
+      string
+    >,
+    successMessage: (nome: string, channelPhrase: string) =>
+      `Thanks, ${nome}. I'll get back to you ${channelPhrase} — usually within [placeholder — response time].`,
+    genericError: `Something didn't work. You can write to me directly on WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
+    honeypotLabel: "Don't fill in this field",
+  },
 };
 
-// Replaces FinalContactSection's old single CTA button — a structured
-// contact path alongside the header popup/mini-contact band (both stay
-// untouched; they serve low-threshold contact). Copy is hardcoded per
-// spec, not CMS-sourced: this is a code-owned form, not editorial
-// content.
-// tight: mirrors the old button's own .finalContactCtaTight — halves this
-// form's top margin when the availability badge (rendered just above, by
-// FinalContactSection) is present, same "two smaller gaps replace one
-// larger gap" spacing rule as everywhere else that badge appears.
-// Handled internally via a data-attribute (not an externally-applied
-// className) so the override can never lose a cross-module CSS
-// specificity race — see HeaderInteractive.module.scss's own documented
-// incident with exactly that failure mode.
-export function ContactForm({
-  locale,
-  tight,
-}: {
-  locale: Locale;
-  tight?: boolean;
-}) {
+export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: string }) {
+  const t = COPY[locale];
+
   const [channel, setChannel] = useState<ContactChannel | null>(DEFAULT_CHANNEL);
   const [errors, setErrors] = useState<ContactFormErrors>({});
   const [status, setStatus] = useState<SubmitStatus>("idle");
@@ -73,9 +107,10 @@ export function ContactForm({
   const [submittedChannel, setSubmittedChannel] = useState<ContactChannel | null>(null);
 
   const nomeRef = useRef<ContactFieldHandle>(null);
-  const firstChannelRadioRef = useRef<HTMLInputElement>(null);
-  const contactRef = useRef<ContactFieldHandle>(null);
+  const telefonoRef = useRef<ContactFieldHandle>(null);
+  const emailRef = useRef<ContactFieldHandle>(null);
   const messaggioRef = useRef<ContactFieldHandle>(null);
+  const firstChannelRadioRef = useRef<HTMLInputElement>(null);
   const consentRef = useRef<HTMLInputElement>(null);
   const honeypotRef = useRef<HTMLInputElement>(null);
 
@@ -85,10 +120,12 @@ export function ContactForm({
   function focusFirstError(fieldErrors: ContactFormErrors) {
     if (fieldErrors.nome) {
       nomeRef.current?.focus();
+    } else if (fieldErrors.telefono) {
+      telefonoRef.current?.focus();
+    } else if (fieldErrors.email) {
+      emailRef.current?.focus();
     } else if (fieldErrors.channel) {
       firstChannelRadioRef.current?.focus();
-    } else if (fieldErrors.contact) {
-      contactRef.current?.focus();
     } else if (fieldErrors.consent) {
       consentRef.current?.focus();
     }
@@ -96,22 +133,23 @@ export function ContactForm({
 
   function handleChannelChange(value: ContactChannel) {
     setChannel(value);
-    // Switching channels preserves nothing — the dynamic contact field is
-    // keyed by channel below, so it remounts empty; clear any stale
-    // error from the previous channel's own validation too.
-    setErrors((prev) => ({ ...prev, channel: undefined, contact: undefined }));
+    // Switching channels can change whether telefono is required (e.g.
+    // moving from email to whatsapp) — clear any stale telefono error
+    // from before the switch, same as it already clears channel's own.
+    setErrors((prev) => ({ ...prev, channel: undefined, telefono: undefined }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nome = nomeRef.current?.getValue() ?? "";
-    const contact = contactRef.current?.getValue() ?? "";
+    const telefono = telefonoRef.current?.getValue() ?? "";
+    const email = emailRef.current?.getValue() ?? "";
     const messaggio = messaggioRef.current?.getValue() ?? "";
     const consent = consentRef.current?.checked ?? false;
     const honeypot = honeypotRef.current?.value ?? "";
 
-    const values: ContactFormValues = { nome, channel, contact, messaggio, consent };
+    const values: ContactFormValues = { nome, channel, email, telefono, messaggio, consent };
     const validationErrors = validateContactForm(values);
 
     if (Object.keys(validationErrors).length > 0) {
@@ -130,7 +168,8 @@ export function ContactForm({
         body: JSON.stringify({
           nome: nome.trim(),
           channel,
-          contact: contact.trim(),
+          email: email.trim(),
+          telefono: telefono.trim(),
           messaggio: messaggio.trim(),
           consent,
           companyWebsite: honeypot,
@@ -144,6 +183,10 @@ export function ContactForm({
         return;
       }
 
+      // A 400 here means the server's own validateContactForm rejected
+      // something — same rules the client already checked above, so this
+      // path is a defence against a stale/bypassed client, not evidence of
+      // a client/server disagreement (there is only one rule set now).
       if (res.status === 400) {
         const data: { errors?: ContactFormErrors } | null = await res.json().catch(() => null);
         if (data?.errors) {
@@ -161,77 +204,123 @@ export function ContactForm({
   }
 
   if (status === "success" && submittedChannel) {
-    // Replaces the form in place, no redirect — the availability badge
-    // (rendered by FinalContactSection, above this component) stays
-    // visible regardless, since this only replaces ContactForm's own
-    // output. "di solito" (usually) states the response time as fact,
-    // not a promise — per §9 (no guaranteed-response wording).
     return (
-      <p className={styles.successMessage} data-tight={tight}>
-        {`Grazie, ${submittedNome}. Ti ricontatto io ${CHANNEL_PHRASES[submittedChannel]} — di solito entro [segnaposto — tempo di risposta].`}
+      <p className={styles.successMessage}>
+        {t.successMessage(submittedNome, t.channelPhrases[submittedChannel])}
       </p>
     );
   }
 
-  const contactLabel = channel === "email" ? "Email" : "Numero";
+  const telefonoRequired = channel === "whatsapp" || channel === "telefonata";
+  const telefonoLabel = telefonoRequired ? t.fieldLabels.telefonoRequired : t.fieldLabels.telefonoOptional;
 
   return (
-    <form className={styles.contactForm} data-tight={tight} onSubmit={handleSubmit} noValidate>
+    <form className={styles.contactForm} onSubmit={handleSubmit} noValidate>
       {status === "error" ? (
         <div className={styles.formBanner} role="alert">
-          <p className={styles.formBannerText}>
-            {`Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`}
-          </p>
+          <p className={styles.formBannerText}>{t.genericError}</p>
         </div>
       ) : null}
 
-      {/* VARIANT B pass — content order per spec: Nome + the dynamic
-          contact field share one row (channel already has a non-null
-          default, so the second field is present from first paint — see
-          DEFAULT_CHANNEL's own comment above), message field below, THEN
-          the channel picker (moved down from directly after Nome). The
-          picker still fully drives the row above it (label/type/
-          validation all key off `channel`) even though it now renders
-          visually later — purely a DOM/visual reorder, no change to which
-          state drives what. */}
+      {/* Row 1: Nome | Numero — equal width at sm+. */}
       <div className={styles.fieldRow}>
         <ContactFormInput
-          label="Nome"
+          label={t.fieldLabels.nome}
           name="nome"
           required
           ref={nomeRef}
-          error={errors.nome}
-          onBlurValue={(value) => setErrors((prev) => ({ ...prev, nome: validateNome(value) }))}
-        />
-
-        {channel ? (
-          <ContactFormInput
-            key={channel}
-            label={contactLabel}
-            name="contact"
-            required
-            ref={contactRef}
-            error={errors.contact}
-            type={channel === "email" ? "email" : "text"}
-            inputMode={channel === "email" ? "email" : "tel"}
-            autoComplete={channel === "email" ? "email" : "tel"}
-            onBlurValue={(value) =>
-              setErrors((prev) => ({ ...prev, contact: validateContact(channel, value) }))
+          error={errors.nome ? contactErrorMessage(locale, "nome", errors.nome) : undefined}
+          onBlurValue={(value) => {
+            // Untouched (never typed into) must not error on blur — only a
+            // non-empty value gets validated here. Submit's own check is
+            // what still catches an empty required field on attempted submit.
+            if (!value.trim()) {
+              setErrors((prev) => ({ ...prev, nome: undefined }));
+              return;
             }
-          />
-        ) : null}
+            setErrors((prev) => ({ ...prev, nome: validateNome(value) }));
+          }}
+          onChangeValue={(value) => {
+            // Clears the moment the field becomes valid, no second blur
+            // needed — only acts while an error is already showing.
+            if (errors.nome && !validateNome(value)) {
+              setErrors((prev) => ({ ...prev, nome: undefined }));
+            }
+          }}
+        />
+        <ContactFormInput
+          label={telefonoLabel}
+          name="telefono"
+          required={telefonoRequired}
+          ref={telefonoRef}
+          error={errors.telefono ? contactErrorMessage(locale, "telefono", errors.telefono) : undefined}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          onBlurValue={(value) => {
+            // An empty field never errors on blur, even when telefono is
+            // required for the selected channel — "required" is enforced
+            // at submit time only, same treatment as every other field.
+            if (!value.trim()) {
+              setErrors((prev) => ({ ...prev, telefono: undefined }));
+              return;
+            }
+            setErrors((prev) => ({ ...prev, telefono: validateTelefono(channel, value) }));
+          }}
+          onChangeValue={(value) => {
+            if (errors.telefono && (!value.trim() || !validateTelefono(channel, value))) {
+              setErrors((prev) => ({ ...prev, telefono: undefined }));
+            }
+          }}
+        />
       </div>
 
-      <ContactFormTextarea
-        label="Se vuoi, scrivi due righe — anche solo un saluto"
-        name="messaggio"
-        ref={messaggioRef}
+      {/* Screen-reader-only announcement of the telefono field's label —
+          the visible label above already changes with it (required vs
+          optional wording), but a label's text/attribute changes are only
+          read on focus, not proactively. A visitor who picks a different
+          channel without refocusing telefono would otherwise get a purely
+          visual update. aria-live announces it regardless of focus;
+          aria-atomic ensures the whole sentence is re-read, not a diff.
+          Reuses the same (already-approved) label text — no separate copy. */}
+      <p aria-live="polite" aria-atomic="true" className={styles.srOnlyStatus}>
+        {telefonoLabel}
+      </p>
+
+      {/* Row 2: Email, full width — always required regardless of channel. */}
+      <ContactFormInput
+        label={t.fieldLabels.email}
+        name="email"
+        required
+        ref={emailRef}
+        error={errors.email ? contactErrorMessage(locale, "email", errors.email) : undefined}
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        onBlurValue={(value) => {
+          if (!value.trim()) {
+            setErrors((prev) => ({ ...prev, email: undefined }));
+            return;
+          }
+          setErrors((prev) => ({ ...prev, email: validateEmail(value) }));
+        }}
+        onChangeValue={(value) => {
+          if (errors.email && !validateEmail(value)) {
+            setErrors((prev) => ({ ...prev, email: undefined }));
+          }
+        }}
       />
 
-      <fieldset className={styles.pillFieldset} aria-describedby={errors.channel ? `${channelGroupId}-error` : undefined}>
-        <legend className={styles.pillLegend}>Come preferisci essere ricontattato?</legend>
+      {/* Row 3: message, full width. */}
+      <ContactFormTextarea label={t.fieldLabels.messaggio} name="messaggio" ref={messaggioRef} />
+
+      <fieldset
+        className={styles.pillFieldset}
+        aria-describedby={errors.channel ? `${channelGroupId}-error` : undefined}
+      >
+        <legend className={styles.pillLegend}>{t.channelLegend}</legend>
         <div className={styles.pillGroup}>
-          {CHANNEL_OPTIONS.map((option, index) => (
+          {t.channelOptions.map((option, index) => (
             <label key={option.value} className={styles.pill} data-selected={channel === option.value}>
               <input
                 ref={index === 0 ? firstChannelRadioRef : undefined}
@@ -249,19 +338,15 @@ export function ContactForm({
         </div>
         {errors.channel ? (
           <p id={`${channelGroupId}-error`} className={styles.groupError} role="alert">
-            {errors.channel}
+            {contactErrorMessage(locale, "channel", errors.channel)}
           </p>
         ) : null}
       </fieldset>
 
-      {/* Declutter pass: the error <p> lives in this wrapping div, not
-          inside the <label> itself — <label>'s content model only
-          allows phrasing (inline) content, and a block-level <p> in
-          there would also risk being absorbed into the checkbox's own
-          accessible name via implicit label association. The div is
-          just the position:relative anchor the hanging-error treatment
-          measures from (top: 100%), same mechanism as the field
-          errors — see ContactForm.module.scss's own comment. */}
+      {/* Consent stays ABOVE the submit button, unchecked by default,
+          blocking submission until checked — deliberate deviation from the
+          reference (which places it below the button). Never pre-checked,
+          never opt-out. */}
       <div className={styles.consentWrap}>
         <label className={styles.consentRow}>
           <input
@@ -274,50 +359,54 @@ export function ContactForm({
             onChange={() => setErrors((prev) => ({ ...prev, consent: undefined }))}
           />
           <span className={styles.consentText}>
-            Ho letto l&apos;
-            {/* Route may 404 until the privacy page is actually built —
-                same "ship structure now" policy as every other pending
-                route referenced elsewhere in this codebase (header/footer
-                nav, footer legal column). */}
-            <Link href={privacyPath(locale)} className={styles.consentLink}>
-              informativa sulla privacy
-            </Link>
-            {" "}e acconsento al trattamento dei dati.
+            {locale === "en" ? (
+              <>
+                I have read the{" "}
+                <Link href={privacyPath(locale)} className={styles.consentLink}>
+                  {t.consentLinkText}
+                </Link>{" "}
+                and consent to the processing of my data.
+              </>
+            ) : (
+              <>
+                Ho letto l&apos;
+                <Link href={privacyPath(locale)} className={styles.consentLink}>
+                  {t.consentLinkText}
+                </Link>{" "}
+                e acconsento al trattamento dei dati.
+              </>
+            )}
           </span>
         </label>
         {errors.consent ? (
           <p id={`${channelGroupId}-consent-error`} className={styles.groupError} role="alert">
-            {errors.consent}
+            {contactErrorMessage(locale, "consent", errors.consent)}
           </p>
         ) : null}
       </div>
 
-      {/* Honeypot — off-screen (not display:none, so naive bots still
-          "see" and fill it), excluded from tab order and screen readers.
-          Any value here means a bot filled every field it could find;
-          the server silently accepts (200) without sending. */}
       <div className={styles.honeypotWrap} aria-hidden="true">
-        <label htmlFor={honeypotId}>Non compilare questo campo</label>
-        <input
-          id={honeypotId}
-          type="text"
-          name="companyWebsite"
-          ref={honeypotRef}
-          tabIndex={-1}
-          autoComplete="off"
-        />
+        <label htmlFor={honeypotId}>{t.honeypotLabel}</label>
+        <input id={honeypotId} type="text" name="companyWebsite" ref={honeypotRef} tabIndex={-1} autoComplete="off" />
       </div>
 
-      {/* VARIANT B pass — HONESTY-RULE FLAG: the responseNote prop/
-          .responseLine trust line under the consent row is gone entirely
-          (was the form's own render of homePage.finalCta.responseNote) —
-          it duplicated FinalContactSection's own "Rispondo entro 24 ore."
-          line below the form, per spec's explicit "delete the duplicate
-          promise" instruction. Nothing renders below the submit button,
-          same as before this pass. */}
-      <button type="submit" className={styles.submitButton} disabled={status === "submitting"}>
-        {status === "submitting" ? "Invio…" : "Invia il messaggio"}
-      </button>
+      {/* Submit + reply line: below lg, stacked (button then reply line,
+          both left-aligned). At lg+, row-reverse puts the reply line on
+          the left (growing) and the button on the right (intrinsic,
+          right-aligned) — DOM order (button, then reply line) is
+          unchanged either way; row-reverse only flips visual position. */}
+      <div className={styles.submitRow}>
+        <Button
+          type="submit"
+          variant="primary"
+          tone="mid"
+          className={styles.submitButton}
+          pending={status === "submitting"}
+        >
+          {status === "submitting" ? t.submitLabelBusy : t.submitLabel}
+        </Button>
+        <p className={styles.replyLine}>{replyLine}</p>
+      </div>
     </form>
   );
 }

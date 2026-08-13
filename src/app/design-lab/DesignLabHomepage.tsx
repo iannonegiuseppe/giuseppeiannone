@@ -343,6 +343,11 @@ export async function DesignLabHomepage({
   const tDiplomi = await getTranslations({ locale: LOCALE, namespace: "Diplomi" });
   const closeLabel = tDiplomi("closeLabel");
 
+  // Same convention as closeLabel above — production's own page.tsx
+  // resolves this the same way (see that file's own comment).
+  const tContactDialog = await getTranslations({ locale: LOCALE, namespace: "ContactDialog" });
+  const contactDialogHeading = tContactDialog("heading");
+
   const theSpace = THE_SPACE.it;
 
   // Stage 2c — hero background-video poster, same fallback chain as
@@ -539,6 +544,7 @@ export async function DesignLabHomepage({
                 contactLabel="Scrivimi"
                 locale={LOCALE}
                 closeLabel={closeLabel}
+                contactDialogHeading={contactDialogHeading}
               />
             }
           />
@@ -595,6 +601,8 @@ export async function DesignLabHomepage({
             areas={areaRows}
             locale={LOCALE}
             closeLabel={closeLabel}
+            contactDialogHeading={contactDialogHeading}
+            contactLabel="Scrivimi"
           />
 
           {/* 5. Credentials — extracted to its own component
@@ -705,6 +713,7 @@ export async function DesignLabHomepage({
               linkLabel={ctaBridge?.linkLabel ?? ""}
               locale={LOCALE}
               closeLabel={closeLabel}
+              contactDialogHeading={contactDialogHeading}
             />
           </RevealOnScroll>
 

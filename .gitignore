@@ -37,6 +37,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# dev-server output redirected to a file during manual verification
+# (npm run dev > dev-out.log 2> dev-err.log) — scratch, never committed
+dev-out.log
+dev-err.log
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example

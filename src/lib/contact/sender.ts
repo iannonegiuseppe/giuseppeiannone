@@ -1,10 +1,14 @@
 import nodemailer from "nodemailer";
 import type { ContactChannel } from "./validation";
 
+// Merge pass — `contact` (polymorphic phone-or-email) is gone; email and
+// telefono are now separate, explicit fields on the payload, matching
+// validation.ts's own ContactFormValues shape.
 export interface ContactMessagePayload {
   nome: string;
   channel: ContactChannel;
-  contact: string;
+  email: string;
+  telefono: string;
   messaggio: string;
 }
 
@@ -33,9 +37,23 @@ function isConfigured(): boolean {
   );
 }
 
+// This email is read by Giuseppe, not the visitor — always composed in
+// Italian regardless of which locale the visitor filled the form in.
+// Merge pass: confirmed this was already true before this pass touched
+// anything (no locale parameter has ever reached this module or
+// route.ts) — not a deliberate multilingual decision being preserved
+// here, just how the file was originally written. Kept always-Italian
+// per this pass's own instruction rather than adding locale-switching
+// that was never asked for; see this pass's own report for the approved
+// EN equivalent text, which deliberately has no code path here.
+//
+// "Telefono", not "Telefonata", for the telefonata channel — this label
+// is for the Recapito block below, distinct from (and intentionally
+// worded differently than) the visitor-facing channel-picker label in
+// errorMessages.ts's own CHANNEL_LABELS, which stays "Telefonata".
 const CHANNEL_LABELS: Record<ContactChannel, string> = {
   whatsapp: "WhatsApp",
-  telefonata: "Telefonata",
+  telefonata: "Telefono",
   email: "Email",
 };
 
@@ -62,18 +80,33 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
     auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
 
+  // Telefono line only appears when a number was actually given — when
+  // channel is "email" and telefono was left blank, the channel line above
+  // already says the person chose email; a line saying no phone number was
+  // given adds nothing for the reader.
+  const bodyLines = [
+    `Nome: ${payload.nome}`,
+    `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
+    `Email: ${payload.email}`,
+  ];
+  if (payload.telefono) {
+    bodyLines.push(`Telefono: ${payload.telefono}`);
+  }
+  bodyLines.push(
+    payload.messaggio ? `Messaggio:\n${payload.messaggio}` : "Nessun messaggio aggiuntivo.",
+  );
+
   try {
     await transporter.sendMail({
       from: CONTACT_FROM_EMAIL,
       to: CONTACT_TO_EMAIL,
-      replyTo: payload.channel === "email" ? payload.contact : undefined,
+      // Merge pass fix: email is now always collected regardless of
+      // channel, so replyTo can always be populated. Previously a
+      // whatsapp/telefonata submission left replyTo undefined — hitting
+      // "Reply" in the inbox went nowhere useful.
+      replyTo: payload.email,
       subject: `Nuovo contatto dal sito — ${payload.nome}`,
-      text: [
-        `Nome: ${payload.nome}`,
-        `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
-        `Recapito: ${payload.contact}`,
-        payload.messaggio ? `Messaggio:\n${payload.messaggio}` : "Nessun messaggio aggiuntivo.",
-      ].join("\n\n"),
+      text: bodyLines.join("\n\n"),
     });
     return { ok: true };
   } catch (error) {

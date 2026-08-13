@@ -1,22 +1,20 @@
 import NextImage from "next/image";
 import { AnimatedDivider } from "@/components/AnimatedDivider";
-import { ContactFormLab } from "./ContactFormLab";
+import { ContactForm } from "./ContactForm";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import type { Locale } from "@/sanity/paths";
 import styles from "./contactBlock.module.scss";
 
 // Light-surface pass — reversed off tone-deep (dark) onto tone.light-
 // island-surface (.contactLightWrap, contactBlock.module.scss), the last
-// dark section on the page per this pass's own brief. ContactForm itself
-// (validation, GDPR consent, submit mechanics) is now ContactFormLab, a
-// fork — the real, shared ContactForm.tsx feeds production's
-// FinalContactSection too, and this pass's field-model change (email
-// always required, telefono local-state-only — see ContactFormLab.tsx's
-// own top comment) can't leak there. contactLab (Sanity) is this block's
-// own independent kicker/heading/caption field group, separate from the
-// shared finalCta above it in the schema; googleProfileLabel is the one
-// exception, still read from finalCta since this pass never touched that
-// field or its copy.
+// dark section on the page per this pass's own brief. Renders the shared
+// ContactForm.tsx (validation, GDPR consent, submit mechanics) — also used
+// by ContactFormDialog.tsx's homepage modal, one implementation since the
+// step-6/7 merge (see ContactForm.tsx's own top comment). contactLab
+// (Sanity) is this block's own independent kicker/heading/caption field
+// group, separate from the shared finalCta above it in the schema;
+// googleProfileLabel is the one exception, still read from finalCta since
+// this pass never touched that field or its copy.
 //
 // No border at either the Spazi->Contact or Contact->"Lo spazio" junction
 // (explicit correction this pass — every other tonal change on this page
@@ -104,7 +102,7 @@ export function ContactBlock({
                 display:none on the sweep) — nothing extra needed here. */}
             <AnimatedDivider className={styles.contactRule} />
             <div className={styles.contactForm}>
-              <ContactFormLab locale={locale as Locale} replyLine={replyLine} />
+              <ContactForm locale={locale as Locale} replyLine={replyLine} />
             </div>
             {googleProfileUrl ? (
               <a

@@ -20,6 +20,9 @@
     "areeLabel": "Perché rivolgersi",
     "contactLabel": "Scrivimi"
   },
+  "ContactDialog": {
+    "heading": "Scrivimi"
+  },
   "Diplomi": {
     "prevLabel": "Diploma precedente",
     "nextLabel": "Diploma successivo",

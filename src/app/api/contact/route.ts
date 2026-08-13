@@ -15,7 +15,8 @@ export const runtime = "nodejs";
 interface ContactRequestBody {
   nome?: unknown;
   channel?: unknown;
-  contact?: unknown;
+  email?: unknown;
+  telefono?: unknown;
   messaggio?: unknown;
   consent?: unknown;
   // Honeypot — a real visitor never fills this (it's visually hidden and
@@ -56,11 +57,12 @@ export async function POST(req: NextRequest) {
   const channel = VALID_CHANNELS.includes(body.channel as ContactChannel)
     ? (body.channel as ContactChannel)
     : null;
-  const contact = typeof body.contact === "string" ? body.contact : "";
+  const email = typeof body.email === "string" ? body.email : "";
+  const telefono = typeof body.telefono === "string" ? body.telefono : "";
   const messaggio = typeof body.messaggio === "string" ? body.messaggio : "";
   const consent = body.consent === true;
 
-  const values: ContactFormValues = { nome, channel, contact, messaggio, consent };
+  const values: ContactFormValues = { nome, channel, email, telefono, messaggio, consent };
   const errors = validateContactForm(values);
 
   if (Object.keys(errors).length > 0) {
@@ -72,7 +74,8 @@ export async function POST(req: NextRequest) {
   const result = await sendContactMessage({
     nome: nome.trim(),
     channel: channel as ContactChannel,
-    contact: contact.trim(),
+    email: email.trim(),
+    telefono: telefono.trim(),
     messaggio: messaggio.trim(),
   });
 

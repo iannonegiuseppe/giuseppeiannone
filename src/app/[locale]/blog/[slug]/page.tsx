@@ -351,7 +351,7 @@ export default async function ArticlePage({
       {/* Item 4 — the real, shared ContactBlock (photo column + form side
           by side), the exact component/props the homepage's own
           ContactSection renders (src/app/[locale]/page.tsx) — not forked,
-          not just ContactFormLab alone. contactSection copy now comes from
+          not just the bare ContactForm alone. contactSection copy now comes from
           the corrected contactSectionQuery (was reading the schema's own
           "DEPRECATED, see contactSection" contactLab field — a real bug
           fixed this pass, see queries.ts's own comment on

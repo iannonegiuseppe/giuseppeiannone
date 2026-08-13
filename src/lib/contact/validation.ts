@@ -1,24 +1,41 @@
-// Contact form pass: shared, isomorphic validation — imported by both
-// ContactForm.tsx (client, on blur/submit) and api/contact/route.ts
-// (server, re-validates everything unconditionally, per "never trust the
-// client"). One source of truth for what counts as valid, so the two
-// layers can't silently drift apart.
+// Contact form pass: shared, isomorphic validation — imported by the
+// (single, post-merge) contact form component (client, on blur/submit) and
+// api/contact/route.ts (server, re-validates everything unconditionally,
+// per "never trust the client"). One source of truth for what counts as
+// valid, so the two layers can't silently drift apart.
+//
+// Merge pass — `contact` (a polymorphic phone-or-email field keyed by
+// channel) is gone. `email` and `telefono` are now separate, explicit
+// fields: email is always required regardless of channel; telefono is
+// required exactly when channel is "whatsapp" or "telefonata", and
+// optional-but-still-shape-checked-if-present when channel is "email".
+//
+// Validators return error CODES ("required" | "invalid"), not prose —
+// the client owns the only bilingual copy (src/lib/contact/errorMessages.ts),
+// the server never needs to know what language the visitor reads in. This
+// replaces the old validateContact/validateContactForm dispatcher, whose
+// core logic ("contact is phone unless channel is email") assumed the
+// field this pass removes and can't be adapted to it.
 
 export type ContactChannel = "whatsapp" | "telefonata" | "email";
 
 export interface ContactFormValues {
   nome: string;
   channel: ContactChannel | null;
-  contact: string;
+  email: string;
+  telefono: string;
   messaggio: string;
   consent: boolean;
 }
 
+export type ContactFieldErrorCode = "required" | "invalid";
+
 export interface ContactFormErrors {
-  nome?: string;
-  channel?: string;
-  contact?: string;
-  consent?: string;
+  nome?: ContactFieldErrorCode;
+  channel?: ContactFieldErrorCode;
+  email?: ContactFieldErrorCode;
+  telefono?: ContactFieldErrorCode;
+  consent?: ContactFieldErrorCode;
 }
 
 // Pragmatic, not RFC-pedantic — per spec.
@@ -32,42 +49,44 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_NORMALIZE_RE = /[\s\-.()]/g;
 const PHONE_RE = /^\+?\d{8,15}$/;
 
-export function validateNome(value: string): string | undefined {
-  if (!value.trim()) return "Il nome è obbligatorio.";
+export function validateNome(value: string): ContactFieldErrorCode | undefined {
+  if (!value.trim()) return "required";
   return undefined;
 }
 
-export function validateEmail(value: string): string | undefined {
+export function validateEmail(value: string): ContactFieldErrorCode | undefined {
   const trimmed = value.trim();
-  if (!trimmed || !EMAIL_RE.test(trimmed)) {
-    return "L'indirizzo email non sembra completo.";
-  }
+  if (!trimmed) return "required";
+  if (!EMAIL_RE.test(trimmed)) return "invalid";
   return undefined;
 }
 
-export function validatePhone(value: string): string | undefined {
-  const normalized = value.replace(PHONE_NORMALIZE_RE, "");
-  if (!normalized || !PHONE_RE.test(normalized)) {
-    return "Controlla il numero: sembra troppo corto.";
-  }
-  return undefined;
-}
-
-export function validateChannel(value: ContactChannel | null): string | undefined {
-  if (!value) return "Scegli come preferisci essere ricontattato.";
-  return undefined;
-}
-
-export function validateContact(
+// channel decides whether an empty telefono is an error at all; a non-empty
+// value is always shape-checked regardless of channel, so a malformed
+// number is caught even on the "optional" (email-channel) path.
+export function validateTelefono(
   channel: ContactChannel | null,
   value: string,
-): string | undefined {
-  if (!channel) return undefined; // channel's own error covers this case
-  return channel === "email" ? validateEmail(value) : validatePhone(value);
+): ContactFieldErrorCode | undefined {
+  const trimmed = value.trim();
+  const required = channel === "whatsapp" || channel === "telefonata";
+
+  if (!trimmed) {
+    return required ? "required" : undefined;
+  }
+
+  const normalized = trimmed.replace(PHONE_NORMALIZE_RE, "");
+  if (!PHONE_RE.test(normalized)) return "invalid";
+  return undefined;
 }
 
-export function validateConsent(value: boolean): string | undefined {
-  if (!value) return "Per inviare serve il consenso privacy.";
+export function validateChannel(value: ContactChannel | null): ContactFieldErrorCode | undefined {
+  if (!value) return "required";
+  return undefined;
+}
+
+export function validateConsent(value: boolean): ContactFieldErrorCode | undefined {
+  if (!value) return "required";
   return undefined;
 }
 
@@ -83,8 +102,11 @@ export function validateContactForm(values: ContactFormValues): ContactFormError
   const channelError = validateChannel(values.channel);
   if (channelError) errors.channel = channelError;
 
-  const contactError = validateContact(values.channel, values.contact);
-  if (contactError) errors.contact = contactError;
+  const emailError = validateEmail(values.email);
+  if (emailError) errors.email = emailError;
+
+  const telefonoError = validateTelefono(values.channel, values.telefono);
+  if (telefonoError) errors.telefono = telefonoError;
 
   const consentError = validateConsent(values.consent);
   if (consentError) errors.consent = consentError;

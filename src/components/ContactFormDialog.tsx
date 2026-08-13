@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLenisRef } from "@/components/LenisProvider";
 import type { Locale } from "@/sanity/paths";
@@ -33,8 +33,21 @@ export type ContactFormDialogHandle = {
 //   than ChannelPickerDialog's plain opacity/transform toggle).
 export const ContactFormDialog = forwardRef<
   ContactFormDialogHandle,
-  { locale: Locale; closeLabel?: string }
->(function ContactFormDialog({ locale, closeLabel = "Chiudi" }, ref) {
+  { locale: Locale; closeLabel?: string; heading: string }
+>(function ContactFormDialog({ locale, closeLabel = "Chiudi", heading }, ref) {
+  // Same inline locale-branch literal ContactBlock.tsx already uses for
+  // this exact copy — no message-catalog key for it there either, kept
+  // consistent rather than introducing a second scheme for one sentence.
+  const replyLine = locale === "en" ? "I reply within 24 hours." : "Rispondo entro 24 ore.";
+  // Three independent ContactFormDialog instances mount on the homepage
+  // (Hero/Welcome/CtaBridge) and used to share one hardcoded heading id —
+  // harmless while only one had ever been opened, but the second and third
+  // duplicated it (see everOpened's own comment below for why the id
+  // stuck around after close). useId() gives each instance its own,
+  // stable across this instance's re-renders, so aria-labelledby always
+  // resolves to THIS dialog's own heading, never whichever instance
+  // happens to be first in the DOM.
+  const headingId = useId();
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -42,6 +55,19 @@ export const ContactFormDialog = forwardRef<
   const lenisRef = useLenisRef();
 
   const [closing, setClosing] = useState(false);
+  // Lazy-mounted: stays false until first opened, so a visitor who never
+  // opens this dialog never pays for mounting the full ContactForm (its
+  // own state, refs, event listeners) — only a bare, contentless <dialog>
+  // renders until then. Previously never reset back to false, so the
+  // heading/form stayed mounted (and its id stayed in the DOM) even after
+  // close — harmless for a single instance, but the direct cause of the
+  // id collision above once more than one of the three homepage instances
+  // had ever been opened. Now reset in handleClose: the transition has
+  // already finished and the dialog is already closed by the time that
+  // fires (see handleClose's own comment), so swapping back to the bare
+  // dialog there is invisible — and it means each reopen mounts a fresh
+  // form rather than resurrecting whatever was left over (typed values, a
+  // stale success/error state) from the last time this instance was open.
   const [everOpened, setEverOpened] = useState(false);
   // Portal target only exists client-side — render nothing during SSR
   // (the dialog starts closed either way, so there's no content to show
@@ -111,6 +137,12 @@ export const ContactFormDialog = forwardRef<
 
   function handleClose() {
     setClosing(false);
+    // Fires after the native dialog is already closed (either immediately,
+    // for reduced-motion, or once the exit transition's transitionend has
+    // already called .close() — see requestClose/handleTransitionEnd) —
+    // never mid-animation, so unmounting the heavy content here is
+    // invisible. See everOpened's own comment for why this matters.
+    setEverOpened(false);
     restoreScrollLock();
     previouslyFocusedRef.current?.focus({ preventScroll: true });
   }
@@ -148,7 +180,7 @@ export const ContactFormDialog = forwardRef<
       ref={dialogRef}
       className={styles.contactDialog}
       data-closing={closing ? "true" : undefined}
-      aria-labelledby="contact-form-dialog-heading"
+      aria-labelledby={headingId}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
       onTransitionEnd={handleTransitionEnd}
@@ -164,12 +196,12 @@ export const ContactFormDialog = forwardRef<
           <span aria-hidden="true">×</span>
         </button>
 
-        <h2 id="contact-form-dialog-heading" className={styles.contactDialogHeading}>
-          Scrivimi
+        <h2 id={headingId} className={styles.contactDialogHeading}>
+          {heading}
         </h2>
 
         <div className={styles.contactDialogFormWrap}>
-          <ContactForm locale={locale} />
+          <ContactForm locale={locale} replyLine={replyLine} />
         </div>
       </div>
     </dialog>

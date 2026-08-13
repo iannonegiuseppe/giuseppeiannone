@@ -415,6 +415,13 @@ export default async function Home({
   const tDiplomi = await getTranslations({ locale, namespace: "Diplomi" });
   const closeLabel = tDiplomi("closeLabel");
 
+  // Same convention as closeLabel above — ContactFormDialog's <h2> was
+  // hardcoded "Scrivimi" regardless of locale (a real bug on /en), fixed
+  // by resolving messages/{it,en}.json's new ContactDialog.heading here
+  // and passing it down the same three prop chains as closeLabel.
+  const tContactDialog = await getTranslations({ locale, namespace: "ContactDialog" });
+  const contactDialogHeading = tContactDialog("heading");
+
   // Stage 2c fix — Hero's two action buttons (video-background variant):
   // design-lab hardcodes their labels as Italian literals directly in
   // HeroVideoActions' own call site (LOCALE is always "it" there), which
@@ -422,6 +429,9 @@ export default async function Home({
   // .json's new Hero.areeLabel/.contactLabel keys are this pass's own
   // addition, not a pre-existing catalog entry.
   const tHero = await getTranslations({ locale, namespace: "Hero" });
+  // Reused below for WelcomeBlock's own CTA button too — same
+  // "Scrivimi"/"Message me" string, not a second copy of it.
+  const heroContactLabel = tHero("contactLabel");
 
   // Chi sono pass — extracted to src/sanity/diplomi.ts's own
   // resolveDiplomiLabItems, now the one place this gate is computed
@@ -528,9 +538,10 @@ export default async function Home({
           <HeroVideoActions
             areeHref="#aree"
             areeLabel={tHero("areeLabel")}
-            contactLabel={tHero("contactLabel")}
+            contactLabel={heroContactLabel}
             locale={locale as Locale}
             closeLabel={closeLabel}
+            contactDialogHeading={contactDialogHeading}
           />
         }
       />
@@ -586,6 +597,8 @@ export default async function Home({
         areas={homePage?.aree?.items}
         locale={locale as Locale}
         closeLabel={closeLabel}
+        contactDialogHeading={contactDialogHeading}
+        contactLabel={heroContactLabel}
       />
 
       {/* Stage 2b-2 — Credentials, new to production (design-lab-to-
@@ -715,6 +728,7 @@ export default async function Home({
           linkLabel={homePage?.ctaBridge?.linkLabel ?? ""}
           locale={locale as Locale}
           closeLabel={closeLabel}
+          contactDialogHeading={contactDialogHeading}
         />
       </RevealOnScroll>
 
@@ -829,14 +843,13 @@ export default async function Home({
           block's own independent kicker/heading/caption field group
           (renamed from contactLab, separate from the shared finalCta) —
           googleProfileLabel is the one field still read from finalCta,
-          unchanged. NOTE: ContactBlock uses ContactFormLab, not the real,
-          shared ContactForm FinalContactSection used — a different field
-          model (email always required, telefono local-state-only; see
-          ContactFormLab.tsx's own top comment) is now live on the
-          production contact form as a direct consequence of this swap,
-          flagged in this pass's own report, not silently absorbed.
-          FinalContactSection.tsx/ContactForm.tsx themselves are untouched,
-          just no longer imported here. */}
+          unchanged. Contact-form merge pass: ContactBlock and the homepage
+          modal (ContactFormDialog) now both render the same ContactForm.tsx
+          (email always required, telefono required only for whatsapp/
+          telefonata — see that file's own top comment); the field-model
+          divergence this comment used to flag no longer exists.
+          FinalContactSection.tsx is still unused, not yet deleted (its own
+          pass). */}
       <ContactBlock
         kicker={homePage?.contactSection?.kicker ?? ""}
         heading={homePage?.contactSection?.heading ?? ""}
