@@ -38,6 +38,25 @@ body {
   overflow-x: clip;
 }
 
+// Cookie consent pass — html is the real scroll root here (see the
+// comment above: window.scrollY/document.documentElement.scrollTop are
+// what's authoritative, Lenis drives native window.scrollTo). This is
+// the property that actually matters for "the submit button must be
+// reachable": scroll-padding-bottom tells the BROWSER'S OWN scroll-into-
+// view machinery (Tab-focus auto-scroll, scrollIntoView(), #anchor
+// navigation) to leave this much clearance at the bottom. The OTHER
+// half of this fix — extending the document's true scrollable length so
+// content genuinely at the end (the footer) also clears the banner on a
+// manual scroll-to-bottom — is a real flex-item spacer in
+// [locale]/layout.tsx, not a CSS rule here: body has an explicit
+// height:100% below and already overflows it on every real page, so a
+// padding-bottom on body's own box never had room to manifest as extra
+// scrollable space (confirmed live: document.documentElement.scrollHeight
+// was identical with and without it). See that spacer's own comment.
+html {
+  scroll-padding-bottom: var(--consent-banner-offset, 0px);
+}
+
 img,
 picture,
 video,

@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { ReactElement } from "react";
+import { CookiePreferencesLink } from "@/components/CookiePreferencesLink";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import {
   FacebookIcon,
@@ -240,15 +241,12 @@ export async function FooterLab({
                   CMS legalNavItems entry: that schema's navLink object has
                   no free-text URL field (deliberately, so an editor can
                   never author a broken link — see navLink.ts's own
-                  comment), so it structurally cannot represent a
-                  placeholder that goes nowhere. This one does, on purpose:
-                  the consent banner it's meant to open is a separate pass,
-                  not built yet. INERT until that pass wires up a real
-                  handler — do not ship believing this button works. */}
+                  comment), so it structurally cannot represent an in-page
+                  action rather than a URL. Opens CookieConsentBanner
+                  (rendered once at layout level) via the shared consent
+                  module — see CookiePreferencesLink.tsx. */}
               <li>
-                <a href="#" className={styles.linkMuted}>
-                  {t("cookiePreferences")}
-                </a>
+                <CookiePreferencesLink label={t("cookiePreferences")} className={styles.linkMuted} />
               </li>
             </ul>
             <p className={styles.pivaLine}>P.IVA {piva ?? "[segnaposto]"}</p>

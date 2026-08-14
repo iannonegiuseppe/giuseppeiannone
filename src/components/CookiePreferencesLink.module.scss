@@ -1,0 +1,11 @@
+// Plain button-chrome reset — this element is styled entirely by the
+// .linkMuted class the caller passes in (authored for an <a>, not a
+// <button>), so this only strips the browser's own button defaults.
+.reset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+}

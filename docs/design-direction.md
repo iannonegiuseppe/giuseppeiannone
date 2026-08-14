@@ -237,6 +237,18 @@ Each visual device has exactly one meaning sitewide:
 No new device may be introduced without retiring one. Reusing a device
 for a second meaning is the fastest way to look ordinary.
 
+**Named exception — CookieConsentBanner.** The sitewide cookie-consent
+card (`src/components/CookieConsentBanner.tsx`) reuses the card device's
+raised treatment (`--radius-l` + `--shadow-soft`, the same pair the
+homepage's Welcome block uses) for a persistent utility panel, not an
+item in a collection — a second meaning for "card" under this rule's own
+definition. This was a deliberate, explicit instruction for that
+component specifically ("follow the existing raised-card treatment"),
+not a drift in the rule itself and not license to reuse "card" this way
+elsewhere. Treat every other use of the card device as still bound by
+the one-meaning definition above; this is a named, single-component
+carve-out, not a redefinition.
+
 ### 10.3 Asymmetry by default
 
 Centred layouts are reserved for punctuation moments (pull quotes, the

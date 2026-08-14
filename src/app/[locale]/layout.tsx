@@ -4,6 +4,7 @@ import { VisualEditing } from "next-sanity/visual-editing";
 import { EB_Garamond, Source_Sans_3 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { FooterLab } from "@/components/FooterLab";
 import { Header } from "@/components/Header";
 import { LenisProvider } from "@/components/LenisProvider";
@@ -219,6 +220,13 @@ export default async function LocaleLayout({
           <JsonLdScript data={medicalBusinessJsonLd} />
         ) : null}
         <NextIntlClientProvider>
+          {/* Cookie consent pass — rendered here, OUTSIDE every page's own
+              light-island sections and outside FooterLab's tone-mid wrap,
+              so it always reads the plain ambient dark theme tokens (see
+              CookieConsentBanner.module.scss's own comment). First child
+              on purpose: keyboard users reach it before Header's own nav,
+              matching "reachable by keyboard from the top of the page." */}
+          <CookieConsentBanner locale={typedLocale} />
           {/* Promoted from design-lab's own page-scoped LenisProvider —
               Header's dialogs (channel picker, mobile menu) now need the
               same Lenis instance Header itself renders under, and Header
@@ -249,6 +257,30 @@ export default async function LocaleLayout({
                 socialLinks={siteSettings?.socialLinks}
               />
             </div>
+            {/* Cookie consent pass — a REAL flex child (sibling of Header/
+                {children}/FooterLab in this same flex-column body), not
+                padding on body itself: body has an explicit height:100%
+                (globals.scss's own reset) and its content already
+                overflows that height on every real page, so padding on
+                body's own box never had room to manifest as extra
+                scrollable space — confirmed live, document.documentElement
+                .scrollHeight was IDENTICAL with and without it. A plain
+                block contributing real height to the flex column's own
+                content extent is what actually moves the true end of the
+                document. Grows/shrinks with the same --consent-banner-
+                offset custom property CookieConsentBanner.tsx sets via
+                ResizeObserver — 0px (the var()'s own fallback) the instant
+                a choice exists or the banner isn't mounted. flexShrink: 0
+                is load-bearing, not defensive: body's flex column already
+                overflows its own fixed height on every real page, and an
+                empty flex item has no content-driven minimum size to
+                resist the resulting shrink — confirmed live, without this
+                the div's declared height collapsed to 0 regardless of the
+                custom property's value. */}
+            <div
+              aria-hidden="true"
+              style={{ height: "var(--consent-banner-offset, 0px)", flexShrink: 0 }}
+            />
           </LenisProvider>
         </NextIntlClientProvider>
         {isDraft ? <VisualEditing /> : null}

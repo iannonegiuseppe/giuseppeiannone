@@ -63,6 +63,17 @@
     "copyright": "© {year} {name} — All rights reserved.",
     "cookiePreferences": "Cookie preferences"
   },
+  "CookieConsent": {
+    "heading": "Cookies and privacy",
+    "body": "This site uses technical cookies, which it needs in order to work. With your consent it also uses statistical and marketing cookies. You can change your mind at any time.",
+    "necessary": "Necessary — always on",
+    "analytics": "Statistics",
+    "marketing": "Marketing",
+    "accept": "Accept all",
+    "reject": "Necessary only",
+    "save": "Save preferences",
+    "link": "Cookie policy"
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has been moved.",

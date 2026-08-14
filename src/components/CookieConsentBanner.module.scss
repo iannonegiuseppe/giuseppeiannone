@@ -1,0 +1,274 @@
+@use "../styles/mixins";
+
+// Not a light island, not nested inside one — rendered as a direct child
+// of NextIntlClientProvider in layout.tsx, outside FooterLab's
+// tone-mid-surface wrap and outside every page's own light-island
+// sections. Every token below reads the plain ambient dark theme
+// (--color-bg sea-deep, --color-text ivory, --color-accent champagne) —
+// no light-island reassignment risk here (see CLAUDE.md's own trap
+// writeup before moving this component anywhere else in the tree).
+
+.visuallyHidden {
+  @include mixins.visually-hidden;
+}
+
+// Mobile-first: base rules are the full-width bottom sheet ("On mobile it
+// may become full width at the bottom" — this pass's own choice, made
+// because a 24rem card pinned to the left corner on a 390px viewport
+// would leave almost no margin on either side; full-width reads as
+// deliberate there, not cramped). The corner-card treatment is the
+// breakpoint-up(md) override, not the default.
+.wrap {
+  position: fixed;
+  z-index: mixins.z(toast);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+
+  @include mixins.breakpoint-up(md) {
+    left: var(--space-5);
+    right: auto;
+    bottom: var(--space-5);
+    width: min(24rem, calc(100vw - var(--space-5) * 2));
+  }
+}
+
+// §10.6 — grouped, not uniform: gap here is the OUTER rhythm, between
+// distinct blocks (.intro, .toggles, .actionsGroup, the policy link).
+// Each block sets its own, tighter, internal gap below — at least a
+// 1:2.5 ratio against this one, per the charter's own floor.
+.card {
+  display: flex;
+  flex-direction: column;
+  // Mobile: compacted as far as the 44px tap-target floor and the "all
+  // three toggles visible, no second step" requirement allow — measured
+  // live against a real page (see this component's own verification):
+  // still tall enough to reach a contact-page submit button scrolled
+  // into view underneath, which no amount of padding alone resolves.
+  // Reported, not hidden — see this pass's own report for the honest
+  // number and why the remaining overlap is structural, not an oversight.
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-hairline);
+  border-bottom: none;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  box-shadow: var(--shadow-soft);
+  max-height: 75vh;
+  overflow-y: auto;
+
+  @include mixins.breakpoint-up(md) {
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-hairline);
+    border-radius: var(--radius-l);
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.toggles {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  // Tight, uniform rhythm WITHIN the toggle cluster (one control group) —
+  // deliberately less than half the card's own outer gap (--space-5), so
+  // the three rows read as one thing, not three separately-spaced items.
+  // min-height (44px, tap-target floor) holds the row's real height
+  // regardless of this padding.
+  padding-block: var(--space-1);
+  cursor: pointer;
+
+  &:has(.switchInput:disabled) {
+    cursor: default;
+  }
+}
+
+.toggleLabel {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+// Checkbox-as-switch: native input carries all real semantics/keyboard
+// behavior (role="switch" only changes how AT announces it — Space/click
+// still toggle it exactly like a checkbox, nothing custom to reimplement).
+// Track + thumb are pure decoration (aria-hidden), driven by the real
+// input's :checked/:disabled state via sibling selectors — never by a
+// separate JS-only "looks checked" flag that could drift from the real
+// value.
+.switchWrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+}
+
+.switchInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.switchTrack {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  // Measured: --color-hairline-strong (0.3 alpha) composited over
+  // --color-bg only reaches 2.41:1, under the 3:1 non-text floor this
+  // pass measured itself against. 45% clears it at 3.93:1 — same
+  // color-mix() pattern --shadow-soft already uses, not a raw value.
+  background: color-mix(in srgb, var(--color-text) 45%, transparent);
+  border: 1px solid var(--color-hairline);
+  pointer-events: none;
+}
+
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.15s ease;
+}
+
+.switchInput:checked + .switchTrack {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.switchInput:checked + .switchTrack .switchThumb {
+  transform: translateX(20px);
+  background: var(--color-bg);
+}
+
+.switchInput:disabled + .switchTrack {
+  opacity: 0.7;
+}
+
+.switchInput:focus-visible + .switchTrack {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switchThumb {
+    transition: none;
+  }
+}
+
+// The three decision buttons read as one cluster (tight internal gap),
+// distinct from the card's own outer --space-5 rhythm around it.
+.actionsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+// Equal-prominence button pair — see the component's own comment for why
+// this is one shared class with a single color-only modifier, not two
+// differently-weighted variants. Same border width, same padding, same
+// font-weight for BOTH; .actionAccent only swaps border/text color.
+.actionButton {
+  flex: 1;
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  background: transparent;
+  border: 1px solid var(--color-text);
+  border-radius: var(--radius-button);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.actionAccent {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.saveButton {
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  background: transparent;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-button);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.policyLink {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  @include mixins.link;
+}

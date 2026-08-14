@@ -63,6 +63,17 @@
     "copyright": "© {year} {name} — Tutti i diritti riservati.",
     "cookiePreferences": "Preferenze cookie"
   },
+  "CookieConsent": {
+    "heading": "Cookie e privacy",
+    "body": "Questo sito usa cookie tecnici, necessari al suo funzionamento. Con il tuo consenso usa anche cookie statistici e di marketing. Puoi cambiare idea in qualsiasi momento.",
+    "necessary": "Necessari — sempre attivi",
+    "analytics": "Statistici",
+    "marketing": "Marketing",
+    "accept": "Accetta tutti",
+    "reject": "Solo necessari",
+    "save": "Salva le preferenze",
+    "link": "Cookie policy"
+  },
   "NotFound": {
     "title": "Pagina non trovata",
     "description": "La pagina che stai cercando non esiste o è stata spostata.",
