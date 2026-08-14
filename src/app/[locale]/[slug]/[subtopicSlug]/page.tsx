@@ -43,6 +43,7 @@ interface SubtopicPageData {
   seo?: SeoFields;
   medicalEntityType?: MedicalEntityType;
   alternates?: AlternateEntry[];
+  parentPillarAlternates?: AlternateEntry[];
 }
 
 interface ContactSectionCopy {
@@ -74,6 +75,24 @@ function currentParentSlug(
   return alternates?.find((alt) => alt.language === locale)?.parentSlug;
 }
 
+// Fallback-target pass — used only when THIS subtopic has no own
+// counterpart in otherLocale (17 of 21 today): falls back to the parent
+// pillar's page in otherLocale instead of the homepage, since that's the
+// nearest section that's actually still about the same topic. Returns
+// undefined when the parent pillar itself has no otherLocale counterpart
+// either — buildMetadata then leaves fallbackPath unset, and
+// LocaleSwitcher keeps its own plain home fallback, same as a pillar page
+// gets by deliberately never passing fallbackPath at all.
+function parentPillarFallbackPath(
+  parentPillarAlternates: AlternateEntry[] | undefined,
+  otherLocale: "it" | "en",
+): string | undefined {
+  const otherSlug = parentPillarAlternates?.find(
+    (alt) => alt.language === otherLocale,
+  )?.slug;
+  return otherSlug ? buildPillarPath(otherLocale, otherSlug) : undefined;
+}
+
 export async function generateStaticParams({
   params,
 }: {
@@ -100,18 +119,21 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string; subtopicSlug: string }>;
 }): Promise<Metadata> {
   const { locale, slug: pillarSlug, subtopicSlug } = await params;
+  const typedLocale = locale as "it" | "en";
+  const otherLocale: "it" | "en" = typedLocale === "it" ? "en" : "it";
   const [data, siteSettings] = await Promise.all([
     getSubtopicPage(locale, pillarSlug, subtopicSlug),
     getSiteSettings(locale),
   ]);
 
   return await buildMetadata({
-    locale: locale as "it" | "en",
+    locale: typedLocale,
     title: data?.title ?? "",
     seo: data?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
     localizedPaths: subtopicLocalizedPaths(data?.alternates),
+    fallbackPath: parentPillarFallbackPath(data?.parentPillarAlternates, otherLocale),
   });
 }
 

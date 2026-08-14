@@ -564,7 +564,21 @@ export const subtopicPageQuery = defineQuery(`
     ${bodyProjection},
     seo,
     medicalEntityType,
-    ${alternatesProjection}
+    ${alternatesProjection},
+    // Language-switching fallback pass — a subtopic's OWN alternates
+    // above cover the "real counterpart exists" case (4 of 21 pairs
+    // today); this is for the other 17, so the switcher can fall back to
+    // the parent pillar's page in the other locale instead of the
+    // homepage. Confirmed live via a standalone query before wiring this
+    // in: parentPillar->{ ... } correctly re-scopes ^ to the dereferenced
+    // pillar doc, same as alternatesProjection's own ^._id does when used
+    // directly on a filtered document.
+    "parentPillarAlternates": parentPillar->{
+      "alternates": *[_type == "translation.metadata" && references(^._id)][0].translations[]{
+        language,
+        "slug": value->slug.current
+      }
+    }.alternates
   }
 `);
 
@@ -599,6 +613,21 @@ export const articleBySlugQuery = defineQuery(`
     ${bodyProjection},
     seo,
     ${alternatesProjection}
+  }
+`);
+
+// Language-switching pass — pairing by slug match, not translation.metadata:
+// articles have zero of those documents for any of the 468+5 that exist
+// today (confirmed live), and creating one per pair doesn't generalize —
+// every future article pair would need a human to remember a second
+// authoring step, where matching slugs already IS the article corpus's own
+// stated pairing convention (see contents/blog-en-cinque-articoli.md's own
+// "Slugs mirror the Italian ones exactly"). Existence-only projection — the
+// route just needs to know whether $slug exists in $otherLocale, not fetch
+// its content.
+export const articleCounterpartQuery = defineQuery(`
+  *[_type == "article" && language == $otherLocale && slug.current == $slug][0]{
+    "slug": slug.current
   }
 `);
 

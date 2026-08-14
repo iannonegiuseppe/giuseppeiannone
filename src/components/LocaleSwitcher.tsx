@@ -39,14 +39,26 @@ export function LocaleSwitcher({ currentLocale }: { currentLocale: Locale }) {
   // label.
   const staticMatch = reciprocalSingletonPath(currentLocale, otherLocale, pathname);
 
-  // Not a known fixed route — a pillar/subtopic page. Its exact reciprocal
-  // path is already computed and emitted by that page's own
+  // Not a known fixed route — a pillar/subtopic/article page. Its exact
+  // reciprocal path is already computed and emitted by that page's own
   // generateMetadata (Stage 2 Step 3) as a <link rel="alternate">; read it
   // rather than re-deriving it or querying Sanity again. Guarded: any miss
   // (missing tag, empty href, unrecognized future page type) falls back to
   // home, never to a broken link. useSyncExternalStore (rather than
   // state+effect) reconciles the client-only DOM read against the
   // server's `null` snapshot without a synchronous setState in an effect.
+  //
+  // Fallback-target pass — a THIRD tier, tried only when neither of the
+  // above find anything: a page with no real counterpart (463 of 468
+  // articles, 17 of 21 subtopics) can still emit a page-specific
+  // `x-locale-fallback` meta tag (see buildMetadata's own comment on
+  // `fallbackPath`) pointing somewhere more relevant than the homepage —
+  // an article's own /blog listing, a subtopic's own parent pillar. This
+  // keeps LocaleSwitcher itself generic: it never hardcodes "if article,
+  // do X" — it just reads whatever the page chose to emit, same shape as
+  // the real-alternate read one line above. A page that emits neither tag
+  // (pillar, by deliberate choice — see that route's own generateMetadata)
+  // still lands on homeFallback below, unchanged from before this pass.
   const alternateHref = useSyncExternalStore(
     subscribe,
     () => {
@@ -54,7 +66,11 @@ export function LocaleSwitcher({ currentLocale }: { currentLocale: Locale }) {
       const tag = document.querySelector<HTMLLinkElement>(
         `link[rel="alternate"][hreflang="${otherLocale}"]`,
       );
-      return tag?.getAttribute("href") ?? null;
+      if (tag) return tag.getAttribute("href");
+      const fallbackTag = document.querySelector<HTMLMetaElement>(
+        'meta[name="x-locale-fallback"]',
+      );
+      return fallbackTag?.getAttribute("content") ?? null;
     },
     () => staticMatch,
   );

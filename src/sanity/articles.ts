@@ -1,6 +1,7 @@
 import { sanityFetch, sanityFetchPublished } from "./client";
 import {
   articleBySlugQuery,
+  articleCounterpartQuery,
   articlesCountQuery,
   articlesPageQuery,
   articleSlugsQuery,
@@ -81,6 +82,23 @@ export function getArticleBySlug(locale: string, slug: string) {
       })
     | null
   >(articleBySlugQuery, { locale, slug }, ["article", `article:${slug}`]);
+}
+
+// Language-switching pass — true iff an article exists with this exact
+// slug in otherLocale. See articleCounterpartQuery's own comment for why
+// this is a slug match, not a translation.metadata lookup. Tagged
+// ["article"] like every other article read, so the revalidation webhook
+// invalidates it too (e.g. once a new counterpart is published).
+export async function getArticleHasCounterpart(
+  otherLocale: string,
+  slug: string,
+): Promise<boolean> {
+  const row = await sanityFetch<{ slug: string } | null>(
+    articleCounterpartQuery,
+    { otherLocale, slug },
+    ["article"],
+  );
+  return row !== null;
 }
 
 export async function getArticleSlugs(locale: string): Promise<string[]> {

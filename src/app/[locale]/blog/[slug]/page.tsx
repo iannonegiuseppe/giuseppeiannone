@@ -10,7 +10,7 @@ import { ReadingArea } from "@/components/ReadingArea";
 import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/RelatedArticlesGrid";
 import { sanityFetch } from "@/sanity/client";
 import { ArticleProgress } from "./ArticleProgress";
-import { getArticleBySlug, getArticleSlugs } from "@/sanity/articles";
+import { getArticleBySlug, getArticleHasCounterpart, getArticleSlugs } from "@/sanity/articles";
 import { getArticleTrail } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
@@ -110,18 +110,36 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const typedLocale = locale as "it" | "en";
-  const [data, siteSettings] = await Promise.all([
+  const otherLocale = typedLocale === "it" ? "en" : "it";
+  const [data, siteSettings, hasCounterpart] = await Promise.all([
     getArticleBySlug(locale, slug) as Promise<ArticleData | null>,
     getSiteSettings(locale),
+    getArticleHasCounterpart(otherLocale, slug),
   ]);
 
+  // Language-switching pass — real cross-locale hreflang, wired the moment
+  // a same-slug counterpart exists in the other locale (checked live, not
+  // assumed from a translation.metadata document — see
+  // getArticleHasCounterpart's own comment). LocaleSwitcher.tsx already
+  // reads whichever alternate <link> this emits; no change needed there.
+  const localizedPaths = hasCounterpart
+    ? { [typedLocale]: articlePath(typedLocale, slug), [otherLocale]: articlePath(otherLocale, slug) }
+    : { [typedLocale]: articlePath(typedLocale, slug) };
+
+  // Fallback-target pass — for the 463 articles with no counterpart, send
+  // the switcher to the other locale's /blog listing rather than its
+  // homepage: a visitor pressing EN on an Italian-only article still wants
+  // articles, not the front door. buildMetadata only uses this when
+  // localizedPaths above doesn't already cover otherLocale (i.e. exactly
+  // the no-counterpart case) — harmless to pass unconditionally.
   return await buildMetadata({
     locale: typedLocale,
     title: data?.title ?? "",
     seo: data?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
-    localizedPaths: { [typedLocale]: articlePath(typedLocale, slug) },
+    localizedPaths,
+    fallbackPath: articlesPath(otherLocale),
   });
 }
 

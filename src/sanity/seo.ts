@@ -166,6 +166,18 @@ interface BuildMetadataArgs {
    * include every locale this page exists in — omit a locale if there's
    * no translation for it yet, rather than guessing a URL. */
   localizedPaths: Partial<Record<Locale, string>>;
+  /** Language-switching fallback pass — where LocaleSwitcher.tsx should
+   * send a visitor when this page has NO real counterpart in the other
+   * locale (i.e. localizedPaths omits it). Only used in that case; a real
+   * alternate always wins over this. Omit to keep the plain home-page
+   * fallback LocaleSwitcher already falls back to on its own — that stays
+   * correct for page types (pillar) where "the section itself" already IS
+   * the nearest meaningful place to land. Never a hreflang/alternates
+   * entry (this would tell search engines two different pages are
+   * translations of each other, which isn't true) — carried instead as a
+   * plain `x-locale-fallback` meta tag, read by LocaleSwitcher via a DOM
+   * query exactly like it already reads the real alternate tags. */
+  fallbackPath?: string;
 }
 
 export async function buildMetadata({
@@ -175,6 +187,7 @@ export async function buildMetadata({
   siteName,
   siteSeo,
   localizedPaths,
+  fallbackPath,
 }: BuildMetadataArgs): Promise<Metadata> {
   const siteUrl = getSiteUrl();
   // Draft-mode responses must never be indexable, on top of never being
@@ -206,6 +219,12 @@ export async function buildMetadata({
   // default-locale convention.
   languages["x-default"] = languages.it ?? canonical;
 
+  const otherLocale: Locale = locale === "it" ? "en" : "it";
+  const needsFallback = fallbackPath && !localizedPaths[otherLocale];
+  const other = needsFallback
+    ? { "x-locale-fallback": `${siteUrl}${fallbackPath}` }
+    : undefined;
+
   return {
     title: finalTitle,
     description,
@@ -213,6 +232,7 @@ export async function buildMetadata({
       canonical,
       languages,
     },
+    other,
     robots: resolveRobots(seo?.noIndex || isDraft),
     openGraph: {
       title: finalTitle,
