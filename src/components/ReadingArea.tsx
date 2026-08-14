@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { TocHeading } from "@/sanity/headings";
+import { MobileToc } from "./MobileToc";
 import { ScrollTrackingToc } from "./ScrollTrackingToc";
 import styles from "./ReadingArea.module.scss";
 
@@ -68,9 +69,15 @@ export function ReadingArea({
   return (
     <div className={styles.readingArea} data-toc={hasToc ? "true" : undefined}>
       {hasToc ? (
-        <div className={styles.tocWrapper}>
-          <ScrollTrackingToc headings={headings} topOffset={topOffset} />
-        </div>
+        <>
+          {/* Below lg only (MobileToc.module.scss's own display:none at
+              lg+) — .tocWrapper right below is the mirror image, hidden
+              below lg. Exactly one of the two is ever visible. */}
+          <MobileToc headings={headings} />
+          <div className={styles.tocWrapper}>
+            <ScrollTrackingToc headings={headings} topOffset={topOffset} />
+          </div>
+        </>
       ) : null}
       <div className={styles.column}>
         <div className={styles.body} id={bodyId}>

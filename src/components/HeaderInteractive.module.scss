@@ -437,7 +437,11 @@ body:has([data-light-hero]) .labHeader .labHeaderNavLink {
   // desktop size at lg+, where the burger disappears and there's room.
   padding-inline: var(--space-3); // 12px, mobile tier
   padding-block: var(--space-2); // 8px, mobile tier
-  min-height: auto;
+  // 44px touch target — same literal value .labHeaderBurger already uses
+  // for the same reason, a few lines below. Width-affecting properties
+  // (padding-inline, font-size) are untouched, so the empirical mobile-
+  // overflow fit above is unaffected; only the height floor changes.
+  min-height: 2.75rem;
   font-size: 0.6875rem; // 11px, mobile tier
   white-space: nowrap;
 

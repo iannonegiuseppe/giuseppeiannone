@@ -145,7 +145,17 @@
 .recognitionFragmentLabel {
   margin: 0 0 var(--space-2);
   font-family: var(--font-body);
-  font-size: 0.5625rem; // 9px, per spec
+  // 9px, per spec — deliberately smaller than the sitewide kicker size
+  // (0.75rem/12px elsewhere, e.g. this same file's own .recognitionKicker
+  // above, LightPortraitHero's .kicker). This section's desktop layout
+  // scatters up to five of these fragment labels on screen at once, each
+  // tagging a different quote around the dominant anchor sentence; at
+  // the sitewide 12px they compete for attention against that anchor
+  // and against each other, at 9px they stay subordinate as intended.
+  // Considered, tried at 12px, and reverted — this is a deliberate
+  // exception to the sitewide kicker size, not an oversight. Same size
+  // at every breakpoint on purpose, do not split it.
+  font-size: 0.5625rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.2em;
   text-transform: uppercase;

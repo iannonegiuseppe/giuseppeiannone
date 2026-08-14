@@ -502,7 +502,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  // Wraps rather than shrinks: at 44px each + the new gap, a full page
+  // set (‹ + 5 numbers + ›) is wider than the 342px mobile content
+  // column, and flex's default shrink would have silently compressed
+  // the circles back below 44px to fit — defeating the touch-target fix
+  // on exactly the viewport it was for. Wrapping the overflow controls
+  // onto a second centered row keeps every circle a true 44px instead.
+  flex-wrap: wrap;
+  // One step up from space-2 — was tight enough that adjacent 44px
+  // circles sat close to touching, raising mis-tap risk between page
+  // numbers.
+  gap: var(--space-3);
   margin-top: var(--space-9);
 }
 
@@ -521,8 +531,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  // Paired with .pagination's flex-wrap above: without this, flex would
+  // still shrink these before wrapping.
+  flex-shrink: 0;
+  // 44px touch target — was 2.5rem/40px.
+  width: 2.75rem;
+  height: 2.75rem;
   line-height: 1;
   border-radius: 50%;
   border: 1px solid var(--color-hairline);

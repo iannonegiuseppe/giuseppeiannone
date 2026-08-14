@@ -16,7 +16,16 @@
   display: grid;
   grid-template-columns: 1fr;
   align-items: center;
-  gap: var(--space-8);
+  // Below md: one step down from the md+ gap (space-8) to close part of
+  // the fold gap between the portrait and the kicker on short mobile
+  // viewports — see .heroText's own top-padding step-down just below,
+  // the other half of that same fix. md+ (tablet) restores today's
+  // value unchanged; lg's own override further below is untouched.
+  gap: var(--space-7);
+
+  @include mixins.breakpoint-up(md) {
+    gap: var(--space-8);
+  }
 
   @include mixins.breakpoint-up(lg) {
     grid-template-columns: 1fr 1.15fr;
@@ -28,7 +37,16 @@
 
 .heroText {
   order: 2;
-  padding-block: var(--space-9);
+  // Below md: top padding stepped down one notch (space-9 -> space-8),
+  // bottom left at space-9 — only the whitespace ABOVE the kicker was
+  // the fold problem, so only that edge moves. md+ restores today's
+  // padding-block: var(--space-9) on both edges unchanged.
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-9);
+
+  @include mixins.breakpoint-up(md) {
+    padding-block: var(--space-9);
+  }
 
   @include mixins.breakpoint-up(lg) {
     order: 1;
@@ -104,7 +122,17 @@
   justify-content: center;
   max-width: 20rem;
   margin-inline: auto;
-  padding-top: var(--space-9);
+  // Below md: one step down from the md+ value (space-9) — second half
+  // of the /faq fold fix, after .heroInner's gap and .heroText's top
+  // padding (see their own comments) still left the lead paragraph's
+  // first line just below the 667px fold. This is the space ABOVE the
+  // portrait, between it and the header — trial-measured, see this
+  // pass's own report for the before/after numbers.
+  padding-top: var(--space-8);
+
+  @include mixins.breakpoint-up(md) {
+    padding-top: var(--space-9);
+  }
 
   @include mixins.breakpoint-up(lg) {
     order: 2;

@@ -1,0 +1,206 @@
+@use "../styles/mixins";
+
+// Mobile TOC pass — below-lg-only presentation living in ReadingArea
+// alongside .tocWrapper (that one's own comment explains the lg+ grid
+// this sits opposite of). Palette/background reused verbatim from
+// ScrollTrackingToc.module.scss's own .toc/.tocLabel/.tocLink — proven
+// safe inside tone.light-island-surface already (see that file's own
+// comment on --color-gold-bronze specifically), not re-derived here.
+// Sticky top tracks the header's OWN data-collapsed state rather than
+// assuming one static offset — this bar (unlike the desktop sidebar TOC,
+// which only ever sticks far down the page) sits right under the page
+// title, close enough to the top on privacy/cookie-policy that it can
+// start sticking before the header's own 150px collapse threshold. The
+// `body:has([data-lab-header]...)` selector is the exact mechanism
+// HeaderInteractive.module.scss already uses for its own light-hero
+// case — reused, not reinvented. transition on `top` matches the
+// header's own 250ms so the two move in step instead of snapping past
+// each other mid-collapse.
+// The one sticky element — bar and panel are both its children, not
+// independently-sticky siblings (see MobileToc.tsx's own comment for why
+// that broke: a sticky element still occupies its ORIGINAL box for a
+// later sibling's layout purposes, so the panel expanded off-screen at
+// the bar's un-stuck document position instead of visually below it).
+// Its own stick RANGE comes from ITS parent (.readingArea, spanning bar
+// + panel + .column's full height) — .sticky itself must not be nested
+// inside another wrapper, or that wrapper becomes the (too-short)
+// containing block instead, the same trap this rule avoided once already.
+.sticky {
+  position: sticky;
+  top: var(--header-height);
+  z-index: mixins.z(dropdown);
+  background: var(--color-bg);
+  transition: top 250ms ease;
+
+  @include mixins.breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+body:has([data-lab-header][data-collapsed="true"]) .sticky {
+  top: var(--header-height-collapsed);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-hairline);
+  // One step down from --space-3 — the bar sits over content permanently
+  // while reading (not a one-off banner), so its fixed cost matters more
+  // than a typical padding choice. See this pass's own report for the
+  // full before/after composition breakdown: content height (barKicker +
+  // gap + barActive) and the sitewide kicker line-height convention this
+  // deliberately did NOT also touch are both accounted for there.
+  padding-block: var(--space-2);
+  padding-inline: var(--space-5);
+  text-align: left;
+  cursor: pointer;
+
+  @include mixins.focus-ring-inset;
+}
+
+.barText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0; // lets barActive's own line-clamp/ellipsis actually apply inside a flex child
+}
+
+.barKicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+// 2-line clamp, not 1: a single-line ellipsis on the 344-character
+// outlier heading found live (see this pass's own report) would cut off
+// after a handful of words — still technically "showing something," but
+// not enough to identify which section you're in. Two lines keeps far
+// more of any heading's actual words before the ellipsis kicks in, while
+// still bounding the bar's height for that outlier case.
+.barActive {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.barIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+// Same two-bar plus/x technique as FaqSection's own accordion icon
+// (FaqSection.module.scss .faqRowIcon*) — reused for visual consistency
+// with the site's one other expand/collapse control, not reinvented.
+.barIconBarH,
+.barIconBarV {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--color-text);
+  transition: transform 250ms ease;
+}
+
+.barIconBarH {
+  width: 0.875rem; // 14px
+  height: 0.09375rem; // 1.5px
+  transform: translate(-50%, -50%);
+}
+
+.barIconBarV {
+  width: 0.09375rem; // 1.5px
+  height: 0.875rem; // 14px
+  transform: translate(-50%, -50%);
+}
+
+.bar[aria-expanded="true"] .barIconBarV {
+  transform: translate(-50%, -50%) rotate(90deg) scale(0);
+}
+
+// Height animation: CSS Grid rows 0fr<->1fr — same technique and easing
+// as FaqSection's own .faqRowPanelWrap (that file's comment explains why
+// grid-rows over max-height: an even perceived speed regardless of how
+// many headings are in a given list, not a fixed pixel range that would
+// animate a 3-item and a 28-item list at visibly different rates).
+.panelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+}
+
+.panelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+// No internal scroll / max-height cap: even the longest article (28
+// headings, see this pass's own report) is meant to show every entry
+// when expanded, not a clipped subset — the page simply grows taller
+// while the panel is open, exactly like FaqSection's own panels do.
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-bg);
+}
+
+// 44px tap-target floor, measured: var(--fs-small) at line-height 1.4 is
+// ~19.6px; --space-4 (16px) padding on each block edge lands the full
+// row at ~51.6px, comfortably clear — see this pass's own report for the
+// live-measured number.
+.link {
+  display: block;
+  padding-block: var(--space-4);
+  padding-inline: var(--space-5);
+  border-bottom: 1px solid var(--color-hairline);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &[aria-current="true"] {
+    color: var(--color-gold-bronze);
+  }
+
+  @include mixins.focus-ring-inset;
+}
+
+li:last-child > .link {
+  border-bottom: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky,
+  .barIconBarV,
+  .panelWrap {
+    transition: none;
+  }
+}

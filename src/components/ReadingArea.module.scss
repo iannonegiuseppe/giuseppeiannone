@@ -67,6 +67,14 @@
 // range is bounded by its containing block's height, which for .toc is
 // this wrapper. Left at the default (stretch) so the wrapper fills the
 // full grid row height, matching .column's own (much taller) content.
+// This is a BOTH-AXES fact, not a horizontal-grid-only one: below lg,
+// MobileToc.tsx hit the same containing-block rule from the vertical
+// side — a first attempt wrapped its own sticky bar in a div only as
+// tall as the bar itself, and the bar detached and scrolled away after a
+// few px for exactly this reason. The fix there was structurally the
+// same one this rule already uses (make the sticky element's direct
+// parent span the full column height), just row-wise instead of
+// column-wise. See MobileToc.module.scss's own .sticky comment.
 .tocWrapper {
   display: none;
 
