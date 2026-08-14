@@ -34,101 +34,20 @@ type ResolvedArticle = {
   _id: string;
   title: string;
   slug: string;
-  publishedAt: string;
+  publishedAt: string | null;
   category: string;
   excerpt?: string;
   cover?: SanityImage;
 };
 
+// Still real and still needed: articles have no stored category field, so
+// this rotates a locale-appropriate label across whichever real articles
+// resolveArticles is given. Not part of the removed mock-article fallback
+// below — that was a separate thing (fake articles standing in for missing
+// ones), this is a display label for genuinely real ones.
 const MOCK_CATEGORIES: Record<Locale, [string, string, string, string]> = {
   it: ["Ansia", "Stress", "Cambiamenti di vita", "Rapporti"],
   en: ["Anxiety", "Stress", "Life changes", "Relationships"],
-};
-
-// Same four mock entries ResourcesSection.tsx already carries (title/
-// slug/date/excerpt copy is IDENTICAL, including every [segnaposto]/
-// [placeholder] marker — not touched, per explicit instruction). No cover
-// assigned: there is no honest photo to attach to invented mock content
-// — see this pass's own report on why the preview currently shows the
-// greige fallback for all four, and that this is a fact about the
-// dataset (zero real articles exist at all), not a layout choice.
-const FULL_MOCK_ARTICLES: Record<Locale, ResolvedArticle[]> = {
-  it: [
-    {
-      _id: "mock-1",
-      title: "Riconoscere i primi segnali dell'ansia",
-      slug: "riconoscere-i-primi-segnali-dellansia",
-      publishedAt: "2026-01-30",
-      category: MOCK_CATEGORIES.it[0],
-      excerpt:
-        "[segnaposto] Come distinguere una preoccupazione passeggera da un campanello d'allarme che merita attenzione, con qualche primo passo pratico.",
-    },
-    {
-      _id: "mock-2",
-      title: "Quando lo stress diventa cronico",
-      slug: "quando-lo-stress-diventa-cronico",
-      publishedAt: "2026-01-27",
-      category: MOCK_CATEGORIES.it[1],
-      excerpt:
-        "[segnaposto] I segnali fisici ed emotivi che indicano che lo stress non è più solo una fase passeggera, e cosa fare a riguardo.",
-    },
-    {
-      _id: "mock-3",
-      title: "Affrontare un cambiamento di vita importante",
-      slug: "affrontare-un-cambiamento-di-vita",
-      publishedAt: "2026-01-24",
-      category: MOCK_CATEGORIES.it[2],
-      excerpt:
-        "[segnaposto] Strumenti pratici per attraversare una transizione importante senza perdere il proprio equilibrio.",
-    },
-    {
-      _id: "mock-4",
-      title: "Comunicare i propri bisogni senza sensi di colpa",
-      slug: "comunicare-i-propri-bisogni-senza-sensi-di-colpa",
-      publishedAt: "2026-01-20",
-      category: MOCK_CATEGORIES.it[3],
-      excerpt:
-        "[segnaposto] Perché dire di no è spesso più difficile del previsto, e come farlo restando in relazione con l'altro.",
-    },
-  ],
-  en: [
-    {
-      _id: "mock-1",
-      title: "Recognizing the first signs of anxiety",
-      slug: "recognizing-the-first-signs-of-anxiety",
-      publishedAt: "2026-01-30",
-      category: MOCK_CATEGORIES.en[0],
-      excerpt:
-        "[placeholder] How to tell a passing worry apart from a warning sign worth paying attention to, with a few practical first steps.",
-    },
-    {
-      _id: "mock-2",
-      title: "When stress becomes chronic",
-      slug: "when-stress-becomes-chronic",
-      publishedAt: "2026-01-27",
-      category: MOCK_CATEGORIES.en[1],
-      excerpt:
-        "[placeholder] The physical and emotional signs that stress is no longer just a passing phase, and what to do about it.",
-    },
-    {
-      _id: "mock-3",
-      title: "Facing a major life change",
-      slug: "facing-a-major-life-change",
-      publishedAt: "2026-01-24",
-      category: MOCK_CATEGORIES.en[2],
-      excerpt:
-        "[placeholder] Practical tools for getting through a major transition without losing your own footing.",
-    },
-    {
-      _id: "mock-4",
-      title: "Saying what you need without the guilt",
-      slug: "saying-what-you-need-without-the-guilt",
-      publishedAt: "2026-01-20",
-      category: MOCK_CATEGORIES.en[3],
-      excerpt:
-        "[placeholder] Why saying no is often harder than it should be, and how to do it without losing the relationship.",
-    },
-  ],
 };
 
 // Excerpt cap — plainTextFromPortableText returns the WHOLE body as text;
@@ -145,22 +64,24 @@ function deriveExcerpt(body: unknown): string | undefined {
 }
 
 function resolveArticles(realArticles: RealArticleLab[], locale: Locale): ResolvedArticle[] {
-  if (realArticles.length === 0) {
-    return FULL_MOCK_ARTICLES[locale];
-  }
   const categories = MOCK_CATEGORIES[locale];
   return realArticles.map((article, i) => ({
     _id: article._id,
     title: article.title,
     slug: article.slug,
-    publishedAt: article.publishedAt ?? FULL_MOCK_ARTICLES[locale][0]!.publishedAt,
+    publishedAt: article.publishedAt,
     category: categories[i % categories.length]!,
     excerpt: deriveExcerpt(article.body),
     cover: article.cover,
   }));
 }
 
-function formatArticleDate(iso: string, locale: Locale): string {
+// null publishedAt is a real, if rare, possibility — the article schema
+// doesn't require it — and there's no honest date to invent for one now
+// that the mock article this used to fall back to is gone. Card below
+// just omits the date rather than showing a fabricated one.
+function formatArticleDate(iso: string | null, locale: Locale): string | null {
+  if (!iso) return null;
   return new Intl.DateTimeFormat(locale === "it" ? "it-IT" : "en-GB", {
     day: "numeric",
     month: "short",
@@ -183,6 +104,7 @@ function coverUrl(cover: SanityImage | undefined, width: number): string | undef
 
 function Card({ locale, article, href }: { locale: Locale; article: ResolvedArticle; href: string }) {
   const src = coverUrl(article.cover, CARD_COVER_WIDTH);
+  const date = formatArticleDate(article.publishedAt, locale);
 
   return (
     <a href={href} className={styles.card} aria-label={article.title}>
@@ -196,7 +118,7 @@ function Card({ locale, article, href }: { locale: Locale; article: ResolvedArti
         </div>
       )}
       <p className={styles.cardMeta}>
-        {article.category} · {formatArticleDate(article.publishedAt, locale)}
+        {date ? `${article.category} · ${date}` : article.category}
       </p>
       <h3 className={styles.cardTitle}>{article.title}</h3>
       {article.excerpt ? <p className={styles.cardExcerpt}>{article.excerpt}</p> : null}
@@ -219,16 +141,19 @@ export function ResourcesLab({
 }) {
   const typedLocale = locale as Locale;
   // Three most recent only — no CMS pick, no featured flag. Any fourth or
-  // later article (mock data still carries 4 entries, untouched per
-  // instruction) simply doesn't render here; "Tutte le risorse" is what
-  // leads to the rest.
+  // later real article simply doesn't render here; "Tutte le risorse" is
+  // what leads to the rest.
   const cards = resolveArticles(realArticles, typedLocale).slice(0, 3);
+
+  // A locale with zero real articles renders nothing at all — no heading,
+  // no empty grid, no "coming soon" placeholder. This used to fall back
+  // to FULL_MOCK_ARTICLES (four invented articles, [placeholder] excerpts
+  // and all) instead of hitting this case; that fallback is gone, not
+  // routed around.
+  if (cards.length === 0) return null;
 
   return (
     <section className={styles.resourcesSection} data-lab-section="resources-lab">
-      {/* Header row — unchanged from ResourcesSection.tsx's own layout,
-          reproduced (not imported) since this whole tree is now
-          independent. Always renders, regardless of article data. */}
       <div className={styles.resourcesHeader}>
         <p className={styles.resourcesKicker}>
           <span className={styles.resourcesKickerRule} aria-hidden="true" />
@@ -241,13 +166,11 @@ export function ResourcesLab({
         </a>
       </div>
 
-      {cards.length > 0 ? (
-        <div className={styles.cardsGrid} data-card-count={cards.length}>
-          {cards.map((article) => (
-            <Card key={article._id} locale={typedLocale} article={article} href={articlePath(typedLocale, article.slug)} />
-          ))}
-        </div>
-      ) : null}
+      <div className={styles.cardsGrid} data-card-count={cards.length}>
+        {cards.map((article) => (
+          <Card key={article._id} locale={typedLocale} article={article} href={articlePath(typedLocale, article.slug)} />
+        ))}
+      </div>
     </section>
   );
 }
