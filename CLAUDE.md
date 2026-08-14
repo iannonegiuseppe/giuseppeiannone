@@ -130,6 +130,20 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
     (`--color-text` -> `--tone-deep-text` -> `--color-text`, both declared
     for one element) that resolves to nothing (`getComputedStyle` returns
     `""`), confirmed live during the design-lab pass.
+- **When a token's value or retoning changes, grep ALL its consumers and
+  spot-check each — not just the ones the task was about.** Two edits in
+  this project's Phase 2 dark-theme work each silently changed a consumer
+  nobody was looking at: repointing `--color-bg`-derived values first
+  broke, and later a follow-up fix to `--color-accent-contrast` broke a
+  *second* time, VideoPlayer's control icon — a component neither task was
+  about, discovered only because a later, unrelated audit happened to
+  render it. A token is a shared contract; changing what it resolves to
+  (or what retones it) affects every reader, not just the one the change
+  was written for. Before calling a token edit done: grep the token name
+  repo-wide, list every consumer, and check each one's actual rendered
+  result — the same discipline already applied to contrast measurements
+  themselves (real selectors, real sampled pixels, not assumptions) should
+  apply to token blast-radius too.
 
 ## i18n routing
 

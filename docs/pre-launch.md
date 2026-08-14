@@ -1,256 +1,211 @@
 # Pre-launch checklist
 
-Temporary, preview-only, or demo-only items found self-documented in the
-codebase (grep for "PREVIEW-GATE", "TEMPORARY", "HONESTY-RULE FLAG" to
-re-find these as the code evolves). Each one names its own reversal — do
-that, then delete the line here.
+Rebuilt from the code and the data as they actually are (not patched from the
+previous version — that one had drifted too far from reality to trust). Each
+entry names what it's based on: a file, a live query, or a specific commit.
+Re-verify anything older than a few weeks before relying on it — code and
+content both move.
 
-## Must fix before launch
+## 1. Blocks launch
 
-- **At launch: flip `seo.noIndex` off on exactly 6 documents** —
-  `homePage-it`, `homePage-en`, `pillarPage-anxiety-it`,
-  `pillarPage-anxiety-en`, `subtopicPage-panic-it`,
-  `subtopicPage-panic-en`. Until then, the sitemap stays empty of them
-  and each one keeps serving `noindex`. All 468 `article` documents are
-  already `noIndex: false` (untouched, not gated) and are correctly
-  included in the sitemap as of this pass.
-  - **`siteSettings-it`/`-en` are ALSO `noIndex: true` — leave them.**
-    Not part of the 6. Confirmed by reading `buildMetadata()`
-    (`src/sanity/seo.ts`): it never reads `siteSeo.noIndex`, only each
-    page's own `seo.noIndex`. The field is inert — flipping it does
-    nothing, and NOT flipping it does nothing either. It can stay
-    exactly as it is, at launch and after; don't spend time on it and
-    don't mistake it for one of the 6 that actually matter.
-  - **One-time cleanup, not a recurring trap:** the schema's `noIndex`
-    field (`src/sanity/schemaTypes/objects/seo.ts`) has
-    `initialValue: false` — confirmed by all 468 articles already being
-    `false` with nobody having touched them individually. New documents
-    are born indexable, not hidden; flipping the 6 above is a finite
-    action.
-  - **Reverse warning, same fact from the other side:** because nothing
-    inherits the gate automatically, any NEW `pillarPage`/`subtopicPage`
-    (or another `homePage`, unlikely as that is) created between now and
-    launch will be born **indexable** — the opposite of gated. If
-    pre-launch content like that gets added, someone has to set
-    `noIndex: true` on it by hand, the same way it was apparently done
-    for the original 6, or it goes live in search before it's meant to.
-  - Reversal (the 6 real gates only): in Studio, open each document →
-    SEO → turn off "Hide from search engines." Re-run/redeploy so the
-    sitemap and each page's own `<meta name="robots">` pick it up.
-    Delete this entry once done.
+Things that must be done before the domain switches.
 
-- **Profilo (Chi sono full-bleed rebuild) copy (homePage-it/-en) is
-  DRAFT, not approved.** `scripts/patch-profilo-copy.ts` — new `profilo`
-  field group (eyebrow, heading, headingEmphasisWord, three paragraphs).
-  Deliberately separate from `chiSonoSection` (the real, live production
-  singleton) — see `homePage.ts`'s own comment on `profilo` for why. Per
-  the client's own explicit request, the personal-experience material
-  (the Siena 2001 panic-attack paragraph, the Amsterdam/own-therapy
-  paragraph, the old "Conosco l'ansia da vicino" heading) is dropped
-  entirely — three professional-fact paragraphs only. §9-checked via the
-  actual `deontologyCheck` validator for IT; EN checked by hand (EN
-  paragraphs reuse `content.ts`'s own existing, already-drafted
-  `paragraphsAfterPhoto` translations verbatim, not retranslated from
-  scratch). Reversal: once Giuseppe reviews and approves (or rewrites)
-  both languages, delete this line.
-- **CTA bridge body copy (ctaBridgeSection-it/-en) is DRAFT, not
-  approved.** `scripts/patch-cta-bridge-body.ts` — replaces the old
-  `[segnaposto]`/`[placeholder]` body text. Title/titleEmphasis/linkLabel
-  are unchanged. "Rispondo entro 24 ore" is a commitment the client
-  explicitly confirmed he can keep. §9-checked via the actual
-  `deontologyCheck` validator for IT; EN checked by hand. Reversal: once
-  Giuseppe reviews and approves (or rewrites) both languages, delete this
-  line.
-- **Hero headline/description copy (homePage-it/-en) is DRAFT, not
-  approved.** `scripts/patch-hero-copy-2.ts` — set via that script, not
-  written in Studio by Giuseppe. It's real, finished-reading prose (name,
-  credentials, disorders treated, method, locations, languages, first-
-  contact process), not `[segnaposto]`-style placeholder text, because it
-  was needed to judge Hero's actual line-count/layout against — but it
-  has NOT been reviewed or signed off. Both `hero.headline` and
-  `hero.positioningStatement`, IT and EN, need Giuseppe's approval (or
-  rewrite) before this ships past `/design-lab`. Reversal: once approved,
-  either accept as final in Studio or replace with his own wording —
-  either way, delete this line once someone has actually looked at it.
-- **Recognition/Hope/Welcome copy (homePage-it/-en) is DRAFT, not
-  approved.** `scripts/patch-recognition-hope-welcome-copy.ts` — real,
-  finished-reading prose in Giuseppe's voice, not `[segnaposto]`-style
-  placeholders (needed to judge Recognition's actual composition against
-  real-length copy, including a new sixth fragment), but not reviewed or
-  signed off. Covers `recognition.kicker/heading/bridgeLine/fragments`,
-  `hope.eyebrow/heading`, and the new `welcome.kicker/title/titleEmphasis/
-  paragraph` field group (Welcome's copy was hardcoded in
-  `density/content.ts` before this pass — now sourced from Sanity like
-  every other section). §9-checked via the actual `deontologyCheck`
-  validator for IT; EN checked by hand against the same categories (no
-  automated EN check exists — pre-existing, disclosed gap). Reversal: once
-  Giuseppe reviews and approves (or rewrites) both languages, delete this
-  line.
-- **Credentials band copy (homePage-it/-en) is DRAFT, not approved.**
-  `scripts/patch-credentials-band.ts` — new `credentialsBand` field group
-  (eyebrow, heading, the three counter captions, the languages caption).
-  The three numbers (13 years clinical practice, 14 years training, 5
-  locations including online) are established/verified facts, not drafted
-  copy — only the surrounding wording is DRAFT. Was hardcoded in
-  `density/content.ts`'s `CREDENTIALS` constant before this pass — now
-  sourced from Sanity. §9-checked via the actual `deontologyCheck`
-  validator for IT; EN checked by hand. Reversal: once Giuseppe reviews the
-  eyebrow/heading/caption wording, delete this line.
-- **Metodo copy (homePage-it/-en) is DRAFT, not approved.**
-  `scripts/patch-metodo-copy.ts` — new `metodo` field group (kicker,
-  heading, headingEmphasisWord, paragraph, the four step titles +
-  descriptions). Deliberately separate from `percorso` (the real, live
-  JourneySection's own field group) — see `homePage.ts`'s own comment on
-  `metodo` for why reusing `percorso` directly wasn't safe. Step titles
-  are the pre-existing wording, unchanged; only the four step descriptions
-  are new copy replacing the old `[segnaposto]`/`[placeholder]` markers.
-  §9-checked via the actual `deontologyCheck` validator for IT; EN checked
-  by hand. Reversal: once Giuseppe reviews and approves (or rewrites) both
-  languages, delete this line.
-- ~~**Leaflet map attribution is hidden.**~~ RESOLVED (Contatti build
-  pass): the `.leaflet-control-attribution { display: none !important; }`
-  rule has been deleted from `src/app/[locale]/globals.scss`. Attribution
-  now renders wherever the map does — verified live on both the homepage's
-  Sedi section and the new `/contatti` page (see that pass's own report
-  for the measured contrast).
-- **7 standalone page routes are still placeholder stubs** (was 9 before
-  the Contatti build pass removed `/contatti`/`/contact` from this list),
-  each
-  rendering `PreviewPlaceholderPage` instead of real content: `/prezzi`,
-  `/pricing`, `/faq`, `/risorse`, `/resources`,
-  `/privacy`, `/cookie-policy` (see `src/components/PreviewPlaceholderPage.tsx`'s
-  own comment for the full list). Note these are the *dedicated* routes
-  for these topics — the homepage's own FAQ/Contact/Resources
-  *sections* are already real, un-gated content; only the standalone
-  pages remain stubs. Reversal: delete each route folder once its real
-  page is built (nothing else references the placeholder for it).
-- **"Chi sono" header nav link scrolls to the homepage section instead
-  of a dedicated route.** `src/components/headerNavItems.ts` —
-  `PREVIEW_GATE_ANCHOR_OVERRIDES` — `/chi-sono` isn't built yet, so the
-  nav link resolves to `#chi-sono` on the homepage instead. ("Metodo" is
-  in the same map but is *not* part of this gate — that anchor behavior
-  is permanent, not a placeholder — see the file's own comment.) Reversal:
-  delete the `"chi-sono"` entry from that map once `/chi-sono` exists.
-- **FormazioneBand and PricingSection homepage sections are gated**,
-  commented out of `src/app/[locale]/page.tsx` (see that file's own
-  PREVIEW-GATE comment at the top) — content/design decisions still
-  pending on both. Reversal instructions are written inline in that
-  comment block.
-- **`previewHover` demo flag on Aree — now already inert, field itself
-  still live.** Card-grid rebuild pass removed the prop from
-  `AreeSection.tsx` entirely (it faked a hover/clickable affordance on
-  non-interactive cards, which directly contradicted that pass's own
-  accessibility requirement) — `AreeSectionData.previewHover` is still
-  fetched by `areeSectionQuery` and still a real field
-  (`src/sanity/schemaTypes/documents/areeSection.ts`), but nothing reads
-  it anymore in either `AreeSection.tsx` caller (`page.tsx` or
-  `DesignLabHomepage.tsx`). Reversal: once real `/aree/*` pages exist,
-  remove the now-fully-dead `previewHover` field from the schema (and
-  drop it from `areeSectionQuery`) — every area will be a real, working
-  link by then anyway, so there's nothing left for it to demo.
-- **Aree card descriptions (`area` documents, it/en) is DRAFT, not
-  approved.** `scripts/patch-area-descriptions.ts` — real, finished
-  one-sentence descriptions replacing the old `[segnaposto]`/
-  `[placeholder]` descriptors, part of the card-grid rebuild (titles
-  unchanged). §9-checked via the actual `deontologyCheck` validator for
-  IT; EN checked by hand. Reversal: once Giuseppe reviews and approves (or
-  rewrites) both languages, delete this line.
-- **Re-gate `/design-lab` before launch.** `src/app/design-lab/page.tsx`
-  (now the DARK/primary variant — see the Phase 2 default-theme switch,
-  below), `src/app/design-lab/light-mode/page.tsx` (the parked light
-  variant), `src/app/design-lab/density/page.tsx`,
-  `src/app/design-lab/density/en/page.tsx`
-  — each had its `if (isProductionDeployment()) notFound()` gate removed
-  (PREVIEW-GATE comment at each site), so the route is currently
-  reachable on the real production URL — deliberately, so the client can
-  review it there. noindex/nofollow stays on regardless (`resolveRobots(true)`,
-  unconditional), and the route stays unlinked and out of the sitemap.
-  Reversal: re-add the `isProductionDeployment()`/`notFound()` gate in
-  all four files (see git history on these files for the exact block,
-  or `/design-preview/taupe`'s own page.tsx for the same pattern still
-  intact there).
-- **Phase 2 default-theme switch — decide before launch whether dark
-  stays primary.** `/design-lab` now renders the DARK (Cyprus-derived)
-  theme by default — the light presentation moved, unchanged, to
-  `/design-lab/light-mode`. This was a deliberate internal-preview
-  decision (see this pass's own report), not yet a decision about what
-  ships to the real `/[locale]` site — the real site's own theme was NOT
-  touched in this pass. Before launch: confirm which theme (or both, and
-  how) the real site should use, and update `/[locale]` accordingly —
-  this route pair is only the design-lab sandbox's own default.
-- **Replace `public/interiors` stock with real per-location interiors.**
-  `src/app/design-lab/DesignLabHomepage.tsx`'s `INTERIOR_STOCK_FALLBACK`
-  map — the Locations marquee (slot 13) falls back to 4 generic stock
-  photos (`public/interiors/interior-1.jpg` through `-4.jpg`; `-5.jpg` is
-  spare/unused) whenever a `sede.addresses[]` entry has no `photo` set in
-  Sanity — true for all of them right now. Once Giuseppe's real per-location
-  interiors (Citylife / Bicocca / Monza / Cernusco) are uploaded to the
-  corresponding Sanity `sede` documents, the marquee switches to them
-  automatically (no code change) — at that point `INTERIOR_STOCK_FALLBACK`
-  and the 5 files in `public/interiors/` are dead weight and safe to delete.
-- **Delete `/design-lab/tone-swatch` before launch.** Temporary Phase-1
-  proof route for the tonal-scale pass (`src/app/design-lab/tone-swatch/`)
-  — a 3-tone × 2-theme swatch grid, kept live post-approval at the
-  client's own request so the tonal scale could be compared directly
-  against the applied page. Noindexed, unlinked from anywhere, but still
-  a real reachable route — delete the whole `tone-swatch/` directory
-  once it's no longer needed for comparison.
+- **`seo.noIndex` is `true` on 79 documents right now, not a fixed small
+  number.** Live count via `*[seo.noIndex == true]`, by type:
+  `pillarPage` 14 (all 7, both locales), `subtopicPage` 42 (all 21, both
+  locales), `article` 5, `homePage` 2, `chiSonoSection` 2, `contactPage` 2,
+  `cookiePolicyPage` 2, `faqPage` 2, `methodPage` 2, `pricePage` 2,
+  `privacyPage` 2, `siteSettings` 2. Every real, built page on the site is
+  currently noindexed — this isn't a short list to flip, it's "turn
+  indexing on" as a real launch step. `siteSettings-it`/`-en` don't need
+  touching: `buildMetadata()` never reads `siteSeo.noIndex`, only each
+  page's own `seo.noIndex` — flipping it does nothing either way.
+  - **The 5 `article` noIndex docs are the five new English articles
+    added this session** (`perche-sono-impulsivo`, `quando-una-relazione-
+    diventa-tossica`, `perche-ho-sempre-bisogno-di-conferme`, `isteria-o-
+    borderline`, `coppie-lontane-da-casa-e-rischio-solitudine`) — they're
+    the only 5 noindexed articles out of 473. Real, finished, working
+    content that's currently invisible to search by omission, not by
+    design — easy to miss since nothing else about them looks unfinished.
+  - Reversal: in Studio, SEO → turn off "Hide from search engines" on
+    each, or a scripted batch unset. Re-deploy so the sitemap and each
+    page's own `<meta name="robots">` pick it up.
 
-## Found during this pass, needs reconciling (not fixed here — outside this task's scope)
+- **Privacy policy has 2 confirmed `[DA CONFERMARE — ...]` placeholders**,
+  both awaiting Giuseppe: §1 "Sede: `[DA CONFERMARE — sede legale]`", §9
+  "puoi scrivere a `[DA CONFERMARE — email diritti]`". Checked the full
+  body text of `privacyPage-it` and `cookiePolicyPage-it` for any bracket
+  pattern — these are the only two; cookie policy has none.
 
-- **EN gate: partially reconciled.** `src/app/[locale]/page.tsx:220`
-  documents "EN GATE LIFTED" (the EN homepage now has real, translated
-  content and the hardcoded IT redirect + hreflang suppression were
-  removed there; `proxy.ts` confirms it — no gate logic remains there
-  either). `src/app/sitemap.ts` carried the same stale special case
-  (excluded the EN homepage entirely) — **fixed in the sitemap pass**:
-  the EN-specific `continue`/alternates carve-out is gone, homePage now
-  emits both locales like every other type here (moot in practice right
-  now since `homePage-{it,en}` both carry `seo.noIndex: true` regardless
-  — see the noIndex entry below). `src/sanity/presentationLocations.ts:62,86`
-  still carries the old assumption (EN should redirect to IT) — still
-  unreconciled, still outside what either pass was asked to do. Worth a
-  dedicated look.
+- **No consent banner, no script blocking — must exist before any
+  analytics is connected, not after.** Checked the codebase for GA/GTM/
+  Meta Pixel/Clarity script tags and for any cookie-consent component:
+  none exist yet, anywhere. The privacy policy (§6) already documents
+  Google Analytics/Tag Manager/Ads, Microsoft Clarity/Bing Webmaster,
+  and Meta Pixel as "used only with consent" — so the policy is ahead of
+  the code here. Not urgent today (nothing is tracking yet), but wiring
+  any of those scripts before the consent gate exists would make the
+  policy false the moment it happens.
 
-## Intentionally parked — do not delete in a future cleanup
+- **Disavow file for the 84 junk backlink domains — not created.**
+  Checked the repo for any `disavow*` file: none. (The 84-domain figure
+  itself comes from an external backlink audit, not something checkable
+  from this codebase — noted here as reported, not independently
+  verified.) Needed before the domain switches so the junk backlink
+  profile doesn't attach to the live domain from day one.
 
-- **`src/app/design-lab/density/SediCards.tsx` + `sediCards.module.scss`,
-  and `Lightbox.tsx` + `lightbox.module.scss`.** Not imported anywhere —
-  confirmed via a repo-wide grep, not just `/design-lab` — so a routine
-  dead-code sweep will flag both as unreachable. They aren't: this is the
-  only implementation of the "Le sedi" location-cards block, built and
-  then disconnected when that section came out of `/design-lab`. Giuseppe
-  was attached to the idea and it may come back. Both files are untracked
-  in git (never committed), so deleting them is unrecoverable — there's no
-  history to restore from afterward. Keep parked until there's an explicit
-  decision to either revive or discard the idea.
+- **`NEXT_LOCALE` cookie — decided to disable, not implemented.** Checked
+  the codebase for any reference: none (`next-intl`'s default behavior is
+  untouched). Whatever code change the disable decision requires hasn't
+  been written yet.
 
-## Lessons
+- **Giuseppe owes:** studio photographs (blocks the location pages below,
+  and the `public/interiors` stock-photo swap already tracked in
+  §2), and the WordPress user list (needed to finish reconciling the
+  migrated article corpus's authorship).
 
-- **When a token's value or retoning changes, grep ALL its consumers and
-  spot-check each — not just the ones the task was about.** Two edits in
-  this project's Phase 2 dark-theme work each silently changed a consumer
-  nobody was looking at: repointing `--color-bg`-derived values first
-  broke, and later a follow-up fix to `--color-accent-contrast` broke a
-  *second* time, VideoPlayer's control icon — a component neither task was
-  about, discovered only because a later, unrelated audit happened to
-  render it. A token is a shared contract; changing what it resolves to
-  (or what retones it) affects every reader, not just the one the change
-  was written for. Before calling a token edit done: grep the token name
-  repo-wide, list every consumer, and check each one's actual rendered
-  result — the same discipline already applied to contrast measurements
-  themselves (real selectors, real sampled pixels, not assumptions) should
-  apply to token blast-radius too.
+## 2. Should fix before launch
 
-## Also worth knowing (not code gates, editorial/content work)
+Real defects, not launch-blocking.
 
-- Many CMS fields across the site still hold literal `[segnaposto]` /
-  `[placeholder]` copy (phone/email in site settings, several intro
-  paragraphs, etc.) — an editorial task in Sanity Studio, not a code
-  change. Not enumerated here field-by-field; grep the live dataset or
-  check Studio directly for the current count.
+- **`/design-lab` and `/design-preview` — awaiting a decision: re-gate or
+  delete, not settled as re-gate.** 15 `page.tsx` routes total (14 under
+  `src/app/design-lab/`, 1 under `src/app/design-preview/taupe/`) are
+  still reachable on the production URL — deliberately, so Giuseppe can
+  review them there; each has `noindex, nofollow` regardless, and none
+  are linked or in the sitemap, so leaving them up costs nothing in
+  search visibility either way.
+  - **Case for deleting:** `prezzi-proposals` (a-ledger, b-percorso,
+    c-editoriale) and `contatti-proposals` (a-canali, b-mappa,
+    c-editoriale) were A/B/C mockups for pages that are now real —
+    confirmed live: `/prezzi` and `/contatti` both exist and render real
+    Sanity-driven content. Those 6+ routes are spent comparisons, not
+    ongoing references.
+  - **Case for re-gating instead:** `tone-swatch` was previously kept
+    live post-approval specifically "at the client's own request so the
+    tonal scale could be compared directly against the applied page" —
+    an ongoing reference tool, not a spent mockup, unless that request
+    has since lapsed. `/design-lab` itself, `density`/`density/en`, and
+    `light-mode` are the homepage's own design sandbox, not a proposal
+    comparison for an already-built page — deleting those forecloses
+    being able to preview a homepage change in place before it ships.
+  - **The dark/light default split (`/design-lab` renders dark,
+    `/design-lab/light-mode` holds the light variant) is purely a
+    design-lab-internal question, not a real-site one — confirmed by
+    reading `[locale]/layout.tsx`: `data-theme="dark"` is a static,
+    unconditional SSR'd attribute there, and the comment above it says
+    outright this was "never actually conditional in production."** The
+    real site's theme isn't an open question; only design-lab's own
+    default is.
+  - Reversal if re-gated: re-add the `isProductionDeployment()` gate each
+    route had removed (see git history on these files for the exact
+    block, or `/design-preview/taupe`'s own `page.tsx` for the same
+    pattern still intact there).
 
-## Content debt
+- **FormazioneBand and PricingSection are still gated on the homepage.**
+  Confirmed in `src/app/[locale]/page.tsx`: both imports are commented
+  out (lines 87–88), the `<FormazioneBand>` JSX block is fully commented
+  (lines 684–697), and no `<PricingSection>` JSX exists anywhere, active
+  or commented. Both components still exist on disk, unimported. **Don't
+  confuse this with "Tariffe"** — the homepage already has a separate,
+  live pricing section (`PricingBlock`, driven by `homePage.tariffe`,
+  rendered right below where the gated block would sit) that looks
+  similar but is an explicitly different field/component; the file's own
+  comment flags the distinction, but it's easy to misread from outside
+  the code.
+
+- **Three anomalies in the article corpus, found via a full-text sweep
+  of all IT article bodies:**
+  - `e-normale-controllare-tutto-mille-volte` — one link points to
+    `https://claude.ai/chat/06f975ff-dc63-4737-8022-fb58dddc74b3#contatti`
+    — a leaked AI chat-session URL, not a real citation.
+  - `fumare-aiuta-a-gestire-lansia` — 10 links to
+    `instagram.com/explore/tags/*` (fumo, sigaretta, paura, nicotina,
+    psicoterapia, respirare, calcio, cervello, cuore, polmoni) — a
+    hashtag-stuffing artifact, not real Instagram content.
+  - `cose-un-disturbo-di-personalita` — 12 separate body blocks, six
+    pairs of a `"PrecSucc"` block immediately followed by a `"123"`
+    block — a WordPress pagination widget ("Precedente / Successivo",
+    "1 2 3 …") that got flattened into plain text during migration, once
+    per page break.
+
+- **`come-si-cura-il-panico` has a "see this page" sentence promising a
+  link that no longer exists — known cause, not a mystery to solve.**
+  "Per maggiori informazioni sull'argomento è possibile consultare
+  questa pagina." — the phrase "questa pagina" carries no link
+  (`marks: []`, empty `markDefs`). The link was removed this session as
+  part of the `systemamilano.it` cleanup (§5): its target was one of the
+  outbound links belonging to that scheme, not a legitimate citation.
+  **Whoever picks this up should delete the sentence, not go looking for
+  a URL to restore** — there is no correct link to put back, the page it
+  pointed to was never a real citation in the first place.
+
+- **`ansia-sessuale` (subtopic) has no hero image.** Confirmed:
+  `heroImage` is unset on `subtopicPage-ansia-sessuale-it`.
+
+- **`SectionKicker`'s decorative rule fails non-text contrast sitewide.**
+  In the dark theme, `.rule`'s `background: var(--color-line)` resolves
+  to `hsla(42, 38%, 90%, 0.16)` over `--color-bg: #081512` — computed
+  from those exact token values, this comes out to roughly 1.3–1.5:1,
+  far under the WCAG 3:1 non-text floor. The element is `aria-hidden` and
+  `pointer-events: none` (coded as purely decorative), which may exempt
+  it from 1.4.11 outright — but if the rule is meant to read as a visible
+  design element (its whole purpose), the contrast is real regardless of
+  the ARIA treatment. Worth a decision either way, not just a shrug.
+
+- **`src/sanity/presentationLocations.ts:62,86` still assumes EN redirects
+  to IT.** Found during the sitemap/EN-gate work: the homepage's own EN
+  gate is gone and the sitemap's EN carve-out is fixed, but this file
+  (Studio's Presentation tool location resolver) never got the same
+  update. Low impact — affects only the Studio editing UI, not the live
+  site — but still a real stale assumption.
+
+- **Dead Sanity fields and orphaned schema types — partial list, not a
+  full schema audit:**
+  - `homePage.diCosa` (`src/sanity/schemaTypes/documents/homePage.ts:227`)
+    — `hidden: true`, comment confirms "nothing reads this field group,"
+    superseded by `homePage.aree`. Data untouched, safe to remove
+    whenever someone wants to.
+  - `AreeSectionData.previewHover` — still fetched by `areeSectionQuery`,
+    still a real schema field, read by nothing (carried forward from the
+    card-grid rebuild pass). Reversal already recorded in that pass's own
+    comment: remove once real `/aree/*` pages exist.
+  - `areeSection` document type — its own schema comment marks it
+    DEPRECATED in favor of `homePage.aree`, but `areeSectionQuery` is
+    still actually fetched — by `src/app/design-lab/DesignLabHomepage.tsx`
+    only, not by the production homepage. Not fully dead, just
+    production-orphaned.
+  - `area` document type is Studio-hidden (`hidden: () => true`, can't
+    create new ones) but NOT dead data — its 6 existing documents are
+    still the live source for `homePage.aree`'s grid rows. Don't delete
+    these; "hidden in Studio" and "orphaned" are different things here.
+  - This is what turned up while chasing specific other findings, not a
+    dedicated sweep of all 28 document schema files — a real audit would
+    likely find more.
+
+## 3. Content debt
+
+Corpus-wide problems needing a pass through the articles, not one-off fixes.
+
+- **468 Italian articles (plus the 5 new English ones) carry no link to
+  any of the six intervention areas.** The `article` schema
+  (`src/sanity/schemaTypes/documents/article.ts`) has no relational field
+  to the `area` type at all — only free-form `tags` (WordPress's own ~86
+  tags, imported wholesale). The six areas exist as real data
+  (`homePage.aree` grid, backed by 6 `area` documents) but nothing
+  connects an article to one.
+
+- **316 of 463 non-paired Italian articles (two-thirds of the corpus)
+  have empty cover alt text — an accessibility problem, not a
+  content-polish item, on a site whose entire subject is health.** Live
+  count via `cover.alt` on every IT article outside the 5 EN-paired ones.
+  A screen-reader user gets nothing at all on two out of every three
+  article covers site-wide. A generic-text heuristic (alt starting with
+  "image/img/photo/foto/placeholder/screenshot/…") found zero additional
+  matches among the remaining 147 — but that heuristic can't catch alt
+  text that's present and plausible-looking yet still wrong (describes
+  the wrong subject, is copy-pasted across unrelated photos, etc.);
+  confirming those needs an actual read, not a query.
 
 - **34 headings longer than 120 characters, across 26 articles — a
   WordPress-migration artifact, not a code bug.** Paragraphs that became
@@ -262,12 +217,11 @@ that, then delete the line here.
   a real section break), and `le-6-cause-della-claustrofobia`, where the
   same call-to-action paragraph ("Se soffri di sintomi di
   claustrofobia...") is tagged `h3` three separate times. Handle together
-  with the article-categorisation task — both require going through the
-  same corpus, no reason to do it twice. Not fixed here; the full list
-  below is so nobody has to re-derive it.
+  with the categorisation task above — both require going through the
+  same corpus, no reason to do it twice.
 
-  All 34, slug — chars — level (one language only: no English articles
-  exist to contain any):
+  All 34, slug — chars — level (Italian corpus only; the 5 English
+  articles don't have this problem):
   - `come-resistere-alle-tentazioni` — 344 — h3
   - `le-6-cause-della-claustrofobia` — 300 — h3
   - `come-affrontare-il-ghosting` — 269 — h2 (block 0 — an intro
@@ -304,3 +258,109 @@ that, then delete the line here.
   - `la-fame-e-le-emozioni` — 124 — h3
   - `dipendenza-da-sesso-e-da-porno` — 123 — h3
   - `il-disturbo-paranoide-di-personalita` — 121 — h3
+
+- **`article-5049` and `article-5122` are a 94.2% duplicate pair.** Same
+  title, "In quante sedute di psicoterapia starò meglio?" — slugs
+  `in-quante-sedute-di-psicoterapia-staro-meglio` and
+  `in-quante-sedute-di-psicoterapia-staro-meglio-2` (the `-2` suffix is
+  the tell: a WordPress double-publish, not a deliberate follow-up
+  piece). Measured via longest-common-subsequence ratio over the full
+  body text (5,278 vs. 5,744 characters): 94.2% identical. Two URLs
+  competing for the same query, one of them needs to redirect to the
+  other — likely not the only such pair in a 468-article corpus this
+  size, just the one found so far.
+
+- **58 duplicate FAQ question strings across URLs.** Live count across
+  all 295 `faqItem` documents: 58 distinct question strings appear more
+  than once (139 total duplicate occurrences). Same question asked
+  verbatim on more than one page reads as thin/duplicated content to
+  search engines even when the answer differs by context.
+
+- **Many CMS fields across the site still hold literal `[segnaposto]` /
+  `[placeholder]` copy** (phone/email in site settings, several intro
+  paragraphs, etc.) — an editorial task in Sanity Studio, not a code
+  change. Not enumerated field-by-field here; grep the live dataset or
+  check Studio directly for the current count.
+
+## 4. Deliberately deferred
+
+Decisions already taken — recorded so nobody re-opens them.
+
+- **Location pages — deferred pending studio photographs.** Zero
+  `locationPage` documents exist yet (confirmed live: `locIt: 0, locEn:
+  0`). Waiting on Giuseppe's real photos of the Milan/Monza studios
+  (see §1) before these get built at all.
+
+- **`src/app/design-lab/density/SediCards.tsx` + `sediCards.module.scss`,
+  and `Lightbox.tsx` + `lightbox.module.scss` — kept, not imported
+  anywhere.** Confirmed via a repo-wide grep, not just `/design-lab` — a
+  routine dead-code sweep will flag both as unreachable. They aren't
+  meant to be deleted: this is the only implementation of the "Le sedi"
+  location-cards block, built and then disconnected when that section
+  came out of `/design-lab`. Giuseppe was attached to the idea and it may
+  come back. Both files are untracked in git (never committed) — deleting
+  them would be unrecoverable, no history to restore from. Keep parked
+  until there's an explicit decision to revive or discard.
+
+- **`public/interiors` stock photography is a deliberate placeholder,
+  not a bug.** `src/app/design-lab/DesignLabHomepage.tsx`'s
+  `INTERIOR_STOCK_FALLBACK` map — the Locations marquee falls back to 4
+  generic stock photos whenever a `sede.addresses[]` entry has no
+  `photo` set in Sanity, true for all of them right now. Switches to
+  Giuseppe's real per-location interiors automatically, no code change,
+  once those are uploaded (see §1 — same photograph dependency as the
+  location pages above).
+
+- **`AreeSectionData.previewHover` stays in the schema, unread, on
+  purpose.** See §2's own entry — kept until real `/aree/*` pages exist
+  to make the flag meaningful again, not deleted now.
+
+## 5. Resolved this session
+
+Terse and true, sourced from `git log` on `dev` — commits `e82b6fe`
+through `f8a4614` (Aug 11–14, 2026) — plus a few Sanity-content changes
+that never touched a repo file, so they don't show up in git at all;
+called out separately below.
+
+**Landed as commits:**
+
+- Rebuilt Chi sono, Prezzi, FAQ, and the Blog listing/article pages as
+  real, shared-UI-kit-based content (`e82b6fe`).
+- Built real Contatti and Metodo pages (`21ef55e`).
+- Fixed the contact form: split the merged email/phone field, merged the
+  two duplicate form components into one (`70cd325`).
+- Deleted `FinalContactSection` (zero importers); moved the
+  `.pendingReveal`/`.revealed` classes `RevealOnScroll.tsx` actually
+  depends on into their own module, out of the file that no longer
+  exists (`f672bf5`).
+- Added real Privacy and Cookie Policy pages (`bef7d09`).
+- Added subtopic content-creation scripts (`05f1b7c`).
+- Wired real locale switching and hreflang for articles and subtopics —
+  same-slug pairing for articles, parent-pillar-aware fallback for
+  subtopics with no counterpart, instead of always landing on the
+  homepage (`d85d6e7`).
+- Removed `ResourcesLab`'s mock-article fallback (`bb21078`).
+- Deleted the now-fully-dead `ResourcesSection`/`ResourceColumn`/
+  `FeaturedResource` cluster and rewrote this file (`ddcb4b4`).
+- Added a mobile table of contents (`MobileToc`, extending
+  `ScrollTrackingToc`'s shared `useActiveScrollId` hook) for article/
+  pillar/subtopic/privacy/cookie-policy pages, wired in via
+  `ReadingArea`; fixed three layout bugs found during a mobile audit —
+  `LightPortraitHero` fold height, header CTA min-height, blog
+  pagination flex-shrink (`f8a4614`).
+
+**Resolved but not in git — Sanity content or diagnostic work, verified
+live rather than by commit:**
+
+- Added 5 English articles (adapted, not translated, from the Italian
+  originals) with English excerpts, cover images, and alt text — pure
+  Sanity writes via temporary scripts, deleted after use per this repo's
+  own convention, so no file trace.
+- Removed all ~428 `systemamilano.it` outbound links from article bodies
+  (a WordPress-era cross-promotion scheme) — reverified live via a fresh
+  query just now: 0 remaining.
+
+**Already correctly marked resolved before this rewrite, left as-is:**
+the Leaflet map attribution fix (Contatti build pass) was the one entry
+the previous version of this file actually kept up to date — confirmed
+still accurate, no change needed.
