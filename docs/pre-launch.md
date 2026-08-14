@@ -155,18 +155,6 @@ that, then delete the line here.
   unchanged). §9-checked via the actual `deontologyCheck` validator for
   IT; EN checked by hand. Reversal: once Giuseppe reviews and approves (or
   rewrites) both languages, delete this line.
-- **Resources: 3 hardcoded placeholder articles.**
-  `src/components/ResourcesSection.tsx` — `FULL_MOCK_ARTICLES` (line 44),
-  used whenever the CMS has 0 published `article` documents (currently
-  always, per that file's own HONESTY-RULE FLAG comment). Reversal:
-  publish real articles in Sanity; the component already prefers real
-  data the moment any exists.
-- **Resources: featured-image placeholder.** `src/components/FeaturedResource.tsx:42`
-  — `hasImage = Boolean(article.image)`, always false today since the
-  `article` schema has no image field yet, so the featured card always
-  renders the greige placeholder frame (`.featuredImagePlaceholder`,
-  line 66) instead of a real cover image. Reversal: add an image field
-  to the `article` schema and populate it.
 - **Re-gate `/design-lab` before launch.** `src/app/design-lab/page.tsx`
   (now the DARK/primary variant — see the Phase 2 default-theme switch,
   below), `src/app/design-lab/light-mode/page.tsx` (the parked light
@@ -261,3 +249,58 @@ that, then delete the line here.
   paragraphs, etc.) — an editorial task in Sanity Studio, not a code
   change. Not enumerated here field-by-field; grep the live dataset or
   check Studio directly for the current count.
+
+## Content debt
+
+- **34 headings longer than 120 characters, across 26 articles — a
+  WordPress-migration artifact, not a code bug.** Paragraphs that became
+  `h2`/`h3` during import. They corrupt the heading outline for search
+  engines and fill both the desktop and mobile tables of contents with
+  paragraph-length entries. Worst cases: `come-resistere-alle-tentazioni`
+  (344 chars, `h3`, second-to-last block in the body — a paragraph
+  continuing the article's own Ulysses metaphor into the next block, not
+  a real section break), and `le-6-cause-della-claustrofobia`, where the
+  same call-to-action paragraph ("Se soffri di sintomi di
+  claustrofobia...") is tagged `h3` three separate times. Handle together
+  with the article-categorisation task — both require going through the
+  same corpus, no reason to do it twice. Not fixed here; the full list
+  below is so nobody has to re-derive it.
+
+  All 34, slug — chars — level (one language only: no English articles
+  exist to contain any):
+  - `come-resistere-alle-tentazioni` — 344 — h3
+  - `le-6-cause-della-claustrofobia` — 300 — h3
+  - `come-affrontare-il-ghosting` — 269 — h2 (block 0 — an intro
+    paragraph as the article's first block, not the other 33's
+    mid-body pattern)
+  - `perche-mi-sento-in-ansia-senza-un-motivo` — 200 — h3
+  - `le-6-cause-della-claustrofobia` — 200 — h3
+  - `le-6-cause-della-claustrofobia` — 200 — h3
+  - `le-6-cause-della-claustrofobia` — 198 — h3
+  - `le-6-cause-della-claustrofobia` — 198 — h3
+  - `la-fame-e-le-emozioni` — 197 — h3
+  - `il-disturbo-dansia-generalizzata` — 194 — h3
+  - `come-curare-la-depressione` — 178 — h3
+  - `dipendenza-da-sesso-e-da-porno` — 176 — h3
+  - `come-curare-la-depressione` — 172 — h3
+  - `eiaculazione-precoce-e-ritardata` — 170 — h3
+  - `il-disturbo-dansia-generalizzata` — 163 — h3
+  - `uomini-e-salute-mentale` — 162 — h3
+  - `come-imparare-a-non-ferire-chi-amiamo` — 156 — h3
+  - `le-conseguenze-psicologiche-del-coronavirus` — 155 — h3
+  - `le-6-cause-della-claustrofobia` — 154 — h3
+  - `come-curare-la-depressione` — 139 — h3
+  - `come-lansia-influisce-sul-sesso` — 133 — h3
+  - `ipocondria-il-male-reale-del-malato-immaginario` — 133 — h3
+  - `ex-militare-perche-mi-scatta-il-panico-in-situazioni-normali` — 132 — h3
+  - `benzodiazepine-per-il-panico-si-o-no` — 131 — h3
+  - `attacco-di-panico-cosa-fare` — 129 — h3
+  - `assenza-orgasmo-cosa-fare` — 129 — h3
+  - `agorafobia-claustrofobia-due-facce-stessa-medaglia` — 128 — h3
+  - `come-si-cura-il-panico` — 127 — h3
+  - `panico-o-ipocondria` — 126 — h3
+  - `il-disturbo-dansia-generalizzata` — 126 — h3
+  - `come-controllare-la-rabbia` — 125 — h3
+  - `la-fame-e-le-emozioni` — 124 — h3
+  - `dipendenza-da-sesso-e-da-porno` — 123 — h3
+  - `il-disturbo-paranoide-di-personalita` — 121 — h3
