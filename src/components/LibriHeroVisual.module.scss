@@ -1,0 +1,352 @@
+@use "../styles/mixins";
+
+// Positioned inside LibriHero's own .stageFrame (the same container box
+// every other section aligns to — see that file's own comment). Note
+// right/top/etc. on an absolutely positioned element resolve against the
+// containing block's PADDING-BOX outer edge, not inside the padding — so
+// right: 0 alone would still land on stageFrame's outer edge, ignoring
+// its padding-inline entirely (caught live: measured box right edge sat
+// at 1380px, the container's raw max-width edge, not 1332px, the actual
+// padded content edge every other section's text aligns to). Fix: right
+// must explicitly match stageFrame's own padding-inline value at each
+// breakpoint. Vertically offset down to clear the site's own fixed
+// header.
+//
+// PNG cutout pass: replaced the JPG background-photo with a real-alpha
+// PNG (contents/book-image.png, 1536x896, ratio 1.7143 — see this pass's
+// own report for the alpha-channel verification). Heights below are all
+// recomputed for the NEW image's own ratio, same "match the box to the
+// source" approach as the previous crop fix. With object-fit: contain
+// (see .photo below) and this ratio match at every tier, the box shows
+// the ENTIRE image canvas with zero cropping by construction, at any size.
+//
+// Two desktop-range sizes, not one fixed 704px — a real regression
+// caught at 1024 while verifying this same pass: the OLD masked/dimmed
+// JPG's bounding box could overlap .copy's own text without it reading
+// as broken (the mask faded the pixels there to near-invisible). The new
+// cutout has real opaque pixels with no fade, so that same bounding-box
+// overlap became a genuinely visible clash — the fan visibly sat on top
+// of the lead paragraph at 1024. Fixed with a medium tier (lg to just
+// below xl, 1024-1279px, where the container's own inner width is
+// narrowest relative to .copy's max-width) sized down to 460px, growing
+// to the full 704px only at xl+ (1280px, where 1024's own math no longer
+// applies since the container has more real inner width to work with —
+// checked, not assumed, against the same 1440 numbers as before).
+.stage {
+  position: absolute;
+  right: var(--space-5); // matches .stageFrame's own padding-inline below lg
+  top: calc(50% + var(--header-height-collapsed) / 2);
+  transform: translateY(-50%);
+  width: 28.75rem; // 460px — medium tier, see block comment above
+  height: 16.7708rem; // 268.33px — 460 * (896/1536)
+  z-index: 1;
+
+  @include mixins.breakpoint-up(lg) {
+    right: var(--space-7); // matches .stageFrame's padding-inline at lg+
+  }
+
+  @include mixins.breakpoint-up(xl) {
+    width: 44rem; // 704px — full desktop size, unchanged from the prior
+    // "too small for the space" correction
+    height: 25.6667rem; // 410.67px — 704 * (896/1536)
+
+    // Spacing correction, desktop (xl+) only — measured clearance
+    // between the fixed header's bottom edge and the book's own top
+    // edge was only ~28px at 1440, tight enough to read as crowding the
+    // header. --space-6 (32px) is the closest spacing token to the
+    // requested "roughly 30px" (2px off); moving the book down by that
+    // amount brings clearance to ~58px (see this pass's own report for
+    // the measured before/after). Scoped to xl+ specifically because
+    // 1024 and 390 already measured 99px/195px of clearance — not the
+    // same problem, so left untouched rather than also pushed down.
+    top: calc(50% + var(--header-height-collapsed) / 2 + var(--space-6));
+  }
+
+  // Entry: LEFT to right, settling — not a slide-and-stop. A small
+  // amount of scale-down as it arrives (1.06 -> 1.00), so it reads as
+  // coming to rest rather than zooming. Correction pass: was right to
+  // left (started at translateX(+4.5%), i.e. displaced toward the
+  // viewport's right edge); flipped to start at translateX(-4.5%) so it
+  // arrives from the left instead. Runs on every load now, not gated by
+  // session storage — see LibriHeroVisual.tsx's own comment.
+  &[data-state="entering"] {
+    animation: heroEnter 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes heroEnter {
+  0% {
+    transform: translateY(-50%) translateX(-4.5%) scale(1.06);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50%) translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+// Mobile restructure pass — .stage was a small, bottom-anchored box
+// holding the book as a discrete floating object (own translateX/scale
+// entrance, own bottom-edge position). It's now the full-bleed
+// background layer itself (LibriHero.module.scss's own mobile block
+// zeroes .stageFrame's padding-inline so this reaches the section's TRUE
+// edges, not just the container's). The old bottom-anchored heroEnter
+// keyframe redefinition is gone with it — LibriHeroVisual.tsx no longer
+// ever sets data-state="entering" at this breakpoint (see that file's
+// own comment), so a translateX(-50%)-relative entrance for a box that
+// no longer has that transform at rest would be dead, misleading CSS.
+@media (max-width: 47.9375rem) {
+  .stage {
+    position: absolute;
+    inset: 0;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  // object-fit: cover (not contain) — the whole point of a full-bleed
+  // background is that it fills the frame; contain would letterbox it
+  // against .hero's own gradient instead. object-position: 20% center —
+  // determined by rendering candidate crops of the real source file
+  // (book-hero.png) at the actual worst-case visible window (390px wide
+  // container, the narrowest crop window across both tested heights):
+  // 0% cut into the leftmost fanned page tips, 50% (centered) lost most
+  // of the fan entirely and showed mostly the flat, unlit text page and
+  // back cover on the image's right side. 20% keeps the full dramatic
+  // fan — every glowing page edge — in frame with a small margin, which
+  // is the "part worth seeing" the brief asked not to crop out.
+  .photo {
+    object-fit: cover;
+    object-position: 20% center;
+  }
+}
+
+// PNG cutout pass: this project's shared photo white-balance treatment
+// (sepia(0.08) saturate(0.95), sharedSections.module.scss's own
+// .heroOverlapPhotoTreated / welcome.module.scss's .welcomePhotoImg) does
+// NOT apply here — checked directly, .photo below references neither
+// shared class. Left that way deliberately: that treatment was tuned for
+// a PORTRAIT photo's skin/shirt tones against a warm, LIGHT ivory/taupe
+// background (see sharedSections.module.scss's own comment on it) — a
+// cut-out book illustration sitting on this hero's dark ground is a
+// different subject on a different ground entirely, and applying it here
+// would also directly contradict this pass's own point: the book now
+// sits on the ground with nothing painted over it.
+// Registered so --book-reveal is animatable as a real interpolated
+// number — same technique as --reveal below for the words. Default
+// (initial-value) is 1 = fully revealed: a non-JS/slow-JS/settled
+// visitor sees the whole book, never a stranded half-swept frame — same
+// no-flash discipline as the rest of this component.
+@property --book-reveal {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+// "The book should draw itself in" — a mask sweeping left to right over
+// the ENTRY's own 900ms, combined with (not replacing) .stage's existing
+// slide+scale. Same mask-reveal mechanism as .word's own "writes itself
+// in" (a moving soft edge, not a hard clip), scaled up for a much larger,
+// more detailed image: 14-point-wide transition band (vs the word's 8),
+// tuned so the sweep edge reads as gradually revealing the photograph
+// rather than a hard-edged wipe crossing it — verified via a scrubbed
+// frame sequence (see this pass's own report).
+//
+// This is genuinely the "book emerging from left to right" reading, not
+// the two alternatives Alex asked to have named rather than assumed:
+// brightness-rising-from-darkness, or an outline that fills. For a
+// photograph specifically, a brightness-based reveal doesn't read as
+// "drawing" (a photo doesn't have a meaningful "outline" to fill, and a
+// global brightness ramp looks like a lighting change, not an object
+// appearing) — a spatial sweep is the one that reads as the object
+// itself being progressively revealed, matching how the word's own
+// "writes itself in" treatment already works. Report says so explicitly
+// rather than treating this as the only possible reading.
+.photoWrap {
+  position: absolute;
+  inset: 0;
+  --book-reveal: 1;
+
+  mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(var(--book-reveal) * 100%),
+    transparent calc(var(--book-reveal) * 100% + 14%)
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(var(--book-reveal) * 100%),
+    transparent calc(var(--book-reveal) * 100% + 14%)
+  );
+}
+
+.stage[data-state="entering"] .photoWrap {
+  animation: bookReveal 900ms cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+@keyframes bookReveal {
+  from {
+    --book-reveal: 0;
+  }
+  to {
+    --book-reveal: 1;
+  }
+}
+
+// Correction pass: removed entirely — mask-image/-webkit-mask-image/
+// mask-composite (edge-fade vignette), the .vignette gradient layer, and
+// .photo's own filter: brightness(0.6) contrast(1.3) saturate(0.68)
+// hue-rotate(-8deg) all existed only to disguise the old JPG's opaque
+// rectangle against the hero's dark ground. The new asset
+// (contents/book-image.png, copied to public/libri/book-hero.png) is a
+// real cut-out with its own alpha channel — verified via raw pixel
+// sampling (see this pass's own report) that the fanned page tips
+// survived as genuine soft/antialiased alpha, not a hard binary mask —
+// so there is no rectangle left to hide and nothing left to paint over
+// it with. object-fit: contain (not cover) is deliberate: paired with
+// .stage's height now matching the PNG's own ratio exactly, this
+// guarantees the ENTIRE canvas renders with zero cropping, by
+// construction, rather than relying on a close-enough ratio match.
+.photo {
+  object-fit: contain;
+}
+
+.words {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+// Registered so --reveal is animatable as a real interpolated number, not
+// just a discrete jump — this is what lets the wordWrite keyframe below
+// smoothly drive a mask-image calc() rather than snapping between two
+// static gradients (the standard technique for animating something a
+// browser wouldn't otherwise know how to tween).
+@property --reveal {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+// "Writes itself in" — Alex's word choice, deliberately not a fade: the
+// glyph SHAPES appear progressively left to right, not the whole word
+// materializing as a block. A mask, not opacity, is what makes this a
+// writing effect and not a wipe: the reveal boundary has an 8-point-wide
+// soft gradient (not a hard clip edge), so it reads as a soft leading
+// edge — closer to ink appearing than a curtain opening. Report from
+// this pass's own verification: confirmed via a scrubbed frame sequence
+// that this reads as writing, not a wipe (see that report).
+.word {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  --reveal: 0;
+  opacity: 1;
+
+  // Declared explicitly, per the original brief — not left to <em>'s own
+  // browser default italic, and not inheriting whatever weight
+  // ShimmerText's host context happens to set.
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  // Correction pass: "too small" — was 1.0625rem (17px). 1.875rem (30px)
+  // is ~1.76x, inside the requested 1.5-2x range; judged by reading it
+  // at a glance in an actual screenshot (see this pass's own report),
+  // not just by the ratio.
+  font-size: 1.875rem;
+
+  mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 8%)
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black calc(var(--reveal) * 100%),
+    transparent calc(var(--reveal) * 100% + 8%)
+  );
+
+  // Timings match LibriHeroVisual.tsx's own WRITE_MS/FADE_MS constants —
+  // change one, change the other. Cubic-bezier eases IN then OUT rather
+  // than linear, so the reveal has a touch of natural acceleration/
+  // deceleration instead of a mechanical constant sweep. Correction
+  // pass: write-in was 350ms and read as too hurried — slowed to 600ms
+  // (inside the requested 550-650ms range); fade-out and the immediate
+  // handover were already right, left untouched.
+  &[data-phase="writing"] {
+    animation: wordWrite 600ms cubic-bezier(0.45, 0, 0.2, 1) forwards;
+  }
+
+  &[data-phase="held"] {
+    --reveal: 1;
+  }
+
+  &[data-phase="fading"] {
+    --reveal: 1;
+    animation: wordFade 300ms ease-in forwards;
+  }
+
+  // The IntersectionObserver-driven pause (LibriHeroVisual.tsx) sets this
+  // when the hero scrolls out of view — animation-play-state is the one
+  // piece of this that's genuinely free: the browser freezes the
+  // animation's own internal clock and resumes it from the exact same
+  // point, no manual remaining-time bookkeeping needed for the CSS side.
+  &[data-paused="true"] {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes wordWrite {
+  from {
+    --reveal: 0;
+  }
+  to {
+    --reveal: 1;
+  }
+}
+
+@keyframes wordFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// Mobile restructure pass — the .word sizing override that used to live
+// here is gone: LibriHeroVisual.tsx no longer renders the floating-word
+// cycle at all below this breakpoint (see that file's own comment), so
+// there is no .word element at this width for a font-size rule to reach.
+
+// Reduced motion: one word, fully written, static — never cycles (see
+// LibriHeroVisual.tsx, which renders only a single fixed word and skips
+// the scheduler entirely in this case, rather than relying on CSS alone
+// to freeze an otherwise-running JS state machine).
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-state="entering"] {
+    animation: none;
+  }
+
+  .stage[data-state="entering"] .photoWrap {
+    animation: none;
+  }
+
+  .photoWrap {
+    --book-reveal: 1;
+  }
+
+  .word {
+    --reveal: 1;
+    animation: none;
+  }
+}

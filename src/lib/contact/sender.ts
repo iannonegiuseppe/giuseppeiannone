@@ -4,12 +4,24 @@ import type { ContactChannel } from "./validation";
 // Merge pass — `contact` (polymorphic phone-or-email) is gone; email and
 // telefono are now separate, explicit fields on the payload, matching
 // validation.ts's own ContactFormValues shape.
+//
+// Libri download pass — `source`/`marketingConsent` are additive and
+// optional, so every existing caller (the sitewide contact form) is
+// unaffected: omitting both is identical to today's behavior. This is
+// still the ONE email path, not a second one — a guide-download request
+// just needs its own subject line and an explicit marker in the body so
+// Giuseppe can tell it apart from an ordinary contact message (see
+// isLibri below), plus the optional marketing-consent answer recorded
+// somewhere, since the libri form's request body carries one and this is
+// its only route to an inbox.
 export interface ContactMessagePayload {
   nome: string;
   channel: ContactChannel;
   email: string;
   telefono: string;
   messaggio: string;
+  source?: "contact" | "libri";
+  marketingConsent?: boolean;
 }
 
 export interface SendResult {
@@ -80,21 +92,35 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
     auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
 
+  // Libri download pass — isLibri swaps out the channel-preference line
+  // (the libri form never collects one; it always sends "email" just to
+  // satisfy the shared validator) for an explicit request-type line, and
+  // the free-text messaggio line for the marketing-consent answer, which
+  // is what a guide request actually carries instead. See this pass's own
+  // report for why this is a body-content branch on the ONE existing
+  // sender rather than a second function/route.
+  const isLibri = payload.source === "libri";
+
   // Telefono line only appears when a number was actually given — when
   // channel is "email" and telefono was left blank, the channel line above
   // already says the person chose email; a line saying no phone number was
   // given adds nothing for the reader.
   const bodyLines = [
+    isLibri ? "Tipo di richiesta: download manuale gratuito" : null,
     `Nome: ${payload.nome}`,
-    `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
+    isLibri ? null : `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
     `Email: ${payload.email}`,
-  ];
+  ].filter((line): line is string => line !== null);
   if (payload.telefono) {
     bodyLines.push(`Telefono: ${payload.telefono}`);
   }
-  bodyLines.push(
-    payload.messaggio ? `Messaggio:\n${payload.messaggio}` : "Nessun messaggio aggiuntivo.",
-  );
+  if (isLibri) {
+    bodyLines.push(`Consenso marketing: ${payload.marketingConsent ? "Sì" : "No"}`);
+  } else {
+    bodyLines.push(
+      payload.messaggio ? `Messaggio:\n${payload.messaggio}` : "Nessun messaggio aggiuntivo.",
+    );
+  }
 
   try {
     await transporter.sendMail({
@@ -105,7 +131,9 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
       // whatsapp/telefonata submission left replyTo undefined — hitting
       // "Reply" in the inbox went nowhere useful.
       replyTo: payload.email,
-      subject: `Nuovo contatto dal sito — ${payload.nome}`,
+      subject: isLibri
+        ? `Richiesta manuale gratuito dal sito — ${payload.nome}`
+        : `Nuovo contatto dal sito — ${payload.nome}`,
       text: bodyLines.join("\n\n"),
     });
     return { ok: true };

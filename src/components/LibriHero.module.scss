@@ -1,0 +1,192 @@
+@use "../styles/mixins";
+
+// Fixed min-height at every breakpoint — the book animation must not
+// shift this section's own height while it plays (explicit requirement).
+// Values match the mockup's own two breakpoints (640px desktop /
+// 520px mobile), not invented.
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 40rem; // 640px
+  display: flex;
+  align-items: center;
+  background: radial-gradient(120% 90% at 64% 46%, var(--color-surface) 0%, var(--color-bg) 68%);
+
+  @include mixins.breakpoint-up(md) {
+    min-height: 40rem;
+  }
+}
+
+// Mobile restructure pass — below md (the SAME breakpoint this file
+// already special-cases for .copy/.stage; not a new one), the two-column
+// arrangement (copy on the left, book floating to the right/below) no
+// longer has the width to read as two things sitting next to each
+// other. Collapsed into one full-bleed layer instead: the book image
+// becomes the section's own background (see LibriHeroVisual.module.scss's
+// own mobile block for the object-fit/position), the copy sits centered
+// on top of it. height (not min-height) is a fixed 80dvh — a background
+// needs a real, bounded box to fill, not a content-driven one — with a
+// vh fallback for browsers that don't parse dvh: declared first, so a
+// browser that can't parse the second (dvh) line simply keeps this one
+// (an unparseable value drops the whole declaration, never overwrites
+// the previous valid one), while a dvh-capable browser uses the later,
+// more correct value.
+@media (max-width: 47.9375rem) {
+  .hero {
+    min-height: 0;
+    height: 80vh;
+    height: 80dvh;
+    align-items: center;
+    padding-top: 0;
+  }
+
+  // Scrim between the photo and the copy, so the text stays legible
+  // wherever it lands. A flat single-opacity wash was tried first and
+  // rejected: strong enough to hold the lead paragraph, it still let the
+  // lit page edges show through behind the kicker/h1 nearer the top of
+  // the text band. This is a vertical gradient instead, darkest through
+  // the middle (where the copy actually sits, vertically centered) and
+  // lighter toward the top/bottom edges, so the photograph still reads
+  // as a photograph outside the text band rather than going flat black
+  // edge to edge. Built from --color-bg (this theme's own dark ground,
+  // already what .hero's own desktop gradient fades toward) via
+  // color-mix, not a raw hex. See this pass's own report for the
+  // measured contrast this achieves against the real rendered pixels
+  // beneath each text element, and where it still falls short (the gold
+  // emphasis word).
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-bg) 60%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 30%,
+      color-mix(in srgb, var(--color-bg) 93%, transparent) 52%,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 74%,
+      color-mix(in srgb, var(--color-bg) 62%, transparent) 100%
+    );
+  }
+
+  // Above the scrim (z-index: 2) and the image (.stageFrame, z-index: 1)
+  // — was 2 unconditionally; bumped only inside this mobile block so
+  // desktop/tablet's stacking order is untouched.
+  .inner {
+    z-index: 3;
+  }
+
+  // .stage now needs to reach .hero's TRUE edges (full-bleed background),
+  // not stop at the container's own inline padding — see
+  // LibriHeroVisual.module.scss's own mobile .stage override, which
+  // relies on this.
+  .stageFrame {
+    padding-inline: 0;
+  }
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}
+
+// Same box as .inner (container mixin values), but absolutely positioned
+// to span the hero's full height rather than sized to .copy's content
+// height — a pure positioning frame for the book visual, so its "right:0"
+// lands on the same content edge as every other section's container
+// (mixins.container), not the viewport edge. Previously the book was a
+// direct child of .hero (full-bleed, edge to edge) with right:2% of the
+// VIEWPORT — at 1440 that put its right edge past the container's own
+// right edge, reading as a bleed. Non-interactive: it only exists to
+// give the book visual a right-edge reference to align to.
+.stageFrame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+  pointer-events: none;
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}
+
+// Full hero box, no max-width/padding — unlike .stageFrame (capped at
+// --container-max-width) and .inner, this spans the ENTIRE hero section
+// (which itself spans the full viewport width, being a full-bleed
+// section). Correction pass: floating words were previously confined to
+// the book's own tight box, so "let them use the space beyond, to the
+// right and above" needed a coordinate frame at least as large as the
+// viewport itself — .stageFrame's own 1320px cap couldn't express that,
+// only .hero's own untamed box can. LibriHeroVisual (client component)
+// portals its word layer into this div at runtime via
+// document.querySelector — kept as a plain server-rendered target here
+// rather than converting this file to a client component just to hold a
+// ref.
+.wordsLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.copy {
+  max-width: 32.5rem;
+
+  @media (max-width: 47.9375rem) {
+    max-width: none;
+  }
+}
+
+// Correction pass: now wraps its text in the shared SectionKicker
+// component (rule dash + gold accent colour), matching every other
+// kicker on the site — this file's own layout/typography (uppercase,
+// letter-spacing, size) is unchanged, since SectionKicker deliberately
+// doesn't own those (every existing caller keeps its own established
+// type). Why this wasn't using it already: LibriHero.tsx has never been
+// committed (checked via git log — zero commits for the file), built
+// entirely within an uncommitted work session that came AFTER
+// SectionKicker already existed in the codebase (SectionKicker itself
+// committed 2026-08-11). Not a deliberate override — an oversight when
+// this hero was first built: plain inline <p>{kicker}</p> markup was
+// used instead of reaching for the shared component that was already
+// there.
+.kicker {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.125rem, 5vw, 3.75rem);
+  line-height: 1.07;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-5);
+  text-wrap: balance;
+}
+
+.lead {
+  font-family: var(--font-body);
+  font-size: 1.1875rem;
+  line-height: 1.6;
+  margin: 0;
+  color: var(--color-text-muted);
+  max-width: 28rem;
+}

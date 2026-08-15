@@ -1,0 +1,104 @@
+@use "../styles/mixins";
+
+// Real-cover pass — mirrored (cover left, text right; was text left,
+// cover right) and the cover column grown from 12rem (192px) to 20rem
+// (320px) — "large, running most of the section's height." DOM order
+// now matches: BookCover renders first (see the .tsx file's own
+// comment), so the column order below is [cover, text], not [text,
+// cover] like before.
+.wrap {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 20rem 1fr;
+    gap: var(--space-9);
+  }
+}
+
+// Kicker consistency pass — color removed: SectionKicker's own .wrap now
+// supplies it (var(--color-accent), same value this rule set manually
+// before), plus the rule dash this rule never had. Same "own the text's
+// size/tracking, not the color/rule" split every other kicker on this
+// page already follows.
+.kicker {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.16;
+  margin: 0 0 var(--space-3);
+}
+
+// Metadata line beneath the title, not body prose — same treatment as
+// the sitewide "[n] pagine · PDF · italiano" convention (LibriIndexSection
+// module.scss's own .coverMeta): smaller than .body, muted, no italic/
+// accent — just a plain fact line.
+.subtitle {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+  max-width: 34rem;
+  margin: 0;
+
+  // Now rendered as one <p> per paragraph (see the .tsx file's own
+  // comment) — gap between them, but not after the last one, so the
+  // existing .ctaRow { margin-top } spacing above the button is
+  // unchanged from before this was multi-paragraph.
+  &:not(:last-child) {
+    margin-bottom: var(--space-4);
+  }
+}
+
+.ctaRow {
+  margin-top: var(--space-5);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: transparent;
+  border: 1px solid var(--color-hairline);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: 0.9375rem;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-button);
+  text-decoration: none;
+  min-height: 44px;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.75;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.cover {
+  max-width: 20rem;
+  margin-inline: auto;
+
+  @include mixins.breakpoint-up(lg) {
+    margin-inline: 0;
+  }
+}

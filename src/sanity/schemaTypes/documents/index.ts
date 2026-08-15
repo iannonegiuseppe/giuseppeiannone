@@ -13,6 +13,7 @@ import { faqPage } from "./faqPage";
 import { footerSettings } from "./footerSettings";
 import { headerSettings } from "./headerSettings";
 import { homePage } from "./homePage";
+import { libriPage } from "./libriPage";
 import { locationPage } from "./locationPage";
 import { methodPage } from "./methodPage";
 import { page } from "./page";
@@ -44,6 +45,10 @@ export const documentTypes = [
   // than with knowledge-base content below.
   privacyPage,
   cookiePolicyPage,
+  // Libri build pass — grows out of defineSimplePageType the same way
+  // pricePage/contactPage do (see libriPage.ts's own comment); grouped
+  // with the other singleton content pages above.
+  libriPage,
   // Chi sono section pass: homepage teaser singleton (own structured
   // fields, not defineSimplePageType) — see its own file's comment for
   // why it supersedes homePage.chiSono/ChiSonoOverlap.tsx instead of

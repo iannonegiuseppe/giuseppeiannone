@@ -99,6 +99,16 @@ export function cookiePolicyPath(locale: Locale): string {
   return locale === "it" ? "/cookie-policy" : "/en/cookie-policy";
 }
 
+// Libri build pass — fixed singleton route, same convention as every
+// other entry above. EN slug is "books" (a direct, literal translation),
+// not a soundalike or a repositioned word — checked for collisions
+// against every pillarPage/page document and the frozen 468-entry
+// WordPress redirect snapshot before choosing it (this pass's own
+// report): neither "libri" nor "books" appears anywhere.
+export function libriPath(locale: Locale): string {
+  return locale === "it" ? "/libri" : "/en/books";
+}
+
 // Blog listing — repointed from /risorse, /en/resources (WordPress
 // migration pass): those were PREVIEW-GATE placeholder routes for this
 // exact listing, but the decided URL structure for the migrated blog is
@@ -125,6 +135,7 @@ export const singletonPathFns: Array<(locale: Locale) => string> = [
   methodPath,
   pricePath,
   articlesPath,
+  libriPath,
   faqPath,
   contactPath,
   privacyPath,
@@ -165,6 +176,7 @@ export const NAV_ROUTE_KEYS: NavRouteKeyEntry[] = [
   { key: "metodo", studioLabel: "Method (Metodo)", pathFn: methodPath },
   { key: "prezzi", studioLabel: "Pricing (Prezzi)", pathFn: pricePath },
   { key: "risorse", studioLabel: "Resources (Risorse)", pathFn: articlesPath },
+  { key: "libri", studioLabel: "Books (Libri)", pathFn: libriPath },
   { key: "faq", studioLabel: "FAQ", pathFn: faqPath },
   { key: "contatti", studioLabel: "Contact (Contatti)", pathFn: contactPath },
   { key: "privacy", studioLabel: "Privacy", pathFn: privacyPath },

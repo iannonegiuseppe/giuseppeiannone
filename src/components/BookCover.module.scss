@@ -1,0 +1,114 @@
+.cover {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px var(--radius-s) var(--radius-s) 3px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-5);
+  aspect-ratio: 3 / 4;
+  min-height: 12rem;
+}
+
+// See BookCover.tsx's own comment on why this variant is always wrapped
+// in .themeDark — --color-surface stays reliably dark on its own, but
+// --color-text/--color-accent (the label/rule below) don't without it.
+.guide {
+  background: linear-gradient(120deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  color: var(--color-text);
+  box-shadow:
+    var(--shadow-soft),
+    inset 3px 0 0 rgba(0, 0, 0, 0.35),
+    inset 5px 0 0 color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+// Theme-invariant light tokens only — never needs a wrapper, correct on
+// both the light-island index section and the ambient-dark book-promo
+// section.
+.book {
+  background: linear-gradient(
+    120deg,
+    var(--light-base-bg) 0%,
+    color-mix(in srgb, var(--light-base-bg) 80%, var(--light-base-accent) 20%) 100%
+  );
+  color: var(--light-base-text);
+  box-shadow:
+    var(--shadow-soft),
+    inset 3px 0 0 color-mix(in srgb, var(--light-base-text) 16%, transparent),
+    inset 5px 0 0 color-mix(in srgb, var(--light-base-bg) 94%, var(--light-base-text) 6%);
+}
+
+.coverLabel {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.coverRule {
+  display: block;
+  width: 1.75rem;
+  height: 1px;
+  margin-bottom: var(--space-3);
+}
+
+.guide .coverRule {
+  background: var(--color-accent);
+}
+
+.book .coverRule {
+  background: var(--light-base-accent);
+}
+
+.coverTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.1875rem;
+  line-height: 1.2;
+}
+
+.coverByline {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.coverImage {
+  object-fit: cover;
+}
+
+// "guide" with a real image — ebook.png is already a complete 3D mockup
+// (its own spine, shadow, and transparent background baked in). This is
+// deliberately bare: no border-radius/overflow-hidden (would clip the
+// image's own shadow, which extends past the book's silhouette), no
+// box-shadow, no gradient — the image does 100% of the visual work.
+// "book" (real-book.jpg, a flat scan) shares this exact box — see
+// .coverImageShadow below for the one thing it gets that "guide"
+// doesn't. Width here is the layout's own real constraint (.cover's/
+// .coverSidebar's max-width in the two caller stylesheets), which is
+// why BookCover.tsx's own GUIDE_SIZES/BOOK_SIZES constants are fixed
+// pixel values, not a guess.
+.coverImageOnly {
+  position: relative;
+  width: 100%;
+}
+
+// 3D-treatment correction pass: this file used to also define
+// .depthWrap/.tilt/.coverFace/.pageBlock — a rotateY tilt plus a
+// striped page-block edge on the "book" cover. Removed outright, not
+// hidden: the flat scan now renders through the exact same
+// .coverImageOnly box "guide" uses, no transform of any kind. All that
+// carries over is a soft shadow, so the flat cover doesn't look like
+// it's floating directly on the page's own ground — var(--shadow-soft)
+// is the same token the CSS-drawn placeholder itself already used
+// (.cover's own box-shadow, above), not a new value invented for this.
+.coverImageShadow {
+  box-shadow: var(--shadow-soft);
+}

@@ -1,0 +1,125 @@
+@use "../styles/mixins";
+
+.wrap {
+  display: grid;
+  gap: var(--space-8);
+  align-items: start;
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-9);
+  }
+}
+
+.kicker {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.16;
+  margin: 0 0 var(--space-3);
+}
+
+.lead {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 30rem;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.fieldRow {
+  display: grid;
+  gap: var(--space-3);
+
+  @include mixins.breakpoint-up(sm) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1875rem;
+  accent-color: var(--color-accent);
+
+  @include mixins.focus-ring;
+}
+
+.consentText {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.consentLink {
+  @include mixins.link;
+}
+
+.groupError {
+  margin: calc(-1 * var(--space-2)) 0 0 calc(1rem + var(--space-3));
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+}
+
+.submitRow {
+  margin-top: var(--space-2);
+}
+
+.submitButton {
+  width: 100%;
+
+  @include mixins.breakpoint-up(sm) {
+    width: auto;
+  }
+}
+
+// Download-flow build pass — success replaces the whole <form> (see
+// LibriForm.tsx's own comment); error is a banner inside it, above the
+// submit row, same "error is primary, not hidden" convention
+// ContactForm.module.scss's own .formBanner already uses.
+.successMessage {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.formBanner {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 60%, transparent);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--color-amber) 15%, var(--color-bg));
+}
+
+.formBannerText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}

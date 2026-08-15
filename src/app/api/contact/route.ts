@@ -24,6 +24,11 @@ interface ContactRequestBody {
   // every field it could find. Silently accept (200) so the bot has no
   // signal to react to, but never actually send.
   companyWebsite?: unknown;
+  // Libri download pass — both optional and additive, see sender.ts's own
+  // comment on ContactMessagePayload: omitting either preserves today's
+  // contact-form behavior exactly.
+  source?: unknown;
+  marketingConsent?: unknown;
 }
 
 const VALID_CHANNELS: ContactChannel[] = ["whatsapp", "telefonata", "email"];
@@ -61,6 +66,8 @@ export async function POST(req: NextRequest) {
   const telefono = typeof body.telefono === "string" ? body.telefono : "";
   const messaggio = typeof body.messaggio === "string" ? body.messaggio : "";
   const consent = body.consent === true;
+  const source = body.source === "libri" ? "libri" : "contact";
+  const marketingConsent = body.marketingConsent === true;
 
   const values: ContactFormValues = { nome, channel, email, telefono, messaggio, consent };
   const errors = validateContactForm(values);
@@ -77,6 +84,8 @@ export async function POST(req: NextRequest) {
     email: email.trim(),
     telefono: telefono.trim(),
     messaggio: messaggio.trim(),
+    source,
+    marketingConsent,
   });
 
   if (!result.ok) {

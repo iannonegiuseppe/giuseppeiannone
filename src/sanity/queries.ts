@@ -824,6 +824,37 @@ export const cookiePolicyPageQuery = defineQuery(`
   }
 `);
 
+// Libri build pass — libriPage is a real document (see that schema
+// file's own comment for why it grew out of defineSimplePageType, same
+// call as pricePage/contactPage). Six named chapter fields projected by
+// name (not a spread) so a future stray field doesn't silently start
+// rendering — same discipline contactPageQuery above already applies.
+export const libriPageQuery = defineQuery(`
+  *[_type == "libriPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    lead,
+    indexKicker,
+    indexTitle,
+    indexTitleEmphasisWord,
+    indexLead,
+    chapter1,
+    chapter2,
+    chapter3,
+    chapter4,
+    chapter5,
+    chapter6,
+    coverTitle,
+    metaLine,
+    guideCoverImage,
+    "guidePdfUrl": guidePdf.asset->url,
+    form,
+    book,
+    seo
+  }
+`);
+
 // Blog index redesign pass — hero + closing editorial copy for the /blog
 // listing (its own singleton, blogIndexSection.ts).
 export const blogIndexQuery = defineQuery(`

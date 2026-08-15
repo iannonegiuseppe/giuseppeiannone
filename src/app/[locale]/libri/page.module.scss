@@ -1,0 +1,73 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+// Tonal-separation pass (item 3) — form section, "surface step": a light
+// island, same mixin the index section above and the sitewide ContactForm
+// (ContactBlock) already use. This is a deliberate step OFF the page's own
+// dark register, not a shade of it — see page.tsx's own comment on why
+// this also fixes item 2's placeholder-contrast bug.
+// padding-top removed (explicit instruction) — the gap above the
+// divider now comes entirely from whatever sits above this section
+// (LibriIndexSection's own padding-bottom, itself since removed) plus
+// .sectionDivider's own margin-bottom, not this section's own padding.
+.formSection {
+  @include tone.light-island-surface;
+  padding-bottom: var(--space-9);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-bottom: var(--space-10);
+  }
+}
+
+.formInner {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}
+
+// Seam marker (item 6) between the index section above and this light
+// section — both are light islands, so without this the two would read as
+// one continuous light block. Layout-only margin, same convention as
+// ContactBlock's own .contactRule/CredentialsBand's own .credentialsRule:
+// AnimatedDivider's own CSS supplies color/rule/sweep, untouched here.
+.sectionDivider {
+  margin-bottom: var(--space-8);
+
+  @include mixins.breakpoint-up(lg) {
+    margin-bottom: var(--space-9);
+  }
+}
+
+// Book section, "base ground": the page's own plain ambient dark, no tone
+// wrapper — unchanged from what the old merged .darkSection used to paint
+// for both form and book together.
+.bookSection {
+  padding-block: var(--space-9);
+  background: var(--color-bg);
+  color: var(--color-text);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-block: var(--space-10);
+  }
+}
+
+.bookInner {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-7);
+  }
+}

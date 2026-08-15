@@ -306,6 +306,22 @@ Maximum four motion moments per page. Each must be reversible, respect
 `prefers-reduced-motion`, and last ≤ 400 ms unless scroll-driven.
 Motion that only decorates is removed.
 
+**Named exception — LibriHeroVisual's word cycle.** The `/libri` hero's
+floating decorative word (`src/components/LibriHeroVisual.tsx`) writes
+in, holds, fades, pauses, and repeats indefinitely for as long as the
+page is open — one continuous motion moment for the section's entire
+lifetime on screen, not a bounded ≤ 400ms moment. This was a deliberate,
+explicit instruction from Alex specifically for that component ("this
+breaks §10.10... that is a deliberate exception on Alex's instruction"),
+not a drift in the rule itself and not license to run indefinite loops
+elsewhere. It ships with the mitigations the rule exists to enforce in
+spirit even though it can't meet the letter: `prefers-reduced-motion`
+shows one static word and never cycles, and an `IntersectionObserver`
+pauses the loop entirely while the hero is scrolled out of view (so nothing
+animates off-screen, wasted, while a visitor reads the rest of the page).
+Treat every other page's motion as still bound by the four-moment/
+≤400ms definition above; this is a named, single-component carve-out.
+
 ### 10.11 Not everything lives in the container
 
 Full-bleed is a deliberate tool, not an accident. The page runs a
