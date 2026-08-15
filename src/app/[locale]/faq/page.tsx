@@ -133,6 +133,7 @@ export default async function FaqPage({
         photo={data?.photo}
         photoScale={0.85}
         priority
+        mobileFullBleed
       />
       <JsonLdScript data={faqPageJsonLd} />
       <div className={styles.body}>

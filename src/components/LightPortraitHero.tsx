@@ -47,6 +47,29 @@ export interface LightPortraitHeroProps {
   // same 22rem/34rem sizing blog has always had. 1 = full size, 0.85 = 15%
   // smaller, etc.
   photoScale?: number;
+  // Mobile-hero-transplant pass (/libri precedent) — opt-in only, exactly
+  // like photoScale/metaLine above: /blog never passes this, so its own
+  // render is provably unaffected (the attribute is omitted from the DOM
+  // entirely when unset, not just visually inert — see the section's own
+  // data attribute below). /faq passes it: the photo it renders is a real
+  // still-life photograph (not a transparent cut-out), which is what
+  // makes a full-bleed cover crop safe here — see this pass's own report
+  // for why /blog's own cut-out portrait was excluded instead.
+  mobileFullBleed?: boolean;
+  // Second, DIFFERENT mobile treatment — for a transparent cut-out figure
+  // rather than a rectangular photograph (mobileFullBleed's object-fit:
+  // cover assumes a photo that fills its own canvas edge-to-edge; a
+  // cut-out cropped that way either crops through the subject or exposes
+  // empty transparent canvas — see this pass's own report for why /blog
+  // needed a different answer, not mobileFullBleed reused). The figure
+  // anchors to the section's bottom edge at its own natural aspect ratio
+  // instead of being cropped to fill the frame; copy is allowed to
+  // overlap its lower half (shoulders/chest), never the face. Opt-in,
+  // same "unset = today's behavior" convention as every other prop here
+  // — currently only /blog passes it, /faq never does (mobileFullBleed
+  // and mobileCutoutAnchor are mutually exclusive in practice, but
+  // nothing here enforces that structurally since no caller passes both).
+  mobileCutoutAnchor?: boolean;
 }
 
 function renderHeadingWithEmphasis(
@@ -80,6 +103,8 @@ export function LightPortraitHero({
   photo,
   priority,
   photoScale,
+  mobileFullBleed,
+  mobileCutoutAnchor,
 }: LightPortraitHeroProps) {
   const dims = photo ? imageDimensions(photo) : null;
 
@@ -92,7 +117,12 @@ export function LightPortraitHero({
   // See that file's own comment on the selector for what "reacts" means
   // precisely.
   return (
-    <section className={styles.hero} data-light-hero>
+    <section
+      className={styles.hero}
+      data-light-hero
+      data-mobile-full-bleed={mobileFullBleed || undefined}
+      data-mobile-cutout-anchor={mobileCutoutAnchor || undefined}
+    >
       <div className={`container ${styles.heroInner}`}>
         <div className={styles.heroText}>
           <p className={styles.kickerRow}>

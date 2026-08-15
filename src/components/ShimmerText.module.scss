@@ -117,6 +117,38 @@
     --shimmer-highlight: var(--tone-deep-accent-small);
   }
 
+  // /faq mobile-full-bleed pass — ink instead of bronze, mobile width
+  // only (desktop/tablet keep the bronze branch above; data-mobile-full-
+  // bleed is present on the section at every breakpoint, but the visual
+  // full-bleed treatment — and this override — only applies below the
+  // same breakpoint LightPortraitHero.module.scss's own mobile block
+  // uses). Bronze (var(--color-accent)) never reliably cleared 4.5:1
+  // against this photo's own worst-case pixel even at ~96-100% overlay
+  // opacity; ink holds real margin, freeing the overlay to come back
+  // down — see LightPortraitHero.module.scss's own report. Highlight
+  // uses --color-text-muted (a lighter ink, not a new hue) so the sweep
+  // stays visible without introducing an unrelated color; this is
+  // currently the ONLY consumer of data-mobile-full-bleed sitewide, so
+  // this branch is inert everywhere else by construction.
+  @media (max-width: 47.9375rem) {
+    :global([data-mobile-full-bleed]) & {
+      color: var(--color-text);
+
+      @supports (background-clip: text) or (-webkit-background-clip: text) {
+        background-image: linear-gradient(
+          90deg,
+          var(--color-text) 0%,
+          var(--color-text) 40%,
+          var(--shimmer-highlight) 50%,
+          var(--color-text) 60%,
+          var(--color-text) 100%
+        );
+      }
+
+      --shimmer-highlight: var(--color-text-muted);
+    }
+  }
+
   &[data-in-view="true"] {
     @supports (background-clip: text) or (-webkit-background-clip: text) {
       animation-play-state: running;

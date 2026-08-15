@@ -259,6 +259,7 @@ export async function BlogIndexView({
           intro={blogIndex?.intro}
           photo={heroPortrait?.photo}
           priority
+          mobileCutoutAnchor
         />
 
         {/* 2. DARK SECTION — featured + grid + pagination */}

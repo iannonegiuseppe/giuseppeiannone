@@ -10,6 +10,253 @@
 
 .hero {
   @include tone.light-island-surface;
+  // position:relative is new here — needed as the containing block for
+  // .heroVisual's mobile-only position:absolute (below), so it escapes
+  // .heroInner's own padding-inline (the .container class) and reaches
+  // this section's TRUE edges. No visual effect at any breakpoint on its
+  // own (nothing else in this file was relying on .hero being a plain
+  // static box).
+  position: relative;
+}
+
+// Mobile hero restructure pass (/libri precedent, applied here on request)
+// — below the SAME breakpoint /libri's own mobile treatment used
+// (max-width: 47.9375rem, i.e. below md/768px). This is deliberately
+// NOT this component's own two-column breakpoint (lg/1024px, where
+// .heroInner below switches to a 1fr 1.15fr grid) — the 768-1023px
+// range keeps today's single-column stacked appearance (portrait above
+// text, contained frame) completely untouched, matching this pass's own
+// "tablet untouched" instruction; only true mobile widths get the new
+// full-bleed treatment. Gated behind [data-mobile-full-bleed] — the
+// section-level attribute LightPortraitHero.tsx only ever sets when a
+// caller opts in (currently /faq only; /blog never passes it, so this
+// entire block is inert there by construction, not by convention).
+@media (max-width: 47.9375rem) {
+  .hero[data-mobile-full-bleed] {
+    height: 80vh;
+    height: 80dvh;
+  }
+
+  // Scrim: unlike /libri's dark-ground version (which blends toward
+  // black), this ground is LIGHT and its text is DARK (ink, and the
+  // light-island bronze accent — see ShimmerText.module.scss's own
+  // [data-light-hero] branch, which this section's existing data-light-
+  // hero attribute already activates) — so the correct direction is the
+  // OPPOSITE of /libri: blend toward --color-bg here means blending
+  // toward IVORY (light-island-surface reassigns it to --light-base-bg),
+  // lightening the photo under the text band rather than darkening it.
+  // Darkest through the vertical middle (copy is vertically centered),
+  // lighter at the top/bottom edges, same rationale as /libri's own
+  // gradient. See this pass's own report for the measured contrast this
+  // achieves — including where the bronze emphasis word's own, much
+  // tighter margin lands.
+  .hero[data-mobile-full-bleed]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg) 94%, transparent) 25%,
+      color-mix(in srgb, var(--color-bg) 96%, transparent) 50%,
+      color-mix(in srgb, var(--color-bg) 94%, transparent) 75%,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 100%
+    );
+  }
+
+  // height/align-content only — deliberately NOT position/z-index here.
+  // A first version put z-index:3 on .heroInner itself to lift the text
+  // above the scrim; that instead lifted .heroInner's WHOLE subtree —
+  // including .heroVisual, its own sibling-in-flow child — since a
+  // positioned ancestor's stacking context is atomic (nothing inside it
+  // can render below an outside layer once the ancestor itself is
+  // stacked above that layer). Caught live: the scrim's own computed
+  // background-image was correct, but the photo still rendered at full,
+  // un-scrimmed brightness — the stacking bug, not a missing style. Fix:
+  // the elevated z-index moves to .heroText directly (below), the one
+  // element that actually needs to clear the scrim; .heroVisual and
+  // .hero::before now compare directly within .hero's own stacking
+  // context, with no intermediate ancestor stacking context in the way.
+  .hero[data-mobile-full-bleed] .heroInner {
+    height: 100%;
+    align-content: center;
+  }
+
+  // Escapes .heroInner's grid/padding entirely (position:absolute against
+  // .hero, the nearest positioned ancestor — see .hero's own comment) —
+  // no longer a grid item, no longer constrained to .heroInner's own
+  // padding-inline.
+  .hero[data-mobile-full-bleed] .heroVisual {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    max-width: none;
+    margin-inline: 0;
+    padding-top: 0;
+    display: block;
+  }
+
+  // The glow was tuned for a small, contained, floating portrait frame —
+  // it has no role once the same photo is the section's own full-bleed
+  // ground; hidden rather than left to render faintly behind an edge-to-
+  // edge image where it would do nothing visible anyway.
+  .hero[data-mobile-full-bleed] .heroVisualGlow {
+    display: none;
+  }
+
+  .hero[data-mobile-full-bleed] .heroVisualFrame {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  // object-fit: cover + object-position: center — determined by rendering
+  // candidate crops of the real source photo at the actual worst-case
+  // visible window (this component's own report has the numbers): the
+  // still-life's subject (vase, olive branch, ring, book, plinth) sits
+  // close enough to center, and the source is already portrait-oriented,
+  // that a centered crop keeps the entire subject in frame with no
+  // adjustment needed — unlike /libri's book cutout, no left/right bias
+  // was required here.
+  .hero[data-mobile-full-bleed] .heroVisualImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .hero[data-mobile-full-bleed] .heroText {
+    position: relative;
+    z-index: 3;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  // Ink-over-bronze pass — the bronze accent (var(--color-accent), same
+  // token .kicker reads at every other breakpoint/page) never reliably
+  // cleared 4.5:1 against this photo's own worst-case (darkest) residual
+  // pixel, even with the overlay pushed to ~96-100% opacity — see this
+  // pass's own report. Desktop/tablet keep bronze (a clean, un-photographed
+  // ivory ground, where it already measures 4.58:1+ with margin); only
+  // this mobile-full-bleed context switches to ink, which holds 11-12:1
+  // against the same worst case with real headroom, letting the overlay
+  // come back down. The rule dash itself (SectionKicker's own .wrap/.rule)
+  // is untouched — a shared component, not scoped per-caller — so it
+  // stays bronze as the one remaining accent touch on this screen.
+  .hero[data-mobile-full-bleed] .kicker {
+    color: var(--color-text);
+  }
+}
+
+// Second mobile treatment (/blog) — for a transparent cut-out figure, not
+// a rectangular photograph. mobileFullBleed's object-fit:cover assumes a
+// photo that fills its own canvas edge to edge; this source (a person
+// cut out on a transparent background) does not — cover-cropping it would
+// either crop through Giuseppe or expose empty canvas at the sides. See
+// this pass's own report for the measured alpha geometry that ruled that
+// out. Same breakpoint as mobileFullBleed (below md/768px, this
+// component's OWN two-column split stays at lg/1024px, untouched).
+//
+// Third rebuild (order reversed) — two earlier versions stacked the copy
+// ABOVE the figure and tried to protect the face by either shrinking the
+// figure to fit below the text (read as a sticker) or growing the section
+// and top-anchoring the figure below the text with an overlap-only scrim
+// (better, but still put the face near the crop line and needed a scrim
+// at all). Per direct instruction, the ORDER is reversed instead: figure
+// first (order:1, this component's own pre-existing default — nothing to
+// override), copy second (order:2, also the default). This is close to
+// the untouched, pre-mobile-treatment layout — the actual complaint was
+// never the order, it was the small contained frame, the radial glow, and
+// the dead space, all three removed below.
+//
+// Fourth pass (mask fade + overlap) — the stacked version above was
+// correct but flat: a hard photo edge, then text starting cleanly below
+// it. This pass fades the image's own LOWER portion to transparent (a
+// mask on the <img> itself — see .heroVisualImg's own comment for why a
+// mask, not a scrim overlay, is what "the photograph becomes transparent"
+// requires) and pulls .heroText up with a negative margin so its box
+// genuinely overlaps the image's box, reading as one composition. The
+// two are deliberately kept SEPARATE facts: the mask is tuned so real
+// pixel opacity reaches zero well before the text's own line-boxes begin
+// (see this pass's own report for the measured opacity at both the
+// kicker's and h1's own y-position — both zero), so despite the BOX
+// overlap, contrast is measured against plain, already-transparent
+// ivory, not a fading photo. No z-index anywhere in this block: .heroText
+// is later in DOM order than .heroVisual and neither sets position, so
+// plain paint order already puts the text on top where they overlap —
+// deliberately not repeating the stacking-context bug from an earlier
+// pass in this same file (an elevated z-index on the wrong ancestor lifted
+// an entire subtree, including the image, above a layer it should have
+// stayed under).
+@media (max-width: 47.9375rem) {
+  // No fixed/dvh height at all — content drives it. See this pass's own
+  // report for the real rendered total at both 667 and 844 (shorter than
+  // the previous stacked version's 843/889px — the overlap below is what
+  // buys that height back, not a smaller figure).
+  .hero[data-mobile-cutout-anchor] {
+    height: auto;
+  }
+
+  // Large, uncropped, natural aspect ratio, in normal flow — same 82%
+  // width as the previous (flat-stack) pass, unchanged per "stays at its
+  // current size or larger." max-width: none removes the old 22rem/34rem
+  // cap this component uses on /faq and on /blog's own desktop layout.
+  .hero[data-mobile-cutout-anchor] .heroVisual {
+    max-width: none;
+    width: 82%;
+    margin-inline: auto;
+    padding-top: var(--header-height-collapsed);
+  }
+
+  .hero[data-mobile-cutout-anchor] .heroVisualFrame {
+    width: 100%;
+    max-width: none;
+  }
+
+  // Gone outright, not hidden — a floating frame's glow has no role
+  // behind a figure that's grounded in normal flow and takes up real
+  // space on its own.
+  .hero[data-mobile-cutout-anchor] .heroVisualGlow {
+    display: none;
+  }
+
+  // The fade itself — a mask-image on the <img>, not a scrim div layered
+  // on top. This is the real difference the brief asked to confirm is
+  // workable: mask-image (with the -webkit- prefix for older Safari) is
+  // well-supported on a plain <img> element, so it was — the photograph's
+  // OWN alpha channel is what fades here, letting the section's real
+  // ivory background (light-island-surface's own --light-base-bg) show
+  // through as it goes, not a translucent wash painted over an opaque
+  // photo. Opaque through the top 45% (face, shoulders — untouched),
+  // fading from 45% to 68% of the image's own height, fully transparent
+  // from 68% down — chosen so the transparent point lands well above
+  // where the crossed-arms/shirt reach the image's own bottom edge, and
+  // (measured, see this pass's own report) well above the y-position
+  // .heroText's own overlap reaches, so real pixel opacity is already
+  // zero everywhere the copy renders a glyph.
+  .hero[data-mobile-cutout-anchor] .heroVisualImg {
+    mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 68%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 68%);
+  }
+
+  // No scrim — the mask above is the entire legibility mechanism now;
+  // adding a second darkening/lightening layer on top would fight it
+  // instead of complementing it.
+
+  // Overlap: a negative margin-top pulls the text block up into the
+  // image's own box — see this pass's own report for the exact measured
+  // px this produces (it depends on .heroInner's own grid gap, which
+  // this margin has to cancel before it can start actually overlapping).
+  // padding-top: 0 (unchanged from the flat-stack pass) — the ONLY
+  // spacing above the kicker is this negative margin now, no residual
+  // padding stacked on top of it.
+  .hero[data-mobile-cutout-anchor] .heroText {
+    margin-top: -7.5rem;
+    padding-top: 0;
+    padding-bottom: var(--space-9);
+  }
 }
 
 .heroInner {
