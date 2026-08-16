@@ -45,7 +45,15 @@
 // acknowledged tradeoff from the original A/B pass, not a bug).
 .welcomeTopZone {
   container-type: inline-size;
-  padding: var(--space-7) var(--space-7) 0;
+  // Mobile-cramped pass — horizontal padding was --space-7 (48px) at
+  // every width below md, on top of .welcomeInner's own --space-5 (24px)
+  // container padding: 72px total text inset at 390, against the
+  // portrait photo's own measured 48px inset (.welcomePhotoLayer's
+  // margin: var(--space-6) auto var(--space-7) inside a card with no
+  // padding of its own). Reduced to --space-5 here so the two match
+  // exactly (24 container + 24 zone = 48px, both columns). md+ override
+  // below is untouched — this only changes the base (mobile) value.
+  padding: var(--space-7) var(--space-5) 0;
 
   @include mixins.breakpoint-up(md) {
     padding: var(--space-8) var(--space-8) 0;
@@ -59,9 +67,18 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  // --tone-mid-accent-small: the established AA-safe swap for small text
-  // on sand-deep (checked: 7.25:1 light / 8.28:1 dark).
-  color: var(--tone-mid-accent-small);
+  // SectionKicker pass — was --tone-mid-accent-small (#e0c8a7, "gold-
+  // light"), a token no other kicker on the site uses; this block never
+  // actually used tone-mid-surface (it moved to tone-base — see
+  // .welcomeOuterMid's own comment), so that token's own "AA-safe swap
+  // for small text on sand-deep" justification never applied here in the
+  // first place. --color-accent is the same token SectionKicker's own
+  // .wrap sets on itself (SectionKicker.module.scss) — kept here too,
+  // redundant with that but matching every other real kicker caller
+  // (e.g. TimelineSection.module.scss's own .kicker), so the rule and
+  // the text color are provably the same source as the rest of the site,
+  // not just visually similar.
+  color: var(--color-accent);
 }
 
 .welcomeHeading {
@@ -73,6 +90,16 @@
   font-size: var(--welcome-heading-fs);
   line-height: var(--lh-display);
   color: var(--color-text);
+
+  // Mobile-cramped pass — at 390 the cqw branch (5.4cqw of the narrow
+  // topZone) sits far under the 2.5rem floor, so this was always
+  // rendering at the floor's own 40px, an H1/display size for what reads
+  // as a section heading. --fs-h2 is the site's own standard H2 token
+  // (used elsewhere at this exact hierarchy level) rather than an
+  // invented number.
+  @include mixins.breakpoint-down(md) {
+    --welcome-heading-fs: var(--fs-h2);
+  }
 }
 
 .welcomeEmphasis {
@@ -85,6 +112,18 @@
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   color: var(--color-text-muted);
+
+  // Mobile-cramped pass — one step down the body scale (--fs-body-lg
+  // 18px -> --fs-body 16px), staying well clear of the 14px floor for
+  // running text on this site. .welcomeAreaText/.welcomeAreaLink get the
+  // identical override below, not just this paragraph — they share
+  // --fs-body-lg deliberately today (see their own comment: "at the same
+  // visual weight as body copy"), and reducing only the paragraph would
+  // break that intentional match.
+  @include mixins.breakpoint-down(md) {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+  }
 }
 
 // --- Areas / CTA / signature -------------------------------------------------
@@ -102,7 +141,13 @@
   list-style: none;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-3) var(--space-5);
+  // Vertical-spacing pass — row-gap raised one step on the scale
+  // (--space-3, 12px -> --space-4, 16px). Column-gap (--space-5)
+  // unchanged. Same mechanism (grid gap, not per-item padding) every
+  // other list on the site already uses for this — see e.g.
+  // AreeSection.module.scss/ChiSonoHowIWorkVariants.module.scss's own
+  // list rules.
+  gap: var(--space-4) var(--space-5);
 
   @include mixins.breakpoint-up(md) {
     grid-template-columns: repeat(2, 1fr);
@@ -136,6 +181,13 @@
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   color: var(--color-text-muted);
+
+  // Mobile-cramped pass — kept matched with .welcomeParagraph's own
+  // mobile override (see that rule's own comment for why).
+  @include mixins.breakpoint-down(md) {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+  }
 }
 
 .welcomeAreaLink {
@@ -153,6 +205,11 @@
   }
 
   @include mixins.focus-ring;
+
+  @include mixins.breakpoint-down(md) {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+  }
 }
 
 .welcomeCta {
@@ -198,6 +255,28 @@
   text-transform: uppercase;
   line-height: var(--lh-small);
   color: var(--color-text-muted);
+
+  // Credentials-hierarchy pass, mobile only — right-alignment here is a
+  // deliberate desktop composition (paired with .welcomeSignatureRow's
+  // own justify-content: space-between — name flush left, credentials
+  // flush right on the one shared line, and flush right again if it
+  // wraps to a second line there). At 390 the row is only ~246px wide,
+  // well under what fits both blocks on one line, so flex-wrap already
+  // stacks them — right-aligning a fully stacked block creates a ragged
+  // right edge floating away from the name's own left edge, with none of
+  // the "opposite the name" logic that motivates it on desktop. Reads as
+  // an unaddressed side effect of the stacking breakpoint, not a
+  // considered mobile choice — left-aligned here to match the name and
+  // the rest of the column. Size drops to 0.75rem (12px, literal —
+  // matches .welcomeKicker's own established size for small
+  // uppercase/bold/letter-spaced caption text elsewhere in this same
+  // file; --fs-small at 14px was already below the name's 19px in raw
+  // terms, but the all-caps/bold/letter-spaced/multi-line treatment was
+  // still visually outweighing it).
+  @include mixins.breakpoint-down(md) {
+    text-align: left;
+    font-size: 0.75rem;
+  }
 }
 
 // ============================================================================
@@ -270,7 +349,10 @@
 .welcomeLowerZone {
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-7) var(--space-7);
+  // Mobile-cramped pass — same --space-7 -> --space-5 horizontal
+  // reduction as .welcomeTopZone above, same reasoning (matches the
+  // photo's own 48px inset). md+ override untouched.
+  padding: 0 var(--space-5) var(--space-7);
 
   @include mixins.breakpoint-up(md) {
     padding: 0 var(--space-8) var(--space-8);

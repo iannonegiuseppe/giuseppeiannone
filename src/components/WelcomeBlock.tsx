@@ -7,6 +7,7 @@ import type { AreaRow } from "@/components/AreeSection";
 import { Button } from "@/components/Button";
 import { ContactFormDialog, type ContactFormDialogHandle } from "@/components/ContactFormDialog";
 import { ShimmerText } from "@/components/ShimmerText";
+import { SectionKicker } from "@/components/ui/SectionKicker";
 import type { Locale } from "@/sanity/paths";
 import styles from "./welcome.module.scss";
 
@@ -92,7 +93,9 @@ function WelcomeTopZone({
 }) {
   return (
     <div className={styles.welcomeTopZone}>
-      <p className={styles.welcomeKicker}>{kicker}</p>
+      <p className={styles.welcomeKicker}>
+        <SectionKicker>{kicker}</SectionKicker>
+      </p>
       <h2 className={styles.welcomeHeading}>
         {title}{" "}
         <ShimmerText className={styles.welcomeEmphasis}>{titleEmphasis}</ShimmerText>
