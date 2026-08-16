@@ -22,6 +22,20 @@
   max-height: 100vh;
   width: 100%;
   height: 100%;
+  // No-scrollbar pass — the slide (.imageOutgoing/.imageIncoming, below)
+  // travels via translateX(±100vw), so for the transition's own brief
+  // duration BOTH images are in the document at once, well outside this
+  // element's own box. Clipped here, not on body: .dialog is already
+  // explicitly sized to exactly the viewport (max-width/height above),
+  // so nothing this clips was ever visible in the first place — no
+  // change to the slide's own look, only to whether the sliding images
+  // are allowed to register as page-level horizontal overflow while
+  // they're off to either side. Confirmed live this doesn't clip the
+  // close/prev/next buttons: they're position:fixed, and .dialog sets no
+  // transform/filter/perspective that would hijack their containing
+  // block away from the real viewport (see .closeButton's own comment
+  // for why that specific combination matters).
+  overflow: hidden;
   // Champagne pass — NOT --color-accent/--color-accent-hover directly.
   // Both are among the tokens tone.light-island-surface reassigns (see
   // CLAUDE.md's own documented list), and DiplomiSlider.tsx renders this
