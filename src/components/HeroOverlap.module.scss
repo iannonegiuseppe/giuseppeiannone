@@ -47,19 +47,6 @@
   }
 }
 
-// Primary: accent fill, ivory text.
-.btnPrimary {
-  @include shared.button-base;
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  border: var(--button-border-width) solid var(--color-accent);
-
-  &:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
-  }
-}
-
 // --- Hero — full-height pass -----------------------------------------------
 // Full-viewport again on both breakpoints — 100dvh where supported
 // (recomputes live as mobile browser chrome shows/hides, so the hero
@@ -369,10 +356,11 @@
 // `backgroundMedia` prop — currently only DesignLabHomepage.tsx passes
 // one. Nothing above this point is touched or reused for sizing/layout
 // (only .heroOverlapSection as the shared outer shell, plus
-// .heroOverlapName/.heroOverlapEmphasis/.heroOverlapSubtitle/.btnPrimary/
-// .heroOverlapCta for the actual heading/CTA content, unchanged). The
-// real production site never passes backgroundMedia, so none of this
-// can ever affect it.
+// .heroOverlapName/.heroOverlapEmphasis/.heroOverlapSubtitle/.heroOverlapCta
+// for the actual heading/CTA content, unchanged — the CTA's own fill/hover
+// now comes from Button.tsx's own primary variant, see HeroOverlap.tsx's
+// own HeroCta call, not a local class here anymore). The real production
+// site never passes backgroundMedia, so none of this can ever affect it.
 .heroVideoSection {
   overflow: hidden;
 }

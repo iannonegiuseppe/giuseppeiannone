@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { LocationEntry } from "@/components/LocationsSection";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import type { LocationsLabels } from "@/components/LocationsInteractive";
+import { ButtonLink } from "@/components/Button";
 import styles from "./sediSection.module.scss";
 
 // Forked from src/components/LocationsPopupContent.tsx (shared with
@@ -101,14 +102,15 @@ export function SediPopupContent({
       <p className={styles.popupAddress}>{secondary}</p>
 
       <div className={styles.popupActions}>
-        <a
+        <ButtonLink
           href={googleHref}
           target="_blank"
           rel="noopener noreferrer"
+          variant="primary"
           className={styles.popupActionPrimary}
         >
           {labels.googleMapsLabel}
-        </a>
+        </ButtonLink>
         <div className={styles.popupActionsSecondary}>
           <a href={appleHref} target="_blank" rel="noopener noreferrer" className={styles.popupActionSecondary}>
             {labels.appleMapsLabel}

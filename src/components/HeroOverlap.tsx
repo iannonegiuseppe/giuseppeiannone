@@ -195,7 +195,7 @@ export function HeroOverlap({
             {renderHeadline(headline, headlineEmphasisWord, styles.heroOverlapEmphasis)}
           </h1>
           <p className={styles.heroOverlapSubtitle}>{positioningStatement}</p>
-          <HeroCta href="#contatto" className={`${styles.btnPrimary} ${styles.heroOverlapCta}`}>
+          <HeroCta href="#contatto" variant="primary" className={styles.heroOverlapCta!}>
             {ctaLabel}
           </HeroCta>
         </div>

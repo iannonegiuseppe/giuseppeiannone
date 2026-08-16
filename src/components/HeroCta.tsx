@@ -1,6 +1,7 @@
 "use client";
 
 import { useLenisRef } from "./LenisProvider";
+import { buttonClassName, ButtonContent, type ButtonTone, type ButtonVariant } from "./Button";
 
 // Hero — finish it: the CTA previously pointed at href="#" (a pre-existing
 // dead link). Wired here to smooth-scroll to the contact section instead
@@ -12,14 +13,32 @@ import { useLenisRef } from "./LenisProvider";
 // prefers-reduced-motion is checked directly (not inferred from Lenis being
 // absent, since Lenis is also disabled for coarse-pointer/touch, which
 // should still get a native smooth scroll, not an instant jump).
+//
+// Gold-button unification pass — `variant` is a new, OPTIONAL opt-in: when
+// omitted, this renders exactly as before (a plain <a>, `className` used
+// verbatim, `children` passed through untouched) — CtaBridgeSection.tsx's
+// own usage relies on this, it's a text link with its own hand-written
+// arrow span, not a filled button, and must stay byte-for-byte unaffected.
+// When a caller (HeroOverlap.tsx) passes variant="primary", this reuses
+// Button.tsx's own buttonClassName/ButtonContent — the exact same fill,
+// hover, transition, and label/arrow/glint markup a real <Button> renders
+// — rather than a second, forked copy of that recipe. HeroCta can't just
+// BE a <Button>: it owns real behavior (smooth-scroll interception, native
+// <a href> fallback for no-JS) neither Button nor ButtonLink model.
 export function HeroCta({
   href,
   className,
   children,
+  variant,
+  tone = "base",
+  showArrow = true,
 }: {
   href: string;
   className: string;
   children: React.ReactNode;
+  variant?: ButtonVariant;
+  tone?: ButtonTone;
+  showArrow?: boolean;
 }) {
   const lenisRef = useLenisRef();
 
@@ -42,9 +61,24 @@ export function HeroCta({
     }
   }
 
+  const resolvedClassName = variant
+    ? buttonClassName(variant, "default", tone, false, className)
+    : className;
+
   return (
-    <a href={href} className={className} onClick={handleClick}>
-      {children}
+    <a
+      href={href}
+      className={resolvedClassName}
+      data-tone={variant ? tone : undefined}
+      onClick={handleClick}
+    >
+      {variant ? (
+        <ButtonContent variant={variant} showArrow={showArrow}>
+          {children}
+        </ButtonContent>
+      ) : (
+        children
+      )}
     </a>
   );
 }
