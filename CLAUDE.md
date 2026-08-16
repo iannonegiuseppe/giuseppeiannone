@@ -82,6 +82,16 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
   borders. Reference tokens/mixins only.
 - Media queries are mobile-first, expressed via the breakpoint mixins — not raw
   `@media` queries with hand-written widths.
+- **`data-theme="dark"` is set on `<html>` only in `src/app/[locale]/layout.tsx`
+  — nowhere else, including `src/app/design-lab/layout.tsx`.** `:root[data-
+  theme="dark"]`-scoped token overrides only match the literal document root;
+  a `<div data-theme="dark">` wrapper anywhere else in the tree (a design-lab
+  test route, a temporary harness) never matches, so every themed token
+  silently falls through to its light default instead. Hit twice in the same
+  session building throwaway dark-theme test harnesses under `design-lab/` —
+  both times diagnosed by a screenshot/measurement that looked light-themed
+  when it should have looked dark. A route that genuinely needs to render
+  under the real dark cascade must live under `[locale]`, not `design-lab`.
 - **Inside `tone.light-island-surface` (or `tone-mid-surface`), only the tokens
   that mixin explicitly reassigns are safe to use — every other token still
   resolves to the site's ambient DARK theme value**, because the mixin doesn't
