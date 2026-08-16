@@ -95,19 +95,15 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-5);
-
-  // Mobile: price moves below the mode name/sub-line instead of forcing
-  // two columns into a narrow row — align-items only matters on the
-  // row's own cross-axis, which becomes moot once stacked, so the
-  // price's own left-alignment and a small top margin read as a natural
-  // continuation of the block instead of a stray right-aligned line.
-  flex-direction: column;
-  align-items: flex-start;
-
-  @include mixins.breakpoint-up(sm) {
-    flex-direction: row;
-    align-items: flex-end;
-  }
+  // Row pass — was flex-direction: column below sm (480px), moving the
+  // price to its own line under the mode name/sub-line block. Direct
+  // instruction: keep the price on the same line as its sub-line
+  // ("description") at every width instead. Row + align-items: flex-end
+  // now applies unconditionally — flex-end bottom-aligns the price
+  // against .pricingRowMode's own last line (the sub-line, not the mode
+  // name above it), which is what actually puts it visually beside the
+  // sub-line rather than the row's top.
+  align-items: flex-end;
 }
 
 .pricingRowMode {
@@ -129,14 +125,14 @@
 }
 
 .pricingPrice {
-  margin: var(--space-2) 0 0;
+  // Row pass — was --space-2 top margin below sm, a stacked-layout
+  // artifact (spacing under the sub-line it used to sit beneath). Now
+  // unconditionally 0: the row is never stacked at any width, so there's
+  // no "below" to space away from.
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   color: var(--color-accent);
-
-  @include mixins.breakpoint-up(sm) {
-    margin: 0;
-  }
 }
 
 // --- Footer: one flowing details line, middot-separated --------------------
