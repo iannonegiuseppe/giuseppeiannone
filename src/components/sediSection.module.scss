@@ -425,7 +425,21 @@
 :global(.leaflet-popup-content) {
   .popupWrap & {
     margin: 0;
-    width: 18rem !important;
+    // Viewport-safe width — was a flat 18rem (288px) regardless of
+    // viewport. Could not reproduce an actual overflow at 390px against
+    // the current four addresses (measured live: the popup always
+    // rendered at exactly 288px, comfortably inside both the 390px
+    // viewport and the map's own ~342px container, for every address
+    // and both the address-list and direct-marker-tap paths) — but a
+    // hardcoded pixel width has no floor under it on a genuinely
+    // narrower device or a longer future address, so this makes the
+    // guarantee real instead of accidental. min() caps at the original
+    // 288px on anything wide enough (unconditional — no breakpoint
+    // needed, same "only ever binds where it has to" pattern as
+    // ParallaxFrameStatic's own max-height cap), and shrinks below that
+    // only once the viewport genuinely can't fit it with --space-5
+    // margin on each side.
+    width: min(18rem, calc(100vw - var(--space-5) * 2)) !important;
   }
 }
 
@@ -489,60 +503,43 @@
 }
 
 // Popup weighting pass: was three equally-weighted pills. Google Maps
-// directions is now the one primary action (.popupActionPrimary, filled —
-// matches this project's existing filled-button language). Apple Maps +
-// "copia indirizzo" are demoted to plain text links (.popupActionSecondary,
-// no pill chrome), side by side beneath — one clear primary, two clearly
-// tertiary, not three competing.
+// directions is now the one primary action. Apple Maps + "copia indirizzo"
+// are demoted to plain text links (.popupActionSecondary, no pill chrome),
+// side by side beneath — one clear primary, two clearly tertiary, not
+// three competing.
 .popupActions {
   margin-top: var(--space-4);
 }
 
+// Gold-button unification pass — this used to be a full bespoke filled-
+// button recipe (padding/radius/fill/hover/focus-ring/transition, all
+// hand-duplicated from the site's other gold buttons). The Google Maps
+// link now renders the real ButtonLink (variant="primary") — see
+// SediPopupContent.tsx — which owns all of that. All that's left here is
+// the one thing that's genuinely this popup's own layout need and not
+// part of "the gold button treatment": filling the popup's own width
+// (Button's own .button class is inline-flex, not full-width by default).
 .popupActionPrimary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-button);
-  background: var(--color-accent);
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  // Correction pass: no bold anywhere in the popup — capped at
-  // --font-weight-medium (500), the same cap applied to every other text
-  // element in here (.popupTitle already read --font-weight-regular/400,
-  // unchanged). See this pass's own report for the computed weight of
-  // every popup text element after this change.
-  font-weight: var(--font-weight-medium);
-  color: var(--color-accent-contrast);
-  text-decoration: none;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 150ms ease;
-
-  &:hover {
-    background: var(--color-accent-hover);
-  }
-
-  @include mixins.focus-ring;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
 }
 
 // HONESTY-RULE CATCH: leaflet.css ships `.leaflet-container a { color: ...
-// }` (specificity 0,1,1) — measured live, not assumed: without this,
-// .popupActionPrimary/-Secondary's own `color` (a single class, 0,1,0)
+// }` (specificity 0,1,1) — measured live, not assumed. Button.module.scss's
+// own .primary sets `color` too, but as a single class (0,1,0), which still
 // loses to Leaflet's rule for any element that's an <a> specifically
 // (confirmed: the "Copia indirizzo" BUTTON already showed the correct
 // token; only the two <a> actions — Google Maps, Apple Maps — didn't).
 // :global(.leaflet-container) raises this to 0,2,0, which wins regardless
-// of stylesheet load order. The shared LocationsPopupContent.tsx/
-// LocationsSection.module.scss (.popupAction) has this exact same
-// vulnerability today — out of scope to fix there (shared with
-// production), flagged in this pass's own report instead.
+// of stylesheet load order — still needed after the gold-button
+// unification pass above, since .popupActionPrimary (this file's own
+// class, still applied alongside Button's classes) is what this selector
+// targets, and the resting-state color value it forces still has to match
+// Button.primary's own rest-state color exactly. Button's own :hover rule
+// doesn't need this — `.primary:hover:not(:disabled)` (0,3,0) already
+// outranks Leaflet's (0,1,1) on specificity alone. The shared
+// LocationsPopupContent.tsx/LocationsSection.module.scss (.popupAction)
+// has this exact same vulnerability today — out of scope to fix there
+// (shared with production), flagged in this pass's own report instead.
 :global(.leaflet-container) {
   a.popupActionPrimary {
     color: var(--color-accent-contrast);
