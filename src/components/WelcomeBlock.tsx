@@ -164,7 +164,7 @@ export function WelcomeBlock({
   }, []);
 
   return (
-    <div className={styles.welcomeOuterMid}>
+    <div className={styles.welcomeOuterMid} data-sheen="upper-left">
       <div className={styles.welcomeInner}>
         <div ref={rootRef} className={styles.welcomeCard} data-revealed={revealed}>
           <div className={styles.welcomeContent}>

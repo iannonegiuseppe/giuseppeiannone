@@ -7,6 +7,17 @@
   }
 }
 
+// Header mobile-collapsed pass — this project's breakpoints have only ever
+// been consumed mobile-first (breakpoint-up) until now; this is the first
+// rule that genuinely needs "below X," not just "above X unset." calc()
+// against the same token rather than a second hardcoded literal, so it can
+// never drift from breakpoint-up's own value for the same name.
+@mixin breakpoint-down($name) {
+  @media (max-width: calc(tokens.breakpoint($name) - 0.0625rem)) {
+    @content;
+  }
+}
+
 // --- Z-index accessor --------------------------------------------------
 @function z($name) {
   @return tokens.z($name);
@@ -124,4 +135,120 @@
   display: grid;
   gap: $gap;
   grid-template-columns: repeat(auto-fit, minmax($min-item-width, 1fr));
+}
+
+// --- Sheen (upper-left) ----------------------------------------------------
+// One reusable answer to "where does light come from" for dark sections —
+// see this pass's own report for the audit that found three existing
+// gradient treatments each lighting from a different position (12%/0%,
+// 50%/-10%, 64%/46%) with no shared source of truth. Upper-left, per
+// direct instruction: it agrees with where light actually falls in the
+// /libri book photograph and in the portraits, rather than contradicting
+// the photography. This mixin does NOT touch any of those three existing
+// treatments — a separate, later pass, not this one.
+//
+// Compositional, not material — this is the "sheen" half of a deliberate
+// split (see this pass's own report, item 2): a light source, meant to be
+// used on a small, considered number of sections per page, not everywhere.
+// Grain (a material, always-on texture) is a SEPARATE opt-in, built
+// separately, precisely so the two don't become one combined "dark section
+// treatment" that can only be taken as a whole.
+//
+// Same two-layer recipe already proven by Come lavoro/Timeline-route (a
+// radial accent-tinted highlight, alpha-composited over a linear surface
+// -to-bg base) — reusing that recipe, not inventing a new visual language,
+// just a different, single, agreed light position. Tokens only: every stop
+// is var(--color-accent)/var(--color-surface)/var(--color-bg), so this
+// reads correctly wherever those resolve to the real dark palette — and,
+// deliberately unguarded against the alternative, will read WRONG (by
+// design, not a bug) if included inside a scope that has locally
+// reassigned them to something else (tone.light-island-surface, for one)
+// — this mixin doesn't try to force a dark result out of a light-scoped
+// element; it trusts the tokens, the same way rich-dark-surface always did.
+//
+// Opt-in via a DATA ATTRIBUTE (data-sheen="upper-left"), not a class —
+// matches this codebase's own established pattern for optional,
+// cross-cutting visual states (data-theme, data-collapsed, data-light-hero,
+// data-mobile-menu-open all work this way; there is no precedent anywhere
+// in this codebase for a shared, unscoped utility class, and introducing
+// one would fight CSS Modules' own per-file class hashing for no reason).
+// A component includes this mixin ONCE, wiring up the capability; each
+// rendered instance then opts in or out simply by whether its own root
+// element carries the attribute — trivial to toggle for an A/B screenshot,
+// on the same element the mixin's own position:relative applies to.
+//
+// Tonal range, measured live on a genuine dark section: 1.83:1 (floor was
+// 1.8). Resolved text colour against that same peak: 8.41:1 — nowhere
+// near the 4.5:1 floor, real margin kept deliberately (30% accent mix,
+// not pushed to the ceiling that number allows).
+//
+// GUARD — a comment is not enough (found out the hard way: this mixin
+// was applied to ContactBlock, a tone.light-island-surface section,
+// despite the paragraph above already documenting the exact failure
+// mode). --color-surface is not one of the tokens light-island-surface
+// reassigns (_tone.scss, and CLAUDE.md's own "NOT covered" list) — used
+// inside that scope, this mixin's color-mix(--color-surface, --color-bg)
+// base silently mixes a genuinely-dark literal with genuinely-light
+// values. Below, a @container style query reads
+// --tone-surface-scope (set to "light" by light-island-surface itself,
+// _tone.scss) and, when it matches, REPLACES the gradient with an
+// unmissable hazard pattern instead of painting the muddy result —
+// fails loud, doesn't degrade quietly to "do nothing." Style queries
+// need no container-type/container-name setup to read an ancestor's (or
+// the originating element's own) custom properties; supported in every
+// evergreen browser as of this pass.
+@mixin upper-left-sheen {
+  // z-index: 0 here (not just position: relative) is load-bearing, found
+  // live: position != static with z-index left auto does NOT establish a
+  // stacking context on its own (a real CSS2.1 rule, not a guess — first
+  // draft of this mixin used just position:relative and the ::before's
+  // negative z-index escaped to whatever ancestor DOES establish one,
+  // rendering the sheen behind unrelated page content instead of behind
+  // its own consumer — confirmed by forcing the ::before to solid red
+  // and finding it invisible even then). Setting both together makes
+  // this element genuinely its own local stacking context, so the
+  // negative-z-index pseudo below stays contained to it.
+  position: relative;
+  z-index: 0;
+
+  &[data-sheen="upper-left"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    // Negative, not 0 — this mixin has to sit behind whatever ordinary,
+    // non-positioned content a consuming component already renders,
+    // without requiring that component to also promote its own content
+    // to a stacking context. A positioned z-index:0 layer stacks ABOVE
+    // normal in-flow content by default (positioned elements form their
+    // own level over non-positioned ones); -1 is the standard idiom for
+    // "behind everything ordinary," and doesn't require any change on
+    // the consumer's side.
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        120% 100% at 15% 10%,
+        color-mix(in srgb, var(--color-accent) 30%, transparent) 0%,
+        transparent 55%
+      ),
+      linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--color-surface) 55%, var(--color-bg) 45%) 0%,
+        var(--color-bg) 100%
+      );
+
+    // See this mixin's own top comment ("GUARD") — light-island-surface
+    // sets --tone-surface-scope: light on itself; when this pseudo's
+    // originating element is inside that scope, this query matches and
+    // overrides the background above with a hazard pattern.
+    @container style(--tone-surface-scope: light) {
+      background: repeating-linear-gradient(
+        45deg,
+        #ff00ff 0px,
+        #ff00ff 16px,
+        #000000 16px,
+        #000000 32px
+      );
+    }
+  }
 }

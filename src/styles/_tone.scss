@@ -151,6 +151,17 @@
   --divider-glow: none;
   --hope-section-padding-block: var(--space-9);
   --hope-section-padding-block-lg: var(--space-10);
+  // Sheen-mixin guard sentinel — see mixins.upper-left-sheen's own
+  // comment (_mixins.scss) for the full story: --color-surface is NOT
+  // one of the tokens this mixin reassigns (documented gap, CLAUDE.md's
+  // own "NOT covered" list), so any mixin reading --color-surface
+  // directly — upper-left-sheen does, for its gradient base — would
+  // silently mix a dark literal with these reassigned light values if
+  // applied inside this scope. This flag is a real, enforced signal
+  // (read via a @container style query), not documentation: it's what
+  // let that mixin catch this contamination live instead of relying on
+  // a comment being read.
+  --tone-surface-scope: light;
 }
 
 // tone-mid: no background-painting conflict (mid is a flat color, not a

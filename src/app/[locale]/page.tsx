@@ -553,7 +553,11 @@ export default async function Home({
           design-lab's own wrapper exactly, same pattern AreeSection/
           FaqSection/DiplomiSlider already use. Layout/copy/spacing
           untouched; only the wrapper is new. */}
-      <div style={{ marginTop: "-1rem" }} className={sectionWrapperStyles.toneMidWrap}>
+      <div
+        style={{ marginTop: "-1rem" }}
+        className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+        data-sheen="upper-left"
+      >
         <RevealOnScroll>
           <RecognitionSection
             kicker={homePage?.recognition?.kicker ?? ""}
@@ -641,7 +645,11 @@ export default async function Home({
           video-hero actions (HeroVideoActions), whose "Perché rivolgersi"
           button scrolls here, so the id is live, not just kept for
           exactness. */}
-      <div id="aree" className={sectionWrapperStyles.toneMidWrap}>
+      <div
+        id="aree"
+        className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+        data-sheen="upper-left"
+      >
         <RevealOnScroll>
           <AreeSection
             kicker={homePage?.aree?.kicker ?? ""}

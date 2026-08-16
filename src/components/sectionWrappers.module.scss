@@ -166,3 +166,14 @@
 .faqLightWrap {
   @include faq-light-wrap;
 }
+
+// Sheen pass — combined with .toneMidWrap (not folded into it): toneMidWrap
+// is shared by every tone-mid section (Recognition/Aree/Tariffe/Spazi/
+// Risorse), but the sheen is deliberately applied to only the tallest two
+// or three of them, per mixins.upper-left-sheen's own "few per page"
+// design intent — see this pass's own report. Toggle is data-sheen=
+// "upper-left" on the same element, same convention the mixin's own
+// comment already established.
+.sheenWrap {
+  @include mixins.upper-left-sheen;
+}
