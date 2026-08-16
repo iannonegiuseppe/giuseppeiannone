@@ -38,6 +38,20 @@
   display: grid;
   row-gap: var(--space-6);
 
+  // Centering pass — mobile only (below md, 768px): heading, body and
+  // the button all center. text-align:center covers the two text
+  // elements directly; the button centers too because Button.module.scss
+  // sets display:inline-flex on .primary — an inline-level box, which
+  // text-align does center, not something that needed its own margin:
+  // auto or flex justify-content. Tablet (>=md, still single-column/
+  // stacked below lg) and desktop are untouched — this rule is gated to
+  // strictly below where tablet starts, not "below lg" (this component's
+  // own existing 2-column breakpoint), so the tablet-width stacked
+  // layout keeps its current left alignment.
+  @include mixins.breakpoint-down(md) {
+    text-align: center;
+  }
+
   @include mixins.breakpoint-up(lg) {
     grid-template-columns: repeat(12, 1fr);
     column-gap: var(--space-7);
@@ -98,6 +112,16 @@
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   color: var(--color-text-muted);
+
+  // Centering pass — .layout's own text-align: center (mobile only,
+  // above) centers the TEXT inside this box, but the box itself
+  // (max-width: 42ch, no auto margins) would still sit flush left
+  // within its full-width column — margin-inline: auto centers the box
+  // itself too, so the paragraph reads as a genuinely centered element,
+  // not left-stuck text that happens to center-wrap.
+  @include mixins.breakpoint-down(md) {
+    margin-inline: auto;
+  }
 }
 
 // Real-button pass: was an oversized underlined <a>; now the shared
