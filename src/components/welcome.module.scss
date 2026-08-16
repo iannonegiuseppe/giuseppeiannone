@@ -23,9 +23,10 @@
 // to distinguish it from.
 .welcomeOuterMid {
   @include tone.tone-base-surface;
-  // Sheen pass — see sectionWrappers.module.scss's own .sheenWrap comment;
-  // applied directly here (this component has no external page.tsx
-  // wrapper div) rather than via that shared class. Toggle is
+  // Glow pass — the exploratory Welcome-only overlay-circle build is now
+  // the mixin's own default mechanism (mixins.upper-left-sheen,
+  // _mixins.scss); reverted back to the shared include now that every
+  // sheen-bearing section runs the same code. Toggle is
   // data-sheen="upper-left" on this same element (WelcomeBlock.tsx).
   @include mixins.upper-left-sheen;
 }

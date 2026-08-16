@@ -154,17 +154,29 @@
 // separately, precisely so the two don't become one combined "dark section
 // treatment" that can only be taken as a whole.
 //
-// Same two-layer recipe already proven by Come lavoro/Timeline-route (a
-// radial accent-tinted highlight, alpha-composited over a linear surface
-// -to-bg base) — reusing that recipe, not inventing a new visual language,
-// just a different, single, agreed light position. Tokens only: every stop
-// is var(--color-accent)/var(--color-surface)/var(--color-bg), so this
-// reads correctly wherever those resolve to the real dark palette — and,
-// deliberately unguarded against the alternative, will read WRONG (by
-// design, not a bug) if included inside a scope that has locally
-// reassigned them to something else (tone.light-island-surface, for one)
-// — this mixin doesn't try to force a dark result out of a light-scoped
-// element; it trusts the tokens, the same way rich-dark-surface always did.
+// Mechanism pass — REPLACED what this mixin paints, not the mixin itself:
+// same opt-in (data-sheen="upper-left"), same guard, same light position
+// (15%/10%, upper-left) — every section already carrying the mixin picked
+// up the new look with zero per-section edits, which is the whole point
+// of keeping this as one mixin rather than a second, parallel mechanism.
+//
+// The original recipe MIXED a tint INTO the ground's own paint
+// (color-mix(--color-accent, transparent) composited over a linear
+// surface-to-bg base) — live review found that read as a warm patch of a
+// different colour laid over the section, not as light falling on it,
+// because any amount of champagne shifts a green ground toward yellow.
+// This version instead OVERLAYS a translucent circle on top of whatever
+// the section already paints (its own tone mixin or literal background,
+// untouched) — light sitting over the ground as a distinct layer, not
+// mixed into its colour. No --color-surface/--color-bg read here at all
+// now (the old base layer is gone; every section already paints its own
+// base), which incidentally means the failure mode the GUARD below exists
+// for — a dark literal mixing with reassigned light tokens — can't
+// technically recur this way. The guard stays anyway: even a
+// technically-clean gold circle is still the wrong RESULT on a light
+// island (flat, undecorated, no vignette — see tone.light-island-surface's
+// own comment), so this is enforcing a design rule now, not just a token
+// bug.
 //
 // Opt-in via a DATA ATTRIBUTE (data-sheen="upper-left"), not a class —
 // matches this codebase's own established pattern for optional,
@@ -177,39 +189,31 @@
 // element carries the attribute — trivial to toggle for an A/B screenshot,
 // on the same element the mixin's own position:relative applies to.
 //
-// Tonal range floor is PER-SURFACE, not one fixed number — found out live
-// applying this same recipe to two different grounds (Recognition/Aree/
-// Welcome, see this pass's own report). On the base ground
-// (tone.tone-base-surface / ambient --color-bg, #081512 dark theme —
-// Welcome) the composited peak reaches ~1.8:1 against the far corner
-// (measured 1.86:1). On the mid surface (tone.tone-mid-surface, #16261F —
-// Recognition/Aree) the SAME recipe, unchanged, reaches only ~1.7:1
-// (measured 1.72:1 on both) — that surface's own resting tone starts
-// lighter, leaving less headroom before the highlight would need pushing
-// brighter than the "few, considered, subtle" design intent allows. A
-// lower number on the mid surface is the correct, expected result of a
-// lighter starting ground, not a regression in the mixin — do not read
-// a mid-surface instance measuring ~1.7 as broken, and do not brighten
-// the highlight to chase 1.8 there. Resolved text colour against each
-// surface's own peak stays nowhere near the 4.5:1 floor either way
-// (7.58:1 mid, 8.28:1 base), real margin kept deliberately (30% accent
-// mix, not pushed to the ceiling either number allows).
+// Tokens where one exists: the colour is var(--color-glow-soft)
+// (_tokens.scss), a new token — NOT --color-accent-soft (rgba(194,154,94,
+// 0.14), close but not equal), which already has real, contrast-verified
+// consumers elsewhere that a value change would have silently affected.
+// See --color-glow-soft's own comment for the full reasoning. Size/
+// position: a circle, explicit radius min(35vw, 440px) (half of
+// min(70vw, 880px) — the diameter judged live on Welcome), centred at the
+// same 15%/10% point the old radial used, fixed regardless of section
+// height — see this pass's own report for which sections that reads
+// sensibly on and which it doesn't (short ones overflow top and bottom
+// and read as a band rather than a corner light; not corrected per
+// section here, reported instead).
 //
 // GUARD — a comment is not enough (found out the hard way: this mixin
 // was applied to ContactBlock, a tone.light-island-surface section,
-// despite the paragraph above already documenting the exact failure
-// mode). --color-surface is not one of the tokens light-island-surface
-// reassigns (_tone.scss, and CLAUDE.md's own "NOT covered" list) — used
-// inside that scope, this mixin's color-mix(--color-surface, --color-bg)
-// base silently mixes a genuinely-dark literal with genuinely-light
-// values. Below, a @container style query reads
+// despite an earlier version of this same comment already documenting
+// the failure mode). Below, a @container style query reads
 // --tone-surface-scope (set to "light" by light-island-surface itself,
-// _tone.scss) and, when it matches, REPLACES the gradient with an
-// unmissable hazard pattern instead of painting the muddy result —
-// fails loud, doesn't degrade quietly to "do nothing." Style queries
-// need no container-type/container-name setup to read an ancestor's (or
-// the originating element's own) custom properties; supported in every
-// evergreen browser as of this pass.
+// _tone.scss) and, when it matches, REPLACES the background with an
+// unmissable hazard pattern instead of painting the (now merely
+// undesired, not technically broken) result — fails loud, doesn't
+// degrade quietly to "do nothing." Style queries need no container-type/
+// container-name setup to read an ancestor's (or the originating
+// element's own) custom properties; supported in every evergreen browser
+// as of this pass.
 @mixin upper-left-sheen {
   // z-index: 0 here (not just position: relative) is load-bearing, found
   // live: position != static with z-index left auto does NOT establish a
@@ -238,17 +242,11 @@
     // the consumer's side.
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(
-        120% 100% at 15% 10%,
-        color-mix(in srgb, var(--color-accent) 30%, transparent) 0%,
-        transparent 55%
-      ),
-      linear-gradient(
-        160deg,
-        color-mix(in srgb, var(--color-surface) 55%, var(--color-bg) 45%) 0%,
-        var(--color-bg) 100%
-      );
+    background: radial-gradient(
+      circle min(35vw, 440px) at 15% 10%,
+      var(--color-glow-soft) 0%,
+      transparent 66%
+    );
 
     // See this mixin's own top comment ("GUARD") — light-island-surface
     // sets --tone-surface-scope: light on itself; when this pseudo's

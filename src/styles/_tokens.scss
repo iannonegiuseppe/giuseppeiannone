@@ -779,6 +779,15 @@ $z-index: (
   // added in Phase 2). Two intensities, matching Cyprus's own pairing.
   --color-glow: rgba(194, 154, 94, 0.2);
   --color-glow-strong: rgba(216, 178, 104, 0.55);
+  // Third, softer tier — the sheen mixin's own corner-glow overlay
+  // (upper-left-sheen, _mixins.scss). Not --color-accent-soft (rgba(194,
+  // 154, 94, 0.14), close but not equal): that token has real, already
+  // contrast-verified consumers (sharedSections.module.scss's own
+  // measured 4.16:1, portableTextComponents.module.scss in three places)
+  // — moving it to .16 would touch all of them without re-verifying any.
+  // Added here instead, alongside its own family, rather than repeating
+  // the literal at each of the sheen's — soon to be many — call sites.
+  --color-glow-soft: rgba(194, 154, 94, 0.16);
   // Glass — translucent panel system (frosted-card treatments). First
   // real consumer wired up later (Hero's video-hero buttons) — bg alpha
   // lowered from Cyprus's own reference 0.06 to 0.04; see the base :root
