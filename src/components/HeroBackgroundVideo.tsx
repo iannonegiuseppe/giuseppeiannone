@@ -17,21 +17,25 @@ import styles from "./heroBackgroundVideo.module.scss";
 //    of srcDesktop/srcMobile is actually set; otherwise no <video>
 //    element is rendered at all and the poster is the whole hero.
 // 3. Once it can actually play through, it fades in over the poster and
-//    plays exactly once — muted, no controls, never looped (deliberate:
-//    a continuous full-screen loop is tiring for this audience; one pass
-//    that settles is not).
-// 4. On `ended`, it's paused (already stopped on its own last frame,
-//    since no loop is set — the explicit pause is a redundant-but-cheap
-//    guarantee, not a workaround for anything). hasPlayedRef additionally
-//    guards against ever calling play() a second time, so scrolling away
-//    mid-play and back can never restart it.
+//    plays on a continuous loop — muted, no controls (loop pass:
+//    reverses the earlier "plays exactly once" decision documented here
+//    before; owner's explicit call after being shown the original
+//    reasoning, not a silent reversal). hasPlayedRef still guards
+//    against calling play() more than once — that's for canplaythrough
+//    firing again, not for gating repeat playback, which the native
+//    `loop` attribute now owns entirely; the video never fires its own
+//    `ended` event while looping (per spec — a looping video seeks back
+//    to 0 and keeps playing instead), so there is no separate handler
+//    needed for that.
 //
 // prefers-reduced-motion: reduce, or navigator.connection.saveData, both
 // skip step 2 entirely — the <video> element is never rendered, so the
 // browser never requests any video file at all; the poster is what's
-// shown, permanently. A full-screen looping/autoplaying background is
+// shown, permanently. A CONTINUOUSLY LOOPING full-screen background is
 // exactly what that setting exists to suppress, and this site's audience
-// is people with anxiety and panic disorders — not touched by this pass.
+// is people with anxiety and panic disorders — this pass's own loop
+// change makes that guard more load-bearing than it was before, not
+// less; still untouched here, still skips the video entirely.
 //
 // Source selection: native <source media="..."> — no JS viewport check.
 // The browser evaluates each <source>'s media query itself, before
@@ -115,19 +119,14 @@ export function HeroBackgroundVideo({
       });
     }
 
-    function handleEnded() {
-      // Freeze on the final frame: pause, don't seek/reset — the video
-      // is already sitting on its last frame at this point (no loop is
-      // set), so this is a redundant-but-explicit guarantee, not a fix
-      // for anything actually observed.
-      video?.pause();
-    }
-
+    // No `ended` handler — with the `loop` attribute set below, the
+    // browser never fires `ended` at all (it seeks back to 0 and keeps
+    // playing instead, per spec); the old pause-on-ended handler here
+    // would now be genuinely dead code, not a harmless redundant
+    // guarantee, so it's removed rather than left in place unreachable.
     video.addEventListener("canplaythrough", handleCanPlay, { once: true });
-    video.addEventListener("ended", handleEnded);
     return () => {
       video.removeEventListener("canplaythrough", handleCanPlay);
-      video.removeEventListener("ended", handleEnded);
     };
   }, [shouldLoadVideo]);
 
@@ -149,6 +148,7 @@ export function HeroBackgroundVideo({
           data-visible={videoVisible}
           muted
           playsInline
+          loop
           preload="metadata"
           aria-hidden="true"
         >
