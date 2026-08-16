@@ -16,6 +16,12 @@
   position: relative;
   width: 100%;
   aspect-ratio: 10 / 4;
+  // Height pass — desktop cap. Unconditional, no breakpoint needed: at
+  // aspect-ratio 10/4 this only ever binds where width >= ~1125px (450px
+  // × 2.5), so mobile's own aspect-ratio height (well under 450px even
+  // after the +50px override below) never reaches it. Was uncapped
+  // before this pass — measured 576px at 1440px wide.
+  max-height: 450px;
   overflow: hidden;
   // clip-path is the operative property — it clips a position:fixed
   // descendant to THIS box at paint time, across the containing-block
@@ -23,6 +29,16 @@
   // alone does not do this for a fixed child; kept alongside anyway as
   // the belt-and-braces the brief itself asked for.
   clip-path: inset(0);
+
+  // Height pass — mobile, +50px over the measured current height (156px
+  // at 390px wide, from width:100% × aspect-ratio 10/4) = 206px. An
+  // explicit height, not a ratio, since "50px taller than it is now" is
+  // an absolute target, not a new ratio — aspect-ratio becomes moot once
+  // both width and height are definite (CSS only uses the ratio to
+  // resolve a MISSING dimension), so no need to also unset it here.
+  @include mixins.breakpoint-down(md) {
+    height: 206px;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     height: auto;
