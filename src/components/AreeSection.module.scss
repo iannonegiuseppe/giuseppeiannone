@@ -6,7 +6,15 @@
 // pattern reuses the exact standard values already established by
 // Recognition/Journey/Diplomi/Chi sono's own copy.
 .areeSection {
-  background: var(--color-bg);
+  // Sheen pass — background removed: this was correct when the component
+  // rendered standalone, but both real render sites (production page.tsx,
+  // design-lab DesignLabHomepage.tsx) always wrap it in .toneMidWrap
+  // (tone.tone-mid-surface), which already paints this exact color via
+  // --tone-mid-bg and reassigns --color-bg to the same value — this rule
+  // was a redundant opaque repaint sitting directly above the wrapper's
+  // sheen ::before, hiding it completely wherever this section covers it.
+  // No standalone/unwrapped render site exists, so removing it leaves
+  // nothing transparent that should be opaque.
   padding-block: var(--space-band-y);
 }
 
