@@ -89,7 +89,15 @@
 
 // --- Areas / CTA / signature -------------------------------------------------
 .welcomeAreasList {
-  margin: 0;
+  // Spacing pass — was margin: 0, i.e. genuinely flush against
+  // .welcomeParagraph above (that rule's own margin is top-only, nothing
+  // on its bottom either) — measured live, no gap at all. --space-5
+  // (24px): a real paragraph break, clearly more than the tight 16px
+  // (--space-4) heading-to-paragraph gap above it, and the same value
+  // this list already uses for its own column-gap below, so the outer
+  // paragraph/list separation reads as one step in the same rhythm
+  // rather than an arbitrary new number.
+  margin: var(--space-5) 0 0;
   padding: 0;
   list-style: none;
   display: grid;

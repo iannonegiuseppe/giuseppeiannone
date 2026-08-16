@@ -300,12 +300,23 @@
   color: var(--color-text);
 }
 
-// Real emphasis technique — EB Garamond italic 400 + --color-accent, the
-// exact recipe documented in /styleguide.
+// Real emphasis technique — EB Garamond italic 400. Colour is NOT set
+// here (found live: it was, and it broke the shimmer): ShimmerText's own
+// .shimmer class (merged onto this SAME element, HeroOverlap.tsx's own
+// comment) already owns color completely — var(--color-accent) as the
+// @supports-unsupported fallback, transparent (for the gradient
+// background-clip) when supported. This rule and .shimmer carry equal
+// specificity (one class each), so whichever landed later in the
+// compiled stylesheet silently won regardless of which one was "meant"
+// to apply — this rule's own color was winning, pinning the text
+// permanently opaque and hiding the entire gradient sweep underneath it.
+// The animation was still genuinely running (confirmed live:
+// background-position was changing frame to frame) — just invisible,
+// which is exactly why this read as "still not animated" rather than as
+// an obvious CSS error.
 .heroOverlapEmphasis {
   font-style: italic;
   font-weight: var(--font-weight-regular);
-  color: var(--color-accent);
 }
 
 .heroOverlapSubtitle {

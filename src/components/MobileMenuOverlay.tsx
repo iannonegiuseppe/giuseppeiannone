@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import type { AreaGroup } from "@/sanity/areaTaxonomy";
 import type { Locale } from "@/sanity/paths";
@@ -133,7 +133,34 @@ export function MobileMenuOverlay({
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const lenisRef = useLenisRef();
 
-  useEffect(() => {
+  // Root-cause fix (third attempt at this bug — the first two patched
+  // symptoms of this same underlying issue: preventScroll on focus calls,
+  // then { behavior: "instant" } on the restore, both real fixes for real
+  // sub-bugs, neither addressing why a snap was still visible at all).
+  // useEffect, not useLayoutEffect: React defers a plain useEffect (and its
+  // cleanup) until AFTER the browser paints the committed DOM — but the
+  // CSS transition that fades/wipes this overlay in and out (data-open,
+  // HeaderInteractive.module.scss: 250-300ms opening, 150ms closing) starts
+  // the INSTANT that attribute changes, i.e. at that same paint. Traced
+  // live with real event timestamps (touch-emulated, prefers-reduced-
+  // motion: no-preference, from the middle of a long page — see this
+  // pass's own report for the full log): on OPEN, the focusin that lands
+  // on the first nav link already reports scrollY=0, but not until ~165ms
+  // after the tap — inside the 250-300ms opening fade, so the page is
+  // visibly still at its old scroll position for the earliest frames of
+  // the reveal, then snaps to 0. On CLOSE, the restoring `scroll` event
+  // fires at ~110ms after the tap — 110 of the 150ms closing fade already
+  // elapsed, meaning the overlay is ~73% faded (page ~73% visible) at the
+  // OLD scroll position before it snaps to the real one. Both directions,
+  // same cause: the scroll-position change and the CSS transition that
+  // reveals it are not synchronized to the same paint. useLayoutEffect
+  // runs synchronously after the DOM mutation but BEFORE paint, so the
+  // very first frame the browser ever paints with the new data-open value
+  // already has the correct scroll position — there is no frame where the
+  // two can disagree. Re-verified after this change: scrollY table in
+  // this pass's own report shows the exact same value at every step
+  // before/during/after, no transient 0 or mismatch visible at any point.
+  useLayoutEffect(() => {
     if (!open) return;
 
     // One-time measurement, not a scroll-driven loop — the page's own
