@@ -57,6 +57,20 @@
 .contactPhotoCol {
   order: 2;
 
+  // Mobile-only removal — direct instruction: the portrait photo and the
+  // parallax section immediately after this block stack badly on
+  // narrow viewports (two photographs back to back). Below md (768px)
+  // only — tablet (still single-column/stacked below this component's
+  // own lg breakpoint) and desktop both keep the photo, matching this
+  // session's own established "mobile means below md" convention
+  // (WelcomeBlock, CtaBridgeBlock). display:none, not conditional JSX —
+  // .contactGrid's single 1fr track (below lg) then belongs entirely to
+  // .contactTextCol, the only remaining grid item; no dead column, no
+  // layout change needed elsewhere.
+  @include mixins.breakpoint-down(md) {
+    display: none;
+  }
+
   @include mixins.breakpoint-up(lg) {
     order: 0; // natural DOM position (first) — left column
     // Bottom-aligned pass: was padding-top (a top-align optical nudge to
