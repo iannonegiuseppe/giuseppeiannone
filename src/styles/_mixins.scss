@@ -177,10 +177,23 @@
 // element carries the attribute — trivial to toggle for an A/B screenshot,
 // on the same element the mixin's own position:relative applies to.
 //
-// Tonal range, measured live on a genuine dark section: 1.83:1 (floor was
-// 1.8). Resolved text colour against that same peak: 8.41:1 — nowhere
-// near the 4.5:1 floor, real margin kept deliberately (30% accent mix,
-// not pushed to the ceiling that number allows).
+// Tonal range floor is PER-SURFACE, not one fixed number — found out live
+// applying this same recipe to two different grounds (Recognition/Aree/
+// Welcome, see this pass's own report). On the base ground
+// (tone.tone-base-surface / ambient --color-bg, #081512 dark theme —
+// Welcome) the composited peak reaches ~1.8:1 against the far corner
+// (measured 1.86:1). On the mid surface (tone.tone-mid-surface, #16261F —
+// Recognition/Aree) the SAME recipe, unchanged, reaches only ~1.7:1
+// (measured 1.72:1 on both) — that surface's own resting tone starts
+// lighter, leaving less headroom before the highlight would need pushing
+// brighter than the "few, considered, subtle" design intent allows. A
+// lower number on the mid surface is the correct, expected result of a
+// lighter starting ground, not a regression in the mixin — do not read
+// a mid-surface instance measuring ~1.7 as broken, and do not brighten
+// the highlight to chase 1.8 there. Resolved text colour against each
+// surface's own peak stays nowhere near the 4.5:1 floor either way
+// (7.58:1 mid, 8.28:1 base), real margin kept deliberately (30% accent
+// mix, not pushed to the ceiling either number allows).
 //
 // GUARD — a comment is not enough (found out the hard way: this mixin
 // was applied to ContactBlock, a tone.light-island-surface section,
