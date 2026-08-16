@@ -22,6 +22,24 @@
   max-height: 100vh;
   width: 100%;
   height: 100%;
+  // Champagne pass — NOT --color-accent/--color-accent-hover directly.
+  // Both are among the tokens tone.light-island-surface reassigns (see
+  // CLAUDE.md's own documented list), and DiplomiSlider.tsx renders this
+  // component inside exactly that scope on both callers
+  // (sectionWrapperStyles.diplomiLightWrap on the homepage, the
+  // equivalent on /chi-sono) — even though this <dialog> is a modal with
+  // its OWN, always-dark backdrop, custom-property INHERITANCE follows
+  // the DOM tree regardless of the dialog's own top-layer rendering, so
+  // --color-accent here silently resolved to the light-theme taupe
+  // (#7e6b5b) instead of champagne. Confirmed live: measured button
+  // contrast collapsed to ~2:1 before this fix, and the literal sampled
+  // pixel matched #7e6b5b almost exactly — not a rendering/anti-aliasing
+  // problem, the wrong color entirely. A local, scope-immune name here
+  // (declared once, used by every control below) is deliberate — it
+  // can't silently drift with whatever section happens to have opened
+  // this dialog. Same literal --color-accent already resolves to on
+  // :root[data-theme="dark"], not a new color choice.
+  --lightbox-accent: #c29a5e;
 
   &::backdrop {
     background: color-mix(in srgb, var(--light-base-text) 94%, transparent);
@@ -86,8 +104,34 @@
   transform: scale(0.97);
 }
 
+// Champagne pass — was color: var(--light-base-bg) (this dialog's own
+// theme-invariant "white" token), which is what read as flatly grey
+// against the dark backdrop: an off-white icon with no relationship to
+// the site's own accent identity. --lightbox-accent (declared on .dialog
+// above — see that comment for why it's a local token, not
+// --color-accent directly) is the real champagne gold this whole site
+// uses. Background switched from a light 55%-alpha circle to a dark one
+// built from the SAME token the backdrop itself uses (--light-base-text,
+// "carbone") — a light chip behind a light-ish icon was itself part of
+// why the whole control read as one grey blob; a dark chip lets the gold
+// icon read clearly against it, "champagne on the dark overlay" rather
+// than champagne floating on a paler grey disc. font-weight: bold below
+// (the × glyph has no other way to get a heavier stroke) and the SVG
+// arrows' own strokeWidth bump (2 -> 2.5 in the .tsx) both exist so less
+// of each glyph's small on-screen area is anti-aliased edge — thin
+// strokes at this size dilute toward the circle behind them, and a
+// thicker stroke leaves more pixels at the glyph's own true color.
+//
+// Viewport-pinned pass — position: fixed, and moved out of .card in the
+// .tsx (siblings of it, direct <dialog> children) so this is fixed to
+// the true viewport, not to .card's own box. .card carries `transform:
+// scale(1)` for its own open/close animation — a set transform value
+// (even an identity one) establishes a new containing block for any
+// position:fixed DESCENDANT, which would have silently turned "fixed"
+// into "fixed to .card" (i.e. the exact same per-image drift bug this
+// pass exists to remove) had these stayed nested inside it.
 .closeButton {
-  position: absolute;
+  position: fixed;
   top: var(--space-4);
   right: var(--space-4);
   z-index: 2;
@@ -98,16 +142,17 @@
   height: 2.75rem;
   border-radius: 50%;
   border: none;
-  background: color-mix(in srgb, var(--light-base-bg) 55%, transparent);
-  color: var(--light-base-bg);
+  background: color-mix(in srgb, var(--light-base-text) 55%, transparent);
+  color: var(--lightbox-accent);
   font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
 
   @include mixins.focus-ring;
 }
 
 .navButton {
-  position: absolute;
+  position: fixed;
   top: 50%;
   z-index: 2;
   display: inline-flex;
@@ -118,8 +163,8 @@
   margin-top: -1.375rem; // half of width/height — center on 50% without transform (keeps GPU-safe animation rule intact even though this isn't animated)
   border-radius: 50%;
   border: none;
-  background: color-mix(in srgb, var(--light-base-bg) 55%, transparent);
-  color: var(--light-base-bg);
+  background: color-mix(in srgb, var(--light-base-text) 55%, transparent);
+  color: var(--lightbox-accent);
   cursor: pointer;
 
   @include mixins.focus-ring;
@@ -133,6 +178,18 @@
   right: var(--space-4);
 }
 
+// Slide pass — single-cell grid; see the .tsx's own comment for why this
+// two-image overlay approach (rather than a real multi-slide track) was
+// enough here: the non-absolute (current/incoming) image is the grid's
+// only sizing participant, so .imageStage's own box tracks it exactly
+// like .card always tracked .image before this pass — the outgoing image
+// overlays the same cell via position:absolute, contributing nothing to
+// that sizing, present only for the transition's own brief duration.
+.imageStage {
+  position: relative;
+  display: grid;
+}
+
 // width/height come from QualificationLightboxLab.tsx as real HTML
 // attributes (Next Image, non-fill) — width/height: auto here lets the
 // browser scale the image down from its intrinsic size while preserving
@@ -141,12 +198,103 @@
 // sitting on the dark, not a hole cut in it") — --light-base-bg at low
 // alpha, not a hardcoded white/hex.
 .image {
+  grid-area: 1 / 1;
   max-width: 92vw;
   max-height: 88vh;
   width: auto;
   height: auto;
   object-fit: contain;
   border: 1px solid color-mix(in srgb, var(--light-base-bg) 35%, transparent);
+}
+
+// Swiper-feel pass — outgoing/incoming trade places via a plain
+// translateX keyframe pair, not a toggled transition (there's no
+// resting "before" state to transition FROM: both images mount already
+// at their respective off-stage/on-stage position and animate from
+// there in one shot). vw-based travel distance, not 100% — the two
+// images can have very different natural widths (landscape vs. portrait
+// scans), and a percentage translate would carry each a different
+// absolute distance for what should read as "the same slide"; vw
+// guarantees full clearance off either edge regardless of the image's
+// own size. 450ms / cubic-bezier(0.22, 0.61, 0.36, 1) — the same ease-out
+// curve this project already uses for its other large-object reveals
+// (WelcomeBlock's own photo-layer clip-path, ChiSonoParallaxDivider),
+// reused rather than a one-off curve, at a duration on the same order as
+// the mobile-menu wipe (300ms) but a little longer since this travels a
+// full image, not a panel edge.
+.imageOutgoing {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 1;
+  animation-duration: 450ms;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: forwards;
+
+  &[data-direction="1"] {
+    animation-name: slideOutLeft;
+  }
+
+  &[data-direction="-1"] {
+    animation-name: slideOutRight;
+  }
+}
+
+.imageIncoming {
+  animation-duration: 450ms;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: backwards;
+
+  &[data-direction="1"] {
+    animation-name: slideInFromRight;
+  }
+
+  &[data-direction="-1"] {
+    animation-name: slideInFromLeft;
+  }
+}
+
+@keyframes slideOutLeft {
+  to {
+    transform: translateX(-100vw);
+  }
+}
+
+@keyframes slideOutRight {
+  to {
+    transform: translateX(100vw);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100vw);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100vw);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+// Belt-and-suspenders — goTo() in the .tsx already checks
+// prefers-reduced-motion itself and never sets the transition state that
+// mounts .imageOutgoing/.imageIncoming at all under that preference, so
+// this rule is normally inert. Kept anyway, matching every other
+// animation in this codebase's own "defend at the CSS layer too" habit,
+// in case a future caller ever drives these classes some other way.
+@media (prefers-reduced-motion: reduce) {
+  .imageOutgoing,
+  .imageIncoming {
+    animation: none;
+  }
 }
 
 .caption {
