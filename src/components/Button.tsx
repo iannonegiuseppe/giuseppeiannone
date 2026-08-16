@@ -32,7 +32,12 @@ export type ButtonTone = "base" | "mid" | "deep";
 
 const NEW_VARIANTS: ReadonlySet<ButtonVariant> = new Set(["primary", "text", "glass"]);
 
-function buttonClassName(
+// Exported alongside ButtonContent so callers that render their own root
+// element (HeroCta.tsx's <a>, which also owns non-navigational onClick
+// behavior Button/ButtonLink don't model) can opt into the exact same
+// class list and label/arrow/glint markup instead of a second, forked
+// copy of either.
+export function buttonClassName(
   variant: ButtonVariant,
   size: ButtonSize,
   tone: ButtonTone,
@@ -55,23 +60,35 @@ function buttonClassName(
 // variants only — solid/outline render exactly as before (no arrow span,
 // no glint span), since adding either would visibly change the one real
 // existing usage (the portable-text CTA).
-function ButtonContent({
+//
+// showArrow (gold-button unification pass): the header CTA is the one
+// caller of variant="primary" that must NOT show the arrow (a deliberate,
+// explicit exception — every other primary/text/glass consumer keeps it,
+// so the default stays true). Kept as a prop on ButtonContent itself
+// rather than a second content component, so both Button and ButtonLink
+// share the one branch instead of forking per-caller.
+export function ButtonContent({
   variant,
+  showArrow = true,
   children,
 }: {
   variant: ButtonVariant;
+  showArrow?: boolean;
   children: ReactNode;
 }) {
   if (!NEW_VARIANTS.has(variant)) return <>{children}</>;
   return (
     <>
       <span className={styles.label}>{children}</span>
-      <span className={styles.arrow} aria-hidden="true">
-        →
-      </span>
+      {showArrow ? (
+        <span className={styles.arrow} aria-hidden="true">
+          →
+        </span>
+      ) : null}
       {/* Glint: PRIMARY only, per spec ("one-shot glint on hover for
           PRIMARY only"). Pure CSS, hover-triggered, not ambient/looping —
-          see Button.module.scss's own comment on the mechanism. */}
+          see Button.module.scss's own comment on the mechanism. Independent
+          of showArrow — dropping the arrow doesn't drop the glint. */}
       {variant === "primary" ? <span className={styles.glint} aria-hidden="true" /> : null}
     </>
   );
@@ -82,6 +99,7 @@ interface ButtonLinkProps
   variant?: ButtonVariant;
   size?: ButtonSize;
   tone?: ButtonTone;
+  showArrow?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -93,6 +111,7 @@ export function ButtonLink({
   variant = "solid",
   size = "default",
   tone = "base",
+  showArrow = true,
   className,
   children,
   ...linkProps
@@ -103,7 +122,7 @@ export function ButtonLink({
       data-tone={NEW_VARIANTS.has(variant) ? tone : undefined}
       {...linkProps}
     >
-      <ButtonContent variant={variant}>
+      <ButtonContent variant={variant} showArrow={showArrow}>
         {children}
       </ButtonContent>
     </Link>
@@ -120,6 +139,7 @@ interface ButtonProps
   // glint, and gives assistive tech an aria-busy signal. Only meaningful
   // for the three new variants.
   pending?: boolean;
+  showArrow?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -130,6 +150,7 @@ export function Button({
   size = "default",
   tone = "base",
   pending = false,
+  showArrow = true,
   className,
   children,
   disabled,
@@ -143,7 +164,7 @@ export function Button({
       aria-busy={pending || undefined}
       {...buttonProps}
     >
-      <ButtonContent variant={variant}>
+      <ButtonContent variant={variant} showArrow={showArrow}>
         {children}
       </ButtonContent>
     </button>

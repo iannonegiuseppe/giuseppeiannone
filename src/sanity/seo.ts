@@ -111,6 +111,7 @@ export interface NavLinkData {
   customLabel?: string;
   page?: NavLinkPageRef | null;
   children?: NavLinkData[];
+  isPillarTaxonomy?: boolean;
 }
 
 interface HeaderSettingsData {

@@ -81,6 +81,7 @@ const navLinkFields = `
   linkType,
   routeKey,
   customLabel,
+  isPillarTaxonomy,
   page->{
     _id,
     _type,
@@ -99,6 +100,26 @@ export const headerSettingsQuery = defineQuery(`
       }
     },
     ctaButtonText
+  }
+`);
+
+// Header nav restructure pass — "Aree"'s dropdown content: real
+// pillarPage/subtopicPage documents, grouped by pillar. Queried live and
+// grouped in code (src/sanity/areaTaxonomy.ts), never typed into
+// headerSettings.navItems as a second copy — see navLink.ts's own
+// isPillarTaxonomy field for why. Subtopics ordered alphabetically by
+// title, the same convention structure.ts's own pillarWithSubtopics desk
+// helper already uses for the identical "subtopics under one pillar"
+// listing — no separate ordering scheme invented for this one query.
+export const areaTaxonomyQuery = defineQuery(`
+  *[_type == "pillarPage" && language == $locale]{
+    _id,
+    title,
+    "slug": slug.current,
+    "subtopics": *[_type == "subtopicPage" && language == $locale && parentPillar._ref == ^._id] | order(title asc) {
+      title,
+      "slug": slug.current
+    }
   }
 `);
 

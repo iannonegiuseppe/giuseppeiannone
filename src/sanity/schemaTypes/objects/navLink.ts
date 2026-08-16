@@ -34,6 +34,7 @@ interface NavLinkParent {
   routeKey?: string;
   page?: { _ref?: string };
   children?: unknown[];
+  isPillarTaxonomy?: boolean;
 }
 
 export const navLink = defineType({
@@ -68,8 +69,8 @@ export const navLink = defineType({
           if (value && !ALLOWED_ROUTE_KEYS.has(value)) {
             return "Must be one of the predefined routes.";
           }
-          if (!value && !parent?.children?.length) {
-            return "Required for a Site route item, unless it only holds submenu items (a grouping label).";
+          if (!value && !parent?.children?.length && !parent?.isPillarTaxonomy) {
+            return "Required for a Site route item, unless it only holds submenu items or is a pillar-taxonomy grouping label.";
           }
           return true;
         }),
@@ -90,8 +91,8 @@ export const navLink = defineType({
         Rule.custom((value: { _ref?: string } | undefined, context) => {
           const parent = context.parent as NavLinkParent | undefined;
           if (parent?.linkType !== "reference") return true;
-          if (!value?._ref && !parent?.children?.length) {
-            return "Required for a Page reference item, unless it only holds submenu items (a grouping label).";
+          if (!value?._ref && !parent?.children?.length && !parent?.isPillarTaxonomy) {
+            return "Required for a Page reference item, unless it only holds submenu items or is a pillar-taxonomy grouping label.";
           }
           return true;
         }),
@@ -117,10 +118,37 @@ export const navLink = defineType({
     defineField({
       name: "children",
       title: "Submenu items",
-      description: 'For a top-level item that opens a submenu (e.g. "Aree") — leave the parent\'s own route/reference empty to make it a pure grouping label.',
+      description:
+        'For a top-level item that also opens a submenu. Works two ways: leave the parent\'s own route/reference empty for a pure grouping label (dropdown-only, no navigation of its own — e.g. "Aree"), or set BOTH a route/reference AND submenu items so the item is a real link that ALSO opens a panel (e.g. "Chi sono" linking to /chi-sono with "Libri" beneath it) — clicking/tapping the label navigates, a separate arrow opens the panel. Not used for "Aree" — see "Populate from pillar/subtopic taxonomy" below.',
       type: "array",
       of: [{ type: "navLink" }],
-      validation: (Rule) => Rule.max(8),
+      validation: (Rule) =>
+        Rule.max(8).custom((value: unknown[] | undefined, context) => {
+          const parent = context.parent as NavLinkParent | undefined;
+          if (parent?.isPillarTaxonomy && value?.length) {
+            return "Turn off pillar-taxonomy mode to author submenu items manually, or clear submenu items to use the taxonomy — not both.";
+          }
+          return true;
+        }),
+    }),
+    // Header nav restructure pass — exactly one real use, "Aree": its 7
+    // pillars x 3-6 subtopics (28 links, grouped) come from real
+    // pillarPage/subtopicPage documents, queried and grouped in code
+    // (see src/sanity/queries.ts's own areaTaxonomyQuery and
+    // headerNavItems.ts's usesPillarTaxonomy). Typing that same list into
+    // Submenu items above as a second copy is exactly the drift risk this
+    // flag avoids — the two are mutually exclusive (see children's own
+    // validation). customLabel is still required and still typed by the
+    // editor as normal ("Aree") — only the ITEMS come from the taxonomy,
+    // not the item's own label or position in the nav.
+    defineField({
+      name: "isPillarTaxonomy",
+      title: "Populate from pillar/subtopic taxonomy (Aree)",
+      description:
+        'When enabled, this item\'s dropdown is generated automatically from the site\'s pillar/subtopic pages (grouped by pillar, three columns) instead of the Submenu items above. Used for exactly one item, "Aree" — leave off for every other item.',
+      type: "boolean",
+      initialValue: false,
+      hidden: ({ parent }: { parent?: NavLinkParent }) => Boolean(parent?.children?.length),
     }),
   ],
   preview: {
@@ -130,6 +158,7 @@ export const navLink = defineType({
       linkType: "linkType",
       pageTitle: "page.title",
       childrenCount: "children.length",
+      isPillarTaxonomy: "isPillarTaxonomy",
     },
     prepare({
       customLabel,
@@ -137,16 +166,19 @@ export const navLink = defineType({
       linkType,
       pageTitle,
       childrenCount,
+      isPillarTaxonomy,
     }: {
       customLabel?: string;
       routeKey?: string;
       linkType?: string;
       pageTitle?: string;
       childrenCount?: number;
+      isPillarTaxonomy?: boolean;
     }) {
       const title = customLabel || pageTitle || routeKey || "(untitled link)";
       const subtitleParts = [linkType === "reference" ? "Page reference" : `Route: ${routeKey ?? "—"}`];
       if (childrenCount) subtitleParts.push(`${childrenCount} submenu item(s)`);
+      if (isPillarTaxonomy) subtitleParts.push("Pillar taxonomy (auto)");
       return { title, subtitle: subtitleParts.join(" · ") };
     },
   },

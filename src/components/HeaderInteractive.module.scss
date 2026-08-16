@@ -107,6 +107,51 @@
     }
   }
 
+  // Mobile-starts-collapsed pass — below the same lg breakpoint the burger
+  // menu itself activates at, the tinted/blurred background is present
+  // from first paint, never waiting for the 150px scroll threshold
+  // data-collapsed is gated on. Deliberately the OPPOSITE pairing from the
+  // desktop light-hero decoupling above (tint starts immediately there
+  // too, but height stays FULL until real scroll — see that pass's own
+  // comment at .labHeaderInner) — on mobile BOTH the tint here and the
+  // shorter height (.labHeaderInner's own mobile-forcing rule below) start
+  // on together. Plain `.labHeader` (not doubled) is deliberate: same
+  // specificity as the base transparent rule above, wins on source order
+  // alone; correctly LOSES to body:has([data-light-hero])'s own higher
+  // specificity when that also applies, so a light-hero page on mobile
+  // still gets its already-correct 62% from that unconditional-on-width
+  // rule rather than this one's 55% default — not duplicated here. Ties
+  // harmlessly with &[data-collapsed="true"] if real scroll also pushes
+  // that true on mobile: same 55%/28px values either way.
+  //
+  // -webkit-backdrop-filter declared BEFORE the unprefixed property — this
+  // project's own documented, live-reproduced Chrome bug (see
+  // ChiSonoGlassCard.module.scss's own comment): the reverse order renders
+  // no blur at all.
+  @include mixins.breakpoint-down(lg) {
+    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(28px);
+    background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  }
+
+  // Mobile menu rebuild pass — while the burger overlay is open, the
+  // header goes fully solid (--color-bg, the SAME dark green the overlay
+  // itself now uses) instead of whatever transparency/blur scroll or
+  // light-hero state would otherwise produce, so the header strip and the
+  // panel below it read as one continuous surface rather than a glass bar
+  // floating over a separate panel. data-mobile-menu-open is written by
+  // HeaderInteractive.tsx alongside mobileMenuOpen state — independent of
+  // data-collapsed/light-hero, and must win over both regardless of
+  // scroll position. Doubled class for an unambiguous specificity boost
+  // (0,3,0 vs. every rule above's 0,2,0/0,2,1) — same established pattern
+  // as .labHeaderCta.labHeaderCta elsewhere in this file — rather than
+  // relying on source order against a cross-cutting :has() selector.
+  &.labHeader[data-mobile-menu-open="true"] {
+    background: var(--color-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   // Legibility fix (required, not optional) — see the round-3 report for
   // the full measurement. At rest (scrollY=0, header fully transparent)
   // the worst point across the header's width — nav links sitting
@@ -146,6 +191,7 @@
 
 .labHeaderInner {
   @include mixins.container;
+  position: relative; // positioning context for .headerAreaPanel below — see that rule's own comment for why it can't anchor to its own immediate (narrow) trigger instead
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -158,6 +204,17 @@
   gap: var(--space-3); // 12px, mobile tier
   padding-block: 1.75rem; // 28px, REST state — mobile tier, unscoped
   transition: padding-block 250ms ease;
+
+  // Mobile-starts-collapsed pass — the shorter (10px) padding is present
+  // from first paint below lg, matching the tint's own mobile-forcing
+  // rule on .labHeader above. Same specificity as the REST padding-block
+  // right above (both plain .labHeaderInner), wins on source order; ties
+  // harmlessly with .labHeader[data-collapsed="true"] .labHeaderInner
+  // below if real scroll also pushes that true on mobile — identical
+  // 10px value either way.
+  @include mixins.breakpoint-down(lg) {
+    padding-block: 0.625rem; // 10px — same value the scroll-driven collapsed state already uses at this tier
+  }
 
   @include mixins.breakpoint-up(lg) {
     gap: var(--space-6); // 32px, desktop tier — governs the nav-to-actions gap once both are right-clustered below
@@ -176,14 +233,30 @@
   }
 }
 
+// Height/colour decoupling pass — this rule used to ALSO match
+// `body:has([data-light-hero]) .labHeader .labHeaderInner`, which forced
+// the collapsed (short) padding on every light-hero page from first
+// paint, before any real scroll happened. That was never asked for — the
+// brief was "tint immediately, but full height until scroll" — it just
+// fell out of data-collapsed and data-light-hero happening to drive the
+// exact same rules together everywhere in this file. Removed here and
+// at every other SIZE-affecting rule below (.labHeaderSignature width,
+// .labHeaderNavLink font-size, .labHeaderCta's own collapsed-size block)
+// — data-collapsed is now the ONLY thing that ever shrinks the header,
+// and it's real-scroll-driven unconditionally (HeaderInteractive.tsx's
+// own initialCollapsed is always "false", light-hero pages included). The
+// TINT stays keyed off body:has([data-light-hero]) — that part was
+// correct and is untouched (see .labHeader's own background rule above).
+// No new attribute was needed: the two existing ones already expressed
+// exactly what was wanted once each rule reads only the one it should.
+//
 // Revision round 4: discrete collapsed padding, replacing the old
 // continuous calc(). Mobile keeps its round-2 numeric target (10px) —
 // "its own heights were fixed earlier," per this round's own spec, so
 // only re-expressed via the new mechanism, not re-tuned. Desktop moves
 // to this round's new 6px target (was round 3's 8px) — "the bar is
 // still tall" is what this whole diagnostic pass is about.
-.labHeader[data-collapsed="true"] .labHeaderInner,
-body:has([data-light-hero]) .labHeader .labHeaderInner {
+.labHeader[data-collapsed="true"] .labHeaderInner {
   padding-block: 0.625rem; // 10px, mobile tier
 
   @include mixins.breakpoint-up(lg) {
@@ -236,8 +309,9 @@ body:has([data-light-hero]) .labHeader .labHeaderInner {
   }
 }
 
-.labHeader[data-collapsed="true"] .labHeaderSignature,
-body:has([data-light-hero]) .labHeader .labHeaderSignature {
+// Height/colour decoupling pass — light-hero branch removed, see
+// .labHeaderInner's own padding rule above for the full reasoning.
+.labHeader[data-collapsed="true"] .labHeaderSignature {
   @include mixins.breakpoint-up(lg) {
     width: 7.8125rem; // 125px, collapsed — mirrors the old 24px->17px rest/collapsed ratio
   }
@@ -268,13 +342,31 @@ body:has([data-light-hero]) .labHeader .labHeaderSignature {
   }
 }
 
+// Seven-item fit pass — this list is only ever visible at lg+ (.labHeaderNav's
+// own display:none/breakpoint-up(lg) gate), so the base gap value here is
+// really "the lg tier" (1024-1279px), not a mobile default. Measured live: at
+// 1024px with seven top-level items (Chi sono/Metodo/Aree/Prezzi/Blog/FAQ/
+// Contatti), the un-reduced 32px gap left the flex row too tight overall —
+// not a nav overflow, a flex-shrink squeeze across the WHOLE header row
+// (wordmark/nav/actions), and "Chi sono" (first item, two words) absorbed it
+// by wrapping onto two lines. Tried in the requested order: reducing this gap
+// alone (32px -> 24px) was enough on its own — confirmed via real DOM
+// injection + measurement, not estimated — so wordmark width, CTA padding,
+// and nav font-size were never touched. 26px still wrapped; 24px is the
+// measured threshold, restoring every item (including "Chi sono") to its
+// full natural single-line width — not a one-pixel-margin fit. Reverts to
+// the original 32px at xl+ (1280px), where there's room to spare again.
 .labHeaderNavList {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-5); // 24px — lg tier (1024-1279px)
   margin: 0;
   padding: 0;
   list-style: none;
+
+  @include mixins.breakpoint-up(xl) {
+    gap: var(--space-6); // 32px — xl+ (1280px+), unchanged from before this pass
+  }
 }
 
 .labHeaderNavLink {
@@ -321,8 +413,9 @@ body:has([data-light-hero]) .labHeader .labHeaderSignature {
 // unrelated number. font-weight isn't set here — it cascades from the
 // updated (now regular, 400) .labHeaderNavLink rule above, so both
 // states carry the lighter weight automatically.
-.labHeader[data-collapsed="true"] .labHeaderNavLink,
-body:has([data-light-hero]) .labHeader .labHeaderNavLink {
+// Height/colour decoupling pass — light-hero branch removed, see
+// .labHeaderInner's own padding rule above for the full reasoning.
+.labHeader[data-collapsed="true"] .labHeaderNavLink {
   font-size: 0.9375rem; // 15px (was 13px)
 }
 
@@ -377,39 +470,38 @@ body:has([data-light-hero]) .labHeader .labHeaderNavLink {
 // sharedSections.module.scss's rules were winning that order — silently
 // reverting this button back to button-base's full desktop size (28px
 // padding) on mobile regardless of what this rule declared.
-// First attempt used a cross-module compound selector
-// (.btnSecondary.labHeaderCta) — wrong, because CSS Modules scopes every
-// bare class written in THIS file to THIS file's own hash. The element's
-// actual `btnSecondary` class is hashed under sharedSections.module.scss;
-// writing `.btnSecondary` here creates an unrelated, never-matched local
-// identifier, so that selector silently matched nothing at all. The
-// self-contained fix is to double this file's own class
-// (.labHeaderCta.labHeaderCta) — same specificity boost (0,2,0), but
-// stays within this module's own scoping so it actually matches the
-// element, independent of module bundling order.
+// Gold-button unification pass — this element now renders the real Button
+// component (variant="primary", HeaderInteractive.tsx), not a bespoke
+// btnSecondary-based recipe: fill, hover, active-press, disabled, and
+// focus-ring all come from Button.module.scss's own .primary/.button
+// classes now, previously hand-duplicated here (and, before that, on top
+// of sharedSections.module.scss's own .btnSecondary — see this rule's own
+// git history for that earlier fix, no longer relevant now that the base
+// class is Button's, not sharedStyles'). Button doesn't forward a ref, so
+// the old "needs a direct ref for the scroll-collapse effect" blocker that
+// used to justify staying on a raw <button> is gone too — see this file's
+// own [data-collapsed="true"] rule below and HeaderInteractive.tsx's own
+// scroll effect for how the collapse-driven SIZE change now reads the
+// ancestor header's own attribute instead of a second copy on this element.
+//
+// What's left below is ONLY what's genuinely specific to this header
+// context and isn't "the gold button treatment" itself: this element's own
+// size at every tier (mobile-overflow-fit and collapsed-scroll-fit are
+// both real constraints unique to sitting in a fixed header bar, not
+// something Button's own default/compact sizing was designed for), and
+// this file's own 250ms transition duration — kept deliberately out of
+// sync with Button's own 150ms default so the CTA's fill/color/border
+// changes stay visually synced with every OTHER collapse-driven transition
+// in this header (background, blur, padding, wordmark, nav links — all
+// still 250ms; see those rules' own comments).
+//
+// Still needs the double-class specificity boost this rule has carried
+// since the btnSecondary era: Button.module.scss is a separate CSS module,
+// so a plain same-specificity single-class rule from it isn't reliably
+// beaten by one from this file — see the block comment this replaced for
+// the fuller explanation of why (compiled bundle order isn't something to
+// rely on for a cross-module specificity fight).
 .labHeaderCta.labHeaderCta {
-  display: inline-flex;
-  // Header/hero restyle pass: was the outline .btnSecondary recipe at
-  // rest, switching to this exact solid recipe only once collapsed (see
-  // the removed duplicate in the [data-collapsed="true"] block below) —
-  // now solid at every scroll position, matching the shared solid button
-  // recipe used elsewhere on the site (Button.module.scss's .solid,
-  // HeroOverlap's own .btnPrimary): same --color-accent fill,
-  // --color-accent-contrast text, --color-accent-hover on hover. Still
-  // built on sharedStyles.btnSecondary as its structural base (button-
-  // base's display/padding/radius/font/cursor/focus-ring via
-  // mixins.focus-ring) rather than the real Button component — this
-  // element needs a direct ref for the scroll-collapse effect's own
-  // dataset writes, which Button.tsx doesn't support (no forwardRef).
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  border-color: var(--color-accent);
-
-  &:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
-  }
-
   // Round 4: durations unified to 250ms, matching every other collapse-
   // driven transition in this header (background/blur/padding/wordmark/
   // nav links above) — was 200ms since round 3, a leftover mismatch this
@@ -428,13 +520,12 @@ body:has([data-light-hero]) .labHeader .labHeaderNavLink {
     min-height 250ms ease;
   // Mobile-tier compact override — caught EMPIRICALLY (a QA screenshot at
   // 390px showed the burger pushed clean off the right edge of the
-  // viewport): button-base's default sizing (28px inline padding, 16px
-  // font, 48px min-height) is a roomy desktop size that doesn't leave
-  // room for "Prenota un primo colloquio" alongside the wordmark AND the
-  // burger on a narrow viewport. Shrunk specifically for this button
-  // (not the shared button-base mixin, which other buttons on the page
-  // still use at their normal size on mobile) — restored to the full
-  // desktop size at lg+, where the burger disappears and there's room.
+  // viewport): Button's own default sizing is a roomy desktop size that
+  // doesn't leave room for "Prenota un primo colloquio" alongside the
+  // wordmark AND the burger on a narrow viewport. Shrunk specifically for
+  // this button (not Button.module.scss itself, which other buttons on
+  // the page still use at their normal size on mobile) — restored to the
+  // full desktop size at lg+, where the burger disappears and there's room.
   padding-inline: var(--space-3); // 12px, mobile tier
   padding-block: var(--space-2); // 8px, mobile tier
   // 44px touch target — same literal value .labHeaderBurger already uses
@@ -530,13 +621,22 @@ body:has([data-light-hero]) .labHeader .labHeaderNavLink {
 // from .labHeaderCta's own base rule now that the button is solid at
 // every scroll position (header/hero restyle pass) — removed rather than
 // left as an inert duplicate.
-// Header-over-light-hero pass: the button carries its own data-collapsed
-// (written alongside the header's, HeaderInteractive.tsx) and needed the
-// same second selector branch — without it, on a light-hero page the bar
-// goes collapsed but the CTA stays sized for rest, which is exactly the
-// "only the header is styled" mismatch this pass was flagged to avoid.
-.labHeaderCta[data-collapsed="true"],
-body:has([data-light-hero]) .labHeaderCta {
+// Height/colour decoupling pass — the body:has([data-light-hero]) branch
+// this rule used to also carry is gone, see .labHeaderInner's own padding
+// rule (above) for the full reasoning: the CTA now only shrinks when
+// data-collapsed is genuinely true (real scroll), matching the rest of
+// the header.
+//
+// Gold-button unification pass — this used to be `.labHeaderCta[data-
+// collapsed="true"]`, reading a SECOND copy of data-collapsed written
+// directly onto the button via its own ref. That ref is gone now that the
+// button is a real Button component (Button.tsx doesn't forward one) — but
+// the button is a genuine DOM descendant of `.labHeader` (labHeaderActions
+// sits inside labHeaderInner sits inside the header element), so a plain
+// descendant selector reading the ANCESTOR's own data-collapsed does the
+// same job with one fewer moving part: no second attribute to keep in
+// sync, just the one HeaderInteractive.tsx's scroll effect already writes.
+.labHeader[data-collapsed="true"] .labHeaderCta.labHeaderCta {
   // Revision round 3, item 1 / round 4 retune: true compact collapsed
   // variant, desktop only — reuses the SAME data-collapsed hard-threshold
   // switch already driving the color swap above ("interpolated/switched
@@ -578,6 +678,14 @@ body:has([data-light-hero]) .labHeaderCta {
   position: relative;
 }
 
+// HeaderAreaMenu.tsx's own root — same element role as .headerNavItemWrap
+// above, deliberately NOT position:relative — see .headerAreaPanel's own
+// comment for why its positioning context needs to be .labHeaderInner
+// instead of this narrow per-item wrapper.
+.headerAreaMenuWrap {
+  position: static;
+}
+
 .headerNavButton {
   display: inline-flex;
   align-items: center;
@@ -601,6 +709,31 @@ body:has([data-light-hero]) .labHeaderCta {
   @include mixins.focus-ring;
 }
 
+// Parent-that's-also-a-link pass — the split trigger row (label <Link> +
+// separate chevron <button>) used whenever a submenu item ALSO has its own
+// href (currently: "Chi sono"). Grouping-only items with no href of their
+// own (currently: "Aree", via HeaderAreaMenu.tsx) don't use this — they
+// keep .headerNavButton above, a single combined control, since there's no
+// separate destination to link to.
+.headerNavTriggerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem; // 2px — tight, reads as one unit despite being two controls
+}
+
+.headerNavChevronButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem; // 4px — a real hit area around the small glyph, not just its own bounding box
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+}
+
 .headerNavChevron {
   display: inline-block;
   width: 0;
@@ -618,13 +751,50 @@ body:has([data-light-hero]) .labHeaderCta {
 // Always solid ivory@97% regardless of --header-progress (it must be
 // readable over the hero photo too, per spec) — deliberately NOT reading
 // the header's own glass recipe.
+// Submenu spacing unification pass — panel padding now matches
+// .headerAreaPanel's own exactly (measured before this pass: 8px/0px here
+// vs. 16px/24px there — the clearest of the reported inconsistencies).
+// left: 0 stays left: 0 (unlike the Aree panel, this one's trigger — "Chi
+// sono" — sits near the nav's own left edge, so there's no overflow risk
+// anchoring to the trigger's own narrow wrap; see .headerAreaPanel's own
+// comment for why THAT one anchors to .labHeaderInner instead).
+// "Heavy dark-green box" pass — diagnosed live, not assumed: real
+// getBoundingClientRect + raw pixel sampling across this panel's own
+// background found ONE uniform fill from edge to edge, no color
+// discontinuity anywhere inside it, and Libri's own computed style at
+// rest had no background/border/shadow of its own (transparent,
+// `:hover`/`:focus-visible` both confirmed NOT active). A 3x crop of Libri
+// next to a 3x crop of an Aree subtopic, cropped to the LINK's own box
+// only, are visually identical. So the "second panel inside the panel"
+// effect isn't a stray hover/focus state, a hidden inner wrapper, or a
+// border on the list — none of those exist here. It's this rule's own
+// former min-width: 15rem (240px) forcing a fixed-width box around
+// whatever content it holds; with only "Libri" inside (a ~40px word), the
+// panel's own edges sat far enough past the word that the panel itself —
+// same background/border/radius/shadow as every other dropdown on the
+// site, correctly — read as its own separate block rather than a snug
+// dropdown. The Aree panel never shows this because it's never
+// content-starved relative to its own size (28 links, 3 columns). Fixed
+// by sizing to content instead of a fixed floor: width: max-content, with
+// a small min-width so a very short future label still gets some
+// breathing room, and a max-width safety cap for a long one.
 .headerSubmenuPanel {
   position: absolute;
   top: 100%;
   left: 0;
   margin-top: var(--space-3); // 12px
-  min-width: 15rem; // 240px, per spec
-  padding: var(--space-2) 0;
+  width: max-content;
+  min-width: 10rem; // 160px — a floor, not a target
+  max-width: 20rem; // 320px — safety cap for a long label/long child list
+  // Panel-inset pass — this used to match .headerAreaPanel's own padding
+  // (16px/24px) on the reasoning that "the panel" was one shared thing.
+  // It isn't: .headerAreaPanel's padding is spent holding 28 links across
+  // three columns; this panel usually holds one item, so the same
+  // padding just reads as dead space around it. This is the PANEL's own
+  // inset, not the item's — Libri/Books itself still carries the exact
+  // same .headerSubmenuLink padding (8px/12px) every leaf item
+  // everywhere else uses, unchanged; only the frame around it shrank.
+  padding: var(--space-2); // 8px, all sides
   background: color-mix(in srgb, var(--color-bg) 97%, transparent);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-m);
@@ -649,25 +819,67 @@ body:has([data-light-hero]) .labHeaderCta {
   }
 }
 
+// Submenu spacing unification pass — item-to-item gap (var(--space-1),
+// shared with .headerAreaSubtopicList below — the one value used
+// everywhere two leaf items sit next to each other).
 .headerSubmenuList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1); // 4px
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+// Submenu styling unification pass — this is the ONE leaf-item treatment
+// for every submenu across the header, desktop tier: the flat panel (Chi
+// sono → Libri) and the Aree panel's own subtopic links (composed with
+// .headerAreaSubtopicWeight, below — font-weight only) both apply this
+// class for everything else — type size, colour, hover, active, focus,
+// left edge. Hierarchy inside Aree (a subtopic reading as a child of its
+// own group heading) used to be shown with an indent; it's shown with a
+// lighter font-weight now instead, per this file's own current report —
+// every item in the panel shares one left edge on purpose. Group headings
+// (.headerAreaGroupLink) stay visually distinct on purpose too — a
+// hierarchy level, not a leaf item — but even they share this rule's own
+// hover/active/focus MECHANICS, just not its type size/color/weight.
 .headerSubmenuLink {
   display: block;
-  padding: 0.75rem 1rem; // 12px 16px, per spec
+  // Submenu spacing/inset pass — margin-inline removed: it existed only
+  // because this panel used to have zero horizontal padding of its own
+  // (0px, see .headerSubmenuPanel's own history) and needed SOME inset
+  // from the panel edge. Now that the panel's own padding matches
+  // .headerAreaPanel's (16px/24px), this link needs no margin of its
+  // own — its left inset comes from the panel, same mechanism as every
+  // Aree panel leaf item, measured to match (see this pass's own report).
+  padding: 0.5rem 0.75rem; // 8px 12px — unified leaf spacing
+  border-radius: var(--radius-s);
   font-family: var(--font-body);
-  font-size: 0.875rem; // 14px, per spec
+  font-size: var(--fs-small); // 14px — unified leaf type size
   color: var(--color-text);
   text-decoration: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
 
   &:hover {
     background: var(--color-sand);
+    color: var(--color-accent);
+  }
+
+  // Neither leaf treatment had a real pressed-state before this pass —
+  // added here (not just for the Aree panel) since "same active state"
+  // applies to both.
+  &:active {
+    transform: scale(0.98);
   }
 
   @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -675,6 +887,195 @@ body:has([data-light-hero]) .labHeaderCta {
   .headerSubmenuPanel {
     transition: none;
   }
+}
+
+// --- Desktop "Aree" grouped panel (HeaderAreaMenu.tsx) ---------------------
+// Its own root wrapper (.headerAreaMenuWrap, not .headerNavItemWrap) is
+// deliberately NOT a positioning context, unlike the flat submenu's own
+// wrap — this panel is wide (three columns) and "Aree" sits mid-nav, not
+// near either edge, so anchoring left:0 to the trigger's own (narrow)
+// button overflowed the viewport's right edge, confirmed live with a real
+// screenshot at both 1024 and 1440 before this was caught. Anchored to
+// .labHeaderInner instead (the full header row, now position:relative —
+// see that rule's own comment) via right:0, which — because
+// .labHeaderInner uses the container mixin's own padding-inline — lands
+// exactly at the same effective right margin every other piece of header
+// content already respects, guaranteed to fit the viewport by construction
+// regardless of where "Aree" itself sits in the nav. right: var(--space-7),
+// not right: 0 — an absolutely positioned box's own `right` offset is
+// measured from its containing block's PADDING edge (the box's own outer
+// visible edge), which does NOT already account for .labHeaderInner's own
+// padding-inline — right: 0 measured live sat flush with the viewport's
+// literal right edge at 1024 (0px clearance, and real scrollbar width
+// would have clipped it), not the 48px inset every other header element
+// keeps from that edge.
+.headerAreaPanel {
+  position: absolute;
+  top: 100%;
+  right: var(--space-7); // 48px — matches .labHeaderInner's own container padding-inline
+  margin-top: var(--space-3); // 12px
+  // Explicit width, not max-content: a multi-column box (.headerAreaColumns
+  // below) needs a real width to divide into three even columns — left to
+  // max-content, its own sizing is driven by the single longest
+  // unconstrained line across all 28 links, which measured wider and less
+  // predictable than just picking the width three comfortable 13rem
+  // columns actually need. 46rem = 3 x 13rem columns + 2 x 2rem gaps + the
+  // panel's own inline padding.
+  width: 46rem; // 736px
+  max-width: calc(100vw - 2 * var(--space-7)); // never wider than the container's own inline padding allows
+  padding: var(--space-4) var(--space-5); // 16px 24px
+  background: color-mix(in srgb, var(--color-bg) 97%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-soft);
+  z-index: mixins.z(dropdown);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    visibility 0s linear 200ms;
+
+  &[data-open="true"] {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease,
+      visibility 0s linear 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Multi-column, not a manually-chunked grid — see HeaderAreaMenu.tsx's own
+// comment for why (browser-balanced, self-rebalancing, DOM order == visual
+// order == reading order). Fixed column-count: 3, per spec's own explicit
+// "three columns" — not column-width's auto-derived count, so the panel
+// commits to exactly three regardless of how much content there is.
+// max-height is load-bearing, not decorative: CSS multi-column balancing
+// (column-fill: balance, the default) only distributes content into
+// multiple columns once the container has SOME bounded cross-axis size to
+// balance against — with height left auto, every browser tested rendered
+// one single unbounded column instead of three, confirmed live (a real
+// screenshot at both 1024 and 1440 showed one long list, not three) before
+// this was added. 30rem comfortably covers the tallest real case (the
+// "Ansia" group's own 6 subtopics plus its heading, the longest of the
+// seven) with headroom to spare, confirmed against the live panel's own
+// measured height (see this pass's own report).
+// Overflow-bug fix — deterministic CSS grid, not CSS multi-column. Groups
+// are pre-assigned to exactly 3 columns in code (HeaderAreaMenu.tsx's own
+// splitIntoColumns) rather than balanced by the browser at render time —
+// see that function's own comment for the full diagnosis of why the old
+// column-count/max-height approach broke. grid-template-columns is a hard
+// 3 tracks; there is no mechanism left that could ever add a 4th.
+.headerAreaColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 13rem);
+  column-gap: var(--space-6); // 32px
+}
+
+// One column's own groups, stacked. gap (not margin-bottom + :last-child)
+// for the group-to-group spacing — margin-bottom's own :last-child
+// exemption doesn't work once groups are split across separate column
+// containers (each column's own last group needs ITS trailing space
+// removed, not just the single last group in the whole panel) — gap
+// sidesteps that edge case entirely, it never adds trailing space after
+// the final child by definition.
+.headerAreaColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4); // 16px — group-to-group, shared with Chi sono's own item gap scale (see .headerSubmenuList)
+}
+
+// Submenu spacing unification pass — heading-to-first-item gap, via a real
+// gap value instead of the old zero-extra-margin/padding-only mechanism
+// (measured before this pass: 0px, an accident of padding overlap, not a
+// deliberate value). Own flex column so this group's heading and its
+// subtopic list have an explicit relationship instead of an implicit one.
+.headerAreaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2); // 8px
+}
+
+.headerAreaGroupHeading {
+  margin: 0;
+  font-size: 1em; // a real <h3> for screen-reader heading navigation, not styled as a visual heading — see HeaderAreaMenu.tsx's own comment
+  font-weight: inherit;
+}
+
+// Submenu styling unification pass — a group HEADING, deliberately still
+// distinct from .headerSubmenuLink above (larger, medium weight — a real
+// hierarchy level, not an inconsistency; see this pass's own report). Its
+// own padding rhythm and interaction mechanics (hover/active/transition)
+// now match the leaf treatment's own, so the panel still reads as one
+// coherent system rather than two unrelated recipes stacked together.
+.headerAreaGroupLink {
+  display: block;
+  padding: 0.5rem 0.75rem; // 8px 12px — matches .headerSubmenuLink's own rhythm
+  border-radius: var(--radius-s);
+  font-family: var(--font-body);
+  font-size: 0.9375rem; // 15px — one step above the leaf links below, the one deliberate difference
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  text-decoration: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+
+  &:hover {
+    background: var(--color-sand);
+    color: var(--color-accent);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Submenu spacing unification pass — item-to-item gap, a real value now
+// (measured before this pass: 0px, same padding-overlap accident as the
+// heading-to-item case above). var(--space-1), matching .headerSubmenuList's
+// own item gap below — the one shared value, used everywhere a leaf item
+// sits next to another leaf item.
+.headerAreaSubtopicList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1); // 4px
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Weight-not-indent pass — this used to be .headerAreaSubtopicIndent
+// (padding-left: 1.5rem, no font-weight), showing "this is a child of its
+// own group heading" via a left offset. Replaced, not just renamed: every
+// item in the panel — headings and subtopics alike — now shares the exact
+// same left edge (confirmed live, see this pass's own report), and the
+// hierarchy reads from weight instead. The heading (.headerAreaGroupLink)
+// is untouched, still --font-weight-medium (500). Subtopics drop BELOW
+// the shared .headerSubmenuLink's own implicit weight (400, inherited —
+// that class never set font-weight explicitly) to --font-weight-light
+// (300) — a real loaded Source Sans 3 face (see layout.tsx's own font
+// loader, weight: [...,"300",...], added specifically for this), not a
+// synthesized fake-thin fallback. Composed alongside .headerSubmenuLink
+// (HeaderAreaMenu.tsx), never instead of it — type size, colour, hover
+// treatment, and vertical padding all still come from that one shared
+// class; this rule touches only font-weight.
+.headerAreaSubtopicWeight {
+  font-weight: var(--font-weight-light);
 }
 
 // --- Mobile burger overlay (MobileMenuOverlay.tsx) ------------------------
@@ -700,20 +1101,43 @@ body:has([data-light-hero]) .labHeaderCta {
   z-index: mixins.z(overlay);
   display: flex;
   flex-direction: column;
-  background: var(--color-accent);
+  // Rebuild pass — ground flipped from --color-accent (gold) to
+  // --color-bg (the same dark green every desktop dropdown panel already
+  // uses) so the mobile menu reads as the same surface language as the
+  // rest of the header system, not a separate gold sheet. Every item
+  // color below flips the other way (--color-bg text -> --color-accent
+  // text) to match.
+  background: var(--color-bg);
   padding: var(--space-6);
   overflow-y: auto;
   opacity: 0;
   visibility: hidden;
+  // Rebuild pass — "the panel wiping in rather than sliding as a block":
+  // clip-path reveals top-to-bottom (the panel's own natural growth
+  // direction, directly below the header) instead of a translateX/Y
+  // slide. Paired with the existing opacity fade rather than replacing
+  // it — clip-path alone leaves a hard, aliased edge at the wipe front;
+  // the fade softens it. 0% 0% 100% 0% == fully clipped from the bottom
+  // (nothing visible); 0% 0% 0% 0% == fully revealed.
+  clip-path: inset(0 0 100% 0);
   transition:
     opacity 150ms ease,
+    clip-path 150ms ease,
     visibility 0s linear 150ms;
 
   &[data-open="true"] {
     opacity: 1;
     visibility: visible;
+    clip-path: inset(0 0 0% 0);
+    // 300ms, a calm cubic-bezier already used elsewhere in this file
+    // (the accordion grid-rows reveal) rather than a new curve — total
+    // experience budget: this wipe (300ms) runs concurrently with the
+    // item stagger below (finishes ~550ms for 7 items), both well under
+    // the 600ms ceiling. Close keeps the existing fast, non-staggered
+    // 150ms — a considered open, a quick dismiss.
     transition:
       opacity 250ms ease,
+      clip-path 300ms cubic-bezier(0.4, 0, 0.2, 1),
       visibility 0s linear 0s;
   }
 
@@ -756,17 +1180,28 @@ body:has([data-light-hero]) .labHeaderCta {
 }
 
 .mobileMenuLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem; // 44px touch target — "every item at least 44px"
   font-family: var(--font-display);
   font-size: 1.5rem; // 24px, per spec
-  color: var(--color-bg);
+  // Rebuild pass — top-level items are gold now (--color-accent, 194 154
+  // 94), not dark ink: measured live against this panel's own new
+  // --color-bg ground, 7.17:1 (real pixel sample, not just the CSS
+  // color pair) — clears AA's 4.5:1 with real margin. See this pass's
+  // own report for the full contrast table.
+  color: var(--color-accent);
   text-decoration: none;
 
-  // Contrast audit: the outward ring (mixins.focus-ring, --color-focus
-  // #715c52) measures only ~1.23:1 against this overlay's own accent
-  // background — switched to the inset ivory ring (mixins.focus-ring-inset),
-  // same fix as Footer.module.scss's own links, for the same reason.
-  @include mixins.focus-ring-inset;
+  // Rebuild pass — the inset ivory ring (mixins.focus-ring-inset) existed
+  // ONLY because the old gold background made the plain outward ring
+  // (--color-focus, then #715c52) measure ~1.23:1, unreadable. This
+  // panel's ground is --color-bg now, and --color-focus is re-declared
+  // gold (#c29a5e) on dark theme specifically for this contrast pair —
+  // already verified 7.17:1 against --color-bg elsewhere in this file
+  // (see _tokens.scss's own comment on --color-focus). Plain outward
+  // ring is correct again, matching every desktop dropdown panel.
+  @include mixins.focus-ring;
 }
 
 .mobileMenuAccordionButton {
@@ -774,16 +1209,47 @@ body:has([data-light-hero]) .labHeaderCta {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  min-height: 2.75rem; // 44px touch target
   padding: 0;
   border: none;
   background: transparent;
   font-family: var(--font-display);
   font-size: 1.5rem; // 24px, matching .mobileMenuLink
-  color: var(--color-bg);
+  color: var(--color-accent);
   cursor: pointer;
 
-  // Contrast audit: same inset-ring fix as .mobileMenuLink above.
-  @include mixins.focus-ring-inset;
+  // Rebuild pass — same outward-ring restoration as .mobileMenuLink above.
+  @include mixins.focus-ring;
+}
+
+// Parent-that's-also-a-link pass — used instead of .mobileMenuAccordionButton
+// above when the item ALSO has its own href ("Chi sono"): .mobileMenuLink
+// (unchanged, full-size, real navigation) plus a dedicated chevron toggle,
+// rather than one button trying to both navigate and expand.
+.mobileMenuTriggerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+// 44px square tap target regardless of the chevron glyph's own visual
+// size — same convention as .mobileMenuAreaPillarToggle.
+.mobileMenuAccordionToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: -0.6875rem; // optically aligns the chevron glyph itself with the row's right edge despite the 44px hit area around it
+
+  @include mixins.focus-ring;
 }
 
 .mobileMenuChevron {
@@ -828,19 +1294,135 @@ body:has([data-light-hero]) .labHeaderCta {
   padding-left: var(--space-5); // indented, per spec
 }
 
+// Submenu styling unification pass — this is now the ONE leaf-item
+// treatment for every mobile submenu: the flat panel (Chi sono → Libri)
+// and the Aree accordion's own subtopic links both use this class directly
+// (MobileAreaAccordion.tsx no longer carries a separate
+// .mobileMenuAreaSubtopicLink recipe — that class previously differed by
+// one type-scale step, 15px vs this rule's 16px, with no reason to). The
+// Aree accordion's own indent is already handled structurally by its list
+// container's own padding-left (.mobileMenuAreaSubtopicList), not by this
+// link, so unlike the desktop leaf class there's no per-link exception
+// needed here at all.
 .mobileMenuChildLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem; // 44px touch target — leaf items count as "every item" too
   font-family: var(--font-body);
   font-size: 1rem; // 16px, per spec
-  // Contrast audit: the "verified AA-passing" claim was wrong — ivory@85%
-  // on the current accent measures 3.83:1, not 4.5:1+ (same stale-palette
-  // issue as Footer.module.scss's own links, see that file's own comment
-  // for the full explanation). Full-strength now.
-  color: var(--color-bg);
+  // Rebuild pass — gold, same token as every top-level item
+  // (--color-accent), but lighter weight below carries the hierarchy
+  // instead of a second color — same convention this file's own desktop
+  // counterpart (.headerSubmenuLink/.headerAreaSubtopicWeight) already
+  // settled on. Not loaded here: font-weight-light needed adding to the
+  // Source Sans 3 font loader before this was safe — see this pass's own
+  // report; confirmed loaded, not synthesized.
+  color: var(--color-accent);
+  font-weight: var(--font-weight-light);
   text-decoration: none;
+  transition: transform 150ms ease;
 
-  // Contrast audit: same inset-ring fix as .mobileMenuLink above.
-  @include mixins.focus-ring-inset;
+  &:active {
+    transform: scale(0.98);
+  }
+
+  // Rebuild pass — outward ring restored, same reasoning as .mobileMenuLink.
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// --- Mobile "Aree" nested pillar accordion (MobileAreaAccordion, inside
+// MobileMenuOverlay.tsx's own "Aree" panel) — same visual language as
+// .mobileMenuChildList/-Link above (this IS that list, one level deeper:
+// it renders where a flat child list normally would), plus its own
+// second-tier toggle/panel pair per pillar, reusing .mobileMenuChevron/
+// .mobileMenuAccordionPanelWrap's grid-rows technique rather than a new
+// mechanism.
+.mobileMenuAreaPillarList {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-left: var(--space-5); // indented, matching .mobileMenuChildList
+}
+
+.mobileMenuAreaPillarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mobileMenuAreaPillarLink {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem; // 44px touch target
+  font-family: var(--font-body);
+  font-size: 1rem; // 16px, matching .mobileMenuChildLink
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: transform 150ms ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// A separate control from the link above (see MobileAreaAccordion's own
+// comment for why) — 44px square regardless of the chevron glyph's own
+// visual size, so the tap target meets the touch-target minimum even
+// though the row itself is compact.
+.mobileMenuAreaPillarToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  @include mixins.focus-ring;
+}
+
+.mobileMenuAreaSubtopicPanelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &[data-open="true"] {
+    grid-template-rows: 1fr;
+  }
+}
+
+.mobileMenuAreaSubtopicPanelInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mobileMenuAreaSubtopicList {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-left: var(--space-5); // a second indent step under its own pillar
 }
 
 .mobileMenuLocalePair {
@@ -849,7 +1431,12 @@ body:has([data-light-hero]) .labHeaderCta {
   font-size: 0.875rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.08em;
-  color: var(--color-bg);
+  // Rebuild pass — kept in step with every other item's color flip, even
+  // though the actual rendered locale link (LocaleSwitcher.module.scss's
+  // own .switcher, via mixins.link) already sets its own --color-accent
+  // and was never actually dark-on-dark — this wrapper's own color was
+  // simply stale/misleading otherwise, not load-bearing before or after.
+  color: var(--color-accent);
 }
 
 // "reduced-motion: overlay and accordions open/close instantly, no
@@ -860,6 +1447,7 @@ body:has([data-light-hero]) .labHeaderCta {
   .mobileMenuItem,
   .mobileMenuOverlay[data-open="true"] .mobileMenuItem,
   .mobileMenuAccordionPanelWrap,
+  .mobileMenuAreaSubtopicPanelWrap,
   .mobileMenuChevron {
     transition: none;
   }

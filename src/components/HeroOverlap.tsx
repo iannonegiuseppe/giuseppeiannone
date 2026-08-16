@@ -4,6 +4,7 @@ import Image from "next/image";
 import { AnimatedDivider } from "./AnimatedDivider";
 import { HeroCta } from "./HeroCta";
 import { HeroVideo } from "./HeroVideo";
+import { ShimmerText } from "./ShimmerText";
 import { urlFor } from "@/sanity/image";
 import styles from "./HeroOverlap.module.scss";
 import sharedStyles from "./sharedSections.module.scss";
@@ -23,11 +24,21 @@ import sharedStyles from "./sharedSections.module.scss";
 // photo's background).
 //
 // Only the ONE headline word an editor names in headlineEmphasisWord
-// (Studio field) is wrapped in the site's real italic-accent emphasis span
-// (EB Garamond italic + --color-accent — the exact technique documented in
-// /styleguide). Matches only the first occurrence, case-sensitively, per
-// the schema field's own description — a plain substring split, not a
-// regex, so no special-character escaping concern for ordinary Italian copy.
+// (Studio field) is wrapped in the site's real animated-accent emphasis —
+// ShimmerText, the same component /faq, /prezzi, /libri and Welcome's own
+// heading already use, not a bespoke flat <em>. Matches only the first
+// occurrence, case-sensitively, per the schema field's own description — a
+// plain substring split, not a regex, so no special-character escaping
+// concern for ordinary Italian copy.
+//
+// emphasisClassName (.heroOverlapEmphasis) is still passed through as
+// ShimmerText's own className — merged onto the SAME <em> ShimmerText
+// renders, not a second wrapper — because it's the thing that guarantees
+// font-weight: var(--font-weight-regular) explicitly (EB Garamond's italic
+// must not be synthesized from a heavier inherited weight). font-style:
+// italic on that class is redundant with <em>'s own UA default but kept
+// for the same reason it was already there: explicit, not relying on the
+// browser default holding forever.
 function renderHeadline(headline: string, emphasisWord: string | undefined, emphasisClassName: string | undefined) {
   if (!emphasisWord) return headline;
   const index = headline.indexOf(emphasisWord);
@@ -37,7 +48,7 @@ function renderHeadline(headline: string, emphasisWord: string | undefined, emph
   return (
     <>
       {before}
-      <em className={emphasisClassName}>{emphasisWord}</em>
+      <ShimmerText className={emphasisClassName}>{emphasisWord}</ShimmerText>
       {after}
     </>
   );

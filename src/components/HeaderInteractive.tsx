@@ -6,12 +6,14 @@ import { homePath, type Locale } from "@/sanity/paths";
 import type { ContactChannel } from "@/sanity/seo";
 import { ChannelPickerDialog, type ChannelPickerDialogHandle } from "./ChannelPickerDialog";
 import type { HeaderNavItem } from "./headerNavItems";
+import { HeaderAreaMenu } from "./HeaderAreaMenu";
 import { HeaderNavItemWithSubmenu } from "./HeaderNavItemWithSubmenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import type { AreaGroup } from "@/sanity/areaTaxonomy";
 import { SignatureMark } from "./Logo";
 import { MobileMenuOverlay } from "./MobileMenuOverlay";
+import { Button } from "./Button";
 import styles from "./HeaderInteractive.module.scss";
-import sharedStyles from "./sharedSections.module.scss";
 
 // Promoted from design-lab's own DesignLabHeader.tsx — this is now the
 // real site-wide header's interactive core, rendered by Header.tsx (a
@@ -49,21 +51,50 @@ function getScrollTop(container: HTMLElement | (Window & typeof globalThis)): nu
 
 export function HeaderInteractive({
   navItems,
+  areaTaxonomy,
   locale,
   ctaLabel,
   contactChannels,
 }: {
   navItems: HeaderNavItem[];
+  areaTaxonomy: AreaGroup[];
   locale: Locale;
   ctaLabel: string;
   contactChannels?: ContactChannel[];
 }) {
   const headerRef = useRef<HTMLElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const mobileToggleRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<ChannelPickerDialogHandle>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Hover-race fix — diagnosed live (real event trace, not a guess): moving
+  // the pointer directly from one dropdown parent to another fires the
+  // FIRST item's mouseleave (which schedules a 150ms delayed close, via
+  // useNavDropdownDisclosure's own scheduleClose) essentially in the same
+  // tick as the SECOND item's mouseenter (which opens immediately, no
+  // delay). The second item's open was never the problem — it lands fine.
+  // The bug is that the FIRST item's delayed close was never cancelled: it
+  // still fires ~150ms later and, because the old callback below wrote
+  // `open ? item.label : null` UNCONDITIONALLY, that stale close nulled
+  // whatever was CURRENTLY open — the second item — even though it had
+  // legitimately taken over. Observed trace (real timestamps, MutationObserver
+  // + event listeners): Chi sono mouseleave -> Aree mouseenter (same tick)
+  // -> shared state flips to "Aree" (closes Chi sono correctly, as part of
+  // the SAME render) -> ~150ms later Chi sono's stale timer fires and nulls
+  // the state anyway -> Aree closes on its own, no further pointer movement.
+  // Fix: a functional update that only clears the shared state if the
+  // caller closing itself is STILL the one recorded as open — a stale
+  // close for an item that's no longer current is simply a no-op instead
+  // of clobbering whichever item took over since. Each dropdown's own
+  // close-intent timer (useNavDropdownDisclosure's closeTimerRef) is
+  // per-instance already — the fix belongs here, in how the shared "which
+  // one is open" state is written, not in the hook itself.
+  function handleSubmenuOpenChange(label: string, open: boolean) {
+    setOpenSubmenu((current) => {
+      if (open) return label;
+      return current === label ? null : current;
+    });
+  }
   // Header-over-light-hero pass: the pathname-based forceCollapsed check
   // that used to live here (matching /blog and /en/blog by string) is
   // gone — /blog's collapsed-at-rest appearance is now driven by the same
@@ -77,8 +108,7 @@ export function HeaderInteractive({
   // right without it.
   useEffect(() => {
     const header = headerRef.current;
-    const button = buttonRef.current;
-    if (!header || !button) return;
+    if (!header) return;
 
     // Reduced-motion: state still tracks scroll, just without an animated
     // transition (the 0ms override lives in sectionsShared.module.scss) —
@@ -95,9 +125,15 @@ export function HeaderInteractive({
       } else {
         return; // inside the hysteresis dead zone — state unchanged
       }
-      const value = collapsedRef ? "true" : "false";
-      header!.dataset.collapsed = value;
-      button!.dataset.collapsed = value;
+      // Gold-button unification pass: the CTA no longer carries its own
+      // data-collapsed copy (and no longer needs its own ref for it) — it's
+      // now a real Button component, which doesn't forward refs. It's a DOM
+      // descendant of `header` (labHeaderActions is nested inside
+      // labHeaderInner is nested inside this element), so
+      // HeaderInteractive.module.scss now reads the CTA's collapsed size
+      // off the ancestor's own attribute via a plain descendant selector
+      // (.labHeader[data-collapsed="true"] .labHeaderCta) instead.
+      header!.dataset.collapsed = collapsedRef ? "true" : "false";
     }
     update();
 
@@ -126,8 +162,10 @@ export function HeaderInteractive({
   // rule, which needs no JS and has nothing to flash before. This constant
   // is what's left once the conditional it used to hold is gone: every
   // route's true initial scroll-linked state, always "false" at scroll 0.
-  // Kept as a named constant (not inlined below) so both attributes still
-  // read from one place, and so this comment has somewhere to live.
+  // Kept as a named constant (not inlined below) so this comment has
+  // somewhere to live. The CTA button no longer needs its own copy of this
+  // (see the scroll effect's own comment above) — only the header element
+  // itself sets it now.
   const initialCollapsed = "false";
 
   return (
@@ -137,6 +175,7 @@ export function HeaderInteractive({
         ref={headerRef}
         data-lab-header="true"
         data-collapsed={initialCollapsed}
+        data-mobile-menu-open={mobileMenuOpen ? "true" : undefined}
       >
         <div className={styles.labHeaderInner}>
           {/* Logo pass: signature + a live "Psicoterapeuta" descriptor,
@@ -154,23 +193,39 @@ export function HeaderInteractive({
 
           <nav className={styles.labHeaderNav} aria-label="Menu principale">
             <ul className={styles.labHeaderNavList}>
-              {navItems.map((item) =>
-                item.children ? (
-                  <li key={item.label}>
-                    <HeaderNavItemWithSubmenu
-                      item={item}
-                      isOpen={openSubmenu === item.label}
-                      onOpenChange={(open) => setOpenSubmenu(open ? item.label : null)}
-                    />
-                  </li>
-                ) : (
+              {navItems.map((item) => {
+                if (item.usesPillarTaxonomy) {
+                  return (
+                    <li key={item.label}>
+                      <HeaderAreaMenu
+                        label={item.label}
+                        groups={areaTaxonomy}
+                        isOpen={openSubmenu === item.label}
+                        onOpenChange={(open) => handleSubmenuOpenChange(item.label, open)}
+                      />
+                    </li>
+                  );
+                }
+                if (item.children) {
+                  return (
+                    <li key={item.label}>
+                      <HeaderNavItemWithSubmenu
+                        item={item}
+                        locale={locale}
+                        isOpen={openSubmenu === item.label}
+                        onOpenChange={(open) => handleSubmenuOpenChange(item.label, open)}
+                      />
+                    </li>
+                  );
+                }
+                return (
                   <li key={item.label}>
                     <Link href={item.href ?? "#"} className={styles.labHeaderNavLink}>
                       {item.label}
                     </Link>
                   </li>
-                ),
-              )}
+                );
+              })}
             </ul>
           </nav>
 
@@ -178,15 +233,16 @@ export function HeaderInteractive({
             <p className={styles.labHeaderLocalePair}>
               <LocaleSwitcher currentLocale={locale} />
             </p>
-            <button
-              ref={buttonRef}
+            <Button
               type="button"
-              data-collapsed={initialCollapsed}
-              className={`${sharedStyles.btnSecondary} ${styles.labHeaderCta}`}
+              variant="primary"
+              tone="base"
+              showArrow={false}
+              className={styles.labHeaderCta}
               onClick={() => dialogRef.current?.open()}
             >
               {ctaLabel}
-            </button>
+            </Button>
             <button
               ref={mobileToggleRef}
               type="button"
@@ -210,6 +266,7 @@ export function HeaderInteractive({
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         navItems={navItems}
+        areaTaxonomy={areaTaxonomy}
         locale={locale}
         toggleRef={mobileToggleRef}
         headerRef={headerRef}

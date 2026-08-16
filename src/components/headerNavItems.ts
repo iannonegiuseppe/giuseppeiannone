@@ -10,6 +10,16 @@ export type HeaderNavItem = {
   label: string;
   href?: string; // absent when the item is a submenu-only parent (a <button>, not a link)
   children?: HeaderNavChild[];
+  // Header nav restructure pass — additive, meaningless/absent for every
+  // item except the one CMS-flagged "Aree" (navLink.isPillarTaxonomy).
+  // Deliberately NOT a third HeaderNavChild tier: only one item ever needs
+  // grouped content, and that content is queried live (AreaGroup[], see
+  // src/sanity/areaTaxonomy.ts), not CMS-authored — forcing every consumer
+  // of this shared, editor-driven type (the mobile menu, the flat submenu)
+  // to understand groups would be real over-engineering for a feature
+  // exactly one entry needs. The renderer checks this flag and switches to
+  // a separate grouped-panel component/data path instead.
+  usesPillarTaxonomy?: boolean;
 };
 
 // CMS-driven header/footer pass: replaces the old next-intl-catalog-driven
@@ -142,12 +152,13 @@ function resolveNavLink(locale: Locale, link: NavLinkData): HeaderNavItem | null
   const label = resolveLabel(locale, link);
 
   if (!label) return null;
-  if (!href && children.length === 0) return null;
+  if (!href && children.length === 0 && !link.isPillarTaxonomy) return null;
 
   return {
     label,
     ...(href ? { href } : {}),
     ...(children.length > 0 ? { children } : {}),
+    ...(link.isPillarTaxonomy ? { usesPillarTaxonomy: true } : {}),
   };
 }
 

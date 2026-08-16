@@ -281,6 +281,12 @@ export const structure: StructureResolver = (S, context) =>
               pillarWithSubtopics(S, context, "pillarPage-relazioni-it"),
               pillarWithSubtopics(S, context, "pillarPage-sessuali-it"),
               pillarWithSubtopics(S, context, "pillarPage-stress-it"),
+              // Header nav restructure pass — "Terapia di coppia" is a
+              // real, published pillar (confirmed via a live GROQ query,
+              // 2 subtopics, both locales) that was never pinned here
+              // alongside its five siblings — an existing gap, not
+              // something this pass's own header work introduced.
+              pillarWithSubtopics(S, context, "pillarPage-coppia-it"),
               pillarWithSubtopics(S, context, "pillarPage-trauma-it"),
               singletonListItem(S, "chiSonoSection", "Chi sono"),
               singletonListItem(S, "methodPage", "Metodo"),

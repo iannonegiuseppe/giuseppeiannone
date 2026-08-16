@@ -61,10 +61,20 @@ const ebGaramond = EB_Garamond({
 // real 500 face, font-weight:500 silently falls back to rendering as
 // plain 400 (the CSS spec's own 400/500 fallback pairing) rather than
 // faux-bolding, so it would have been a no-op otherwise.
+//
+// Aree panel hierarchy pass: 300 added — the Aree panel's subtopics now
+// read as children of their group heading via a lighter weight instead of
+// an indent (owner's own instruction: same left edge for every item,
+// weight carries the hierarchy). Same reasoning as 500 above, mirrored
+// for the other direction: font-weight 300 with no real 300 face loaded
+// doesn't fake a thin look, the CSS spec just falls back to the nearest
+// loaded weight (400 here) — a silent no-op, not a visible bug, but not
+// the lighter weight either. Checked before writing any component CSS,
+// not assumed: 300 was NOT in this list previously.
 const sourceSans3 = Source_Sans_3({
   variable: "--font-source-sans-3",
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "700"],
+  weight: ["300", "400", "500", "700"],
   style: ["normal", "italic"],
   display: "swap",
 });
