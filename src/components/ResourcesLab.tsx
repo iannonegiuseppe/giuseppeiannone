@@ -1,8 +1,8 @@
-import Image from "next/image";
 import type { Image as SanityImage } from "sanity";
-import { articlePath, articlesPath, type Locale } from "@/sanity/paths";
+import { articlesPath, type Locale } from "@/sanity/paths";
 import { urlFor } from "@/sanity/image";
 import { plainTextFromPortableText } from "@/sanity/jsonLd";
+import { ResourcesCardSlider } from "./ResourcesCardSlider";
 import styles from "./resourcesLab.module.scss";
 
 // Forked from src/components/ResourcesSection.tsx + ResourceColumn.tsx +
@@ -30,6 +30,13 @@ export type RealArticleLab = {
   body?: unknown;
 };
 
+// coverUrl is a plain string, resolved here (server-side) via urlFor —
+// NOT the raw SanityImage object. ResourcesCardSlider.tsx is a client
+// component; @/sanity/image's urlFor transitively imports
+// @/sanity/client.ts, which reads next/headers (draftMode) — a
+// server-only API Next.js correctly refuses to bundle into client code.
+// Passing an already-resolved URL string across that boundary avoids
+// needing any Sanity-aware import on the client side at all.
 type ResolvedArticle = {
   _id: string;
   title: string;
@@ -37,8 +44,18 @@ type ResolvedArticle = {
   publishedAt: string | null;
   category: string;
   excerpt?: string;
-  cover?: SanityImage;
+  coverUrl?: string;
 };
+
+// Card-sized cover request — Next's own responsive pipeline (the
+// slider's own sizes prop) generates the actual per-viewport variant
+// from this capped source.
+const CARD_COVER_WIDTH = 800;
+
+function coverUrl(cover: SanityImage | undefined, width: number): string | undefined {
+  if (!cover) return undefined;
+  return urlFor(cover).width(width).format("webp").quality(80).url();
+}
 
 // Still real and still needed: articles have no stored category field, so
 // this rotates a locale-appropriate label across whichever real articles
@@ -72,58 +89,8 @@ function resolveArticles(realArticles: RealArticleLab[], locale: Locale): Resolv
     publishedAt: article.publishedAt,
     category: categories[i % categories.length]!,
     excerpt: deriveExcerpt(article.body),
-    cover: article.cover,
+    coverUrl: coverUrl(article.cover, CARD_COVER_WIDTH),
   }));
-}
-
-// null publishedAt is a real, if rare, possibility — the article schema
-// doesn't require it — and there's no honest date to invent for one now
-// that the mock article this used to fall back to is gone. Card below
-// just omits the date rather than showing a fabricated one.
-function formatArticleDate(iso: string | null, locale: Locale): string | null {
-  if (!iso) return null;
-  return new Intl.DateTimeFormat(locale === "it" ? "it-IT" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
-}
-
-// Card-sized cover request only now — the hero-sized cap (2000px, for
-// the full-width overlay image) is gone along with the hero itself.
-// Next's own responsive pipeline (sizes prop below, already configured
-// in next.config for cdn.sanity.io) generates the actual per-viewport
-// variant from this capped source — the cap is the ceiling Sanity itself
-// resizes to, not the final delivered size.
-const CARD_COVER_WIDTH = 800;
-
-function coverUrl(cover: SanityImage | undefined, width: number): string | undefined {
-  if (!cover) return undefined;
-  return urlFor(cover).width(width).format("webp").quality(80).url();
-}
-
-function Card({ locale, article, href }: { locale: Locale; article: ResolvedArticle; href: string }) {
-  const src = coverUrl(article.cover, CARD_COVER_WIDTH);
-  const date = formatArticleDate(article.publishedAt, locale);
-
-  return (
-    <a href={href} className={styles.card} aria-label={article.title}>
-      {src ? (
-        <div className={styles.cardImageWrap}>
-          <Image src={src} alt="" fill sizes="(min-width: 48rem) 33vw, 100vw" className={styles.cardImage} />
-        </div>
-      ) : (
-        <div className={styles.cardImagePlaceholder} aria-hidden="true">
-          <span>{locale === "it" ? "Immagine [segnaposto]" : "Image [placeholder]"}</span>
-        </div>
-      )}
-      <p className={styles.cardMeta}>
-        {date ? `${article.category} · ${date}` : article.category}
-      </p>
-      <h3 className={styles.cardTitle}>{article.title}</h3>
-      {article.excerpt ? <p className={styles.cardExcerpt}>{article.excerpt}</p> : null}
-    </a>
-  );
 }
 
 export function ResourcesLab({
@@ -166,11 +133,13 @@ export function ResourcesLab({
         </a>
       </div>
 
-      <div className={styles.cardsGrid} data-card-count={cards.length}>
-        {cards.map((article) => (
-          <Card key={article._id} locale={typedLocale} article={article} href={articlePath(typedLocale, article.slug)} />
-        ))}
-      </div>
+      {/* Mobile-slider pass — ResourcesCardSlider.tsx's own top comment
+          has the full reasoning (reuses DiplomiSlider's proven
+          scroll-snap track, adds dot pagination — new, nothing on this
+          site had it before). Renders the identical .cardsGrid markup
+          and CSS at md+ (768px) that this section always had; the client
+          boundary starts here, not higher up this tree. */}
+      <ResourcesCardSlider locale={typedLocale} cards={cards} />
     </section>
   );
 }

@@ -107,6 +107,32 @@
   grid-template-columns: 1fr;
   gap: var(--space-5);
   margin-top: var(--space-7);
+
+  // Mobile slider pass — below md (768px) only, where the grid was
+  // always a single column anyway (one card per row, no data-card-count
+  // variant active) — this replaces that vertical stack with the same
+  // horizontal scroll-snap track DiplomiSlider.module.scss's own .track
+  // uses (native touch swipe, no JS drag/gesture code). One full-width
+  // card per "page", matching the dot-pagination convention (a dot per
+  // slide implies exactly one slide visible at a time, unlike Diplomi's
+  // own multi-card-visible arrows layout). md+ is completely untouched —
+  // the grid-template-columns rules below still apply there exactly as
+  // before.
+  @include mixins.breakpoint-down(md) {
+    display: flex;
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    // No visible scrollbar — the dots are the position indicator.
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    @include mixins.focus-ring;
+  }
 }
 
 .cardsGrid[data-card-count="1"] {
@@ -134,6 +160,14 @@
   border-radius: var(--radius-m);
 
   @include mixins.focus-ring;
+
+  // Mobile slider pass — one card = one full-width "page" of the track
+  // above; scroll-snap-align: start is what makes swiping settle exactly
+  // on a card edge instead of an arbitrary scroll position.
+  @include mixins.breakpoint-down(md) {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+  }
 }
 
 .cardImageWrap {
@@ -227,4 +261,64 @@
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--color-text-muted);
+}
+
+// --- Mobile slider dots -----------------------------------------------
+// Mobile-only pagination for .cardsGrid's own scroll-snap track above
+// (see that rule's own comment) — hidden at md+ via display:none, not a
+// separate conditional render, so there's nothing to diff in the served
+// HTML's own visible/interactive surface at desktop/tablet widths.
+.dots {
+  display: none;
+
+  @include mixins.breakpoint-down(md) {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+  }
+}
+
+// 44px real tap target (ResourcesCardSlider.tsx's own <button>, not a
+// div) — the visible dot itself is much smaller (0.5rem) and painted via
+// ::after so the hit area and the visual mark can differ without a
+// wrapper element. Inactive: --color-hairline (the same quiet-neutral
+// token this section's own card border-ish elements already use).
+// Active: --color-accent, plus a wider oval instead of a circle — a
+// shape change reads as "current" independent of colour alone, so this
+// still communicates state under prefers-contrast/forced-colors, not
+// just visually.
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+
+  @include mixins.focus-ring;
+
+  &::after {
+    content: "";
+    display: block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-hairline);
+    transition: background-color 150ms ease, width 150ms ease;
+  }
+
+  &[data-active="true"]::after {
+    width: 1.25rem;
+    background: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
 }
