@@ -134,7 +134,7 @@ export async function PillarRecognition({
   }));
 
   return (
-    <div className={styles.recognition}>
+    <div className={styles.recognition} data-sheen="upper-left">
       <div className={styles.header}>
         <p className={styles.kicker}>
           <span className={styles.kickerRule} aria-hidden="true" />

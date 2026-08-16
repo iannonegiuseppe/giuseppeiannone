@@ -327,7 +327,7 @@ export default async function ContattiPage({
           still applied explicitly (a documented no-op today) so this
           reads as a stated choice, matching Welcome's/prezzi's own dark
           band precedent, not "no tone wrapper" mistaken for an oversight. */}
-      <section className={styles.locationsSection}>
+      <section className={styles.locationsSection} data-sheen="upper-left">
         <div className={styles.locationsHeader}>
           <p className={styles.kicker}>
             <SectionKicker>{data?.sediKicker ?? ""}</SectionKicker>

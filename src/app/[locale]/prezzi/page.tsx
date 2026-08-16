@@ -459,7 +459,7 @@ export default async function PricePage({
           // already correct here with no new override needed — verified
           // live, not assumed, see this pass's own report.
           <div className="themeDark">
-          <section className={styles.darkBand} aria-label={darkBand.kicker}>
+          <section className={styles.darkBand} aria-label={darkBand.kicker} data-sheen="upper-left">
             <div className={styles.darkBandInner}>
               {/* Card — built the same way as the homepage's Welcome/
                   Benvenuto block (WelcomeBlock.tsx/welcome.module.scss):

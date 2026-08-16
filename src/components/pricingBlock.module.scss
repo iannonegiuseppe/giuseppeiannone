@@ -10,7 +10,12 @@
 // every rule below that reads those generic tokens re-tones automatically
 // — zero tone-specific overrides needed in this file itself.
 .pricingSection {
-  background: var(--color-bg);
+  // Sheen pass — background removed: same reasoning as AreeSection.module
+  // .scss's own comment on .areeSection. The real render site (production
+  // page.tsx) always wraps this in .toneMidWrap (tone.tone-mid-surface),
+  // which already paints this exact color via --tone-mid-bg — this rule
+  // was a redundant opaque repaint sitting directly above the wrapper's
+  // sheen ::before, hiding it completely.
   padding-block: var(--space-band-y);
 }
 

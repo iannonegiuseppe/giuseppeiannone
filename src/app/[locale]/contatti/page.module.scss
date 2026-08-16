@@ -298,6 +298,10 @@
 // tone wrapper" mistaken for an oversight.
 .locationsSection {
   @include tone.tone-base-surface;
+  // Sheen pass — toggle is data-sheen="upper-left" on this same element
+  // (contatti/page.tsx). See sectionWrappers.module.scss's own .sheenWrap
+  // comment for the mixin.
+  @include mixins.upper-left-sheen;
   @include mixins.container;
   padding-top: var(--space-9);
   padding-bottom: var(--space-9);

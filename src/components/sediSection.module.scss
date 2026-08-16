@@ -24,7 +24,10 @@
 // consumption — zero per-class retoning needed beyond what's written here.
 .sediWrap {
   @include tone.tone-mid-surface;
-  position: relative;
+  // Sheen pass — this mixin's own position:relative/z-index:0 supersedes
+  // the plain position:relative above (same property, more complete);
+  // toggle is data-sheen="upper-left" on this same element (SediBlock.tsx).
+  @include mixins.upper-left-sheen;
 }
 
 .locationsSection {

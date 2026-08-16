@@ -405,6 +405,7 @@ $z-index: (
   --fs-article-body-sm: 1.125rem; // 18px
   --lh-article-body-sm: 1.7;
 
+  --font-weight-light: 300; // real Source Sans 3 weight, Aree panel subtopics only
   --font-weight-regular: 400;
   --font-weight-medium: 500; // real Source Sans 3 weight, header nav only
   --font-weight-bold: 700; // real weight, for inline emphasis within body copy only
@@ -631,6 +632,18 @@ $z-index: (
 // of removing when nothing requires it gone.
 .themeDark,
 :root[data-theme="dark"] {
+  // Sheen-guard fix: --tone-surface-scope (mixins.upper-left-sheen's own
+  // guard sentinel, set to "light" by tone.light-island-surface) is a
+  // custom property like any other here — a .themeDark escape-hatch
+  // nested inside a light-island ancestor inherits "light" from that
+  // ancestor unless THIS rule explicitly resets it, exactly like every
+  // other token below. Found live: prezzi's .darkBand (tone.tone-base-
+  // surface, wrapped in .themeDark specifically to escape .page's own
+  // light-island) triggered the guard's hazard pattern despite being
+  // genuinely, correctly dark — --color-bg/-surface/etc. were all
+  // correctly re-established by this rule, but --tone-surface-scope
+  // wasn't, since it didn't exist when this rule was first written.
+  --tone-surface-scope: dark;
   --color-bg: #081512; // sea-deep — matches Cyprus design-tokens.css --bg exactly
   // Desaturated from Cyprus's --sea (#102826) for this project's calmer
   // register — a deliberate divergence, not a copy. #102826 read as

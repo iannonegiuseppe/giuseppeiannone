@@ -207,7 +207,7 @@ export default async function LibriPage({
         </div>
       </section>
 
-      <section className={styles.bookSection}>
+      <section className={styles.bookSection} data-sheen="upper-left">
         <div className={styles.bookInner}>
           <LibriBookPromo copy={data.book} byline={byline} coverImage={bookCover} />
         </div>

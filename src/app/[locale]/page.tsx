@@ -711,7 +711,10 @@ export default async function Home({
           section. toneMidWrap: the same tone-mid mechanism Aree already
           used pre-migration on design-lab, now shared via
           sectionWrappers.module.scss. */}
-      <div className={sectionWrapperStyles.toneMidWrap}>
+      <div
+        className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+        data-sheen="upper-left"
+      >
         <RevealOnScroll>
           <PricingBlock
             eyebrow={homePage?.tariffe?.eyebrow ?? ""}
@@ -832,7 +835,10 @@ export default async function Home({
             (design-lab-to-production migration). Semantically part of the
             Sedi map block, not its own tonal moment — reversed onto Sedi's
             own mid-tone surface (toneMidWrap). */}
-        <div className={sectionWrapperStyles.toneMidWrap}>
+        <div
+          className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+          data-sheen="upper-left"
+        >
           <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
             <LocationsMarquee
               kicker={homePage?.spaces?.kicker ?? ""}
@@ -898,7 +904,10 @@ export default async function Home({
           different, though similarly real-but-404ing, fallback set.
           ResourcesSection.tsx itself is untouched, just no longer
           imported. */}
-      <div className={sectionWrapperStyles.toneMidWrap}>
+      <div
+        className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+        data-sheen="upper-left"
+      >
         <RevealOnScroll>
           <ResourcesLab
             kicker={homePage?.risorse?.kicker ?? ""}

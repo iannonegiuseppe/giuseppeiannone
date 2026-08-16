@@ -55,6 +55,11 @@
   padding-block: var(--space-9);
   background: var(--color-bg);
   color: var(--color-text);
+  // Sheen pass — toggle is data-sheen="upper-left" on this same element
+  // (libri/page.tsx). Same-element case (background and sheen on the
+  // one rule): no lid, the sheen's own ::before paints above this
+  // background regardless.
+  @include mixins.upper-left-sheen;
 
   @include mixins.breakpoint-up(lg) {
     padding-block: var(--space-10);

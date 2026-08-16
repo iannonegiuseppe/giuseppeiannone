@@ -101,7 +101,7 @@ export async function SediBlock({
     );
 
   return (
-    <div className={styles.sediWrap}>
+    <div className={styles.sediWrap} data-sheen="upper-left">
       <section className={styles.locationsSection} data-lab-section="sedi">
         <div className={styles.locationsHeader}>
           <p className={styles.locationsKicker}>

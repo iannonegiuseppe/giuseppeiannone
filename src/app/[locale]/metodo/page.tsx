@@ -186,14 +186,14 @@ export default async function MetodoPage({
           which one owns the "safe" background token. */}
       <div className="themeDark">
         <div className={styles.split}>
-          <div className={styles.splitLeft}>
+          <div className={styles.splitLeft} data-sheen="upper-left">
             <p className={styles.splitLabel}>{data?.split?.left?.label}</p>
             <h2 className={styles.splitHeading}>{data?.split?.left?.heading}</h2>
             <p className={styles.splitP}>{data?.split?.left?.p1}</p>
             <p className={styles.splitP}>{data?.split?.left?.p2}</p>
             <p className={styles.splitP}>{data?.split?.left?.p3}</p>
           </div>
-          <div className={styles.splitRight}>
+          <div className={styles.splitRight} data-sheen="upper-left">
             <p className={styles.splitLabel}>{data?.split?.right?.label}</p>
             <h2 className={styles.splitHeading}>{data?.split?.right?.heading}</h2>
             <p className={styles.splitP}>{data?.split?.right?.p1}</p>
@@ -253,7 +253,7 @@ export default async function MetodoPage({
 
       {/* === 4. THE RELATIONSHIP — dark, epigraph + single 720px column ===== */}
       <div className="themeDark">
-        <section className={styles.relationshipSection}>
+        <section className={styles.relationshipSection} data-sheen="upper-left">
           <div className={styles.relationshipInner}>
             <p className={styles.kicker}>
               <SectionKicker>{data?.relationship?.kicker ?? ""}</SectionKicker>
@@ -289,7 +289,7 @@ export default async function MetodoPage({
 
       {/* === 6. FIT AND ENDING — surface step, two stacked bands ============ */}
       <div className="themeDark">
-        <section className={styles.fitEndingSection}>
+        <section className={styles.fitEndingSection} data-sheen="upper-left">
           <div className={styles.fitEndingInner}>
             <div className={styles.fitEndingBand}>
               <h2 className={styles.h2}>{data?.fitEnding?.band1?.heading}</h2>

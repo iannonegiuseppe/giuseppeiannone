@@ -2,6 +2,12 @@
 
 .recognition {
   padding-block: var(--space-8);
+  // Sheen pass — toggle is data-sheen="upper-left" on this same element
+  // (PillarRecognition.tsx). No lid: this section paints no background of
+  // its own (relies on the page's ambient dark), and neither
+  // RecognitionConstellation.module.scss nor RecognitionSubtopicList.module
+  // .scss paints one either — checked directly, not assumed.
+  @include mixins.upper-left-sheen;
 }
 
 // Correction pass, item 3 — real separation below the kicker+lead-in

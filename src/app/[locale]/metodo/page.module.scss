@@ -125,11 +125,27 @@
 .splitLeft {
   background: var(--color-bg);
   color: var(--color-text);
+  // Sheen pass — each half gets its own upper-left light, independently
+  // toggled via data-sheen="upper-left" on its own element (metodo/page.tsx).
+  @include mixins.upper-left-sheen;
 }
 
 .splitRight {
   background: var(--color-surface);
   color: var(--color-text);
+  // Sheen's own gradient resolves its far-edge stop from --color-bg (see
+  // upper-left-sheen's own recipe) — correct by default on sections whose
+  // resting tone IS --color-bg, but this section's resting tone is
+  // deliberately --color-surface instead (the lighter of the two, chosen
+  // to contrast with .splitLeft). Without this local override the sheen's
+  // far edge would resolve to --color-bg (#081512) instead, darkening the
+  // section's own resting tone rather than matching it — exactly what
+  // tone.tone-mid-surface itself does (reassigns --color-bg to --color-
+  // surface's own value) for sections that go through that mixin; this
+  // replicates the same reassignment locally since .splitRight is a
+  // literal, non-mixin-driven rule.
+  --color-bg: var(--color-surface);
+  @include mixins.upper-left-sheen;
 }
 
 .splitLabel {
@@ -276,6 +292,12 @@
 .relationshipSection {
   background: var(--color-bg);
   color: var(--color-text);
+  // Sheen pass — toggle is data-sheen="upper-left" on this same element
+  // (metodo/page.tsx). No local --color-bg override needed here (unlike
+  // .splitRight/.fitEndingSection below) since this section's own resting
+  // tone already IS --color-bg — the sheen's far-edge stop matches it
+  // by construction.
+  @include mixins.upper-left-sheen;
   padding-top: var(--space-9);
   padding-bottom: var(--space-9);
 }
@@ -348,6 +370,12 @@
   // verbatim today, which is the near-black ground, not the lighter step)
   background: var(--color-surface);
   color: var(--color-text);
+  // Sheen pass — same local --color-bg override as .splitRight above, and
+  // for the same reason: this section's resting tone is --color-surface,
+  // not --color-bg, so the sheen's own far-edge stop needs redirecting to
+  // match it (see .splitRight's own comment for the full explanation).
+  --color-bg: var(--color-surface);
+  @include mixins.upper-left-sheen;
   padding-top: var(--space-9);
   padding-bottom: var(--space-9);
 }
