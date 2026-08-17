@@ -46,6 +46,9 @@ export function PillarHero({
   standfirst,
   heroImage,
   imageObjectPosition,
+  imageZoom,
+  imageShiftX,
+  imageShiftY,
   contentAlign,
   titleEmphasisShimmer,
   kickerRule,
@@ -70,6 +73,22 @@ export function PillarHero({
   // string (not a token/enum) because the right value is specific to
   // this one photo's own composition, not a reusable design choice.
   imageObjectPosition?: string;
+  // Chi sono pass 5 — optional, lg+ only, same scoping as
+  // imageObjectPosition. Moving ChiSonoGlassCard to the hero's left side
+  // (freeing the right for the portrait's face) put the subject's own
+  // gesturing hand behind the card instead — object-position alone can't
+  // fix this, since this photo's aspect ratio already matches the hero
+  // band's own width exactly (verified live: 0%/50%/100%
+  // object-position-x render pixel-identical, zero horizontal crop
+  // margin to redistribute). Enlarging the image beyond object-fit:cover's
+  // own minimum (imageZoom) creates that margin; imageShiftX/Y then
+  // redistribute it, carrying the whole photo — subject included — right
+  // and down within the frame. Every other caller omits all three and
+  // gets the previous scale(1)/no-shift behavior unchanged (see
+  // PillarHero.module.scss's own var(...,1)/var(...,0%) fallbacks).
+  imageZoom?: number;
+  imageShiftX?: string;
+  imageShiftY?: string;
   // Chi sono pass 4 — optional, lg+ only, same scoping as
   // imageObjectPosition above. Left-aligns .heroContent to the same left
   // edge mixins.container gives every other section on the page
@@ -115,9 +134,12 @@ export function PillarHero({
           className={styles.heroImage}
           priority
           style={
-            imageObjectPosition
-              ? ({ "--hero-image-object-position-lg": imageObjectPosition } as CSSProperties)
-              : undefined
+            {
+              ...(imageObjectPosition ? { "--hero-image-object-position-lg": imageObjectPosition } : {}),
+              ...(imageZoom !== undefined ? { "--hero-image-zoom-lg": imageZoom } : {}),
+              ...(imageShiftX ? { "--hero-image-shift-x-lg": imageShiftX } : {}),
+              ...(imageShiftY ? { "--hero-image-shift-y-lg": imageShiftY } : {}),
+            } as CSSProperties
           }
         />
       ) : null}

@@ -314,6 +314,57 @@ export default async function ChiSonoPage({
             // already shows the full head with real headroom — verified
             // live at 1440/1024/390 before this pass, see its own
             // report.
+            //
+            // Card-move follow-up, explicit instruction — moving
+            // ChiSonoGlassCard to the left put the subject's own
+            // gesturing hand behind it instead. object-position-x can't
+            // fix this or the head-clearance issue below: this photo's
+            // own aspect (1.5:1) is close enough to the hero band's own
+            // (1.6:1) that there's barely any vertical crop margin either
+            // — object-position-y alone tops out around 60px of total
+            // travel, checked live, nowhere near enough on its own.
+            // imageZoom enlarges the image beyond object-fit:cover's own
+            // minimum, creating real margin on every side; imageShiftX/Y
+            // then carry the whole photo — subject included — right and
+            // down within it.
+            //
+            // Two real corrections during tuning, not assumed correct on
+            // the first pass:
+            // 1. An earlier value (1.2x/8%/8%) was reported as clearing
+            //    the header with a real gap — that reading came from a
+            //    plain cropped screenshot and was wrong. Overlaying a
+            //    literal reference line at the header's own measured
+            //    bottom edge (getBoundingClientRect, not a guess) showed
+            //    the hairline sitting almost exactly ON that line, not
+            //    below it — the earlier "looks fine" verdict didn't
+            //    survive a precise check.
+            // 2. Scale and vertical shift are coupled, not independent:
+            //    increasing zoom pushes the head further from the
+            //    transform's own center point (upward, since the head
+            //    sits above center), so a bigger shift is needed just to
+            //    hold the same clearance at a higher zoom, not gain any.
+            //    Several rounds of "more zoom + proportionally more
+            //    shift" produced the SAME marginal clearance instead of
+            //    improving it, until zoom was raised enough on its own to
+            //    create real slack independent of the shift.
+            //
+            // 1.84x zoom (2.3x reduced 20%, direct instruction), 12%
+            // right, 22% down — re-tuned after the zoom reduction, not
+            // just scaled proportionally: a lower zoom means less
+            // overscan margin, so the SAME 27% vertical shift that was
+            // safe at 2.3x pushed the image's own top edge past the
+            // viewport (a real gap), confirmed live via
+            // getBoundingClientRect before picking 22%, the largest value
+            // that still keeps the image's own edge covering the
+            // viewport with real margin. Checked live with a reference
+            // line at the header's own measured bottom edge (the same
+            // method that caught the earlier 1.2x/8%/8% false-clear): a
+            // real, visible gap under the header at both 1440 and 1024,
+            // and noticeably more of the shoulders/collar visible than
+            // the 2.3x version — less tightly cropped, per instruction.
+            imageZoom={1.84}
+            imageShiftX="12%"
+            imageShiftY="22%"
             // contentAlign="left" — same left edge the rest of the
             // page's own content uses, not centered in the hero band.
             // Vertical position stays centered (PillarHero's own

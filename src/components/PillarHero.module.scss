@@ -136,6 +136,33 @@
   }
 }
 
+// Chi sono pass 5 — a second, lg+-only definition of the SAME keyframe
+// name, inside the same breakpoint the imageZoom/imageShiftX/Y custom
+// properties themselves are read at (see .heroImage's own lg+ block
+// below). CSS resolves a later @keyframes of the same name as an
+// override, so this replaces the base definition above only where the
+// media query matches, letting the intro animation settle into the
+// zoomed/shifted resting position instead of scale(1) when a caller sets
+// those properties — and staying byte-for-byte the base definition
+// (var(...,1) / var(...,0%) fall back to the original scale(1), no
+// shift) for every other pillar/subtopic caller, which never sets them.
+// calc() multiplies the intro's own 1.08 zoom onto whatever resting zoom
+// is set, so the "settle from slightly more zoomed in" feel is
+// preserved at any zoom level, not just the default.
+@include mixins.breakpoint-up(lg) {
+  @keyframes heroImageIntro {
+    from {
+      transform: scale(calc(var(--hero-image-zoom-lg, 1) * 1.08))
+        translate(var(--hero-image-shift-x-lg, 0%), var(--hero-image-shift-y-lg, 0%));
+    }
+
+    to {
+      transform: scale(var(--hero-image-zoom-lg, 1))
+        translate(var(--hero-image-shift-x-lg, 0%), var(--hero-image-shift-y-lg, 0%));
+    }
+  }
+}
+
 .heroImage {
   object-fit: cover;
   object-position: 50% 50%;
@@ -144,6 +171,10 @@
   animation: heroImageIntro 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 
   // Suppressed entirely, not just shortened — final scale (1), no motion.
+  // Static transform below (lg+) still applies in this case, since it's
+  // a resting position, not the animated entrance — a reduced-motion
+  // visitor should see the same final composition, just without the
+  // 1.6s settle.
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
@@ -157,6 +188,13 @@
   // completely unaffected at every breakpoint.
   @include mixins.breakpoint-up(lg) {
     object-position: var(--hero-image-object-position-lg, 50% 50%);
+    // Chi sono pass 5 — see PillarHero.tsx's own imageZoom/imageShiftX/Y
+    // comment. This is the value the animation settles to (its own "to"
+    // keyframe, overridden above, matches exactly, so there's no jump
+    // when the 1.6s intro finishes) and what applies directly under
+    // reduced motion, where the animation itself is suppressed.
+    transform: scale(var(--hero-image-zoom-lg, 1))
+      translate(var(--hero-image-shift-x-lg, 0%), var(--hero-image-shift-y-lg, 0%));
   }
 }
 
