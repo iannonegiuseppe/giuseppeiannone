@@ -52,22 +52,28 @@
 // container; AreaMosaic breaks out to full-bleed on its own.
 //
 // Fix pass — the glass card (ChiSonoGlassCard.module.scss) overlaps this
-// block's own top-right corner, straddling the hero/section seam. Below
-// lg the card doesn't overlap at all (plain horizontal bar, no absolute
+// block's own top-LEFT corner now (moved from right to left — see that
+// file's own $card-left-edge comment — to free the hero's right side for
+// the portrait's face), straddling the hero/section seam. Below lg the
+// card doesn't overlap at all (plain horizontal bar, no absolute
 // positioning), so this reservation is lg+ only — the section keeps its
 // full width there, per instruction.
 //
-// padding-right ADDS to (rather than replaces) mixins.container's own
-// padding-inline: var(--space-7) component — 27.5rem is the card's own
-// width (kept in sync by comment cross-reference, same literal value
+// padding-left (was padding-right, before the card moved) ADDS to
+// (rather than replaces) mixins.container's own padding-inline:
+// var(--space-7) component — 27.5rem is the card's own width (kept in
+// sync by comment cross-reference, same literal value
 // ChiSonoGlassCard.module.scss's own .card rule uses), plus a second
 // var(--space-7) as real clearance. Both this block and the card itself
-// anchor their right edges to the SAME container-content-edge reference
-// point (the card's own $card-right-edge formula is built to land
-// exactly there — see that file's own comment), so the resulting gap
-// between this text's new right edge and the card's left edge works out
-// to exactly var(--space-7) (48px) at any lg+ width, not just 1440 —
+// anchor their left edges to the SAME container-content-edge reference
+// point (the card's own $card-left-edge formula is built to land exactly
+// there — see that file's own comment), so the resulting gap between
+// this text's new left edge and the card's right edge works out to
+// exactly var(--space-7) (48px) at any lg+ width, not just 1440 —
 // verified live at both 1440 and 1024 (see this pass's own report).
+// Text itself stays left-aligned WITHIN its own shifted column (not
+// right-aligned) — the whole block moves right, individual lines don't
+// flip direction.
 //
 // Fix pass 7 — real bug, measured: the previous pass-4/6 padding-top
 // (calc(var(--space-10)*2 + var(--space-6)) = 288px) was sized to clear
@@ -92,7 +98,7 @@
   padding-top: var(--space-9);
 
   @include mixins.breakpoint-up(lg) {
-    padding-right: calc(var(--space-7) + 27.5rem + var(--space-7));
+    padding-left: calc(var(--space-7) + 27.5rem + var(--space-7));
     padding-top: var(--space-8);
     padding-bottom: var(--space-8);
   }

@@ -71,26 +71,41 @@
   // which the container mixin's own max-width:var(--container-max-width)
   // would override if included wholesale.
   //
-  // max-width is tiered, not flat: ChiSonoGlassCard (a sibling this
-  // component has no knowledge of, absolute-positioned bottom-right
-  // against .heroBoundary) sits at a DIFFERENT horizontal position
-  // depending on viewport width — its own right-edge formula anchors to
-  // the 1320px container's own right margin, which shrinks to zero below
-  // that width, so the card sits much further left at wide-but-sub-
-  // container viewports: measured live at 536px at 1024 vs. 892px at
-  // 1440. A flat 44rem text column (ending ~728-812px depending on the
-  // left edge above) ran directly behind the card at 1024 — confirmed
-  // with a screenshot before this fix. 30rem for lg-only (1024 up to
-  // just below xl) keeps the text's own right edge safely under the
-  // card's 536px left edge; 44rem resumes at xl (1280+), where the
-  // card's own left edge has already grown back past 790px — verified
-  // live at both 1024 and 1440, see this pass's own report.
+  // max-width stays tiered (30rem lg-only, 44rem from xl) even though
+  // the reason it was originally added no longer applies: ChiSonoGlassCard
+  // has since moved from the hero's right side to its left (see that
+  // file's own $card-left-edge comment, part of freeing the right side
+  // for the portrait's face) — the two now share a left edge instead of
+  // sitting on opposite sides, and are vertically clear of each other by
+  // a real margin (43px at 1440, 84px at 1024, measured live) rather than
+  // needing a narrower text column to dodge a horizontal collision. Left
+  // as-is anyway: the h1/copy were told to stay exactly where they are
+  // this pass, and changing this value would reflow their own line
+  // breaks — not a decision to make silently as a side effect of an
+  // unrelated card move.
   @include mixins.breakpoint-up(lg) {
     &[data-content-align="left"] .heroContent {
       margin-inline: 0;
       margin-left: max(var(--space-7), calc((100vw - var(--container-max-width)) / 2 + var(--space-7)));
+      // Real bug found live, not assumed: the base rule's own
+      // padding-inline (var(--space-5), left over from when this box was
+      // centered via margin-inline:auto and needed its own inset from
+      // ITS OWN edges) was still applying on top of margin-left above,
+      // pushing the rendered text 24px past the container-edge formula's
+      // own result — measured: text at 132px, card (below) at 108px,
+      // not the same edge despite both using the identical formula.
+      // Zeroing padding-left here removes the double-count; margin-left
+      // alone now IS the rendered edge, matching the card exactly.
+      padding-left: 0;
       text-align: left;
       max-width: 30rem;
+
+      // .breadcrumbs sets its own justify-content (a flex row, not plain
+      // text — text-align:left above doesn't reach it), still centered
+      // by default otherwise.
+      .breadcrumbs {
+        justify-content: flex-start;
+      }
     }
   }
 

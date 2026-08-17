@@ -303,18 +303,17 @@ export default async function ChiSonoPage({
             titleEmphasisWord={chiSono?.titleEmphasisWord}
             standfirst={chiSono?.heroStandfirst}
             heroImage={chiSono?.portrait}
-            // Hero crop fix — height stays 100dvh (a taller band was
-            // tried and reverted, see git history: 130dvh read far too
-            // tall). 50% 0% shows the full head with real clearance
-            // below the header — already the ceiling of what
-            // object-position can do (0% = image's own top edge aligns
-            // with the container's; negative values push the image DOWN,
-            // not further up, checked live before settling on this
-            // value) — at the cost of cropping the crossed arms out
-            // entirely below lg+, an accepted trade-off (explicit
-            // instruction: the head must not crop, the arms cropping is
-            // fine).
-            imageObjectPosition="50% 0%"
+            // Photo swap pass — portrait replaced (Sanity content, see
+            // scripts/patch-chisono-portrait-09.ts) with the open-palms
+            // photo already used sitewide as the contact-block photo.
+            // No imageObjectPosition override needed or passed: unlike
+            // the previous nearly-square portrait (which needed 50% 7.2%
+            // tuning to clear the header — see git history), this
+            // photo's own 1.5:1 aspect is close enough to the hero's own
+            // that a plain center crop (the component's own default)
+            // already shows the full head with real headroom — verified
+            // live at 1440/1024/390 before this pass, see its own
+            // report.
             // contentAlign="left" — same left edge the rest of the
             // page's own content uses, not centered in the hero band.
             // Vertical position stays centered (PillarHero's own

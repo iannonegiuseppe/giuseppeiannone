@@ -1,14 +1,18 @@
 @use "../styles/mixins";
 
-// Card's right edge lands exactly where the container's own text edge
-// lands (headings/body), at every viewport width — same formula
-// mixins.container itself uses to derive its own content edge:
-// margin-right (half of whatever's left over once the container hits its
-// max-width) + padding-right. Also reused by page.module.scss's own
-// .whatIWorkWith padding-right (the section this card overlaps) to keep
-// both anchored to the identical container-edge reference point — see
-// that file's own comment.
-$card-right-edge: max(
+// Card layout pass — moved from the hero's right side to its left,
+// freeing the right side for the portrait's own face (see PillarHero.tsx
+// hero's own imageObjectPosition/contentAlign history). Card's LEFT edge
+// now lands exactly where the container's own text edge lands (h1/
+// kicker/breadcrumbs above it, via PillarHero.module.scss's own
+// margin-left), same formula mixins.container itself uses to derive its
+// own content edge: margin (half of whatever's left over once the
+// container hits its max-width) + padding. Also reused by
+// page.module.scss's own .whatIWorkWith padding-left (the section this
+// card now overlaps on ITS left instead of its right) to keep both
+// anchored to the identical container-edge reference point — see that
+// file's own comment.
+$card-left-edge: max(
   var(--space-7),
   calc((100vw - var(--container-max-width)) / 2 + var(--space-7))
 );
@@ -38,8 +42,8 @@ $divider-clearance: calc(var(--space-5) + var(--space-1));
   transform: translateY(35%);
 
   @include mixins.breakpoint-up(lg) {
-    right: $card-right-edge;
-    left: auto;
+    left: $card-left-edge;
+    right: auto;
     width: 27.5rem;
     // Fix pass 4 — the card still overlapped the hero's own standfirst
     // (measured directly: at 1440, card top 463.9px vs standfirst bottom
