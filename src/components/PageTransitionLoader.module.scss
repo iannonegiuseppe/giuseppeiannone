@@ -1,0 +1,63 @@
+@use "../styles/mixins";
+
+// Ivory ground + the ambient (dark-theme) champagne accent — deliberately
+// NOT tone.light-island-surface: that mixin would also reassign
+// --color-accent to the light-safe --light-base-accent (#7e6b5b, ~4.6:1),
+// a more muted colour than the "gold" this was actually asked for.
+// --light-base-bg is the theme-invariant ivory token (safe to use
+// directly, never reassigned per-scope — see CLAUDE.md's own
+// light-island writeup); --color-accent is read as-is, resolving to the
+// real sitewide champagne gold (#c29a5e) since this site is permanently
+// dark-themed at :root. Measured contrast against --light-base-bg:
+// ~2.35:1 — decorative only, not text, and shown for well under a
+// second in the overwhelming majority of real navigations.
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: mixins.z(toast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light-base-bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0s;
+  }
+
+  &[data-visible="true"] {
+    opacity: 1;
+  }
+
+  // Fades in (base transition above) but disappears instantly —
+  // deliberate asymmetry: a page that's already ready shouldn't sit
+  // behind a fading-out overlay for even 200ms longer than necessary.
+  &[data-visible="false"] {
+    transition-duration: 0s;
+  }
+}
+
+// Sizing pass — was min(50vw, 14rem): the 14rem cap won at every
+// viewport at or above ~448px, so it rendered as a flat 224px mark
+// regardless of screen size, reading as a small caption rather than
+// filling a full-screen moment on real desktop viewports. 33vw puts it
+// at ~475px (~29.7rem) at 1440 — close to the requested third of
+// viewport width — and now genuinely scales with the viewport instead
+// of hitting the same fixed ceiling; the 30rem cap only matters above
+// ~1454px, keeping it from growing unbounded on very wide monitors.
+.mark {
+  width: min(33vw, 30rem);
+  color: var(--color-accent);
+}
+
+.signature {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.status {
+  @include mixins.visually-hidden;
+}

@@ -8,6 +8,7 @@ import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { FooterLab } from "@/components/FooterLab";
 import { Header } from "@/components/Header";
 import { LenisProvider } from "@/components/LenisProvider";
+import { PageTransitionLoader } from "@/components/PageTransitionLoader";
 import { routing } from "@/i18n/routing";
 import { isDraftModeEnabled, sanityFetch } from "@/sanity/client";
 import {
@@ -237,6 +238,7 @@ export default async function LocaleLayout({
               on purpose: keyboard users reach it before Header's own nav,
               matching "reachable by keyboard from the top of the page." */}
           <CookieConsentBanner locale={typedLocale} />
+          <PageTransitionLoader />
           {/* Promoted from design-lab's own page-scoped LenisProvider —
               Header's dialogs (channel picker, mobile menu) now need the
               same Lenis instance Header itself renders under, and Header

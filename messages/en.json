@@ -96,5 +96,8 @@
   "LegalPage": {
     "lastUpdated": "Last updated",
     "lastUpdatedPlaceholder": "[TO BE CONFIRMED]"
+  },
+  "PageTransition": {
+    "loading": "Loading page"
   }
 }
