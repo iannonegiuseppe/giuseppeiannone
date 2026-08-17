@@ -79,6 +79,7 @@
 
 .heroImage {
   object-fit: cover;
+  object-position: 50% 50%;
   z-index: 0;
   transform-origin: center;
   animation: heroImageIntro 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -86,6 +87,17 @@
   // Suppressed entirely, not just shortened — final scale (1), no motion.
   @media (prefers-reduced-motion: reduce) {
     animation: none;
+  }
+
+  // Chi sono fix, lg+ only — see PillarHero.tsx's own imageObjectPosition
+  // comment. Below lg the container is already close enough to the
+  // photo's own aspect ratio that centering needs no correction (checked
+  // live at 390 — full head AND torso already visible with centered
+  // crop); this only takes effect when a caller actually sets the custom
+  // property, so every other pillar/subtopic page's centered image is
+  // completely unaffected at every breakpoint.
+  @include mixins.breakpoint-up(lg) {
+    object-position: var(--hero-image-object-position-lg, 50% 50%);
   }
 }
 

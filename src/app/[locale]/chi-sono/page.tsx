@@ -303,6 +303,13 @@ export default async function ChiSonoPage({
             titleEmphasisWord={chiSono?.titleEmphasisWord}
             standfirst={chiSono?.heroStandfirst}
             heroImage={chiSono?.portrait}
+            // Hero crop fix — the portrait is close to square, cropped
+            // into a much wider lg+ band; centered (the default) cropped
+            // into the top of the head. Paired with .heroViewport's own
+            // lg+ height bump below — see that rule's own comment for
+            // why object-position alone couldn't fix this without
+            // cropping the crossed-arms composition down to nothing.
+            imageObjectPosition="50% 15%"
           />
         </div>
         <ChiSonoGlassCard facts={chiSono?.glassCard?.facts ?? []} />

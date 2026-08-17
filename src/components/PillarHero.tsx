@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import type { Image as SanityImage } from "sanity";
 import type { BreadcrumbItem } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
@@ -31,6 +32,7 @@ export function PillarHero({
   titleEmphasisWord,
   standfirst,
   heroImage,
+  imageObjectPosition,
 }: {
   trail: BreadcrumbItem[];
   heroKicker: string;
@@ -44,6 +46,14 @@ export function PillarHero({
   // passes a real standfirst and is unaffected.
   standfirst?: string;
   heroImage?: (SanityImage & { alt?: string }) | undefined;
+  // Chi sono fix — optional, lg+ only (see PillarHero.module.scss's own
+  // .heroImage rule): every other pillar/subtopic caller omits this and
+  // keeps the existing 50% 50% center crop byte-for-byte. chi-sono's
+  // portrait is close to square, cropped into a much wider landscape
+  // band — centering there crops into the top of the head. A free-form
+  // string (not a token/enum) because the right value is specific to
+  // this one photo's own composition, not a reusable design choice.
+  imageObjectPosition?: string;
 }) {
   const dims = heroImage ? imageDimensions(heroImage) : null;
   // Capped at the source's own natural width — never upscale (same
@@ -65,6 +75,11 @@ export function PillarHero({
           sizes="100vw"
           className={styles.heroImage}
           priority
+          style={
+            imageObjectPosition
+              ? ({ "--hero-image-object-position-lg": imageObjectPosition } as CSSProperties)
+              : undefined
+          }
         />
       ) : null}
       {/* Scrim only when there's a photo underneath — with no heroImage the

@@ -40,12 +40,30 @@
   position: relative;
 }
 
+// Hero crop fix, lg+ only — the portrait's own near-square aspect,
+// cropped into one full viewport height at a wide lg+ width, left no
+// room for both headroom above the head AND the crossed-arms lower body
+// once object-position was shifted to stop cropping into the head (see
+// PillarHero.tsx's own imageObjectPosition comment) — object-position
+// alone just traded one crop problem for the other, since the TOTAL
+// vertical crop (scaled image height minus this band's own height) is
+// fixed regardless of where the split falls. 1.3x gives both: measured
+// live (this pass's own report) at 1440 and 1024 with object-position
+// 50% 15% — full head with real clearance below the header AND the
+// crossed arms visible. Below lg the unscaled crop already worked (390
+// checked live, no change needed there), so this stays 1x below lg.
 .heroViewport {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100lvh;
   min-height: 100dvh;
+
+  @include mixins.breakpoint-up(lg) {
+    min-height: 130vh;
+    min-height: 130lvh;
+    min-height: 130dvh;
+  }
 }
 
 // "Di cosa mi occupo" — heading/intro/closing text stay in the normal
