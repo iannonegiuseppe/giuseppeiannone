@@ -348,23 +348,52 @@ export default async function ChiSonoPage({
             //    improving it, until zoom was raised enough on its own to
             //    create real slack independent of the shift.
             //
-            // 1.84x zoom (2.3x reduced 20%, direct instruction), 12%
-            // right, 22% down — re-tuned after the zoom reduction, not
-            // just scaled proportionally: a lower zoom means less
-            // overscan margin, so the SAME 27% vertical shift that was
-            // safe at 2.3x pushed the image's own top edge past the
-            // viewport (a real gap), confirmed live via
-            // getBoundingClientRect before picking 22%, the largest value
-            // that still keeps the image's own edge covering the
-            // viewport with real margin. Checked live with a reference
-            // line at the header's own measured bottom edge (the same
-            // method that caught the earlier 1.2x/8%/8% false-clear): a
-            // real, visible gap under the header at both 1440 and 1024,
-            // and noticeably more of the shoulders/collar visible than
-            // the 2.3x version — less tightly cropped, per instruction.
-            imageZoom={1.84}
-            imageShiftX="12%"
-            imageShiftY="22%"
+            // 1.472x zoom (1.84x reduced 20%, direct instruction: "the
+            // face is now too large ... zoom out so the figure reads
+            // about 20% smaller"), 15.8% right, 15% down — this pass
+            // genuinely runs into the source image's own boundaries, as
+            // asked to report if it did. Reducing zoom shrinks the
+            // overscan margin available on every edge (formula confirmed
+            // live at every zoom level tried this session:
+            // shift_max ≈ 0.5 × (1 − 1/zoom) of the image's own box, same
+            // on both axes since object-fit:cover already matches this
+            // hero's width exactly) — at 1.84x the vertical ceiling was
+            // ≈22.8%, comfortably above the 22% shift used; at 1.472x the
+            // ceiling drops to ≈16.0%, so the same 22% down is no longer
+            // safe (confirmed live: produces a real gap,
+            // getBoundingClientRect top > 0). Re-tuned to 15% down,
+            // checked against the header's own measured bottom edge with
+            // a reference-line overlay: real but distinctly thinner
+            // clearance than the 1.84x version — a few loose hair strands
+            // reach the line, the bulk of the head sits clearly below it,
+            // at both 1440 and 1024.
+            //
+            // Horizontal shift also had to move, for a reason the zoom
+            // number alone doesn't explain: translate() percentages are
+            // relative to the image's OWN box, so the same 12% covers
+            // fewer actual pixels at a lower zoom (at 1440, 12% of the
+            // 1.472x box is roughly 180px less rightward travel than 12%
+            // of the 1.84x box was). That reintroduced an overlap this
+            // session had already solved once — the subject's raised
+            // hand crossing into ChiSonoGlassCard — confirmed live at
+            // 1024 with 12% still in place. Raised to 15.8% (ceiling
+            // ≈16.0%, same formula, checked live: left stays
+            // negative/safe at both breakpoints) to restore clearance
+            // from the card: a real, visible gap between fingertips and
+            // the card's edge at 1024, comfortable clearance at 1440.
+            //
+            // Net result of "20% smaller": meaningfully more of the
+            // figure is now in frame (the raised hand is fully visible at
+            // 1440, more of the torso/shoulders at 1024) at the cost of
+            // tighter margins on both the header and the card edge than
+            // the 1.84x version had — there is no more room to zoom out
+            // further without giving up either the head-clear-of-header
+            // or hand-clear-of-card constraint, since both are already
+            // within ~1 percentage point of this zoom level's own shift
+            // ceiling.
+            imageZoom={1.472}
+            imageShiftX="15.8%"
+            imageShiftY="15%"
             // contentAlign="left" — same left edge the rest of the
             // page's own content uses, not centered in the hero band.
             // Vertical position stays centered (PillarHero's own
