@@ -149,6 +149,41 @@
     }
   }
 
+  // chi-sono hero pass — PillarHero.tsx sets [data-photo-hero] on its own
+  // .heroContent whenever a heroImage is present (regardless of whether
+  // a caller uses shimmer at all — chi-sono is the only consumer of
+  // titleEmphasisShimmer today, so this branch is inert on every other
+  // pillar/subtopic page's own photo hero). Same problem the /faq
+  // mobile-full-bleed branch above already solved for a photo
+  // background, same fix shape: base/highlight stay in the ivory family
+  // (--light-base-bg/-surface, the SAME theme-invariant tokens
+  // PillarHero.module.scss's own .title/.heroContent already use for
+  // this scope — see that file's own "one uniform ivory value" comment)
+  // rather than the default gold, which is tuned for a flat surface, not
+  // a photo. Measured live against the actual rendered scrim+photo
+  // composite at the emphasis word's own final position (left-aligned,
+  // vertically centered, over the collar/shoulder — re-measured after
+  // each contentAlign revision, not left over from an earlier layout):
+  // lightest pixel in that region rgb(93,90,87) — dimmest phase
+  // (--light-base-bg) 6.19:1, brightest phase (--light-base-surface)
+  // 6.85:1, both clearing 4.5:1 with real margin.
+  :global([data-photo-hero]) & {
+    color: var(--light-base-bg);
+
+    @supports (background-clip: text) or (-webkit-background-clip: text) {
+      background-image: linear-gradient(
+        90deg,
+        var(--light-base-bg) 0%,
+        var(--light-base-bg) 40%,
+        var(--shimmer-highlight) 50%,
+        var(--light-base-bg) 60%,
+        var(--light-base-bg) 100%
+      );
+    }
+
+    --shimmer-highlight: var(--light-base-surface);
+  }
+
   &[data-in-view="true"] {
     @supports (background-clip: text) or (-webkit-background-clip: text) {
       animation-play-state: running;

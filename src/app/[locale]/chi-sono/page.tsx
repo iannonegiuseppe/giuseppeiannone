@@ -303,13 +303,34 @@ export default async function ChiSonoPage({
             titleEmphasisWord={chiSono?.titleEmphasisWord}
             standfirst={chiSono?.heroStandfirst}
             heroImage={chiSono?.portrait}
-            // Hero crop fix — the portrait is close to square, cropped
-            // into a much wider lg+ band; centered (the default) cropped
-            // into the top of the head. Paired with .heroViewport's own
-            // lg+ height bump below — see that rule's own comment for
-            // why object-position alone couldn't fix this without
-            // cropping the crossed-arms composition down to nothing.
-            imageObjectPosition="50% 15%"
+            // Hero crop fix — height stays 100dvh (a taller band was
+            // tried and reverted, see git history: 130dvh read far too
+            // tall). 50% 0% shows the full head with real clearance
+            // below the header — already the ceiling of what
+            // object-position can do (0% = image's own top edge aligns
+            // with the container's; negative values push the image DOWN,
+            // not further up, checked live before settling on this
+            // value) — at the cost of cropping the crossed arms out
+            // entirely below lg+, an accepted trade-off (explicit
+            // instruction: the head must not crop, the arms cropping is
+            // fine).
+            imageObjectPosition="50% 0%"
+            // contentAlign="left" — same left edge the rest of the
+            // page's own content uses, not centered in the hero band.
+            // Vertical position stays centered (PillarHero's own
+            // default) — see that file's own comment for why an earlier
+            // bottom-anchored version was reverted.
+            contentAlign="left"
+            // Standard kicker treatment (rule + --color-accent), matching
+            // every other kicker on this page and site — was plain text.
+            kickerRule
+            // ShimmerText for the h1 emphasis word, matching every other
+            // page's own animated accent — see PillarHero.tsx's own
+            // comment for why it's opt-in rather than the new default,
+            // and PillarHero.module.scss's [data-photo-hero] branch
+            // (ShimmerText.module.scss) for the colour/contrast pass
+            // specific to sitting over this photo.
+            titleEmphasisShimmer
           />
         </div>
         <ChiSonoGlassCard facts={chiSono?.glassCard?.facts ?? []} />
