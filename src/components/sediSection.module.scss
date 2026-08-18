@@ -422,6 +422,11 @@
     border-radius: var(--radius-m);
     box-shadow: var(--shadow-soft);
     padding: 0;
+    // Photo-as-background pass: the photo now fills .popup edge to edge
+    // (position:absolute, inset:0) instead of living in its own
+    // separately-clipped band — this is what keeps it inside the
+    // wrapper's own rounded corners instead of squaring them off.
+    overflow: hidden;
   }
 }
 
@@ -455,13 +460,64 @@
 .popup {
   position: relative;
   padding: var(--space-4);
+
+  // Photo-as-background pass: gives the photo real presence instead of a
+  // cramped sliver — without this, min-height is just the text block's own
+  // natural height (~13rem across title/address/button/links), which
+  // reads as barely a photo at all. flex + justify-content:flex-end pins
+  // .popupContent to the bottom (a caption-over-photo composition, not
+  // text pinned to the top with dead photo space below it) — the close
+  // button is unaffected, it's position:absolute, outside this flow.
+  // Text-less (no-photo) popups are unaffected — this whole rule only
+  // applies where there's a photo to show.
+  &[data-has-photo] {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 15rem;
+  }
+}
+
+// Fills .popup edge to edge, behind everything else (.popupContent and
+// .popupClose both sit above it — see their own z-index). object-fit:cover
+// via Next/Image's fill prop, same technique as PillarHero's own full-bleed
+// hero image.
+.popupPhotoBg {
+  object-fit: cover;
+  z-index: 0;
+}
+
+// Direct instruction: photo becomes the background, text sits over it on a
+// scrim. Flat/uniform darkening (not a bottom-only gradient) — same
+// technique as PillarHero's own .heroScrim, for the same reason: this
+// popup's text isn't confined to one edge (title+address at top of the
+// content block, actions below), so a gradient would need to guarantee
+// contrast at multiple different heights instead of one flat value.
+//
+// 76% mix toward --color-bg (#081512, near-black) — measured live against
+// this popup's own actual photo (contents/monza-office.jpg, via Playwright
+// pixel sampling of the real rendered composite, not computed from the
+// source file), at the lightest pixel behind each text element specifically
+// (not one global worst-case number — the window/sky region is brighter
+// than where the text actually sits). 68% cleared title/appleLink/copyLink
+// but left .popupAddress (3.65:1) and copyLink (4.24:1) short of 4.5:1;
+// raised to 76% — see .popupAddress's own comment for the other half of
+// that fix. All five text elements (title, address, the two secondary
+// links, and the Google Maps button label — measured separately, see that
+// element's own comment) clear 4.5:1 with real margin at 76%; ratios in
+// this pass's own report.
+.popupScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--color-bg) 76%, transparent);
 }
 
 .popupClose {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
-  z-index: 1;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -477,17 +533,9 @@
   @include mixins.focus-ring;
 }
 
-.popupPhotoWrap {
-  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3);
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--radius-m) var(--radius-m) 0 0;
-}
-
-.popupPhoto {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.popupContent {
+  position: relative;
+  z-index: 2;
 }
 
 .popupTitle {
@@ -503,6 +551,21 @@
   font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--color-text-muted);
+
+  // Photo-as-background pass: --color-text-muted is alpha (72%), which is
+  // fine over the flat --color-bg it was designed for — its final
+  // rendered color is fixed, since what's under it never changes. Over a
+  // photo it isn't: the 28% that shows through is whatever pixel sits
+  // behind that exact line, an unknown at author time. Measured live: at
+  // this popup's actual brightest measured point it composited to
+  // 3.65:1, short of 4.5:1. Swapped for an OPAQUE blend toward
+  // --color-bg instead of relying on alpha over an unpredictable photo —
+  // same visual "dimmer than the title" effect, but the rendered color is
+  // fixed regardless of what's beneath it. Measures 4.94:1 at the same
+  // point. No-photo popups are untouched, still the original alpha value.
+  .popup[data-has-photo] & {
+    color: color-mix(in srgb, var(--color-text) 82%, var(--color-bg));
+  }
 }
 
 // Popup weighting pass: was three equally-weighted pills. Google Maps

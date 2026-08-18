@@ -8,14 +8,25 @@ import type { LocationsLabels } from "@/components/LocationsInteractive";
 import { ButtonLink } from "@/components/Button";
 import styles from "./sediSection.module.scss";
 
-// Forked from src/components/LocationsPopupContent.tsx (shared with
-// production — see SediBlock.tsx's own comment). Copy button/clipboard
-// logic is byte-for-byte identical. What changed: three equally-weighted
-// pills (.popupAction × 3) are now one primary filled button (Google Maps
-// directions) plus two plain text links (Apple Maps, copy address) — see
-// this pass's own proposal, part (b). Photo gate is identical to the
-// original (renders only when location.photo exists — same pattern as the
-// diploma scans).
+// Forked from src/components/LocationsPopupContent.tsx. That file's own
+// header comment (and this file's own original header, before this edit)
+// claimed LocationsPopupContent/LocationsSection is what production
+// renders — checked live for this pass (grepped every `<LocationsSection`/
+// `<LocationsInteractive` call site): that's stale. Nothing renders those
+// two anymore; src/app/[locale]/page.tsx uses SediBlock (this file) and
+// src/app/[locale]/contatti/ContattiMap.tsx uses SediMap (which renders
+// THIS component) directly. LocationsPopupContent/LocationsSection.module.scss
+// are dead code today — not touched by this pass, flagged here instead of
+// silently fixed, since deleting dead code wasn't asked for.
+//
+// Photo-as-background pass: was a fixed-aspect band above the text block
+// (.popupPhotoWrap, 16:9, top corners only). Direct instruction: the photo
+// becomes the popup's own background, address/city/actions sit over it on
+// a scrim (.popupScrim — see that class's own comment in
+// sediSection.module.scss for the measured-contrast derivation). Every
+// address without a photo (three of four today) renders exactly as before
+// — plain solid var(--color-bg), no scrim, nothing conditional on that
+// path changes.
 export function SediPopupContent({
   location,
   labels,
@@ -73,8 +84,23 @@ export function SediPopupContent({
     }
   }
 
+  const hasPhoto = Boolean(photoUrl && photoDims);
+
   return (
-    <div className={styles.popup}>
+    <div className={styles.popup} data-has-photo={hasPhoto || undefined}>
+      {hasPhoto ? (
+        <>
+          <Image
+            src={photoUrl!}
+            alt={location.photo?.alt ?? ""}
+            fill
+            sizes="320px"
+            className={styles.popupPhotoBg}
+          />
+          <div className={styles.popupScrim} aria-hidden="true" />
+        </>
+      ) : null}
+
       <button
         type="button"
         className={styles.popupClose}
@@ -86,38 +112,28 @@ export function SediPopupContent({
         </svg>
       </button>
 
-      {photoUrl && photoDims ? (
-        <div className={styles.popupPhotoWrap}>
-          <Image
-            src={photoUrl}
-            alt={location.photo?.alt ?? ""}
-            width={photoDims.width}
-            height={photoDims.height}
-            className={styles.popupPhoto}
-          />
-        </div>
-      ) : null}
+      <div className={styles.popupContent}>
+        <p className={styles.popupTitle}>{title}</p>
+        <p className={styles.popupAddress}>{secondary}</p>
 
-      <p className={styles.popupTitle}>{title}</p>
-      <p className={styles.popupAddress}>{secondary}</p>
-
-      <div className={styles.popupActions}>
-        <ButtonLink
-          href={googleHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="primary"
-          className={styles.popupActionPrimary}
-        >
-          {labels.googleMapsLabel}
-        </ButtonLink>
-        <div className={styles.popupActionsSecondary}>
-          <a href={appleHref} target="_blank" rel="noopener noreferrer" className={styles.popupActionSecondary}>
-            {labels.appleMapsLabel}
-          </a>
-          <button type="button" className={styles.popupActionSecondary} onClick={handleCopy}>
-            {copied ? labels.copiedLabel : labels.copyAddressLabel}
-          </button>
+        <div className={styles.popupActions}>
+          <ButtonLink
+            href={googleHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="primary"
+            className={styles.popupActionPrimary}
+          >
+            {labels.googleMapsLabel}
+          </ButtonLink>
+          <div className={styles.popupActionsSecondary}>
+            <a href={appleHref} target="_blank" rel="noopener noreferrer" className={styles.popupActionSecondary}>
+              {labels.appleMapsLabel}
+            </a>
+            <button type="button" className={styles.popupActionSecondary} onClick={handleCopy}>
+              {copied ? labels.copiedLabel : labels.copyAddressLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>
