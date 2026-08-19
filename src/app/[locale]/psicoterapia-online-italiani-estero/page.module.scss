@@ -1,0 +1,7 @@
+@use "../../../styles/tone";
+
+// Online-therapy page — composes the shared blocks extracted from
+// /metodo. No page-local sections here.
+.page {
+  @include tone.light-island-surface;
+}

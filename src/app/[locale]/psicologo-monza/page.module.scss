@@ -1,0 +1,8 @@
+@use "../../../styles/tone";
+
+// Monza page — composes the shared blocks extracted from /metodo. No
+// page-local sections here (unlike Milan's "six areas" grid) — every
+// section on this page is one of the shared components.
+.page {
+  @include tone.light-island-surface;
+}

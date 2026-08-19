@@ -1,0 +1,93 @@
+@use "../../../styles/mixins";
+@use "../../../styles/tone";
+
+// Milan page — composes the shared blocks extracted from /metodo (see
+// src/components/CenteredHero.tsx and siblings) in this page's own order.
+// Only the "six areas" section is page-local: a 3-column grid, used by
+// this page alone, so it was never extracted as a shared component (see
+// this page's own build report).
+.page {
+  @include tone.light-island-surface;
+}
+
+.kicker {
+  margin: 0;
+}
+
+.h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+}
+
+.h3 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.bodyP {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+.introP {
+  margin: var(--space-5) 0 0;
+  max-width: 45rem;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--color-text-muted);
+}
+
+.sixAreasSection {
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-9);
+}
+
+.sixAreasHeader {
+  @include mixins.container;
+}
+
+.sixAreasGrid {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.areaColumn {
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-hairline);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.linkGlyph {
+  font-size: var(--fs-small);
+}
