@@ -69,6 +69,19 @@ Full end-to-end typing is a hard requirement, not a nice-to-have:
 - next-intl message usage should be type-checked against the message catalogs.
 - Route handlers (`app/api/**/route.ts`) must type their request/response shapes.
 
+## Tests
+
+The project has tests, added when the sitemap/nav/Studio-desk singleton-page
+registration gap was fixed (chiSonoSection had already gone unreachable from
+the Studio desk once for real; sitemap.ts independently had the same shape of
+bug). Run with `npm test` — `tsx --test`, Node's own built-in test runner, no
+separate framework installed. Test files are named `*.test.ts` and can live
+anywhere under `src/`; `src/sanity/singletonPages.completeness.test.ts` is the
+first one, asserting every entry in `paths.ts`'s `SINGLETON_ROUTES` has a
+matching `NAV_ROUTE_KEYS` entry and a matching row in `structure.ts`'s
+`PINNED_SINGLETON_PAGES`. Run it before committing anything that touches
+singleton-page registration (a new fixed route, nav, or the Studio desk).
+
 ## Styling (SCSS Modules, no Tailwind)
 
 - Component styles live in co-located `Component.module.scss` files next to
