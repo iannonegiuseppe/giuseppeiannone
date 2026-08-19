@@ -92,6 +92,34 @@ Things that must be done before the domain switches.
 
 Real defects, not launch-blocking.
 
+- **The WordPress redirect map (`wordpressArticleSlugs.json`) is a frozen
+  snapshot, not a live query — it matches Sanity exactly today (verified:
+  468 IT articles ↔ 468 entries, zero gaps either direction), but nothing
+  keeps it that way.** An editor adding or removing an article in Sanity
+  doesn't touch this file — it's a one-time commit from the migration, not
+  regenerated on content changes. Add a post, and it simply has no
+  redirect (not a regression, just never covered — same as any new post,
+  expected). Delete or rename one that a redirect still points at, and
+  that redirect now silently sends a visitor — and Google, for a URL it
+  already indexed — to a 404 on `/blog/{old-slug}`, which is worse than a
+  clean 404 at the original URL: it looks like the destination itself is
+  broken, not just missing.
+  - **Same shape of problem as the singleton-registration gap
+    `singletonPages.completeness.test.ts` already tests for — two lists
+    that must agree with nothing enforcing it — but not the same shape of
+    *test*.** That test is pure, static, offline: it compares hardcoded
+    arrays against each other, no network, safe to run on every commit,
+    and its result stays true until the code itself changes again. A
+    redirect-vs-Sanity check would need a live Sanity fetch, meaning
+    `npm test` would start requiring `.env.local`/credentials to even run
+    (today it needs neither), and — the bigger difference — a pass at
+    commit time wouldn't stay true: Sanity content changes independently
+    of any git commit, so this check would need re-running periodically
+    or on demand, not just in CI on push, to mean anything. Technically
+    buildable with the same `node:test` mechanism; not the same
+    maintenance model, and not built here — flagged for a decision, not
+    assumed.
+
 - **`/design-lab` and `/design-preview` — awaiting a decision: re-gate or
   delete, not settled as re-gate.** 15 `page.tsx` routes total (14 under
   `src/app/design-lab/`, 1 under `src/app/design-preview/taupe/`) are
