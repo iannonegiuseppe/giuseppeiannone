@@ -485,7 +485,12 @@ export default async function Home({
     if (sede.isOnline) continue; // no physical interior to show
     for (const addr of sede.addresses ?? []) {
       const name = MILANO_STREET_CAPTION[addr.address] ?? sede.city;
-      const fallbackKey = `${addr._key}_${sede._id}`;
+      // INTERIOR_STOCK_FALLBACK's keys are built from the IT sede _id
+      // (unsuffixed, e.g. "sede-milano") — the EN sede documents reuse the
+      // same addr._key values but carry a "-en"-suffixed _id ("sede-milano-
+      // en"), so the raw sede._id must be locale-normalized here or the
+      // lookup misses on /en for every address without a real Sanity photo.
+      const fallbackKey = `${addr._key}_${sede._id.replace(/-en$/, "")}`;
       const photoUrl = addr.photo
         ? urlFor(addr.photo).width(640).format("webp").url()
         : INTERIOR_STOCK_FALLBACK[fallbackKey];
