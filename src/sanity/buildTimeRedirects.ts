@@ -105,12 +105,23 @@ export async function getWordPressArticleRedirects(): Promise<
   // No trailing slash on `source`, even though every real old URL has one
   // (https://www.giuseppeiannone.it/{slug}/): Next.js's own automatic
   // trailing-slash normalization (trailingSlash: false, the project
-  // default) strips it from the incoming request BEFORE custom redirects
-  // are matched — a source WITH a trailing slash never matches a real
-  // request. Confirmed by testing against the actual built server: a
-  // trailing-slash source silently no-ops (Next's own redirect fires
-  // instead, stripping the slash, then 404s) while a slash-less source
-  // correctly catches the now-normalized request.
+  // default) ALWAYS fires before custom redirects() are matched, for any
+  // incoming request that has a trailing slash — there is no way to make
+  // a custom redirect see the pre-normalized path. Re-verified directly
+  // against a real production build (not dev mode) this pass: a
+  // trailing-slash-ONLY source matches nothing at all (0 redirects fired,
+  // straight 404) — Next's own strip redirect always wins first, and once
+  // it does, a slash-terminated source can never match. The real old URL
+  // shape (every one ends in /) therefore costs two redirect hops, not
+  // one: Next's own slash-strip, then this custom redirect. Both hops are
+  // real 308s a browser/crawler follows correctly to a real 200 — this is
+  // not broken, just not reducible to one hop without either flipping
+  // trailingSlash to true sitewide (changes canonical URL shape for every
+  // route, not just these) or moving this redirect into middleware
+  // (reverses the "static config, not middleware" call this file's own
+  // header comment already made, and runs per-request instead of once at
+  // boot). Neither done here — flagged in this pass's own report instead
+  // of picked unilaterally.
   return kept.map((slug) => ({
     source: `/${slug}`,
     destination: `/blog/${slug}`,

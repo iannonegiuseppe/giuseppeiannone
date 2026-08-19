@@ -27,6 +27,38 @@ const nextConfig: NextConfig = {
       { source: "/risorse/:slug", destination: "/blog/:slug", permanent: true },
       { source: "/en/resources", destination: "/en/blog", permanent: true },
       { source: "/en/resources/:slug", destination: "/en/blog/:slug", permanent: true },
+      // Old WordPress site's own standalone pages (crawled live against
+      // https://www.giuseppeiannone.it, not the migrated article corpus —
+      // see this pass's own report) — a small, hand-curated list, not run
+      // through getClaimedRootSlugs()'s dynamic filter the way the 468
+      // article slugs are, since there are only 7 of these and each was
+      // checked individually against live new-site routes before being
+      // added here. No trailing slash on any source, same reasoning as
+      // buildTimeRedirects.ts's own comment: Next's automatic trailing-
+      // slash normalization always strips it before these are matched, so
+      // a slash-terminated source would never fire.
+      { source: "/psicoterapia-online-metodo", destination: "/metodo", permanent: true },
+      { source: "/scarica-e-book", destination: "/libri", permanent: true },
+      {
+        source: "/psychotherapy-for-english-speakers",
+        destination: "/en",
+        permanent: true,
+      },
+      // Old site's own duplicate/alternate contact page — its own <title>
+      // was literally "Contatti — Dr. Giuseppe Iannone...".
+      {
+        source: "/studio-psicologia-psicoterapia-milano",
+        destination: "/contatti",
+        permanent: true,
+      },
+      // Old standalone page on generalized anxiety, same subject as the
+      // new anxiety pillar (old meta description and the pillar's own
+      // title both describe anxiety as a symptom of related conditions).
+      { source: "/ansia", destination: "/disturbi-d-ansia", permanent: true },
+      // Old site had two privacy-policy URLs (a WordPress duplicate-slug
+      // artifact, "-2" suffix) — both real, both live, both point here.
+      { source: "/privacy-policy", destination: "/privacy", permanent: true },
+      { source: "/privacy-policy-2", destination: "/privacy", permanent: true },
     ];
   },
   images: {
