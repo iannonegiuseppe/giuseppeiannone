@@ -16,6 +16,9 @@ import { homePage } from "./homePage";
 import { libriPage } from "./libriPage";
 import { locationPage } from "./locationPage";
 import { methodPage } from "./methodPage";
+import { milanPage } from "./milanPage";
+import { monzaPage } from "./monzaPage";
+import { onlineTherapyPage } from "./onlineTherapyPage";
 import { page } from "./page";
 import { pillarPage } from "./pillarPage";
 import { pricePage } from "./pricePage";
@@ -49,6 +52,12 @@ export const documentTypes = [
   // pricePage/contactPage do (see libriPage.ts's own comment); grouped
   // with the other singleton content pages above.
   libriPage,
+  // City/online pages pass — three bespoke singleton types, same
+  // treatment as methodPage above (see milanPage.ts's own comment for
+  // why each gets its own type rather than a shared/reorderable one).
+  milanPage,
+  monzaPage,
+  onlineTherapyPage,
   // Chi sono section pass: homepage teaser singleton (own structured
   // fields, not defineSimplePageType) — see its own file's comment for
   // why it supersedes homePage.chiSono/ChiSonoOverlap.tsx instead of

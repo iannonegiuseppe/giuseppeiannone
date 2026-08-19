@@ -126,6 +126,24 @@ export function articlePath(locale: Locale, slug: string): string {
   return locale === "it" ? `/blog/${slug}` : `/en/blog/${slug}`;
 }
 
+// City/online pages pass — three more fixed singleton routes, same
+// convention as every entry above (path decided in code, not content —
+// these document types have no slug field). Root-level, not under a
+// "citta"/"cities" prefix: checked collision-free against every pillarPage/
+// page slug, the frozen WordPress redirect snapshot, and RESERVED_ROOT_SLUGS
+// before choosing them (this pass's own report).
+export function milanPath(locale: Locale): string {
+  return locale === "it" ? "/psicologo-milano" : "/en/psychologist-milan";
+}
+
+export function monzaPath(locale: Locale): string {
+  return locale === "it" ? "/psicologo-monza" : "/en/psychologist-monza";
+}
+
+export function onlineTherapyPath(locale: Locale): string {
+  return locale === "it" ? "/psicoterapia-online-italiani-estero" : "/en/online-therapy-italians-abroad";
+}
+
 // Every fixed (non-slug-driven) singleton route, in nav order — pairs each
 // path function with the Sanity document type that actually backs it, so
 // sitemap.ts can generate its URL entries from this SAME array instead of
@@ -157,6 +175,14 @@ export const SINGLETON_ROUTES: Array<{
   { documentType: "contactPage", pathFn: contactPath },
   { documentType: "privacyPage", pathFn: privacyPath },
   { documentType: "cookiePolicyPage", pathFn: cookiePolicyPath },
+  // City/online pages pass — noIndex: true on every seeded document (not
+  // yet ready to be found by search), same as every other page during its
+  // own build. Registering here is still required: sitemap.ts's own
+  // noIndex filter only works because every singleton is queried through
+  // this array in the first place.
+  { documentType: "milanPage", pathFn: milanPath },
+  { documentType: "monzaPage", pathFn: monzaPath },
+  { documentType: "onlineTherapyPage", pathFn: onlineTherapyPath },
 ];
 
 export const singletonPathFns: Array<(locale: Locale) => string> =
@@ -201,6 +227,13 @@ export const NAV_ROUTE_KEYS: NavRouteKeyEntry[] = [
   { key: "contatti", studioLabel: "Contact (Contatti)", pathFn: contactPath },
   { key: "privacy", studioLabel: "Privacy", pathFn: privacyPath },
   { key: "cookie-policy", studioLabel: "Cookie policy", pathFn: cookiePolicyPath },
+  // City/online pages pass — registered so a nav item COULD reference
+  // these routes; none currently does. Explicitly not added to the header
+  // nav itself (see these pages' own build report for where they link
+  // from instead).
+  { key: "psicologo-milano", studioLabel: "Milan", pathFn: milanPath },
+  { key: "psicologo-monza", studioLabel: "Monza", pathFn: monzaPath },
+  { key: "psicoterapia-online", studioLabel: "Online (Italians abroad)", pathFn: onlineTherapyPath },
 ];
 
 function isLocale(value: string): value is Locale {

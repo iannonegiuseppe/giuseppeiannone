@@ -747,6 +747,85 @@ export const methodPageQuery = defineQuery(`
   }
 `);
 
+// City/online pages pass — pillarLink objects dereference "pillar" to
+// its current slug at query time (never a stored href — see pillarLink.ts's
+// own comment for why), so a pillar slug change is picked up automatically
+// on next request, not silently broken. "label" is the page's own short
+// anchor text, always separate from the pillar's own stored title.
+const pillarLinkProjection = `{ label, "slug": pillar->slug.current }`;
+
+export const milanPageQuery = defineQuery(`
+  *[_type == "milanPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    lead,
+    sixAreas{
+      kicker,
+      heading,
+      intro,
+      items[]{
+        title,
+        body,
+        "link": link${pillarLinkProjection}
+      }
+    },
+    split,
+    asymmetric,
+    twoBands,
+    practical,
+    seo
+  }
+`);
+
+export const monzaPageQuery = defineQuery(`
+  *[_type == "monzaPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    lead,
+    split,
+    confidentiality,
+    fourAreas{
+      kicker,
+      heading,
+      bands[]{
+        heading,
+        p1,
+        p2,
+        "links": links[]${pillarLinkProjection}
+      }
+    },
+    asymmetric,
+    practical,
+    seo
+  }
+`);
+
+export const onlineTherapyPageQuery = defineQuery(`
+  *[_type == "onlineTherapyPage" && language == $locale][0]{
+    kicker,
+    title,
+    titleEmphasisWord,
+    lead,
+    languageEpigraph,
+    fourAreas{
+      kicker,
+      heading,
+      bands[]{
+        heading,
+        p1,
+        p2,
+        "links": links[]${pillarLinkProjection}
+      }
+    },
+    timeZones,
+    howItWorks,
+    practical,
+    seo
+  }
+`);
+
 export const pricePageQuery = defineQuery(`
   *[_type == "pricePage" && language == $locale][0]{
     title,

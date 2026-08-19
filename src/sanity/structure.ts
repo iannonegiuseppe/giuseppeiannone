@@ -29,6 +29,11 @@ export const SINGLETON_TYPES = new Set([
   // Libri build pass — same singleton-pane/no-delete-or-duplicate
   // treatment as pricePage/contactPage/faqPage above.
   "libriPage",
+  // City/online pages pass — three more bespoke singleton pages, same
+  // treatment.
+  "milanPage",
+  "monzaPage",
+  "onlineTherapyPage",
   // Chi sono section pass: homepage teaser singleton — see its own
   // schema file's comment for why it's a standalone type rather than a
   // homePage field group.
@@ -298,6 +303,9 @@ export const PINNED_SINGLETON_PAGES: PinnedSingletonPage[] = [
   { documentType: "contactPage", title: "Contatti", group: "pages" },
   { documentType: "faqPage", title: "FAQ", group: "pages" },
   { documentType: "libriPage", title: "Libri", group: "pages" },
+  { documentType: "milanPage", title: "Milano (pagina città)", group: "pages" },
+  { documentType: "monzaPage", title: "Monza (pagina città)", group: "pages" },
+  { documentType: "onlineTherapyPage", title: "Online — italiani all'estero", group: "pages" },
   { documentType: "privacyPage", title: "Privacy", group: "pages" },
   { documentType: "cookiePolicyPage", title: "Cookie policy", group: "pages" },
   {

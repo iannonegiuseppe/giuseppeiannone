@@ -5,6 +5,7 @@ import { faqAnswer } from "./faqAnswer";
 import { faqBlock } from "./faqBlock";
 import { keyTakeaways } from "./keyTakeaways";
 import { navLink } from "./navLink";
+import { pillarLink } from "./pillarLink";
 import { portableText } from "./portableText";
 import { relatedTopics } from "./relatedTopics";
 import { seo } from "./seo";
@@ -22,4 +23,5 @@ export const objectTypes = [
   portableText,
   faqAnswer,
   navLink,
+  pillarLink,
 ];
