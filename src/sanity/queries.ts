@@ -909,10 +909,29 @@ export const heroPortraitQuery = defineQuery(`
 // seo.noIndex != true reads as "true" only for an explicit noIndex, so
 // documents without an seo object at all are still included by default.
 
-export const sitemapHomePagesQuery = defineQuery(`
-  *[_type == "homePage" && seo.noIndex != true]{
+// Singleton pass — one generic, $documentType-parameterized query replaces
+// what used to be a separate hand-written query per fixed-route type
+// (sitemapHomePagesQuery, sitemapBlogIndexQuery, and — the actual bug —
+// no query at all for chiSonoSection/methodPage/pricePage/faqPage/
+// contactPage/libriPage). sitemap.ts now calls this once per entry in
+// paths.ts's own SINGLETON_ROUTES, so a new singleton type needs adding
+// there only, never a matching query written here by hand.
+//
+// Deliberately NOT filtered by seo.noIndex != true here (unlike every
+// other sitemap query below) — this fetches BOTH languages' noIndex state
+// so sitemap.ts can decide per-language inclusion AND only add an
+// hreflang alternate for the other language when THAT document is also
+// indexable. A fixed fetch of "just the not-noIndex ones" can't tell that
+// difference: if IT clears noIndex before EN does, the naive version would
+// still advertise an hreflang link to a page carrying a noindex tag — the
+// same broken-alternate problem pillarPage/subtopicPage/article already
+// avoid by only ever linking a language when a real, resolvable document
+// backs it (see this pass's own report).
+export const sitemapSingletonQuery = defineQuery(`
+  *[_type == $documentType]{
     language,
-    _updatedAt
+    _updatedAt,
+    "noIndex": seo.noIndex
   }
 `);
 
@@ -946,18 +965,6 @@ export const sitemapArticlesQuery = defineQuery(`
     "slug": slug.current,
     _updatedAt,
     ${alternatesProjection}
-  }
-`);
-
-// blogIndexSection is the /blog, /en/blog listing's own singleton (hero +
-// editorial copy) — its _updatedAt is the honest lastModified source for
-// that one URL, same "the document IS the page" reasoning homePage's own
-// sitemap query already uses. Not a stand-in for "an article changed" —
-// see this pass's own report on why pagination pages aren't included.
-export const sitemapBlogIndexQuery = defineQuery(`
-  *[_type == "blogIndexSection" && seo.noIndex != true]{
-    language,
-    _updatedAt
   }
 `);
 

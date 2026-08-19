@@ -126,21 +126,41 @@ export function articlePath(locale: Locale, slug: string): string {
   return locale === "it" ? `/blog/${slug}` : `/en/blog/${slug}`;
 }
 
-// Every fixed (non-slug-driven) path function, in nav order — the single
-// source the locale switcher's static reverse-lookup iterates over. Add a
-// new singleton path function here when one is introduced.
-export const singletonPathFns: Array<(locale: Locale) => string> = [
-  homePath,
-  aboutPath,
-  methodPath,
-  pricePath,
-  articlesPath,
-  libriPath,
-  faqPath,
-  contactPath,
-  privacyPath,
-  cookiePolicyPath,
+// Every fixed (non-slug-driven) singleton route, in nav order — pairs each
+// path function with the Sanity document type that actually backs it, so
+// sitemap.ts can generate its URL entries from this SAME array instead of
+// a hand-typed, independently-maintained list per document type. This is
+// the fix for a real bug: sitemap.ts went 11 days without chi-sono, prezzi,
+// faq, metodo, and contatti (and never had libri, which postdated it) —
+// each became a real page well after sitemap.ts was last touched, and
+// nobody came back to add a query for it. A hand-typed second list has no
+// way to fail loudly when a new singleton is forgotten; deriving from this
+// one array means adding a route here is the ONLY step, for every
+// consumer at once (routing, the locale switcher, reserved-slug
+// protection, and the sitemap).
+//
+// `singletonPathFns` below is kept as the plain function-list projection
+// of this array — its own two existing consumers (reservedSlugs.ts,
+// LocaleSwitcher.tsx) only ever needed the function itself, never the
+// document type, so neither had to change for this.
+export const SINGLETON_ROUTES: Array<{
+  documentType: string;
+  pathFn: (locale: Locale) => string;
+}> = [
+  { documentType: "homePage", pathFn: homePath },
+  { documentType: "chiSonoSection", pathFn: aboutPath },
+  { documentType: "methodPage", pathFn: methodPath },
+  { documentType: "pricePage", pathFn: pricePath },
+  { documentType: "blogIndexSection", pathFn: articlesPath },
+  { documentType: "libriPage", pathFn: libriPath },
+  { documentType: "faqPage", pathFn: faqPath },
+  { documentType: "contactPage", pathFn: contactPath },
+  { documentType: "privacyPage", pathFn: privacyPath },
+  { documentType: "cookiePolicyPage", pathFn: cookiePolicyPath },
 ];
+
+export const singletonPathFns: Array<(locale: Locale) => string> =
+  SINGLETON_ROUTES.map((route) => route.pathFn);
 
 // CMS-driven header/footer pass: the fixed-route allow-list a headerSettings/
 // footerSettings nav item's `routeKey` (Studio dropdown, see navLink.ts) is

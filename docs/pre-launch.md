@@ -10,16 +10,19 @@ content both move.
 
 Things that must be done before the domain switches.
 
-- **`seo.noIndex` is `true` on 79 documents right now, not a fixed small
-  number.** Live count via `*[seo.noIndex == true]`, by type:
-  `pillarPage` 14 (all 7, both locales), `subtopicPage` 42 (all 21, both
-  locales), `article` 5, `homePage` 2, `chiSonoSection` 2, `contactPage` 2,
-  `cookiePolicyPage` 2, `faqPage` 2, `methodPage` 2, `pricePage` 2,
-  `privacyPage` 2, `siteSettings` 2. Every real, built page on the site is
-  currently noindexed — this isn't a short list to flip, it's "turn
-  indexing on" as a real launch step. `siteSettings-it`/`-en` don't need
-  touching: `buildMetadata()` never reads `siteSeo.noIndex`, only each
-  page's own `seo.noIndex` — flipping it does nothing either way.
+- **`seo.noIndex` is `true` on 81 documents right now, not a fixed small
+  number — this entry previously said 79 and was stale by exactly
+  `libriPage`'s 2 documents (missing from the breakdown below since
+  whenever this file last checked; re-verified live just now).** Live
+  count via `*[seo.noIndex == true]`, by type: `pillarPage` 14 (all 7,
+  both locales), `subtopicPage` 42 (all 21, both locales), `article` 5,
+  `homePage` 2, `chiSonoSection` 2, `contactPage` 2, `cookiePolicyPage` 2,
+  `faqPage` 2, `libriPage` 2, `methodPage` 2, `pricePage` 2, `privacyPage`
+  2, `siteSettings` 2. Every real, built page on the site is currently
+  noindexed — this isn't a short list to flip, it's "turn indexing on" as
+  a real launch step. `siteSettings-it`/`-en` don't need touching:
+  `buildMetadata()` never reads `siteSeo.noIndex`, only each page's own
+  `seo.noIndex` — flipping it does nothing either way.
   - **The 5 `article` noIndex docs are the five new English articles
     added this session** (`perche-sono-impulsivo`, `quando-una-relazione-
     diventa-tossica`, `perche-ho-sempre-bisogno-di-conferme`, `isteria-o-
@@ -31,21 +34,38 @@ Things that must be done before the domain switches.
     each, or a scripted batch unset. Re-deploy so the sitemap and each
     page's own `<meta name="robots">` pick it up.
 
-- **Privacy policy has 2 confirmed `[DA CONFERMARE — ...]` placeholders**,
-  both awaiting Giuseppe: §1 "Sede: `[DA CONFERMARE — sede legale]`", §9
-  "puoi scrivere a `[DA CONFERMARE — email diritti]`". Checked the full
-  body text of `privacyPage-it` and `cookiePolicyPage-it` for any bracket
-  pattern — these are the only two; cookie policy has none.
+- **`robots.txt` currently blocks all crawling (verified live:
+  `User-Agent: *` / `Disallow: /`) — this is correct and load-bearing
+  pre-launch, and needs no separate sitemap exception.** Checked whether
+  `/sitemap.xml` also carries an `X-Robots-Tag: noindex` header (it would
+  need excluding from that at launch, since Google won't read a sitemap
+  marked noindex): it doesn't. `proxy.ts`'s middleware — the only thing
+  that sets that header — has a matcher that excludes any path containing
+  a dot (meant for static assets), so it never runs for `/sitemap.xml` on
+  any hostname; confirmed with a live header check. `robots.ts`'s
+  production branch already both allows crawling and lists
+  `sitemap: .../sitemap.xml` — that flips on automatically the same
+  moment `isProductionDeployment()` does (see `robots.ts`'s own comment).
+  Re-confirm this with a live header check against the real Vercel
+  preview before launch, since Vercel-dashboard-level config wouldn't
+  show up in this repo — but nothing here points to action being needed.
 
-- **No consent banner, no script blocking — must exist before any
-  analytics is connected, not after.** Checked the codebase for GA/GTM/
-  Meta Pixel/Clarity script tags and for any cookie-consent component:
-  none exist yet, anywhere. The privacy policy (§6) already documents
-  Google Analytics/Tag Manager/Ads, Microsoft Clarity/Bing Webmaster,
-  and Meta Pixel as "used only with consent" — so the policy is ahead of
-  the code here. Not urgent today (nothing is tracking yet), but wiring
-  any of those scripts before the consent gate exists would make the
-  policy false the moment it happens.
+- **Consent banner and gated script-loading both exist now — GA4 and
+  Microsoft Clarity are wired, not just the mechanism.**
+  `CookieConsentBanner` and `src/lib/consent/consent.ts`'s
+  `runWhenConsented` gate real script injection for both vendors (`src/lib/consent/loadGoogleAnalytics.ts`,
+  `loadClarity.ts`, mounted via `AnalyticsLoader.tsx`) — verified live
+  with a clean browser profile: zero requests to either vendor's domain
+  before consent, both fire correctly after accepting, nothing after
+  choosing necessary-only. Two real findings from that verification, not
+  yet resolved: Clarity's own project configuration pulls in Microsoft
+  Advertising cookies (`MUID`, `MR`, `SRM_B`, `SM`, `ANONCHK`) under
+  analytics-only consent, which the published cookie policy doesn't
+  document and which — per that policy's own §2 grouping — shouldn't be
+  tied to marketing tracking at all; and GA4 sent nothing beyond its own
+  script load in every test run, likely a property-side Consent Mode
+  setting, not a code issue. Giuseppe is checking both dashboards before
+  this ships live; not committed yet pending that.
 
 - **Disavow file for the 84 junk backlink domains — not created.**
   Checked the repo for any `disavow*` file: none. (The 84-domain figure
@@ -59,9 +79,13 @@ Things that must be done before the domain switches.
   untouched). Whatever code change the disable decision requires hasn't
   been written yet.
 
-- **Giuseppe owes:** studio photographs (blocks the location pages below,
-  and the `public/interiors` stock-photo swap already tracked in
-  §2), and the WordPress user list (needed to finish reconciling the
+- **Giuseppe owes:** studio photographs — Monza's is in now (`sede-monza`/
+  `-en`, addr-1, uploaded and verified live in the map popup and the
+  homepage's "Gli spazi" strip), Milano's two addresses and Cernusco's
+  one are still on the stock-photo fallback (blocks the location pages
+  below, and the rest of the `public/interiors` stock-photo swap tracked
+  in §4, which had this cross-reference backwards as "§2" before this
+  pass) — and the WordPress user list (needed to finish reconciling the
   migrated article corpus's authorship).
 
 ## 2. Should fix before launch
@@ -114,20 +138,18 @@ Real defects, not launch-blocking.
   comment flags the distinction, but it's easy to misread from outside
   the code.
 
-- **Three anomalies in the article corpus, found via a full-text sweep
-  of all IT article bodies:**
-  - `e-normale-controllare-tutto-mille-volte` — one link points to
+- **One of three article-corpus anomalies still open — re-checked live,
+  two have been fixed since this was written:**
+  - `e-normale-controllare-tutto-mille-volte` — **still present.** One
+    link still points to
     `https://claude.ai/chat/06f975ff-dc63-4737-8022-fb58dddc74b3#contatti`
     — a leaked AI chat-session URL, not a real citation.
-  - `fumare-aiuta-a-gestire-lansia` — 10 links to
-    `instagram.com/explore/tags/*` (fumo, sigaretta, paura, nicotina,
-    psicoterapia, respirare, calcio, cervello, cuore, polmoni) — a
-    hashtag-stuffing artifact, not real Instagram content.
-  - `cose-un-disturbo-di-personalita` — 12 separate body blocks, six
-    pairs of a `"PrecSucc"` block immediately followed by a `"123"`
-    block — a WordPress pagination widget ("Precedente / Successivo",
-    "1 2 3 …") that got flattened into plain text during migration, once
-    per page break.
+  - ~~`fumare-aiuta-a-gestire-lansia` — 10 links to
+    `instagram.com/explore/tags/*`~~ — **fixed.** Re-checked live: zero
+    Instagram hashtag links remain on this article.
+  - ~~`cose-un-disturbo-di-personalita` — six `"PrecSucc"`/`"123"`
+    pagination-widget block pairs~~ — **fixed.** Re-checked live: no
+    `"PrecSucc"` block remains in the body.
 
 - **`come-si-cura-il-panico` has a "see this page" sentence promising a
   link that no longer exists — known cause, not a mystery to solve.**
@@ -288,8 +310,9 @@ Decisions already taken — recorded so nobody re-opens them.
 
 - **Location pages — deferred pending studio photographs.** Zero
   `locationPage` documents exist yet (confirmed live: `locIt: 0, locEn:
-  0`). Waiting on Giuseppe's real photos of the Milan/Monza studios
-  (see §1) before these get built at all.
+  0`). Monza's photo has landed; still waiting on Giuseppe's real photos
+  of Milano's two addresses and Cernusco's one (see §1) before these get
+  built at all.
 
 - **`src/app/design-lab/density/SediCards.tsx` + `sediCards.module.scss`,
   and `Lightbox.tsx` + `lightbox.module.scss` — kept, not imported
@@ -303,13 +326,14 @@ Decisions already taken — recorded so nobody re-opens them.
   until there's an explicit decision to revive or discard.
 
 - **`public/interiors` stock photography is a deliberate placeholder,
-  not a bug.** `src/app/design-lab/DesignLabHomepage.tsx`'s
-  `INTERIOR_STOCK_FALLBACK` map — the Locations marquee falls back to 4
-  generic stock photos whenever a `sede.addresses[]` entry has no
-  `photo` set in Sanity, true for all of them right now. Switches to
-  Giuseppe's real per-location interiors automatically, no code change,
-  once those are uploaded (see §1 — same photograph dependency as the
-  location pages above).
+  not a bug — no longer true for all of them.**
+  `src/app/design-lab/DesignLabHomepage.tsx`'s `INTERIOR_STOCK_FALLBACK`
+  map — the Locations marquee falls back to a generic stock photo whenever a
+  `sede.addresses[]` entry has no `photo` set in Sanity. Monza's address
+  has a real photo now (see §1); Milano's two addresses and Cernusco's
+  one are still on the fallback. Switches automatically per address, no
+  code change, as each remaining one gets uploaded (see §1 — same
+  photograph dependency as the location pages above).
 
 - **`AreeSectionData.previewHover` stays in the schema, unread, on
   purpose.** See §2's own entry — kept until real `/aree/*` pages exist
@@ -359,6 +383,40 @@ live rather than by commit:**
 - Removed all ~428 `systemamilano.it` outbound links from article bodies
   (a WordPress-era cross-promotion scheme) — reverified live via a fresh
   query just now: 0 remaining.
+
+**Resolved since (Aug 15–19, 2026) — a later session, outside the commit
+range above; same sourcing discipline, checked live rather than assumed:**
+
+- Built the real `/libri` (`/en/books`) page (`f8773df`, Aug 15) — not
+  recorded anywhere in this file until now, since it postdates the
+  commit range this section was originally scoped to.
+- Filled the privacy policy's two `[DA CONFERMARE — ...]` placeholders
+  (controller block's registered-address line removed entirely per
+  instruction, not left blank; rights-request email filled) — the bullet
+  that used to record these as open, in §1, is gone.
+- Uploaded Monza's real studio photo to `sede-monza`/`-en` (addr-1) and
+  wired the map popup to render it as a background with a scrim
+  (readable-text contrast measured live, all ≥4.5:1) instead of a top
+  band — separate from the Advertising-cookie and GA-reporting findings
+  recorded in §1's own updated consent-banner entry.
+- Fixed two real, tsc-clean-but-actually-broken things found while
+  auditing the sitemap for this pass: `robots.ts`'s own comment now
+  explains exactly what changes on launch day (was previously
+  undocumented); this file's own noIndex count was stale by 2 documents
+  (79 → 81, `libriPage` was never added to the breakdown).
+- **Fixed the pattern, not the instance, on the six-missing-query
+  sitemap gap.** `sitemap.ts` used to fetch each fixed-route singleton
+  type via a hand-written query (or, for six of them, no query at all).
+  It now derives its entire singleton-page section from
+  `paths.ts`'s own `SINGLETON_ROUTES` — one array pairing each fixed
+  path function with the Sanity document type behind it, already the
+  established source for `reservedSlugs.ts` and `LocaleSwitcher.tsx`.
+  Adding a future singleton page now means one array entry, not a
+  matching hand-written sitemap query nobody remembers to add. URL count
+  is unchanged today (470 → 470) since all six affected types are still
+  noIndex; the fix is real and verified regardless (queried all six
+  directly — real documents, real timestamps, ready the moment noIndex
+  clears).
 
 **Already correctly marked resolved before this rewrite, left as-is:**
 the Leaflet map attribution fix (Contatti build pass) was the one entry

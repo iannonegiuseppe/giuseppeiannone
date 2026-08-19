@@ -5,19 +5,17 @@ import type { AlternateEntry, Locale } from "@/sanity/paths";
 import {
   articleLocalizedPaths,
   articlePath,
-  articlesPath,
-  homePath,
   pageLocalizedPaths,
   pagePath,
   pillarLocalizedPaths,
+  SINGLETON_ROUTES,
   subtopicLocalizedPaths,
 } from "@/sanity/paths";
 import {
   sitemapArticlesQuery,
-  sitemapBlogIndexQuery,
-  sitemapHomePagesQuery,
   sitemapPagesQuery,
   sitemapPillarsQuery,
+  sitemapSingletonQuery,
   sitemapSubtopicsQuery,
 } from "@/sanity/queries";
 
@@ -40,12 +38,24 @@ function toAbsoluteLanguages(
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
 
-  const [homePages, pillars, subtopics, articles, blogIndexPages, pages] =
+  const [singletons, pillars, subtopics, articles, pages] =
     await Promise.all([
-      sanityFetchPublished<{ language: string; _updatedAt: string }[]>(
-        sitemapHomePagesQuery,
-        {},
-        ["homePage"],
+      // Singleton pass — one fetch per SINGLETON_ROUTES entry (home,
+      // chi-sono, metodo, prezzi, blog listing, libri, faq, contatti,
+      // privacy, cookie policy), run in parallel. Replaces the two
+      // one-off queries this used to hand-write (home, blog index) plus
+      // the five that were simply never written (chi-sono, metodo,
+      // prezzi, faq, contatti) and the one that didn't exist yet when
+      // this file was last touched (libri) — see paths.ts's own comment
+      // on SINGLETON_ROUTES for why a hand-typed second list was the bug.
+      Promise.all(
+        SINGLETON_ROUTES.map((route) =>
+          sanityFetchPublished<
+            { language: string; _updatedAt: string; noIndex?: boolean }[]
+          >(sitemapSingletonQuery, { documentType: route.documentType }, [
+            route.documentType,
+          ]).then((docs) => ({ route, docs })),
+        ),
       ),
       sanityFetchPublished<
         {
@@ -72,11 +82,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           alternates?: AlternateEntry[];
         }[]
       >(sitemapArticlesQuery, {}, ["article"]),
-      sanityFetchPublished<{ language: string; _updatedAt: string }[]>(
-        sitemapBlogIndexQuery,
-        {},
-        ["blogIndexSection"],
-      ),
       sanityFetchPublished<
         {
           language: string;
@@ -89,23 +94,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [];
 
-  // Every locale this document exists in, for real — the EN gate that
-  // used to hand-exclude "en" here is gone everywhere else (page.tsx,
-  // proxy.ts) and this special case was the one piece of it left
-  // undone; see this pass's own report.
-  for (const doc of homePages) {
-    if (!isLocale(doc.language)) continue;
+  // Singleton pass — one loop covers every fixed-route type at once
+  // (home, chi-sono, metodo, prezzi, blog listing, libri, faq, contatti,
+  // privacy, cookie policy). Deliberately NOT a fixed both-locales
+  // hreflang block: only a language that is ITSELF not noIndex gets a
+  // <url> entry, and the alternates map is built only from languages that
+  // survived that same filter — a language cleared for indexing never
+  // links to a sibling that's still noindexed, avoiding the exact broken-
+  // alternate trap sitemapSingletonQuery's own comment describes.
+  for (const { route, docs } of singletons) {
+    const indexable = docs.filter(
+      (doc): doc is typeof doc & { language: Locale } =>
+        isLocale(doc.language) && doc.noIndex !== true,
+    );
+    if (indexable.length === 0) continue;
 
-    entries.push({
-      url: `${siteUrl}${homePath(doc.language)}`,
-      lastModified: doc._updatedAt,
-      alternates: {
-        languages: toAbsoluteLanguages(siteUrl, {
-          it: homePath("it"),
-          en: homePath("en"),
-        }),
-      },
-    });
+    const localizedPaths = Object.fromEntries(
+      indexable.map((doc) => [doc.language, route.pathFn(doc.language)]),
+    ) as Partial<Record<Locale, string>>;
+
+    for (const doc of indexable) {
+      entries.push({
+        url: `${siteUrl}${route.pathFn(doc.language)}`,
+        lastModified: doc._updatedAt,
+        alternates: { languages: toAbsoluteLanguages(siteUrl, localizedPaths) },
+      });
+    }
   }
 
   for (const doc of pillars) {
@@ -162,27 +176,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${siteUrl}${path}`,
       lastModified: doc._updatedAt,
       alternates: { languages: toAbsoluteLanguages(siteUrl, localizedPaths) },
-    });
-  }
-
-  // The /blog, /en/blog listing itself (page 1) — the canonical entry
-  // point to the blog, not one of the excluded pagination pages.
-  // lastModified comes from blogIndexSection's own _updatedAt (the
-  // document that owns this URL's hero/editorial copy), not from
-  // whichever article happens to be newest — same "the document IS the
-  // page" reasoning homePage's own entry above uses.
-  for (const doc of blogIndexPages) {
-    if (!isLocale(doc.language)) continue;
-
-    entries.push({
-      url: `${siteUrl}${articlesPath(doc.language)}`,
-      lastModified: doc._updatedAt,
-      alternates: {
-        languages: toAbsoluteLanguages(siteUrl, {
-          it: articlesPath("it"),
-          en: articlesPath("en"),
-        }),
-      },
     });
   }
 
