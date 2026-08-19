@@ -265,6 +265,58 @@ function pillarWithSubtopics(
 //   subtopicPage "Subtopic page" -> "Sub-area page"
 //   page         "Page"          -> "Simple page"
 //   faqItem      "FAQ item"      -> "FAQ question"
+// Completeness-test pass — this is the fix for a real, already-happened
+// failure: chiSonoSection went unreachable from the desk for a stretch
+// after the type went live, purely because nobody added its row back here
+// (see the "chiSonoSection correction" comment above). Parsing the builder
+// tree below to check what it actually renders is awkward (S.list()/
+// S.listItem() build opaque objects, not inspectable data) — so instead
+// this array IS the data the tree is built from, not a second hand-typed
+// list describing it. Every singletonListItem(...) call in the Pages and
+// Blog groups below is generated from this array (via the lookups right
+// after it), so the tree cannot list a document type this array doesn't
+// also list, and — the actual failure mode that happened — this array
+// cannot claim a row exists that the tree doesn't render either. The
+// completeness test (singletonPages.completeness.test.ts) imports this
+// directly and checks it against paths.ts's own SINGLETON_ROUTES; it does
+// not (and structurally cannot) inspect the S.list() tree itself.
+export interface PinnedSingletonPage {
+  documentType: string;
+  title: string;
+  // Which desk group's item list this row's singletonListItem() call
+  // renders inside — "pages" for the Pages group (homePage through
+  // cookiePolicyPage), "blog" for the Blog group (blogIndexSection,
+  // alongside Articles).
+  group: "pages" | "blog";
+}
+
+export const PINNED_SINGLETON_PAGES: PinnedSingletonPage[] = [
+  { documentType: "homePage", title: "Home page", group: "pages" },
+  { documentType: "chiSonoSection", title: "Chi sono", group: "pages" },
+  { documentType: "methodPage", title: "Metodo", group: "pages" },
+  { documentType: "pricePage", title: "Prezzi", group: "pages" },
+  { documentType: "contactPage", title: "Contatti", group: "pages" },
+  { documentType: "faqPage", title: "FAQ", group: "pages" },
+  { documentType: "libriPage", title: "Libri", group: "pages" },
+  { documentType: "privacyPage", title: "Privacy", group: "pages" },
+  { documentType: "cookiePolicyPage", title: "Cookie policy", group: "pages" },
+  {
+    documentType: "blogIndexSection",
+    title: "Blog index (hero + editorial)",
+    group: "blog",
+  },
+];
+
+// homePage renders first (before the pillar rows) — everything else in
+// the "pages" group renders after them, in PINNED_SINGLETON_PAGES' own
+// order. Both pulled from the same array by filtering, not by a second
+// literal list, for the same reason the array exists at all.
+const HOME_ROW = PINNED_SINGLETON_PAGES.find((p) => p.documentType === "homePage")!;
+const PAGES_GROUP_ROWS = PINNED_SINGLETON_PAGES.filter(
+  (p) => p.group === "pages" && p.documentType !== "homePage",
+);
+const BLOG_GROUP_ROWS = PINNED_SINGLETON_PAGES.filter((p) => p.group === "blog");
+
 export const structure: StructureResolver = (S, context) =>
   S.list()
     .title("Content")
@@ -275,7 +327,7 @@ export const structure: StructureResolver = (S, context) =>
           S.list()
             .title("Pages")
             .items([
-              singletonListItem(S, "homePage", "Home page"),
+              singletonListItem(S, HOME_ROW.documentType, HOME_ROW.title),
               pillarWithSubtopics(S, context, "pillarPage-anxiety-it"),
               pillarWithSubtopics(S, context, "pillarPage-panic-it"),
               pillarWithSubtopics(S, context, "pillarPage-relazioni-it"),
@@ -288,14 +340,7 @@ export const structure: StructureResolver = (S, context) =>
               // something this pass's own header work introduced.
               pillarWithSubtopics(S, context, "pillarPage-coppia-it"),
               pillarWithSubtopics(S, context, "pillarPage-trauma-it"),
-              singletonListItem(S, "chiSonoSection", "Chi sono"),
-              singletonListItem(S, "methodPage", "Metodo"),
-              singletonListItem(S, "pricePage", "Prezzi"),
-              singletonListItem(S, "contactPage", "Contatti"),
-              singletonListItem(S, "faqPage", "FAQ"),
-              singletonListItem(S, "libriPage", "Libri"),
-              singletonListItem(S, "privacyPage", "Privacy"),
-              singletonListItem(S, "cookiePolicyPage", "Cookie policy"),
+              ...PAGES_GROUP_ROWS.map((p) => singletonListItem(S, p.documentType, p.title)),
               S.listItem()
                 .title("Sedi (pagine)")
                 .child(
@@ -315,7 +360,7 @@ export const structure: StructureResolver = (S, context) =>
           S.list()
             .title("Blog")
             .items([
-              singletonListItem(S, "blogIndexSection", "Blog index (hero + editorial)"),
+              ...BLOG_GROUP_ROWS.map((p) => singletonListItem(S, p.documentType, p.title)),
               S.documentTypeListItem("article").title("Articles"),
             ]),
         ),

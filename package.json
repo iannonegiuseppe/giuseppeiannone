@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx --test src/**/*.test.ts",
     "seed": "tsx --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
