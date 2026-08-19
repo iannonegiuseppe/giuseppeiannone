@@ -67,29 +67,6 @@ Things that must be done before the domain switches.
   setting, not a code issue. Giuseppe is checking both dashboards before
   this ships live; not committed yet pending that.
 
-- **A temporary consent bypass exists for GA4/Clarity, and it contradicts the
-  published cookie policy while it's on.** `NEXT_PUBLIC_ANALYTICS_CONSENT_BYPASS`
-  (checked in `AnalyticsLoader.tsx`, set as an env var — not hardcoded, not
-  committed as a value) loads both vendors unconditionally on every page,
-  ignoring the consent gate, so the integrations themselves could be verified
-  on the preview domain without waiting on a real visitor's choice. It logs a
-  loud, unmistakable console warning (naming the flag) on every page load
-  while active. It does not touch `CookieConsentBanner` or `consent.ts` — the
-  banner still renders and still records real choices, only the unconditional
-  load path is new, added as its own single commit specifically so it can be
-  reverted in one move.
-  - **Both cookie-policy locales say, under §2 (Statistical cookies): "Installati
-    solo con il tuo consenso" / "Installed only with your consent."** That
-    sentence is factually false for any visit served while this flag is on —
-    GA and Clarity load before any consent decision exists. Not a future risk;
-    true right now on whichever deployment has the env var set.
-  - **Must be removed (env var unset, and this whole code block reverted)
-    before the domain switches.** Confirm the env var is unset (or absent) on
-    the production Vercel environment specifically before launch — it only
-    needs to exist on Preview for its purpose here, and Preview/Production are
-    separate env var scopes in Vercel, but this is exactly the kind of thing
-    worth checking directly rather than assuming the scoping held.
-
 - **Disavow file for the 84 junk backlink domains — not created.**
   Checked the repo for any `disavow*` file: none. (The 84-domain figure
   itself comes from an external backlink audit, not something checkable
