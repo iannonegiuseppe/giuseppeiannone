@@ -1,0 +1,56 @@
+@use "../styles/mixins";
+
+// Extracted + generalized from metodo/page.module.scss's own section 7.
+// The grid below is tuned for exactly 3 columns, matching every current
+// use (metodo, Milan, Monza, the online page) — revisit grid-template-
+// columns if a future page needs a different count.
+.h3 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.bodyP {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+}
+
+.practicalSection {
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-9);
+}
+
+.practicalColumns {
+  @include mixins.container;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+
+  @include mixins.breakpoint-up(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.practicalRule {
+  @include mixins.container;
+  height: 1px;
+  background: var(--color-hairline);
+  margin: var(--space-8) auto var(--space-7);
+}
+
+.closingQuote {
+  @include mixins.container;
+  max-width: 60rem; // 960px, exactly
+  margin-inline: auto;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-style: italic;
+  font-size: var(--fs-h2);
+  line-height: 1.35;
+  color: var(--color-text);
+}

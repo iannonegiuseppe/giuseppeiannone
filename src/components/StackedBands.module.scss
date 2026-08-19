@@ -1,0 +1,107 @@
+@use "../styles/mixins";
+
+// Extracted + generalized from metodo/page.module.scss's own section 6
+// (.fitEndingSection/.fitEndingInner/.fitEndingBand/.fitEndingBandLast/
+// .fitEndingProse) — same values, band count and tone now variable.
+.section {
+  color: var(--color-text);
+  @include mixins.upper-left-sheen;
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-9);
+}
+
+// "bg" = near-black ground, same resting tone as SplitBlock's left half —
+// no local --color-bg override needed, the sheen's far-edge stop already
+// matches.
+.toneBg {
+  background: var(--color-bg);
+}
+
+// "surface" = the lighter step, same resting tone as SplitBlock's right
+// half — needs the same local override so the sheen's far-edge stop
+// redirects to match (see SplitBlock.module.scss's own comment).
+.toneSurface {
+  background: var(--color-surface);
+  --color-bg: var(--color-surface);
+}
+
+.inner {
+  @include mixins.container;
+}
+
+.band {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: start;
+
+  @include mixins.breakpoint-up(md) {
+    // "roughly 1:2.5" per metodo's own brief
+    grid-template-columns: 1fr 2.5fr;
+    gap: var(--space-8);
+  }
+}
+
+// Applied to every band except the last — the divider between it and the
+// next one. Applied to every band except the first — the matching space
+// above it, on the other side of the previous band's own divider. A
+// middle band (neither first nor last) carries both.
+.hasDividerAfter {
+  padding-bottom: var(--space-7);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.hasSpaceBefore {
+  padding-top: var(--space-7);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+  color: var(--color-text);
+}
+
+.prose {
+  max-width: 47.5rem; // 760px, metodo's own measure
+}
+
+.bodyP {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+
+  & + & {
+    margin-top: var(--space-4);
+  }
+}
+
+.links {
+  margin: var(--space-4) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.linkGlyph {
+  font-size: var(--fs-small);
+}

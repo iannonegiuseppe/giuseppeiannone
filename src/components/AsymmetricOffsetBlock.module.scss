@@ -1,0 +1,63 @@
+@use "../styles/mixins";
+
+// Extracted verbatim from metodo/page.module.scss's own section 5.
+.kicker {
+  margin: 0;
+}
+
+.h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.bodyP {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+
+  & + & {
+    margin-top: var(--space-4);
+  }
+}
+
+.approachSection {
+  padding-top: var(--space-9);
+  padding-bottom: var(--space-9);
+}
+
+.approachInner {
+  @include mixins.container;
+}
+
+.approachHeading {
+  margin: var(--space-6) 0 var(--space-7);
+  max-width: 70rem; // 1120px, metodo's own measure — wider than the h1s elsewhere, deliberately
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-display-sm);
+  line-height: var(--lh-display-sm);
+  color: var(--color-text);
+}
+
+.approachColumn {
+  max-width: 40rem; // 640px, exactly
+  margin-bottom: var(--space-9);
+}
+
+// Deliberately asymmetric — pushed right via margin-left:auto, not a
+// grid column. Do not straighten this into a two-column layout.
+.approachOffset {
+  max-width: 35rem; // 560px
+  margin-left: auto;
+  padding-left: var(--space-8);
+  border-left: 1px solid var(--color-hairline);
+}
+
+.approachOffset .h3 {
+  margin-bottom: var(--space-4);
+}

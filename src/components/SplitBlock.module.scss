@@ -1,0 +1,74 @@
+@use "../styles/mixins";
+
+// Extracted verbatim from metodo/page.module.scss's own section 2. The
+// ONLY 50/50 grid this pattern uses — no mixins.container: it deliberately
+// runs edge-to-edge (full viewport width, only the two halves' own inline
+// padding holds text off the edge), the one section not centred in the
+// content column, by design.
+.split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+
+  @include mixins.breakpoint-up(lg) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.splitLeft,
+.splitRight {
+  padding-block: var(--space-9);
+  padding-inline: var(--space-7);
+
+  @include mixins.breakpoint-up(lg) {
+    padding-inline: var(--space-8);
+  }
+}
+
+.splitLeft {
+  background: var(--color-bg);
+  color: var(--color-text);
+  @include mixins.upper-left-sheen;
+}
+
+.splitRight {
+  background: var(--color-surface);
+  color: var(--color-text);
+  // Sheen's own gradient resolves its far-edge stop from --color-bg — this
+  // section's resting tone is --color-surface instead, so the local
+  // override redirects it. Carried over verbatim from metodo's own
+  // .splitRight comment — do not remove without re-reading it.
+  --color-bg: var(--color-surface);
+  @include mixins.upper-left-sheen;
+}
+
+.splitLabel {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.splitHeading {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h2-lg);
+  line-height: var(--lh-h2-lg);
+  color: var(--color-text);
+}
+
+.splitP {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text-muted);
+
+  & + & {
+    margin-top: var(--space-4);
+  }
+}
