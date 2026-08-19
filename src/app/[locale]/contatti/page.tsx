@@ -10,10 +10,18 @@ import { ShimmerText } from "@/components/ShimmerText";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
 import { whatsappUrl } from "@/sanity/contact";
-import { contactPath, hrefFor, type Locale, type ReferencedDoc } from "@/sanity/paths";
+import {
+  contactPath,
+  hrefFor,
+  milanPath,
+  monzaPath,
+  onlineTherapyPath,
+  type Locale,
+  type ReferencedDoc,
+} from "@/sanity/paths";
 import { contactPageQuery, contactSectionQuery, sedesQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
-import { ContattiLocationCards } from "./ContattiLocationCards";
+import { ContattiLocationCards, type CityPageLink } from "./ContattiLocationCards";
 import { ContattiMap } from "./ContattiMap";
 import styles from "./page.module.scss";
 
@@ -80,6 +88,27 @@ function getSedes(locale: string) {
 
 const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
 const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+
+// City-page links pass — these three pages were unreachable from
+// anywhere on the site before this pass (no nav, no footer, no in-page
+// link). This is the first of two links added: each city's own address
+// card here, plus a matching one on the online strip below. Wording kept
+// short and literal, matching this section's own existing "Indicazioni"
+// link rather than introducing new copy tone. No Cernusco entry —
+// nothing to link to yet, that page doesn't exist (see this pass's own
+// report).
+const CITY_PAGE_LINK_TEXT: Record<Locale, { milano: string; monza: string; online: string }> = {
+  it: {
+    milano: "Tutti i dettagli su Milano",
+    monza: "Tutti i dettagli su Monza",
+    online: "Tutti i dettagli sull'online",
+  },
+  en: {
+    milano: "More about Milan",
+    monza: "More about Monza",
+    online: "More about online sessions",
+  },
+};
 
 // Canonical/hreflang built the Prezzi/Chi-sono/FAQ way: fixed, hardcoded
 // from contactPath() directly, never derived from an `alternates` GROQ
@@ -177,6 +206,12 @@ export default async function ContattiPage({
       photoLqip: addr.photoLqip,
     })),
   );
+
+  const linkText = CITY_PAGE_LINK_TEXT[typedLocale];
+  const cityPageLinks: Record<string, CityPageLink> = {
+    Milano: { href: milanPath(typedLocale), label: linkText.milano },
+    Monza: { href: monzaPath(typedLocale), label: linkText.monza },
+  };
 
   const tLocations = await getTranslations({ locale, namespace: "Locations" });
   const mapLabels = {
@@ -341,6 +376,10 @@ export default async function ContattiPage({
           <div className={styles.onlineStrip}>
             <h3 className={styles.onlineTitle}>{data?.online?.title}</h3>
             <p className={styles.onlineBody}>{data?.online?.body}</p>
+            <Link href={onlineTherapyPath(typedLocale)} className={styles.onlineLink}>
+              {linkText.online}
+              <span aria-hidden="true"> →</span>
+            </Link>
           </div>
         ) : null}
 
@@ -354,6 +393,7 @@ export default async function ContattiPage({
             locations={mapLocations}
             directionsLabel={tLocations("directionsLabel")}
             showOnMapLabel={tLocations("showOnMapLabel")}
+            cityPageLinks={cityPageLinks}
           />
           <ContattiMap locations={mapLocations} labels={mapLabels} />
         </SediMapProvider>

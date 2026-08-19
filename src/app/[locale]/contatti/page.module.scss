@@ -421,6 +421,23 @@
   text-decoration: none;
 }
 
+// City-page links pass — the second link a card can carry (see
+// ContattiLocationCards.tsx's own cityPageLinks comment). A fixed small
+// top margin, not .locationCardLink's own margin-top: auto — two auto
+// margins on adjacent flex children would just bunch them together with
+// no gap between them.
+.locationCardPageLink {
+  @include mixins.link;
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
 // Online — a wide, full-width strip rather than a fifth card in the grid
 // below: it has no address, and a fifth card with no directions link
 // would read as a broken card in that layout. Item 7: now sits ABOVE the
@@ -449,6 +466,20 @@
   line-height: var(--lh-body);
   color: var(--color-text-muted);
   max-width: 42rem;
+}
+
+// City-page links pass — same visual language as .locationCardLink
+// (bold, small, underline-on-hover via mixins.link) but without that
+// class's card-specific positioning (no absolute select-button to paint
+// above here, so no position/z-index needed).
+.onlineLink {
+  @include mixins.link;
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
 }
 
 // Item 10: SediMap's own root (sediSection.module.scss's .locationsMap)

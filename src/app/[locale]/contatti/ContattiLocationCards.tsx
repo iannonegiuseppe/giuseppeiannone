@@ -1,8 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import type { LocationEntry } from "@/components/LocationsSection";
 import { useSediMapContext } from "@/components/SediMapContext";
 import styles from "./page.module.scss";
+
+// City-page links pass — the three new city/online pages (Milan, Monza,
+// online-therapy) were unreachable from anywhere on the site until this
+// pass. Keyed by `LocationEntry.city` (a plain, locale-invariant proper
+// noun — "Milano"/"Monza" in both languages, confirmed against the real
+// sede documents) rather than added to LocationEntry itself: that type is
+// shared with the homepage's own location marquee/map, which has no use
+// for a "read more" link, so this stays local to this page's own prop
+// instead of leaking a Contatti-specific concern onto a shared type.
+export interface CityPageLink {
+  href: string;
+  label: string;
+}
 
 // Nine-revisions pass, item 8: the whole card selects that location and
 // flies the map to its pin — reusing SediMapContext, the SAME mechanism
@@ -29,10 +43,12 @@ export function ContattiLocationCards({
   locations,
   directionsLabel,
   showOnMapLabel,
+  cityPageLinks,
 }: {
   locations: LocationEntry[];
   directionsLabel: string;
   showOnMapLabel: string;
+  cityPageLinks?: Record<string, CityPageLink>;
 }) {
   const { selectLocation } = useSediMapContext();
 
@@ -40,6 +56,7 @@ export function ContattiLocationCards({
     <div className={styles.locationCards}>
       {locations.map((loc) => {
         const accessibleName = loc.district ? `${loc.city}, ${loc.district}` : loc.city;
+        const cityLink = cityPageLinks?.[loc.city];
         return (
           <div key={loc.id} className={styles.locationCard}>
             <button
@@ -67,6 +84,12 @@ export function ContattiLocationCards({
               {directionsLabel}
               <span aria-hidden="true"> →</span>
             </a>
+            {cityLink ? (
+              <Link href={cityLink.href} className={styles.locationCardPageLink} onClick={(e) => e.stopPropagation()}>
+                {cityLink.label}
+                <span aria-hidden="true"> →</span>
+              </Link>
+            ) : null}
           </div>
         );
       })}
