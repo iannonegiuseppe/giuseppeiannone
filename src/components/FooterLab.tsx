@@ -13,7 +13,7 @@ import {
 import { resolveNavItems } from "@/components/headerNavItems";
 import { FullLockupMark } from "@/components/Logo";
 import { whatsappUrl } from "@/sanity/contact";
-import type { Locale } from "@/sanity/paths";
+import { milanPath, monzaPath, onlineTherapyPath, type Locale } from "@/sanity/paths";
 import { getFooterSettings } from "@/sanity/seo";
 import type { ContactChannel, EmergencyContact, SocialLinks } from "@/sanity/seo";
 import styles from "./footerLab.module.scss";
@@ -97,6 +97,17 @@ export async function FooterLab({
 
   const socialIcons = SOCIAL_ICONS.filter(({ key }) => socialLinks?.[key]);
 
+  // City-page links pass — same city-name join key as Contatti's own
+  // cityPageLinks (sede.city is locale-invariant: "Milano"/"Monza"/
+  // "Online" in both language documents, confirmed against the real
+  // sede data). Cernusco has no entry — no page exists for it yet, so
+  // its group stays plain text, same as before this pass.
+  const cityPageHref: Record<string, string> = {
+    Milano: milanPath(locale),
+    Monza: monzaPath(locale),
+    Online: onlineTherapyPath(locale),
+  };
+
   return (
     <footer className={styles.footer} data-lab-section="footer" data-lab-footer>
       <div className={styles.container}>
@@ -152,9 +163,17 @@ export async function FooterLab({
               {columnHeadings?.locations}
             </p>
             <div className={styles.sediList}>
-              {sedes.map((sede) => (
+              {sedes.map((sede) => {
+                const cityHref = cityPageHref[sede.city];
+                return (
                 <div key={sede._id} className={styles.sedeGroup}>
-                  <p className={styles.sedeCityName}>{sede.city}</p>
+                  {cityHref ? (
+                    <Link href={cityHref} className={styles.sedeCityLink}>
+                      {sede.city}
+                    </Link>
+                  ) : (
+                    <p className={styles.sedeCityName}>{sede.city}</p>
+                  )}
                   {sede.isOnline
                     ? sede.onlineLine
                       ? <p className={styles.sediAddress}>{sede.onlineLine}</p>
@@ -166,7 +185,8 @@ export async function FooterLab({
                         </p>
                       ))}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

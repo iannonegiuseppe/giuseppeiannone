@@ -242,6 +242,22 @@
   color: var(--color-text-muted);
 }
 
+// City-page links pass — same typography as .sedeCityName at rest (so
+// the group still reads as a plain label, not an obvious link), with
+// .link's own underline-on-hover added. Only the city name gets this —
+// .sediAddress below is untouched, so the address lines stay plain text.
+.sedeCityLink {
+  @extend .sedeCityName;
+  display: inline-block;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+}
+
 .sediAddress {
   margin: 0;
   font-family: var(--font-body);
