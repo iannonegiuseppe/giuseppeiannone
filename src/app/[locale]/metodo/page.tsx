@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { AsymmetricOffsetBlock } from "@/components/AsymmetricOffsetBlock";
+import { CenteredHero } from "@/components/CenteredHero";
 import { ContactBlock } from "@/components/ContactBlock";
-import { ShimmerText } from "@/components/ShimmerText";
+import { EpigraphBand } from "@/components/EpigraphBand";
+import { PracticalClosing } from "@/components/PracticalClosing";
+import { SplitBlock } from "@/components/SplitBlock";
+import { StackedBands } from "@/components/StackedBands";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
 import { methodPath } from "@/sanity/paths";
@@ -150,27 +155,23 @@ export default async function MetodoPage({
 
   const contactSection = contactCopy?.contactSection;
   const title = data?.title ?? "";
-  const titleNode = splitEmphasis(title, data?.titleEmphasisWord, (s) => <ShimmerText>{s}</ShimmerText>);
-
   const approachHeading = data?.approach?.heading ?? "";
-  const approachHeadingNode = splitEmphasis(approachHeading, data?.approach?.headingEmphasisWord, (s) => (
-    <ShimmerText>{s}</ShimmerText>
-  ));
 
   const rhythmNode = splitLeadIn(data?.path?.experiments?.rhythmBody ?? "", data?.path?.experiments?.rhythmLeadIn);
+
+  const relationshipParagraphs = [data?.relationship?.p1, data?.relationship?.p2, data?.relationship?.p3].filter(
+    (p): p is string => Boolean(p),
+  );
 
   return (
     <main className={styles.page} data-light-hero>
       {/* === 1. HERO — light island, centred ================================ */}
-      <section className={styles.hero}>
-        <div className={styles.heroInner}>
-          <p className={styles.kicker}>
-            <SectionKicker>{data?.kicker ?? ""}</SectionKicker>
-          </p>
-          <h1 className={styles.heroTitle}>{titleNode}</h1>
-          <p className={styles.heroLead}>{data?.lead}</p>
-        </div>
-      </section>
+      <CenteredHero
+        kicker={data?.kicker ?? ""}
+        title={title}
+        titleEmphasisWord={data?.titleEmphasisWord}
+        lead={data?.lead ?? ""}
+      />
 
       {/* === 2. THE SPLIT — dark left / surface right, 50/50, zero gap ======
           "themeDark" (plain global class, src/styles/_tokens.scss) wraps
@@ -183,24 +184,25 @@ export default async function MetodoPage({
           by light-island-surface (neither token is in its reassignment
           list), but BOTH halves' text (--color-text/--color-accent) IS
           reassigned by it, so both need the correction regardless of
-          which one owns the "safe" background token. */}
+          which one owns the "safe" background token. SplitBlock itself
+          never carries this class — see its own file comment. */}
       <div className="themeDark">
-        <div className={styles.split}>
-          <div className={styles.splitLeft} data-sheen="upper-left">
-            <p className={styles.splitLabel}>{data?.split?.left?.label}</p>
-            <h2 className={styles.splitHeading}>{data?.split?.left?.heading}</h2>
-            <p className={styles.splitP}>{data?.split?.left?.p1}</p>
-            <p className={styles.splitP}>{data?.split?.left?.p2}</p>
-            <p className={styles.splitP}>{data?.split?.left?.p3}</p>
-          </div>
-          <div className={styles.splitRight} data-sheen="upper-left">
-            <p className={styles.splitLabel}>{data?.split?.right?.label}</p>
-            <h2 className={styles.splitHeading}>{data?.split?.right?.heading}</h2>
-            <p className={styles.splitP}>{data?.split?.right?.p1}</p>
-            <p className={styles.splitP}>{data?.split?.right?.p2}</p>
-            <p className={styles.splitP}>{data?.split?.right?.p3}</p>
-          </div>
-        </div>
+        <SplitBlock
+          left={{
+            label: data?.split?.left?.label ?? "",
+            heading: data?.split?.left?.heading ?? "",
+            p1: data?.split?.left?.p1 ?? "",
+            p2: data?.split?.left?.p2 ?? "",
+            p3: data?.split?.left?.p3,
+          }}
+          right={{
+            label: data?.split?.right?.label ?? "",
+            heading: data?.split?.right?.heading ?? "",
+            p1: data?.split?.right?.p1 ?? "",
+            p2: data?.split?.right?.p2 ?? "",
+            p3: data?.split?.right?.p3,
+          }}
+        />
       </div>
 
       {/* === 3. THE PATH — light island, three columns + rule + two columns */}
@@ -251,83 +253,61 @@ export default async function MetodoPage({
         </div>
       </section>
 
-      {/* === 4. THE RELATIONSHIP — dark, epigraph + single 720px column ===== */}
+      {/* === 4. THE RELATIONSHIP — dark, epigraph + single 720px column =====
+          EpigraphBand paints its own explicit background/color (see its
+          own file comment for why) — themeDark here still needed for
+          every OTHER token it reads (--color-accent via SectionKicker,
+          --color-hairline, etc.), same rule as sections 2/6. */}
       <div className="themeDark">
-        <section className={styles.relationshipSection} data-sheen="upper-left">
-          <div className={styles.relationshipInner}>
-            <p className={styles.kicker}>
-              <SectionKicker>{data?.relationship?.kicker ?? ""}</SectionKicker>
-            </p>
-            <p className={styles.epigraph}>{data?.relationship?.epigraph}</p>
-            <div className={styles.relationshipColumn}>
-              <p className={styles.bodyP}>{data?.relationship?.p1}</p>
-              <p className={styles.bodyP}>{data?.relationship?.p2}</p>
-              <p className={styles.bodyP}>{data?.relationship?.p3}</p>
-            </div>
-          </div>
-        </section>
+        <EpigraphBand
+          kicker={data?.relationship?.kicker ?? ""}
+          epigraph={data?.relationship?.epigraph ?? ""}
+          paragraphs={relationshipParagraphs}
+        />
       </div>
 
       {/* === 5. THE APPROACH — light island, asymmetric offset, no grid ===== */}
-      <section className={styles.approachSection}>
-        <div className={styles.approachInner}>
-          <p className={styles.kicker}>
-            <SectionKicker>{data?.approach?.kicker ?? ""}</SectionKicker>
-          </p>
-          <h2 className={styles.approachHeading}>{approachHeadingNode}</h2>
-          <div className={styles.approachColumn}>
-            <p className={styles.bodyP}>{data?.approach?.p1}</p>
-            <p className={styles.bodyP}>{data?.approach?.p2}</p>
-          </div>
-          <div className={styles.approachOffset}>
-            <h3 className={styles.h3}>{data?.approach?.offset?.heading}</h3>
-            <p className={styles.bodyP}>{data?.approach?.offset?.p1}</p>
-            <p className={styles.bodyP}>{data?.approach?.offset?.p2}</p>
-          </div>
-        </div>
-      </section>
+      <AsymmetricOffsetBlock
+        kicker={data?.approach?.kicker ?? ""}
+        heading={approachHeading}
+        headingEmphasisWord={data?.approach?.headingEmphasisWord}
+        p1={data?.approach?.p1 ?? ""}
+        p2={data?.approach?.p2 ?? ""}
+        offset={{
+          heading: data?.approach?.offset?.heading ?? "",
+          p1: data?.approach?.offset?.p1 ?? "",
+          p2: data?.approach?.offset?.p2 ?? "",
+        }}
+      />
 
       {/* === 6. FIT AND ENDING — surface step, two stacked bands ============ */}
       <div className="themeDark">
-        <section className={styles.fitEndingSection} data-sheen="upper-left">
-          <div className={styles.fitEndingInner}>
-            <div className={styles.fitEndingBand}>
-              <h2 className={styles.h2}>{data?.fitEnding?.band1?.heading}</h2>
-              <div className={styles.fitEndingProse}>
-                <p className={styles.bodyP}>{data?.fitEnding?.band1?.p1}</p>
-                <p className={styles.bodyP}>{data?.fitEnding?.band1?.p2}</p>
-              </div>
-            </div>
-            <div className={`${styles.fitEndingBand} ${styles.fitEndingBandLast}`}>
-              <h2 className={styles.h2}>{data?.fitEnding?.band2?.heading}</h2>
-              <div className={styles.fitEndingProse}>
-                <p className={styles.bodyP}>{data?.fitEnding?.band2?.p1}</p>
-                <p className={styles.bodyP}>{data?.fitEnding?.band2?.p2}</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <StackedBands
+          tone="surface"
+          bands={[
+            {
+              heading: data?.fitEnding?.band1?.heading ?? "",
+              p1: data?.fitEnding?.band1?.p1 ?? "",
+              p2: data?.fitEnding?.band1?.p2,
+            },
+            {
+              heading: data?.fitEnding?.band2?.heading ?? "",
+              p1: data?.fitEnding?.band2?.p1 ?? "",
+              p2: data?.fitEnding?.band2?.p2,
+            },
+          ]}
+        />
       </div>
 
       {/* === 7. PRACTICAL AND CLOSING — light island ========================= */}
-      <section className={styles.practicalSection}>
-        <div className={styles.practicalColumns}>
-          <div>
-            <h3 className={styles.h3}>{data?.practical?.col1?.heading}</h3>
-            <p className={styles.bodyP}>{data?.practical?.col1?.p}</p>
-          </div>
-          <div>
-            <h3 className={styles.h3}>{data?.practical?.col2?.heading}</h3>
-            <p className={styles.bodyP}>{data?.practical?.col2?.p}</p>
-          </div>
-          <div>
-            <h3 className={styles.h3}>{data?.practical?.col3?.heading}</h3>
-            <p className={styles.bodyP}>{data?.practical?.col3?.p}</p>
-          </div>
-        </div>
-        <div className={styles.practicalRule} />
-        <p className={styles.closingQuote}>{data?.practical?.closingQuote}</p>
-      </section>
+      <PracticalClosing
+        columns={[
+          { heading: data?.practical?.col1?.heading ?? "", body: data?.practical?.col1?.p ?? "" },
+          { heading: data?.practical?.col2?.heading ?? "", body: data?.practical?.col2?.p ?? "" },
+          { heading: data?.practical?.col3?.heading ?? "", body: data?.practical?.col3?.p ?? "" },
+        ]}
+        closingQuote={data?.practical?.closingQuote}
+      />
 
       <ContactBlock
         kicker={contactSection?.kicker ?? ""}

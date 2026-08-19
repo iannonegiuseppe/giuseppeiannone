@@ -3,23 +3,33 @@
 
 // Metodo build pass — reproduces contents/metodo-template-v2.html's
 // STRUCTURE and PROPORTIONS in tokens, not its literal px/hex values.
-// Every place the mockup and a token disagreed, the token won — see this
-// pass's own report for the full substitution table. Key ones noted
-// inline below where the gap is largest.
+//
+// Extraction pass: sections 1/2/4/5/6/7 moved out to shared components
+// (CenteredHero, SplitBlock, EpigraphBand, AsymmetricOffsetBlock,
+// StackedBands, PracticalClosing — see src/components/) so the three new
+// city/online pages can compose the same design in different orders.
+// Only section 3 ("the path" — three-column phases + diary/quote +
+// rhythm paragraph) stays here: it's specific enough to this page (phase
+// labels, the quote card, the "Il ritmo."/"The rhythm." lead-in) that
+// none of the three new pages actually need it, so it was left in place
+// rather than force-generalized for no real caller.
 //
 // .page carries light-island-surface for the WHOLE page (unlike /contatti,
-// which used a per-section wrapper) — sections 1/3/5/7 are plain light
-// content inside it; sections 2/4/6 (dark/surface) each get their own
-// "themeDark" (plain global class, src/styles/_tokens.scss) ANCESTOR
-// wrapper in page.tsx, never applied to the same element as the actual
-// background-painting div — the documented light-island mirror-image trap
-// (CLAUDE.md's own Styling section), same fix already proven on /prezzi's
-// dark band and /contatti's WhatsApp card.
+// which used a per-section wrapper) — every extracted "light" component
+// composed here (CenteredHero, the path section below, AsymmetricOffsetBlock,
+// PracticalClosing) depends on being inside this wrapper for its tokens to
+// resolve to light values; the dark/surface components (SplitBlock,
+// EpigraphBand, StackedBands) each get their own "themeDark" (plain global
+// class, src/styles/_tokens.scss) ANCESTOR wrapper in page.tsx instead,
+// never applied to the same element as the actual background-painting div
+// — the documented light-island mirror-image trap (CLAUDE.md's own Styling
+// section), same fix already proven on /prezzi's dark band and /contatti's
+// WhatsApp card.
 .page {
   @include tone.light-island-surface;
 }
 
-// --- Shared primitives -------------------------------------------------
+// --- Shared primitives (section 3 only, post-extraction) ----------------
 .kicker {
   margin: 0;
 }
@@ -28,10 +38,6 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  // Mockup: 40px. Token: --fs-h2-lg (32-42px fluid) — closest available,
-  // reused for every h2 on this page (split heads, path heading, fit/
-  // ending band heads) rather than the plain --fs-h2 (28-36px, a bit
-  // short of 40).
   font-size: var(--fs-h2-lg);
   line-height: var(--lh-h2-lg);
 }
@@ -40,8 +46,6 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  // Mockup: 26px. Token: --fs-h3 is fixed at 22px, the closest (and only)
-  // serif h3-tier token — smaller than the mockup, token wins.
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
 }
@@ -63,162 +67,9 @@
   margin-bottom: var(--space-5);
 }
 
-// --- Section 1: hero (light, centred) -----------------------------------
-// Height pass, lg+ only — was padding-only (no min-height), so its
-// total rendered height was purely content+padding, ~510px at 1440 /
-// ~424px at 1024 (measured live before this pass — smaller at 1024
-// since --fs-display-lg's own fluid range shrinks the title there).
-// Scaling padding-top/-bottom alone can't reach a 1.3-1.5x TOTAL height
-// increase: content is the majority of that height and doesn't grow
-// with padding, so even a 1.5x padding multiplier only moves total
-// height ~25%. min-height + flex centering targets total height
-// directly instead, and keeps the copy genuinely centered in the extra
-// space rather than pinned to the top with a growing empty band below
-// it — the existing padding-top/-bottom stays as a floor, so unusually
-// long copy (a longer translation) still grows the section rather than
-// clipping.
-//
-// Two tiers, not one flat lg+ value: a single min-height that lands at
-// 1.4x at 1440 overshoots to ~1.7x at 1024, since the fluid title is
-// smaller there but the fixed min-height isn't — checked live, read as
-// noticeably more empty/floating than 1440's own result. 37rem for
-// lg-only (1024-1279) measures ~1.4x there; 44rem from xl (1280+) is
-// the same ~1.4x at 1440 as before.
-//
-// Below lg is unchanged — mobile's existing padding-only height (~544px
-// at 390, already taller than 1440's OWN unscaled height, driven by
-// content wrapping onto more lines) was checked live and reads fine as
-// spacious rather than short; this pass's own report has the
-// measurement.
-.hero {
-  padding-top: var(--space-10);
-  padding-bottom: var(--space-9);
-
-  @include mixins.breakpoint-up(lg) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 37rem; // ~1.4x the unscaled ~424px height at 1024 — verified live, see this pass's own report
-  }
-
-  @include mixins.breakpoint-up(xl) {
-    min-height: 44rem; // ~1.4x the unscaled ~510px height at 1440 — verified live, see this pass's own report
-  }
-}
-
-.heroInner {
-  @include mixins.container;
-  max-width: 58.75rem; // 940px, mockup's own h1 measure — no dedicated token, literal rem per this codebase's established "one-off measure" convention (see LocationsSection.module.scss's own comment)
-  text-align: center;
-}
-
-.heroTitle {
-  margin: var(--space-5) auto 0;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  // Mockup: 64px. Token: --fs-display-lg (44-64px fluid) — the one token
-  // whose own ceiling actually reaches 64px; plain --fs-display tops out
-  // at 60px.
-  font-size: var(--fs-display-lg);
-  line-height: var(--lh-display-lg);
-  color: var(--color-text);
-}
-
-.heroLead {
-  margin: var(--space-5) auto 0;
-  max-width: 41.25rem; // 660px, mockup's own lead measure
-  font-family: var(--font-body);
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  color: var(--color-text-muted);
-}
-
-// --- Section 2: the split (dark left / surface right, 50/50, zero gap) --
-// The ONLY 50/50 grid on this page — not reused elsewhere. No mixins.
-// container here: the mockup deliberately runs this edge-to-edge (full
-// viewport width, only the two halves' own inline padding holds the text
-// off the edge) — the one section on this page NOT centred in the 1320px
-// content column, by design.
-.split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-
-  @include mixins.breakpoint-up(lg) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.splitLeft,
-.splitRight {
-  padding-block: var(--space-9); // 96px, mockup's own 88px — closest token
-  padding-inline: var(--space-7); // 48px, mockup's own 60px — token wins, see report
-
-  @include mixins.breakpoint-up(lg) {
-    padding-inline: var(--space-8); // 64px at lg+, still short of the mockup's 60px... kept modest deliberately so text doesn't run flush to the seam
-  }
-}
-
-.splitLeft {
-  background: var(--color-bg);
-  color: var(--color-text);
-  // Sheen pass — each half gets its own upper-left light, independently
-  // toggled via data-sheen="upper-left" on its own element (metodo/page.tsx).
-  @include mixins.upper-left-sheen;
-}
-
-.splitRight {
-  background: var(--color-surface);
-  color: var(--color-text);
-  // Sheen's own gradient resolves its far-edge stop from --color-bg (see
-  // upper-left-sheen's own recipe) — correct by default on sections whose
-  // resting tone IS --color-bg, but this section's resting tone is
-  // deliberately --color-surface instead (the lighter of the two, chosen
-  // to contrast with .splitLeft). Without this local override the sheen's
-  // far edge would resolve to --color-bg (#081512) instead, darkening the
-  // section's own resting tone rather than matching it — exactly what
-  // tone.tone-mid-surface itself does (reassigns --color-bg to --color-
-  // surface's own value) for sections that go through that mixin; this
-  // replicates the same reassignment locally since .splitRight is a
-  // literal, non-mixin-driven rule.
-  --color-bg: var(--color-surface);
-  @include mixins.upper-left-sheen;
-}
-
-.splitLabel {
-  margin: 0 0 var(--space-5);
-  font-family: var(--font-body);
-  font-size: var(--fs-small);
-  font-weight: var(--font-weight-regular);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-.splitHeading {
-  margin: 0 0 var(--space-6);
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-size: var(--fs-h2-lg);
-  line-height: var(--lh-h2-lg);
-  color: var(--color-text);
-}
-
-.splitP {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--color-text-muted);
-
-  & + & {
-    margin-top: var(--space-4);
-  }
-}
-
 // --- Section 3: the path (light) ----------------------------------------
 .pathSection {
-  padding-top: var(--space-9); // 96px, mockup's own .sec 84px — closest token
+  padding-top: var(--space-9);
   padding-bottom: var(--space-9);
 }
 
@@ -230,7 +81,7 @@
   @include mixins.container;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-6); // 32px, mockup's own 36px — closest token
+  gap: var(--space-6);
   margin-top: var(--space-8);
 
   @include mixins.breakpoint-up(md) {
@@ -267,7 +118,7 @@
   @include mixins.container;
   height: 1px;
   background: var(--color-hairline);
-  margin: var(--space-8) auto var(--space-7); // 64px / 48px, mockup's own 64px/52px
+  margin: var(--space-8) auto var(--space-7);
 }
 
 .pathBelow {
@@ -278,7 +129,7 @@
 
   @include mixins.breakpoint-up(md) {
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-8); // 64px, mockup's own 70px — closest token
+    gap: var(--space-8);
   }
 }
 
@@ -287,7 +138,7 @@
 }
 
 .quoteCard {
-  background: var(--light-base-surface); // white raised card on a light island — same new token /contatti's phone/email cards added, reused rather than a second one
+  background: var(--light-base-surface);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-m);
   padding: var(--space-6) var(--space-6);
@@ -311,177 +162,6 @@
 }
 
 .leadIn {
-  font-weight: var(--font-weight-bold); // Source Sans 3's real 600 isn't loaded (see layout.tsx's own weight array — only 400/500/700); 700 is the closest real, non-synthesized weight to "semibold" available
-  color: var(--color-text);
-}
-
-// --- Section 4: the relationship (dark, single 720px column) ------------
-// Real bug caught live (not assumed): this rule never painted a
-// background/color of its own — "themeDark" (page.tsx) correctly
-// re-established the TOKENS, but nothing here actually APPLIED them, so
-// the section fell through to inheriting .page's own light-island
-// background while --color-text resolved to the real dark-theme ivory —
-// ivory text on an ivory-ish background, nearly invisible. Section 2's
-// two halves and section 6 both painted their own fill explicitly; this
-// one didn't. Fixed the same way section 2 does it: a plain, explicit
-// background/color pair reading the (correctly re-established) tokens
-// directly.
-.relationshipSection {
-  background: var(--color-bg);
-  color: var(--color-text);
-  // Sheen pass — toggle is data-sheen="upper-left" on this same element
-  // (metodo/page.tsx). No local --color-bg override needed here (unlike
-  // .splitRight/.fitEndingSection below) since this section's own resting
-  // tone already IS --color-bg — the sheen's far-edge stop matches it
-  // by construction.
-  @include mixins.upper-left-sheen;
-  padding-top: var(--space-9);
-  padding-bottom: var(--space-9);
-}
-
-.relationshipInner {
-  @include mixins.container;
-}
-
-.epigraph {
-  margin: var(--space-7) 0 var(--space-8);
-  max-width: 62.5rem; // 1000px, mockup's own epigraph measure
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-style: italic;
-  // Mockup: 38px. Token: --fs-h2-lg (32-42px fluid) — closest available;
-  // no dedicated "epigraph" token exists yet.
-  font-size: var(--fs-h2-lg);
-  line-height: 1.3;
-  color: var(--color-text);
-}
-
-.relationshipColumn {
-  max-width: 45rem; // 720px, exactly — "the single measure is the point of this section"
-}
-
-// --- Section 5: the approach (light, asymmetric offset) -----------------
-.approachSection {
-  padding-top: var(--space-9);
-  padding-bottom: var(--space-9);
-}
-
-.approachInner {
-  @include mixins.container;
-}
-
-.approachHeading {
-  margin: var(--space-6) 0 var(--space-7);
-  max-width: 70rem; // 1120px, mockup's own measure — wider than the h1s elsewhere, deliberately
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  // Mockup: ~52px. Token: --fs-display-sm (48-52px fluid) — its own
-  // ceiling lands almost exactly on the mockup's number.
-  font-size: var(--fs-display-sm);
-  line-height: var(--lh-display-sm);
-  color: var(--color-text);
-}
-
-.approachColumn {
-  max-width: 40rem; // 640px, exactly, per the brief
-  margin-bottom: var(--space-9); // 60px in the mockup — rounded up to the nearest token rather than down, to keep the offset block clearly separated
-}
-
-// Deliberately asymmetric — pushed right via margin-left:auto, not a
-// grid column. Do not straighten this into a two-column layout.
-.approachOffset {
-  max-width: 35rem; // 560px, mockup's own measure
-  margin-left: auto;
-  padding-left: var(--space-8); // 64px, mockup's own 60px — closest token
-  border-left: 1px solid var(--color-hairline);
-}
-
-.approachOffset .h3 {
-  margin-bottom: var(--space-4);
-}
-
-// --- Section 6: fit and ending (surface, two stacked bands) -------------
-.fitEndingSection {
-  // "surface" step per brief — same lighter dark-green fill as .splitRight,
-  // deliberately NOT tone.tone-base-surface (that mixin aliases --color-bg
-  // verbatim today, which is the near-black ground, not the lighter step)
-  background: var(--color-surface);
-  color: var(--color-text);
-  // Sheen pass — same local --color-bg override as .splitRight above, and
-  // for the same reason: this section's resting tone is --color-surface,
-  // not --color-bg, so the sheen's own far-edge stop needs redirecting to
-  // match it (see .splitRight's own comment for the full explanation).
-  --color-bg: var(--color-surface);
-  @include mixins.upper-left-sheen;
-  padding-top: var(--space-9);
-  padding-bottom: var(--space-9);
-}
-
-.fitEndingInner {
-  @include mixins.container;
-}
-
-.fitEndingBand {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
-  align-items: start;
-  padding-bottom: var(--space-7); // 48px, mockup's own 52px — closest token
-  border-bottom: 1px solid var(--color-hairline);
-
-  @include mixins.breakpoint-up(md) {
-    // "roughly 1:2.5" per the brief — a literal ratio, not a raw px value
-    grid-template-columns: 1fr 2.5fr;
-    gap: var(--space-8); // 64px, mockup's own 70px — closest token
-  }
-}
-
-.fitEndingBandLast {
-  padding-top: var(--space-7);
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.fitEndingProse {
-  max-width: 47.5rem; // 760px, mockup's own measure
-}
-
-// --- Section 7: practical and closing (light) ----------------------------
-.practicalSection {
-  padding-top: var(--space-9);
-  padding-bottom: var(--space-9);
-}
-
-.practicalColumns {
-  @include mixins.container;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-
-  @include mixins.breakpoint-up(md) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.practicalColumns .h3 {
-  margin-bottom: var(--space-4);
-}
-
-.practicalRule {
-  @include mixins.container;
-  height: 1px;
-  background: var(--color-hairline);
-  margin: var(--space-8) auto var(--space-7); // 64px / 56px, mockup's own 64px/56px
-}
-
-.closingQuote {
-  @include mixins.container;
-  max-width: 60rem; // 960px, exactly, per the brief
-  margin-inline: auto;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-regular);
-  font-style: italic;
-  font-size: var(--fs-h2); // 28-36px fluid, closest token to the mockup's fixed 30px
-  line-height: 1.35;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text);
 }
