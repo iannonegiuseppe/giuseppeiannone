@@ -4,6 +4,7 @@ import { VisualEditing } from "next-sanity/visual-editing";
 import { EB_Garamond, Source_Sans_3 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { AnalyticsLoader } from "@/components/AnalyticsLoader";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { FooterLab } from "@/components/FooterLab";
 import { Header } from "@/components/Header";
@@ -238,6 +239,13 @@ export default async function LocaleLayout({
               on purpose: keyboard users reach it before Header's own nav,
               matching "reachable by keyboard from the top of the page." */}
           <CookieConsentBanner locale={typedLocale} />
+          {/* Gated analytics pass — renders nothing; wires GA4/Clarity to
+              the same consent gate the banner above writes to. See
+              AnalyticsLoader.tsx's own comment. Sibling of the banner, not
+              inside it — this needs to run (and start listening for
+              consent changes) on every route, not just while the banner
+              itself is mounted/visible. */}
+          <AnalyticsLoader />
           <PageTransitionLoader />
           {/* Promoted from design-lab's own page-scoped LenisProvider —
               Header's dialogs (channel picker, mobile menu) now need the
