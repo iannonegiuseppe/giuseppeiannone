@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useLenisRef } from "@/components/LenisProvider";
 import { whatsappUrl } from "@/sanity/contact";
+import type { Locale } from "@/sanity/paths";
 import type { ContactChannel } from "@/sanity/seo";
 import { PAUSE_VIDEO_EVENT } from "./VideoPlayer";
 import styles from "./HeaderInteractive.module.scss";
@@ -18,8 +19,15 @@ export type ChannelPickerDialogHandle = {
   open: () => void;
 };
 
-function channelHref(channel: ContactChannel): string {
-  if (channel.type === "whatsapp") return whatsappUrl(channel.value);
+// WhatsApp prefill pass — locale is new on this component, threaded down
+// from HeaderInteractive (which already had it) solely so the WhatsApp
+// link below can carry the right-language prefilled message. This dialog's
+// OWN copy ("Chiudi", "Scrivimi come ti è più comodo.", etc.) is still
+// hardcoded Italian regardless of site locale — a pre-existing gap, found
+// while wiring this, not touched here: fixing that is a bigger, separate
+// job than "give the WhatsApp link a locale to read."
+function channelHref(channel: ContactChannel, locale: Locale): string {
+  if (channel.type === "whatsapp") return whatsappUrl(channel.value, locale);
   if (channel.type === "phone") return `tel:${channel.value}`;
   return `mailto:${channel.value}`;
 }
@@ -47,8 +55,9 @@ export const ChannelPickerDialog = forwardRef<
   ChannelPickerDialogHandle,
   {
     contactChannels?: ContactChannel[];
+    locale: Locale;
   }
->(function ChannelPickerDialog({ contactChannels }, ref) {
+>(function ChannelPickerDialog({ contactChannels, locale }, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const cardRef = useRef<HTMLDivElement | null>(null);
     const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -178,13 +187,13 @@ export const ChannelPickerDialog = forwardRef<
                 channel.type === "whatsapp" ? (
                   <a
                     key={channel.type}
-                    href={channelHref(channel)}
+                    href={channelHref(channel, locale)}
                     className={`${sharedStyles.btnSecondary} ${styles.channelDialogWhatsapp}`}
                   >
                     {channel.label}
                   </a>
                 ) : (
-                  <a key={channel.type} href={channelHref(channel)} className={styles.channelDialogLink}>
+                  <a key={channel.type} href={channelHref(channel, locale)} className={styles.channelDialogLink}>
                     {channel.label}
                   </a>
                 ),

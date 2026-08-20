@@ -95,7 +95,22 @@ export async function FooterLab({
   const legalNavItems = resolveNavItems(locale, footerSettings?.legalNavItems);
   const columnHeadings = footerSettings?.columnHeadings;
 
-  const socialIcons = SOCIAL_ICONS.filter(({ key }) => socialLinks?.[key]);
+  // WhatsApp prefill pass — the social row's own WhatsApp icon used to
+  // link straight to socialLinks.whatsapp, an editor-pasted free-text URL
+  // field with no guaranteed shape (not necessarily even a wa.me link) and
+  // no way to carry a prefilled message. Derived from contactChannels
+  // instead, same as the contact-list link a few lines below and every
+  // other WhatsApp link on the site — one number, never re-typed, always
+  // prefilled the same way, regardless of what's separately pasted into
+  // socialLinks.whatsapp. The icon's own visibility follows suit: it
+  // shows when contactChannels has a WhatsApp entry, not when
+  // socialLinks.whatsapp happens to be set — the two fields could
+  // otherwise drift (one present, the other not) and either show a dead
+  // icon or hide a working one.
+  const whatsappChannel = contactChannels?.find((channel) => channel.type === "whatsapp");
+  const socialHref = (key: keyof SocialLinks): string | undefined =>
+    key === "whatsapp" ? (whatsappChannel ? whatsappUrl(whatsappChannel.value, locale) : undefined) : socialLinks?.[key];
+  const socialIcons = SOCIAL_ICONS.filter(({ key }) => socialHref(key));
 
   // City-page links pass — same city-name join key as Contatti's own
   // cityPageLinks (sede.city is locale-invariant: "Milano"/"Monza"/
@@ -121,7 +136,7 @@ export async function FooterLab({
                 {socialIcons.map(({ key, label, Icon }) => (
                   <a
                     key={key}
-                    href={socialLinks?.[key]}
+                    href={socialHref(key)}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
@@ -202,7 +217,7 @@ export async function FooterLab({
                 .map((channel) => {
                   const href =
                     channel.type === "whatsapp"
-                      ? whatsappUrl(channel.value)
+                      ? whatsappUrl(channel.value, locale)
                       : channel.type === "phone"
                         ? `tel:${channel.value}`
                         : `mailto:${channel.value}`;

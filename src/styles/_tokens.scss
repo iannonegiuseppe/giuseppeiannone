@@ -32,6 +32,15 @@ $z-index: (
   base: 0,
   dropdown: 10,
   sticky: 20,
+  // Floating WhatsApp button pass — sits above ordinary sticky content
+  // (MobileToc's own bar is `sticky`, 20) but BELOW `overlay`/`modal`
+  // deliberately: every dialog on this site (ChannelPickerDialog,
+  // ContactFormDialog) is a native <dialog>/showModal(), which renders in
+  // the browser's own top layer regardless of z-index — but the FAB
+  // should still visually disappear under any CSS-positioned overlay/
+  // backdrop that isn't a native dialog, not float above a dimmed
+  // background looking clickable when it isn't meant to be reachable.
+  fab: 25,
   overlay: 30,
   modal: 40,
   toast: 50,
@@ -293,6 +302,23 @@ $z-index: (
   // file's own light :root block, just re-exported, same pattern as every
   // other --light-base-* token above.
   --light-base-surface: #ffffff;
+
+  // Floating WhatsApp button pass — WhatsApp's own brand colors, theme-
+  // invariant by construction (a brand mark must render identically
+  // regardless of the site's own light/dark state, same reasoning as the
+  // --light-base-* tokens above, just for a foreign brand rather than
+  // this site's own light palette). --color-whatsapp is the widely-
+  // recognized CTA green (#25D366).
+  //
+  // --color-whatsapp-icon is white per explicit instruction — measured
+  // live at ~1.98:1 against the fill, which fails the WCAG 3:1 non-text
+  // floor (a dark icon, e.g. WhatsApp's own #075E54 brand teal, would
+  // clear it at ~3.87:1; this file used that combination until this
+  // pass). Kept as a named token rather than a literal #fff inline so
+  // the actual failing number stays documented at its one source
+  // instead of silently disappearing into a component file.
+  --color-whatsapp: #25d366;
+  --color-whatsapp-icon: #ffffff;
 
   // Hope-specific indirection: HopeSection.module.scss's .hopeEmphasis
   // reads this instead of --color-accent-contrast directly, purely so the

@@ -274,7 +274,7 @@ export function HeaderInteractive({
 
       {/* Colocated with the button that triggers it — nothing else on
           the page needs to open it. */}
-      <ChannelPickerDialog ref={dialogRef} contactChannels={contactChannels} />
+      <ChannelPickerDialog ref={dialogRef} contactChannels={contactChannels} locale={locale} />
     </>
   );
 }

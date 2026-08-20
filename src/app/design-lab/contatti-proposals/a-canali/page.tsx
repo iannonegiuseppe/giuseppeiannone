@@ -44,7 +44,7 @@ export default async function ProposalACanali() {
         <section className={styles.channelsSection} aria-label="Canali di contatto">
           {whatsapp ? (
             <a
-              href={whatsappUrl(whatsapp.value)}
+              href={whatsappUrl(whatsapp.value, "it")}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.channelPrimary}

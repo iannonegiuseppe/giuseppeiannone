@@ -22,7 +22,7 @@ export default async function ProposalCEditoriale() {
   const phone = pickChannel(siteSettings?.contactChannels, "phone");
   const email = pickChannel(siteSettings?.contactChannels, "email");
   const onlineSede = sedes.find((s) => s.isOnline);
-  const waHref = whatsapp ? whatsappUrl(whatsapp.value) : undefined;
+  const waHref = whatsapp ? whatsappUrl(whatsapp.value, "it") : undefined;
 
   return (
     <>

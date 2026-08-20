@@ -19,6 +19,7 @@ import {
 import { contactErrorMessage } from "@/lib/contact/errorMessages";
 import { useFormToken } from "@/lib/contact/useFormToken";
 import { ContactFormStatusPopup } from "./ContactFormStatusPopup";
+import { whatsappUrl } from "@/sanity/contact";
 import styles from "./ContactForm.module.scss";
 
 // Merge pass — the polymorphic `contact` field (phone-or-email keyed by
@@ -40,11 +41,21 @@ type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 const DEFAULT_CHANNEL: ContactChannel = "whatsapp";
 const WHATSAPP_FALLBACK_DISPLAY = "+39 339 190 1474";
+const WHATSAPP_FALLBACK_NUMBER = "393391901474";
 // wa.me wants the number with no "+", spaces, or punctuation; tel: wants
 // the "+" and digits only (both accept the country code, neither accepts
 // spaces) — two different formats for the same underlying number, not a
-// typo between them.
-const WHATSAPP_FALLBACK_WA_ME_URL = "https://wa.me/393391901474";
+// typo between them. The wa.me side goes through the shared whatsappUrl()
+// helper (WhatsApp prefill pass) so this fallback carries the same
+// locale-appropriate prefilled message as every other WhatsApp link on
+// the site, without retyping that message a third time — the number
+// itself stays hardcoded, matching this component's existing "no live
+// data dependency" fallback design (see COPY above, referenced with its
+// own locale already known at each call site).
+const WHATSAPP_FALLBACK_WA_ME_URL: Record<Locale, string> = {
+  it: whatsappUrl(WHATSAPP_FALLBACK_NUMBER, "it"),
+  en: whatsappUrl(WHATSAPP_FALLBACK_NUMBER, "en"),
+};
 const WHATSAPP_FALLBACK_TEL_URL = "tel:+393391901474";
 
 const COPY = {
@@ -82,7 +93,7 @@ const COPY = {
         </p>
         <p className={styles.popupText}>
           Se hai bisogno prima, scrivimi su WhatsApp al{" "}
-          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL.it} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
             {WHATSAPP_FALLBACK_DISPLAY}
           </a>{" "}
           o <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>chiamami</a> allo stesso numero.
@@ -96,7 +107,7 @@ const COPY = {
         </p>
         <p className={styles.popupText}>
           Se non funziona nemmeno al secondo tentativo, scrivimi direttamente su WhatsApp al{" "}
-          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL.it} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
             {WHATSAPP_FALLBACK_DISPLAY}
           </a>
           , o <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>chiamami</a> allo stesso numero. Il
@@ -137,7 +148,7 @@ const COPY = {
         </p>
         <p className={styles.popupText}>
           If you need to reach me sooner, message me on WhatsApp at{" "}
-          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL.en} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
             {WHATSAPP_FALLBACK_DISPLAY}
           </a>{" "}
           or <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>call</a> the same number.
@@ -149,7 +160,7 @@ const COPY = {
         <p className={styles.popupText}>Something went wrong while sending. Try once more.</p>
         <p className={styles.popupText}>
           If it fails again, write to me directly on WhatsApp at{" "}
-          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL.en} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
             {WHATSAPP_FALLBACK_DISPLAY}
           </a>
           , or <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>call</a> the same number. Your

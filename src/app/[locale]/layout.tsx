@@ -10,6 +10,7 @@ import { FooterLab } from "@/components/FooterLab";
 import { Header } from "@/components/Header";
 import { LenisProvider } from "@/components/LenisProvider";
 import { PageTransitionLoader } from "@/components/PageTransitionLoader";
+import { WhatsappFab } from "@/components/WhatsappFab";
 import { routing } from "@/i18n/routing";
 import { isDraftModeEnabled, sanityFetch } from "@/sanity/client";
 import {
@@ -239,6 +240,15 @@ export default async function LocaleLayout({
               on purpose: keyboard users reach it before Header's own nav,
               matching "reachable by keyboard from the top of the page." */}
           <CookieConsentBanner locale={typedLocale} />
+          {/* Floating WhatsApp button pass — sitewide, fixed bottom-right,
+              every page, both locales. Sibling of the cookie banner for
+              the same reason: outside every page's own light-island
+              scoping, so its (theme-invariant) brand colors are never at
+              risk of resolving through a locally-retoned scope. Reads
+              --consent-banner-offset (see CookieConsentBanner.tsx) to
+              rise above the banner while it's showing, no separate
+              coordination needed. */}
+          <WhatsappFab locale={typedLocale} contactChannels={siteSettings?.contactChannels} />
           {/* Gated analytics pass — renders nothing; wires GA4/Clarity to
               the same consent gate the banner above writes to. See
               AnalyticsLoader.tsx's own comment. Sibling of the banner, not

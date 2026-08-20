@@ -1,0 +1,65 @@
+@use "../styles/mixins";
+
+// Floating WhatsApp button pass — sitewide, fixed bottom-right, both
+// locales. No entrance animation (renders in its resting state
+// immediately, nothing to opt out of), no pulse/bounce loop ever — this
+// button sits on pages about panic attacks; it should be present, not
+// insistent. The only motion at all is the ordinary hover/focus
+// micro-feedback below, itself skipped under reduced motion.
+.fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--space-4) + var(--consent-banner-offset, 0px));
+  z-index: mixins.z(fab);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--color-whatsapp);
+  color: var(--color-whatsapp-icon);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+
+  @include mixins.breakpoint-up(md) {
+    right: var(--space-5);
+    bottom: calc(var(--space-5) + var(--consent-banner-offset, 0px));
+  }
+
+  // 56px sitewide down to here; 48px from `lg` up — the same mobile/
+  // desktop split MobileToc.tsx already uses to decide "is this
+  // desktop" (it hides itself at this exact breakpoint), not the `md`
+  // tier the position offset above uses (that one's about "a bit more
+  // breathing room," not a mobile/desktop line).
+  @include mixins.breakpoint-up(lg) {
+    width: 48px;
+    height: 48px;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  @include mixins.focus-ring;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.icon {
+  width: 28px;
+  height: 28px;
+
+  @include mixins.breakpoint-up(lg) {
+    width: 24px;
+    height: 24px;
+  }
+}

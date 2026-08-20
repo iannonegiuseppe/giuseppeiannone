@@ -182,7 +182,7 @@ export default async function ContattiPage({
   const whatsappChannel = siteSettings?.contactChannels?.find((c) => c.type === "whatsapp");
   const phoneChannel = siteSettings?.contactChannels?.find((c) => c.type === "phone");
   const emailChannel = siteSettings?.contactChannels?.find((c) => c.type === "email");
-  const waHref = whatsappChannel ? whatsappUrl(whatsappChannel.value) : undefined;
+  const waHref = whatsappChannel ? whatsappUrl(whatsappChannel.value, typedLocale) : undefined;
 
   const onlineSede = sedes.find((s) => s.isOnline);
   const physicalLocations = sedes.filter((s) => !s.isOnline);

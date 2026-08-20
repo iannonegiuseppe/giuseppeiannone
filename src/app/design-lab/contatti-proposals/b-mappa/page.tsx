@@ -54,7 +54,7 @@ export default async function ProposalBMappa() {
           <div className={styles.rail}>
             {whatsapp ? (
               <a
-                href={whatsappUrl(whatsapp.value)}
+                href={whatsappUrl(whatsapp.value, "it")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.railItemWhatsapp}
