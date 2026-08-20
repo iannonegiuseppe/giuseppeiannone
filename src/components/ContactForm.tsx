@@ -66,7 +66,7 @@ const COPY = {
       string
     >,
     successMessage: (nome: string, channelPhrase: string) =>
-      `Grazie, ${nome}. Ti ricontatto io ${channelPhrase} — di solito entro [segnaposto — tempo di risposta].`,
+      `Grazie, ${nome}. Ti ricontatto io ${channelPhrase} — di solito entro 24 ore.`,
     genericError: `Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
     honeypotLabel: "Non compilare questo campo",
   },
@@ -92,7 +92,7 @@ const COPY = {
       string
     >,
     successMessage: (nome: string, channelPhrase: string) =>
-      `Thanks, ${nome}. I'll get back to you ${channelPhrase} — usually within [placeholder — response time].`,
+      `Thanks, ${nome}. I'll get back to you ${channelPhrase} — usually within 24 hours.`,
     genericError: `Something didn't work. You can write to me directly on WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
     honeypotLabel: "Don't fill in this field",
   },
