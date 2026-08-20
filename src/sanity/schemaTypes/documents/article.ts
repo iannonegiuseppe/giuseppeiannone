@@ -1,5 +1,6 @@
 import { defineField, defineType } from "sanity";
 import { SlugLockedAfterPublish } from "../../components/SlugLockedAfterPublish";
+import { articleAreaCheck, articleAreaOtherCheck } from "../lib/articleAreaValidator";
 import { languageField } from "../lib/languageField";
 
 // No author reference: there's exactly one author (the singleton), so the
@@ -28,6 +29,40 @@ export const article = defineType({
       title: "Published at",
       type: "datetime",
       initialValue: () => new Date().toISOString(),
+    }),
+    // Categorisation pass — which of the seven pillars this article belongs
+    // to, or an explicit "none of them." Placed here (right after
+    // publishedAt, well before body) rather than near tags at the bottom:
+    // this is now a required field that blocks publish, so it needs to be
+    // one of the first things an editor sees opening the document, not
+    // something found by scrolling past the body. See
+    // articleAreaValidator.ts's own comment for why this is two fields
+    // (area + areaOther) rather than one nullable reference, and for the
+    // same-language enforcement.
+    defineField({
+      name: "area",
+      title: "Area",
+      description:
+        "Which of the seven pillar pages this article belongs to. Must be a pillar page in the same language as this article — the picker below only offers same-language ones. Leave empty only if this article is about something outside the seven areas (see \"Not one of the seven\" below) — one of the two is required.",
+      type: "reference",
+      to: [{ type: "pillarPage" }],
+      options: {
+        filter: ({ document }) => ({
+          filter: "language == $lang",
+          params: { lang: document?.language },
+        }),
+      },
+      hidden: ({ document }) => document?.areaOther === true,
+      validation: (Rule) => Rule.custom(articleAreaCheck),
+    }),
+    defineField({
+      name: "areaOther",
+      title: "Not one of the seven",
+      description:
+        "Check this when the article is about something outside the seven pillar areas — bipolar disorder, OCD, addiction, eating disorders, autism, and similar are real, recurring subjects in this corpus that none of the seven cover. An article marked this way is deliberately excluded from every pillar's article list, not miscategorised into the nearest one.",
+      type: "boolean",
+      initialValue: false,
+      validation: (Rule) => Rule.custom(articleAreaOtherCheck),
     }),
     defineField({
       name: "cover",
