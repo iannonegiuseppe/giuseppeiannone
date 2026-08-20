@@ -184,18 +184,52 @@ Real defects, not launch-blocking.
   comment flags the distinction, but it's easy to misread from outside
   the code.
 
-- **One of three article-corpus anomalies still open — re-checked live,
-  two have been fixed since this was written:**
-  - `e-normale-controllare-tutto-mille-volte` — **still present.** One
-    link still points to
-    `https://claude.ai/chat/06f975ff-dc63-4737-8022-fb58dddc74b3#contatti`
-    — a leaked AI chat-session URL, not a real citation.
+- **Three article-corpus anomalies, all now fixed — re-checked live:**
+  - ~~`e-normale-controllare-tutto-mille-volte` — one link pointed to
+    `https://claude.ai/chat/06f975ff-dc63-4737-8022-fb58dddc74b3#contatti`,
+    a leaked AI chat-session URL, not a real citation~~ — **fixed.**
+    Re-pointed to `/contatti`, anchor text ("→ Contattami per un primo
+    colloquio") unchanged. A full corpus sweep for the same class of
+    problem (localhost, staging hosts, file paths, other leaked chat
+    URLs) turned up one more, separately fixed: `quando-finisce-la-psicoterapia`
+    linked the word "articolo" mid-sentence to a WordPress
+    `wp-admin/post.php?...&action=edit` URL — not a citation of
+    anything, so the link mark was removed and "articolo" left as plain
+    text rather than pointed anywhere.
   - ~~`fumare-aiuta-a-gestire-lansia` — 10 links to
     `instagram.com/explore/tags/*`~~ — **fixed.** Re-checked live: zero
     Instagram hashtag links remain on this article.
   - ~~`cose-un-disturbo-di-personalita` — six `"PrecSucc"`/`"123"`
     pagination-widget block pairs~~ — **fixed.** Re-checked live: no
     `"PrecSucc"` block remains in the body.
+
+- **Three near-duplicate article pairs need a human skim, not an
+  overlap-percentage call.** Found during the blog-category pass
+  alongside a fourth, confirmed-genuine duplicate that's already been
+  resolved (`in-quante-sedute-di-psicoterapia-staro-meglio-2`, 98.6%
+  word overlap, deleted — the earlier unsuffixed article was kept).
+  These three sit at 53–60% word overlap each: real thematic overlap,
+  same question in the title, but not clearly a copy/rewrite pair the
+  way the deleted one was. Each pair, both slugs, and the measured
+  overlap:
+  - `cosa-fa-uno-psicoterapeuta` (2024-11-13) vs.
+    `cosa-fa-uno-psicoterapeuta-2` (2025-03-24) — **~60% overlap.** The
+    second adds explicit Dr. Iannone framing the first lacks; reads more
+    like a deliberate variant than an accidental republish.
+  - `perche-e-difficile-perdonare` (2023-12-09) vs.
+    `perche-e-difficile-perdonare-2` (2025-04-01) — **~53–59% overlap.**
+    The weakest case of the three: the first is about the difficulty of
+    forgiving generally (etymology, betrayal, pride, trust), the second
+    is framed around resentment and "an unforgiving heart" — plausibly
+    two genuinely different articles that happen to share a title.
+  - `lo-psicoterapeuta-mi-giudica` (2024-02-06) vs.
+    `lo-psicoterapeuta-ti-giudica` (2024-07-28) — **~59% overlap.** Same
+    question, five months apart, first- vs. second-person address — the
+    closest call of the three; plausibly a rewrite, but overlap alone
+    doesn't say whether the second is an improvement or a redundant
+    republish.
+  Nothing here has been deleted or merged — that's a 55%-overlap call
+  only a human read can make, not a percentage.
 
 - **`come-si-cura-il-panico` has a "see this page" sentence promising a
   link that no longer exists — known cause, not a mystery to solve.**
@@ -208,8 +242,40 @@ Real defects, not launch-blocking.
   a URL to restore** — there is no correct link to put back, the page it
   pointed to was never a real citation in the first place.
 
-- **`ansia-sessuale` (subtopic) has no hero image.** Confirmed:
-  `heroImage` is unset on `subtopicPage-ansia-sessuale-it`.
+- **`ansia-sessuale` shares its hero image with `ansia-da-prestazione` —
+  the only shared subtopic image on the site, and should be replaced with
+  its own photo when one exists.** Was unset entirely (confirmed:
+  `heroImage` was empty on `subtopicPage-ansia-sessuale-it`); fixed by
+  reusing `ansia-da-prestazione`'s asset (`ansia-sessuale`'s real title is
+  "Ansia da prestazione sessuale," so the two are close cousins, not an
+  arbitrary pairing) with its own, independently written alt text — not
+  the neighbour's. Checked before doing this, not assumed: queried all 21
+  IT subtopics, and every other one has a fully unique image — zero
+  pairs share an asset. So this isn't "how it already works elsewhere,"
+  it's a first, done here only because no real photo exists yet. Give it
+  its own image the moment one does; until then this is the one place on
+  the site where two different pages show an identical picture.
+
+- **301 article covers now have real, title-derived `alt` text
+  (`cover.alt`, "Copertina dell'articolo: {title}" / "Article cover:
+  {title}") — but nothing on the live site renders it.** Checked every
+  consumer: `[slug]/page.tsx`'s own cover band and `BlogFilterableSection.tsx`'s
+  listing cards both hardcode `alt=""`; there's no Open Graph image alt,
+  no JSON-LD, no RSS. This looks like a deliberate, consistent sitewide
+  convention — the same `alt=""` pattern appears on the author portrait,
+  the diplomi row, the locations marquee, and several other components,
+  always where a heading or caption next to the image already says the
+  same thing in real text — not an oversight to fix reflexively. Left
+  alone for now, per the owner's own instruction, but flagged so whoever
+  next touches this doesn't rediscover the same gap and write the alt
+  strings a second time: the data is already there and correct.
+  **The one place this convention may not hold is the article's own
+  cover band** — unlike the author portrait or a card's own title
+  (which sits directly beside its image), the cover there functions as a
+  full-bleed background behind the H1, not as a caption pairing; whether
+  that counts as "redundant with adjacent text" the same way the others
+  do is a real judgment call, not a settled one. Worth a decision before
+  assuming the convention applies here too by default.
 
 - **`SectionKicker`'s decorative rule fails non-text contrast sitewide.**
   In the dark theme, `.rule`'s `background: var(--color-line)` resolves
@@ -275,57 +341,20 @@ Corpus-wide problems needing a pass through the articles, not one-off fixes.
   the wrong subject, is copy-pasted across unrelated photos, etc.);
   confirming those needs an actual read, not a query.
 
-- **34 headings longer than 120 characters, across 26 articles — a
-  WordPress-migration artifact, not a code bug.** Paragraphs that became
-  `h2`/`h3` during import. They corrupt the heading outline for search
-  engines and fill both the desktop and mobile tables of contents with
-  paragraph-length entries. Worst cases: `come-resistere-alle-tentazioni`
-  (344 chars, `h3`, second-to-last block in the body — a paragraph
-  continuing the article's own Ulysses metaphor into the next block, not
-  a real section break), and `le-6-cause-della-claustrofobia`, where the
-  same call-to-action paragraph ("Se soffri di sintomi di
-  claustrofobia...") is tagged `h3` three separate times. Handle together
-  with the categorisation task above — both require going through the
-  same corpus, no reason to do it twice.
-
-  All 34, slug — chars — level (Italian corpus only; the 5 English
-  articles don't have this problem):
-  - `come-resistere-alle-tentazioni` — 344 — h3
-  - `le-6-cause-della-claustrofobia` — 300 — h3
-  - `come-affrontare-il-ghosting` — 269 — h2 (block 0 — an intro
-    paragraph as the article's first block, not the other 33's
-    mid-body pattern)
-  - `perche-mi-sento-in-ansia-senza-un-motivo` — 200 — h3
-  - `le-6-cause-della-claustrofobia` — 200 — h3
-  - `le-6-cause-della-claustrofobia` — 200 — h3
-  - `le-6-cause-della-claustrofobia` — 198 — h3
-  - `le-6-cause-della-claustrofobia` — 198 — h3
-  - `la-fame-e-le-emozioni` — 197 — h3
-  - `il-disturbo-dansia-generalizzata` — 194 — h3
-  - `come-curare-la-depressione` — 178 — h3
-  - `dipendenza-da-sesso-e-da-porno` — 176 — h3
-  - `come-curare-la-depressione` — 172 — h3
-  - `eiaculazione-precoce-e-ritardata` — 170 — h3
-  - `il-disturbo-dansia-generalizzata` — 163 — h3
-  - `uomini-e-salute-mentale` — 162 — h3
-  - `come-imparare-a-non-ferire-chi-amiamo` — 156 — h3
-  - `le-conseguenze-psicologiche-del-coronavirus` — 155 — h3
-  - `le-6-cause-della-claustrofobia` — 154 — h3
-  - `come-curare-la-depressione` — 139 — h3
-  - `come-lansia-influisce-sul-sesso` — 133 — h3
-  - `ipocondria-il-male-reale-del-malato-immaginario` — 133 — h3
-  - `ex-militare-perche-mi-scatta-il-panico-in-situazioni-normali` — 132 — h3
-  - `benzodiazepine-per-il-panico-si-o-no` — 131 — h3
-  - `attacco-di-panico-cosa-fare` — 129 — h3
-  - `assenza-orgasmo-cosa-fare` — 129 — h3
-  - `agorafobia-claustrofobia-due-facce-stessa-medaglia` — 128 — h3
-  - `come-si-cura-il-panico` — 127 — h3
-  - `panico-o-ipocondria` — 126 — h3
-  - `il-disturbo-dansia-generalizzata` — 126 — h3
-  - `come-controllare-la-rabbia` — 125 — h3
-  - `la-fame-e-le-emozioni` — 124 — h3
-  - `dipendenza-da-sesso-e-da-porno` — 123 — h3
-  - `il-disturbo-paranoide-di-personalita` — 121 — h3
+- ~~**34 headings longer than 120 characters, across 26 articles.**~~ —
+  **fixed.** Re-verified live: the real count was 34 headings across 23
+  articles (this entry's own "26" was stale). 29 demoted from `h2`/`h3`
+  to plain paragraphs (WordPress-migration artifacts — paragraphs that
+  became headings on import, corrupting the heading outline and the
+  tables of contents). 3 deleted outright: `le-6-cause-della-claustrofobia`
+  had the same "Se soffri di sintomi di claustrofobia..." call-to-action
+  paragraph tagged `h3` four separate times — a plugin repeating itself,
+  not four real headings — three copies removed, the fourth kept as a
+  plain paragraph. 2 became real, short headings instead of being
+  demoted: `panico-o-ipocondria` now has "Come si presenta l'ipocondria?"
+  and `il-disturbo-paranoide-di-personalita` now has "Il circolo vizioso
+  del sospetto," both inserted above the original (now-paragraph) text
+  rather than editing it apart, so nothing written was lost or reworded.
 
 - **`article-5049` and `article-5122` are a 94.2% duplicate pair.** Same
   title, "In quante sedute di psicoterapia starò meglio?" — slugs
