@@ -1,5 +1,17 @@
+import fs from "fs";
+import path from "path";
 import nodemailer from "nodemailer";
 import type { ContactChannel } from "./validation";
+import { getEmailFooterData } from "./emailFooterData";
+import { getLibriGuidePdfUrl } from "./libriPdfUrl";
+import {
+  renderEmailHtml,
+  renderEmailText,
+  LOGO_CID,
+  type EmailContent,
+  type EmailFooterLines,
+  type EmailPracticalLine,
+} from "./emailTemplate";
 
 // Merge pass — `contact` (polymorphic phone-or-email) is gone; email and
 // telefono are now separate, explicit fields on the payload, matching
@@ -83,8 +95,7 @@ function isConfigured(): boolean {
 // route.ts) — not a deliberate multilingual decision being preserved
 // here, just how the file was originally written. Kept always-Italian
 // per this pass's own instruction rather than adding locale-switching
-// that was never asked for; see this pass's own report for the approved
-// EN equivalent text, which deliberately has no code path here.
+// that was never asked for.
 //
 // "Telefono", not "Telefonata", for the telefonata channel — this label
 // is for the Recapito block below, distinct from (and intentionally
@@ -94,6 +105,220 @@ const CHANNEL_LABELS: Record<ContactChannel, string> = {
   whatsapp: "WhatsApp",
   telefonata: "Telefono",
   email: "Email",
+};
+
+// HTML email pass — the logo is a real file (public/email/logo.png, a
+// 440x74 2x-retina export of contents/logo.png, resized once rather than
+// on every send) attached as a CID inline image, never a linked
+// <img src="https://...">. Most mail clients block remote images by
+// default on first open — a linked logo would simply not render, no
+// matter how correct the URL is; a CID attachment is embedded IN the
+// message itself and always renders (or, if a client also blocks inline
+// images specifically, falls back to the alt text — see
+// emailTemplate.ts's own alt attribute). Read once at module load, not
+// per send: this file's contents never change at runtime.
+const LOGO_PATH = path.join(process.cwd(), "public", "email", "logo.png");
+let logoAttachmentContent: Buffer | null = null;
+try {
+  logoAttachmentContent = fs.readFileSync(LOGO_PATH);
+} catch {
+  // Missing at build/deploy time would be a real bug, but failing to
+  // attach a logo must never be why a contact message doesn't reach
+  // Giuseppe — sendMail below only includes the attachment when this
+  // succeeded, same "degrade, don't crash" discipline as everything else
+  // in this file.
+  console.error(`[contact] Logo not found at ${LOGO_PATH} — emails will send without it.`);
+}
+
+function logoAttachment() {
+  if (!logoAttachmentContent) return [];
+  return [
+    {
+      filename: "logo.png",
+      content: logoAttachmentContent,
+      cid: LOGO_CID,
+      contentDisposition: "inline" as const,
+    },
+  ];
+}
+
+// Hardcoded rather than a sede/locationPage Sanity query — confirmed
+// with the owner that a full fetch for one footer line is overkill. This
+// constant is the one place a new/changed location needs editing; it is
+// NOT derived from the `sede` documents driving the site's own location
+// pages/marquee, so a location added there doesn't automatically show up
+// here — someone has to remember to update this too.
+const LOCATIONS_LINE: Record<"it" | "en", string> = {
+  it: "Milano Citylife e Bicocca · Monza · Cernusco sul Naviglio · Online",
+  en: "Milan Citylife and Bicocca · Monza · Cernusco sul Naviglio · Online",
+};
+
+function footerLines(locale: "it" | "en"): EmailFooterLines {
+  return { locationsLine: LOCATIONS_LINE[locale] };
+}
+
+// Copy pass — {canale} in the confirmation body ("Ti ricontatto {canale},
+// ...") reads as a natural phrase per channel, not just the bare
+// CHANNEL_LABELS noun ("Ti ricontatto WhatsApp" isn't a sentence).
+const CANALE_PHRASES: Record<"it" | "en", Record<ContactChannel, string>> = {
+  it: { whatsapp: "su WhatsApp", telefonata: "per telefono", email: "via email" },
+  en: { whatsapp: "via WhatsApp", telefonata: "by phone", email: "via email" },
+};
+
+// Internal notification: real, final copy for both branches now. The
+// practical block in both is real, functional data (the submitted
+// contact details), never copy.
+function buildInternalContent(payload: ContactMessagePayload, isLibri: boolean): EmailContent {
+  const lines = [
+    isLibri ? "Tipo di richiesta: download manuale gratuito" : null,
+    `Nome: ${payload.nome}`,
+    isLibri ? null : `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
+    `Email: ${payload.email}`,
+  ].filter((line): line is string => line !== null);
+  if (payload.telefono) {
+    lines.push(`Telefono: ${payload.telefono}`);
+  }
+  if (isLibri) {
+    lines.push(`Consenso marketing: ${payload.marketingConsent ? "Sì" : "No"}`);
+  } else {
+    lines.push(payload.messaggio ? `Messaggio: ${payload.messaggio}` : "Nessun messaggio aggiuntivo.");
+  }
+  if (payload.spamSignalsLine) {
+    lines.push(payload.spamSignalsLine);
+  }
+
+  return {
+    heading: isLibri ? "Richiesta del manuale" : "Nuovo contatto dal sito",
+    openingLine: isLibri
+      ? `${payload.nome} ha scaricato il manuale dal sito.`
+      : `${payload.nome} ha scritto dal modulo.`,
+    practicalBlock: { lines },
+  };
+}
+
+// Download-flow copy pass — the guide download link, as its own line in
+// the libri confirmation's practical block (an { label, href } line, not
+// plain text — see emailTemplate.ts's own EmailPracticalLine comment for
+// why: a raw URL sitting in running text isn't a real "download it
+// again" affordance). pdfUrl is null both when no libriPage document
+// exists for the locale and when one exists but guidePdf is still
+// unset — same two cases LibriForm.tsx's own disabled-submit-button
+// already guards against on the form itself (see that file's own
+// comment). This is the SECOND guard: even if this function were ever
+// reached with source:"libri" and no PDF (a direct API call bypassing
+// the UI, or a PDF removed between page load and submit), the email
+// still must not link to something that 404s — falls back to a plain,
+// non-clickable line explaining the PDF isn't ready instead.
+const DOWNLOAD_LINK_LABEL: Record<"it" | "en", string> = {
+  it: "Scarica il manuale (PDF)",
+  en: "Download the guide (PDF)",
+};
+const DOWNLOAD_LINK_UNAVAILABLE: Record<"it" | "en", string> = {
+  it: "Il link di download non è disponibile al momento — verrà inviato non appena pronto.",
+  en: "The download link isn't available right now — it will be sent as soon as it's ready.",
+};
+
+function downloadLinkLine(locale: "it" | "en", pdfUrl: string | null): EmailPracticalLine {
+  return pdfUrl ? { label: DOWNLOAD_LINK_LABEL[locale], href: pdfUrl } : DOWNLOAD_LINK_UNAVAILABLE[locale];
+}
+
+// Confirmation to the visitor — real, final copy, both locales, both
+// branches (ordinary contact vs. libri guide-download — distinct copy
+// for each, per this pass's own instruction). pdfUrl is only read in the
+// isLibri branch; callers pass null for the ordinary contact path where
+// it's meaningless.
+function buildConfirmationContent(
+  payload: ContactMessagePayload,
+  locale: "it" | "en",
+  isLibri: boolean,
+  pdfUrl: string | null,
+): EmailContent {
+  const canale = CANALE_PHRASES[locale][payload.channel];
+
+  if (isLibri) {
+    if (locale === "en") {
+      return {
+        heading: "The guide is yours",
+        openingLine: `Hello ${payload.nome},`,
+        bodyParagraphs: [
+          "The guide opened in a new tab. If you cannot find it, the link below always works.",
+          "It runs to twenty pages and takes about half an hour. It is not a course of therapy and does not replace a consultation: it is there to explain how anxiety and panic work, before you decide anything.",
+        ],
+        practicalBlock: {
+          heading: "If you want to talk about it afterwards",
+          lines: [
+            downloadLinkLine(locale, pdfUrl),
+            "WhatsApp — +39 339 190 1474",
+            "Phone — +39 339 190 1474",
+            "A first session lasts 45 minutes and commits you to nothing.",
+          ],
+        },
+      };
+    }
+    return {
+      heading: "Il manuale è tuo",
+      openingLine: `Ciao ${payload.nome},`,
+      bodyParagraphs: [
+        "Il manuale si è aperto in una nuova scheda. Se non lo trovi, il link qui sotto funziona sempre.",
+        "Sono venti pagine, si legge in mezz'ora. Non è un percorso e non sostituisce un colloquio: serve a capire come funzionano l'ansia e il panico, prima di decidere qualsiasi cosa.",
+      ],
+      practicalBlock: {
+        heading: "Se dopo averlo letto vuoi parlarne",
+        lines: [
+          downloadLinkLine(locale, pdfUrl),
+          "WhatsApp — +39 339 190 1474",
+          "Telefono — +39 339 190 1474",
+          "Il primo colloquio dura 45 minuti e non impegna a proseguire.",
+        ],
+      },
+    };
+  }
+
+  if (locale === "en") {
+    return {
+      heading: "I have your message",
+      openingLine: `Hello ${payload.nome},`,
+      bodyParagraphs: [
+        "Writing to confirm your message arrived. I read these myself — there is no receptionist in between.",
+        `I will get back to you ${canale}, usually within 24 hours. If you wrote at the weekend it may be Monday.`,
+        "There is nothing you need to do in the meantime.",
+      ],
+      practicalBlock: {
+        heading: "If you need to reach me sooner",
+        lines: [
+          "WhatsApp — +39 339 190 1474",
+          "Phone — +39 339 190 1474",
+          "In an emergency or immediate danger, call 112 or go to the nearest emergency department. This address is not an emergency channel.",
+        ],
+      },
+    };
+  }
+  return {
+    heading: "Ho ricevuto il tuo messaggio",
+    openingLine: `Ciao ${payload.nome},`,
+    bodyParagraphs: [
+      "Ti scrivo per confermarti che il tuo messaggio è arrivato. Lo leggo io, personalmente — non c'è una segreteria in mezzo.",
+      `Ti ricontatto ${canale}, di solito entro 24 ore. Se scrivi nel fine settimana, può volerci fino al lunedì.`,
+      "Non serve che tu faccia altro nel frattempo.",
+    ],
+    practicalBlock: {
+      heading: "Se hai bisogno prima",
+      lines: [
+        "WhatsApp — +39 339 190 1474",
+        "Telefono — +39 339 190 1474",
+        "In caso di emergenza o pericolo immediato, chiama il 112 o recati al pronto soccorso più vicino. Questo indirizzo non è un canale di emergenza.",
+      ],
+    },
+  };
+}
+
+const CONFIRMATION_SUBJECT: Record<"it" | "en", string> = {
+  it: "Ho ricevuto il tuo messaggio — Dr. Giuseppe Iannone",
+  en: "I have your message — Dr Giuseppe Iannone",
+};
+const LIBRI_CONFIRMATION_SUBJECT: Record<"it" | "en", string> = {
+  it: "Il manuale è pronto — Dr. Giuseppe Iannone",
+  en: "Your guide is ready — Dr Giuseppe Iannone",
 };
 
 // Never logs payload.messaggio (the visitor's own words) anywhere,
@@ -130,37 +355,15 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
   // (the libri form never collects one; it always sends "email" just to
   // satisfy the shared validator) for an explicit request-type line, and
   // the free-text messaggio line for the marketing-consent answer, which
-  // is what a guide request actually carries instead. See this pass's own
-  // report for why this is a body-content branch on the ONE existing
-  // sender rather than a second function/route.
+  // is what a guide request actually carries instead.
   const isLibri = payload.source === "libri";
 
-  // Telefono line only appears when a number was actually given — when
-  // channel is "email" and telefono was left blank, the channel line above
-  // already says the person chose email; a line saying no phone number was
-  // given adds nothing for the reader.
-  const bodyLines = [
-    isLibri ? "Tipo di richiesta: download manuale gratuito" : null,
-    `Nome: ${payload.nome}`,
-    isLibri ? null : `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
-    `Email: ${payload.email}`,
-  ].filter((line): line is string => line !== null);
-  if (payload.telefono) {
-    bodyLines.push(`Telefono: ${payload.telefono}`);
-  }
-  if (isLibri) {
-    bodyLines.push(`Consenso marketing: ${payload.marketingConsent ? "Sì" : "No"}`);
-  } else {
-    bodyLines.push(
-      payload.messaggio ? `Messaggio:\n${payload.messaggio}` : "Nessun messaggio aggiuntivo.",
-    );
-  }
-  // Hardening pass — content-signal flag, appended last so it never
-  // disrupts the normal reading order of a clean message; simply absent
-  // when contentSignals.ts found nothing (see that file's own comment).
-  if (payload.spamSignalsLine) {
-    bodyLines.push(payload.spamSignalsLine);
-  }
+  // Internal notification — always Italian, always the same footer
+  // (Giuseppe's own inbox, not locale-dependent).
+  const internalFooterData = await getEmailFooterData("it");
+  const internalContent = buildInternalContent(payload, isLibri);
+  const internalHtml = renderEmailHtml(internalContent, footerLines("it"), internalFooterData, "it");
+  const internalText = renderEmailText(internalContent, footerLines("it"), internalFooterData, "it");
 
   try {
     await transporter.sendMail({
@@ -172,9 +375,11 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
       // "Reply" in the inbox went nowhere useful.
       replyTo: payload.email,
       subject: isLibri
-        ? `Richiesta manuale gratuito dal sito — ${payload.nome}`
+        ? `Manuale richiesto dal sito — ${payload.nome}`
         : `Nuovo contatto dal sito — ${payload.nome}`,
-      text: bodyLines.join("\n\n"),
+      html: internalHtml,
+      text: internalText,
+      attachments: logoAttachment(),
     });
   } catch (error) {
     console.error("[contact] Failed to send message:", error instanceof Error ? error.message : error);
@@ -188,7 +393,23 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
   // confirmation is a courtesy on top of it, and a courtesy failing must
   // never turn a successful submission into an error the visitor sees.
   try {
-    await transporter.sendMail(buildConfirmationEmail(payload));
+    const locale = payload.locale ?? "it";
+    const confirmationFooterData = await getEmailFooterData(locale);
+    // Only fetched for the libri branch — the ordinary contact
+    // confirmation never reads pdfUrl, no reason to hit Sanity for it.
+    const pdfUrl = isLibri ? await getLibriGuidePdfUrl(locale) : null;
+    const confirmationContent = buildConfirmationContent(payload, locale, isLibri, pdfUrl);
+    const confirmationHtml = renderEmailHtml(confirmationContent, footerLines(locale), confirmationFooterData, locale);
+    const confirmationText = renderEmailText(confirmationContent, footerLines(locale), confirmationFooterData, locale);
+
+    await transporter.sendMail({
+      from: EMAIL_USER,
+      to: payload.email,
+      subject: isLibri ? LIBRI_CONFIRMATION_SUBJECT[locale] : CONFIRMATION_SUBJECT[locale],
+      html: confirmationHtml,
+      text: confirmationText,
+      attachments: logoAttachment(),
+    });
   } catch (error) {
     console.error(
       "[contact] Confirmation email failed to send (internal notification already delivered):",
@@ -197,37 +418,4 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
   }
 
   return { ok: true };
-}
-
-// PLACEHOLDER COPY — plumbing only, per this pass's own instruction. Not
-// approved text; the owner will write the real subject/body once this
-// shape (locale-aware, its own send, its own failure path) is visible.
-const CONFIRMATION_SUBJECT: Record<"it" | "en", string> = {
-  it: "[SEGNAPOSTO] Abbiamo ricevuto il tuo messaggio",
-  en: "[PLACEHOLDER] We've received your message",
-};
-
-function confirmationBody(locale: "it" | "en", nome: string): string {
-  if (locale === "en") {
-    return [
-      `Hi ${nome},`,
-      "[PLACEHOLDER] This confirms we've received your message and will get back to you soon.",
-      "— Dr. Giuseppe Iannone",
-    ].join("\n\n");
-  }
-  return [
-    `Ciao ${nome},`,
-    "[SEGNAPOSTO] Confermiamo di aver ricevuto il tuo messaggio. Ti risponderemo al più presto.",
-    "— Dr. Giuseppe Iannone",
-  ].join("\n\n");
-}
-
-function buildConfirmationEmail(payload: ContactMessagePayload) {
-  const locale = payload.locale ?? "it";
-  return {
-    from: EMAIL_USER,
-    to: payload.email,
-    subject: CONFIRMATION_SUBJECT[locale],
-    text: confirmationBody(locale, payload.nome),
-  };
 }

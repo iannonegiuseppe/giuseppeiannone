@@ -993,6 +993,15 @@ export const libriPageQuery = defineQuery(`
   }
 `);
 
+// Download-flow copy pass — sender.ts needs the guide PDF's own URL to put
+// in the confirmation email's practical block, without fetching the whole
+// libriPage document (chapters, book promo copy, etc.) just for one field.
+export const libriGuidePdfUrlQuery = defineQuery(`
+  *[_type == "libriPage" && language == $locale][0]{
+    "guidePdfUrl": guidePdf.asset->url
+  }
+`);
+
 // Blog index redesign pass — hero + closing editorial copy for the /blog
 // listing (its own singleton, blogIndexSection.ts).
 export const blogIndexQuery = defineQuery(`
