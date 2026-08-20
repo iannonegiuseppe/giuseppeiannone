@@ -18,6 +18,7 @@ import {
 } from "@/lib/contact/validation";
 import { contactErrorMessage } from "@/lib/contact/errorMessages";
 import { useFormToken } from "@/lib/contact/useFormToken";
+import { ContactFormStatusPopup } from "./ContactFormStatusPopup";
 import styles from "./ContactForm.module.scss";
 
 // Merge pass — the polymorphic `contact` field (phone-or-email keyed by
@@ -39,6 +40,12 @@ type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 const DEFAULT_CHANNEL: ContactChannel = "whatsapp";
 const WHATSAPP_FALLBACK_DISPLAY = "+39 339 190 1474";
+// wa.me wants the number with no "+", spaces, or punctuation; tel: wants
+// the "+" and digits only (both accept the country code, neither accepts
+// spaces) — two different formats for the same underlying number, not a
+// typo between them.
+const WHATSAPP_FALLBACK_WA_ME_URL = "https://wa.me/393391901474";
+const WHATSAPP_FALLBACK_TEL_URL = "tel:+393391901474";
 
 const COPY = {
   it: {
@@ -65,9 +72,38 @@ const COPY = {
       ContactChannel,
       string
     >,
-    successMessage: (nome: string, channelPhrase: string) =>
-      `Grazie, ${nome}. Ti ricontatto io ${channelPhrase} — di solito entro 24 ore.`,
-    genericError: `Qualcosa non ha funzionato. Puoi scrivermi direttamente su WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
+    popupCloseLabel: "Chiudi",
+    popupSuccessHeading: "Messaggio ricevuto",
+    popupErrorHeading: "Il messaggio non è partito",
+    renderPopupSuccessBody: (nome: string, channelPhrase: string) => (
+      <>
+        <p className={styles.popupText}>
+          {`Grazie, ${nome}. Ho ricevuto il tuo messaggio e ti ricontatto io ${channelPhrase}, di solito entro 24 ore.`}
+        </p>
+        <p className={styles.popupText}>
+          Se hai bisogno prima, scrivimi su WhatsApp al{" "}
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+            {WHATSAPP_FALLBACK_DISPLAY}
+          </a>{" "}
+          o <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>chiamami</a> allo stesso numero.
+        </p>
+      </>
+    ),
+    renderPopupErrorBody: () => (
+      <>
+        <p className={styles.popupText}>
+          Qualcosa non ha funzionato durante l&apos;invio. Prova a inviarlo di nuovo.
+        </p>
+        <p className={styles.popupText}>
+          Se non funziona nemmeno al secondo tentativo, scrivimi direttamente su WhatsApp al{" "}
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+            {WHATSAPP_FALLBACK_DISPLAY}
+          </a>
+          , o <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>chiamami</a> allo stesso numero. Il
+          messaggio arriva comunque.
+        </p>
+      </>
+    ),
     honeypotLabel: "Non compilare questo campo",
   },
   en: {
@@ -91,12 +127,47 @@ const COPY = {
       ContactChannel,
       string
     >,
-    successMessage: (nome: string, channelPhrase: string) =>
-      `Thanks, ${nome}. I'll get back to you ${channelPhrase} — usually within 24 hours.`,
-    genericError: `Something didn't work. You can write to me directly on WhatsApp: ${WHATSAPP_FALLBACK_DISPLAY}`,
+    popupCloseLabel: "Close",
+    popupSuccessHeading: "Message received",
+    popupErrorHeading: "The message did not go through",
+    renderPopupSuccessBody: (nome: string, channelPhrase: string) => (
+      <>
+        <p className={styles.popupText}>
+          {`Thank you, ${nome}. I have your message and I will get back to you ${channelPhrase}, usually within 24 hours.`}
+        </p>
+        <p className={styles.popupText}>
+          If you need to reach me sooner, message me on WhatsApp at{" "}
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+            {WHATSAPP_FALLBACK_DISPLAY}
+          </a>{" "}
+          or <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>call</a> the same number.
+        </p>
+      </>
+    ),
+    renderPopupErrorBody: () => (
+      <>
+        <p className={styles.popupText}>Something went wrong while sending. Try once more.</p>
+        <p className={styles.popupText}>
+          If it fails again, write to me directly on WhatsApp at{" "}
+          <a href={WHATSAPP_FALLBACK_WA_ME_URL} target="_blank" rel="noopener noreferrer" className={styles.popupLink}>
+            {WHATSAPP_FALLBACK_DISPLAY}
+          </a>
+          , or <a href={WHATSAPP_FALLBACK_TEL_URL} className={styles.popupLink}>call</a> the same number. Your
+          message will reach me either way.
+        </p>
+      </>
+    ),
     honeypotLabel: "Don't fill in this field",
   },
 };
+
+// 7s — the upper end of the 5-7s range: the success message is two full
+// sentences (roughly 35-40 words including the WhatsApp fallback line), a
+// screen reader needs real time to get through that, and the auto-dismiss
+// timer is what a sighted visitor experiences as "how long this stays
+// visible" — matching the longer end favours a slow reader over a
+// snappier animation.
+const POPUP_AUTO_DISMISS_MS = 7000;
 
 export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: string }) {
   const t = COPY[locale];
@@ -222,26 +293,18 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
     }
   }
 
-  if (status === "success" && submittedChannel) {
-    return (
-      <p className={styles.successMessage}>
-        {t.successMessage(submittedNome, t.channelPhrases[submittedChannel])}
-      </p>
-    );
-  }
-
   const telefonoRequired = channel === "whatsapp" || channel === "telefonata";
   const telefonoLabel = telefonoRequired ? t.fieldLabels.telefonoRequired : t.fieldLabels.telefonoOptional;
 
   return (
-    <form className={styles.contactForm} onSubmit={handleSubmit} noValidate>
-      {status === "error" ? (
-        <div className={styles.formBanner} role="alert">
-          <p className={styles.formBannerText}>{t.genericError}</p>
-        </div>
-      ) : null}
-
-      {/* Row 1: Nome | Numero — equal width at sm+. */}
+    // Popup pass — the form is never unmounted or replaced by either the
+    // success or error state now (it used to be, for success — see
+    // ContactFormStatusPopup.tsx's own top comment). This wrapper is what
+    // gives the popup something to lay OVER as an absolutely-positioned
+    // sibling; the <form> itself renders unconditionally below.
+    <div className={styles.formShell}>
+      <form className={styles.contactForm} onSubmit={handleSubmit} noValidate>
+        {/* Row 1: Nome | Numero — equal width at sm+. */}
       <div className={styles.fieldRow}>
         <ContactFormInput
           label={t.fieldLabels.nome}
@@ -439,6 +502,30 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
         </Button>
         <p className={styles.replyLine}>{replyLine}</p>
       </div>
-    </form>
+      </form>
+
+      {status === "success" && submittedChannel ? (
+        <ContactFormStatusPopup
+          variant="success"
+          heading={t.popupSuccessHeading}
+          onClose={() => setStatus("idle")}
+          closeLabel={t.popupCloseLabel}
+          autoDismissMs={POPUP_AUTO_DISMISS_MS}
+        >
+          {t.renderPopupSuccessBody(submittedNome, t.channelPhrases[submittedChannel])}
+        </ContactFormStatusPopup>
+      ) : null}
+
+      {status === "error" ? (
+        <ContactFormStatusPopup
+          variant="error"
+          heading={t.popupErrorHeading}
+          onClose={() => setStatus("idle")}
+          closeLabel={t.popupCloseLabel}
+        >
+          {t.renderPopupErrorBody()}
+        </ContactFormStatusPopup>
+      ) : null}
+    </div>
   );
 }

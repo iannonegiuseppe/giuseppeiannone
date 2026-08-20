@@ -12,6 +12,13 @@
 // .stripSection, LocationsMarquee's own wrapper).
 .contactLightWrap {
   @include tone.light-island-surface;
+  // ContactForm.module.scss's own --cf-loose-text (pillLegend/consentText/
+  // consentLink) must be set on an ANCESTOR of <ContactForm>, never inside
+  // that file itself — see its own comment on .pillLegend for why. This is
+  // the inline-embed half of that pair; ContactFormDialog.module.scss's
+  // .contactDialogFormWrap is the other.
+  --cf-loose-text: var(--color-text);
+  --cf-loose-muted: var(--color-text-muted);
 }
 
 .contactInner {

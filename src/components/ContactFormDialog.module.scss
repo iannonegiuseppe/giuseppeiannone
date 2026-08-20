@@ -40,6 +40,13 @@
 // actually designed against. Zero changes to ContactForm.tsx/.module.scss
 // itself.
 .contactDialogCard {
+  // Contrast pass — the same upper-left sheen every other dark section
+  // uses (mixins.upper-left-sheen), added because the card read as flat
+  // and too uniformly dark on its own. Needs the data-sheen="upper-left"
+  // attribute on this element too (ContactFormDialog.tsx) — the mixin is
+  // opt-in per instance via that attribute, not automatic just from the
+  // @include (see the mixin's own comment in _mixins.scss).
+  @include mixins.upper-left-sheen;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -82,17 +89,6 @@
   // ContactForm now resolves correctly regardless of theme, with zero
   // edits to that file.
   --color-bg: var(--tone-deep-text);
-  // Third real bug, same root cause: ContactForm's submit button and
-  // consent-checkbox checkmark both use var(--color-text) as "the dark
-  // ink that contrasts against an ivory fill" (the submit button's own
-  // background IS --color-bg, i.e. now correctly ivory via the pin
-  // above) — on light theme --color-text already IS dark ink, so this
-  // was invisible only on dark theme specifically, where --color-text is
-  // the page's own NORMAL (ivory) reading color, giving ivory-on-ivory.
-  // Pinned to --color-accent-gradient-dark — the same dark, on-brand ink
-  // this task's own Button.tsx primary/[data-tone="deep"] variant already
-  // uses for an identical "dark label on an ivory fill" need.
-  --color-text: var(--color-accent-gradient-dark);
   box-shadow: var(--shadow-soft);
   opacity: 1;
   transform: scale(1);
@@ -146,6 +142,38 @@
   @include mixins.focus-ring;
 }
 
+// Real bug found via computed-style check (this pass): the card-level
+// --color-text override this file used to carry (var(--color-accent-
+// gradient-dark), i.e. near-black) was meant ONLY for the submit button
+// and the checked checkbox's own fill — but it applied to the WHOLE
+// card, so .successMessage/.consentText/.consentLink/.pillLegend (which
+// have no local light fill of their own — they sit directly on this
+// card's dark gradient) inherited it too: near-black text on a
+// dark-green/near-black gradient. Turns out unnecessary in the first
+// place — Button.module.scss's own .primary rule already resolves its
+// colors from --color-accent/--color-accent-contrast, never --color-bg/
+// -text, per that file's own comment ("On base/mid this already resolves
+// correctly per tone for free... no [data-tone] branching required").
+// The checkbox's checked-state fill is the one genuine case that needs
+// dark ink — handled below by retoning the whole scope to light-base
+// values (matching ContactForm.module.scss's own stated design: "the
+// tokens light-island-surface actually retones for a light ground" —
+// this IS that retoning, values-only, no background repaint, since the
+// dark gradient card behind this wrapper should keep showing through).
+// --cf-loose-text is the one exception: repointed back to ivory, for the
+// handful of elements that read it instead of --color-text specifically
+// because they sit on the card directly (see ContactForm.module.scss's
+// own comment on that variable).
 .contactDialogFormWrap {
   padding-top: var(--space-2);
+  --color-text: var(--light-base-text);
+  --color-text-muted: var(--light-base-muted);
+  --color-hairline: var(--light-base-hairline);
+  --color-line: var(--light-base-line);
+  --color-focus: var(--light-base-accent-hover);
+  --color-accent: var(--light-base-accent);
+  --color-accent-hover: var(--light-base-accent-hover);
+  --color-accent-contrast: var(--light-base-text);
+  --cf-loose-text: var(--tone-deep-text);
+  --cf-loose-muted: var(--tone-deep-muted);
 }

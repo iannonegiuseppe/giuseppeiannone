@@ -1,0 +1,122 @@
+@use "../styles/mixins";
+
+// Contact form popup pass — self-contained light card, deliberately NOT
+// reading --color-text/--color-bg/--color-accent (which mean different
+// things in the two very different scopes this popup renders inside: the
+// inline embed's light-island vs. the dialog's dark gradient card — see
+// ContactFormDialog.module.scss's own history of exactly this kind of
+// cross-scope token confusion). Using the theme-invariant --light-base-*
+// family instead means this popup looks identical and is correctly
+// readable in both places without any scope-aware branching.
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  // Literal, not a token — same reasoning as field-base's own literal
+  // #fff fill (ContactForm.module.scss): a scrim needs to read as "dark,
+  // dimming" regardless of which theme/scope it's layered over, and every
+  // token that could supply that meaning (--color-text, --color-bg) flips
+  // per scope here.
+  background: rgba(20, 18, 15, 0.55);
+  border-radius: inherit;
+  opacity: 1;
+  transition: opacity 200ms ease;
+
+  @starting-style {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.popup {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-6);
+  border-radius: var(--radius-l);
+  background: var(--light-base-bg);
+  color: var(--light-base-text);
+  box-shadow: var(--shadow-soft);
+  transform: scale(1);
+  opacity: 1;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; // 44px touch target
+  height: 2.75rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--light-base-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--light-base-text) 8%, transparent);
+    color: var(--light-base-text);
+  }
+
+  @include mixins.focus-ring;
+}
+
+.heading {
+  margin: 0 var(--space-7) var(--space-3) 0; // right margin clears the close button
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--fs-h3);
+  line-height: 1.25;
+  color: var(--light-base-text);
+}
+
+.popupText {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--light-base-text);
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.popupLink {
+  color: var(--light-base-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--light-base-accent-hover);
+  }
+
+  @include mixins.focus-ring;
+}

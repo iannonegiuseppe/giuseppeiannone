@@ -186,7 +186,12 @@ export const ContactFormDialog = forwardRef<
       onTransitionEnd={handleTransitionEnd}
       onClose={handleClose}
     >
-      <div ref={cardRef} className={styles.contactDialogCard} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={cardRef}
+        className={styles.contactDialogCard}
+        data-sheen="upper-left"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           className={styles.contactDialogCloseButton}

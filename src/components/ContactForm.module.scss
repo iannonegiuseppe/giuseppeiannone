@@ -30,7 +30,15 @@
   // relative-luminance formula: text at 50/50 measures ~5.38:1 against
   // --color-bg (needs 4.5:1); border at 70% amber / 30% text measures
   // ~3.86:1 (needs only 3:1, so it can stay lighter/more visibly amber).
-  --cf-error-text-color: color-mix(in srgb, var(--color-amber) 50%, var(--color-text) 50%);
+  // --cf-error-text-color feeds .ffError/.groupError, both of which
+  // render BELOW their field/group, never overlapping the white fill —
+  // same "sits on the ambient ground" case as .pillLegend (see that
+  // rule's own comment), so this blends toward --cf-loose-text, not
+  // --color-text directly. --cf-error-border-color stays on --color-text
+  // deliberately: it's read by field-base's own [aria-invalid] border,
+  // which DOES sit on the white field, wanting the retoned dark-ink value
+  // exactly like every other field-local rule.
+  --cf-error-text-color: color-mix(in srgb, var(--color-amber) 50%, var(--cf-loose-text, var(--color-text)) 50%);
   --cf-error-border-color: color-mix(in srgb, var(--color-amber) 70%, var(--color-text) 30%);
   display: flex;
   flex-direction: column;
@@ -232,12 +240,15 @@
   }
 }
 
+// Renders below the field, never overlapping its white fill — same
+// "sits on the ambient ground" case as .replyLine (see that rule's own
+// comment).
 .ffHint {
   margin: 0.375rem 0 0;
   font-family: var(--font-body);
   font-size: 0.8125rem;
   line-height: 1.35;
-  color: var(--color-text-muted);
+  color: var(--cf-loose-muted, var(--color-text-muted));
 }
 
 // Below-group errors (channel fieldset, consent) — unchanged mechanism:
@@ -292,13 +303,25 @@
   padding: 0;
 }
 
+// Dialog color-scope pass — real bug found live: --cf-loose-text must be
+// SET ON AN ANCESTOR of <ContactForm> (contactBlock.module.scss's
+// .contactLightWrap for the inline embed, ContactFormDialog.module.scss's
+// .contactDialogFormWrap for the dialog), never inside this file's own
+// .contactForm rule — a declaration there is a DESCENDANT of both those
+// ancestors and silently wins the cascade over whichever one the caller
+// meant to apply, since custom-property overrides resolve by tree depth,
+// not by which stylesheet declared them. The var()'s own second argument
+// is the fallback for the (should-never-happen) case where neither
+// ancestor set it. This is the one token pillLegend/consentText/
+// consentLink read differently from the rest of the file — see those
+// two ancestor files' own comments for why.
 .pillLegend {
   padding: 0;
   margin: 0 0 var(--space-2);
   font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.3;
-  color: var(--color-text);
+  color: var(--cf-loose-text, var(--color-text));
 }
 
 .pillGroup {
@@ -332,6 +355,19 @@
   background: var(--cf-input-bg);
   font-family: var(--font-body);
   font-size: var(--fs-small);
+  // Same fix as Pagination's own .pageNumber/.pageArrow circles
+  // (blogIndex.module.scss) for the identical cause: flex centering
+  // only centers the LINE BOX, not the glyph inside it — the inherited
+  // body line-height (~1.6-ish via var(--font-body)'s cascade) reserves
+  // descender space below the baseline that "WhatsApp"/"Telefonata"/
+  // "Email" barely or never use, so the visible glyphs read as sitting
+  // above the pill's own visual centre even though the box itself is
+  // centred correctly (confirmed live: bounding-box math showed the
+  // label's own box dead-centre in the pill — the mismatch is between
+  // the box and the ink inside it, not the box's own position).
+  // line-height:1 collapses the line box down to (near enough) the
+  // font's own em-box, which is what actually gets flex-centred now.
+  line-height: 1;
   color: var(--color-text);
   cursor: pointer;
   transition:
@@ -443,11 +479,11 @@
   font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.35;
-  color: var(--color-text);
+  color: var(--cf-loose-text, var(--color-text));
 }
 
 .consentLink {
-  color: var(--color-text);
+  color: var(--cf-loose-text, var(--color-text));
   text-decoration: underline;
   text-underline-offset: 0.15em;
 
@@ -528,12 +564,18 @@
   }
 }
 
+// Same "sits directly on the card, no local fill of its own" case as
+// .pillLegend/.consentText/.consentLink (see .pillLegend's own comment)
+// — found via live measurement (2.70:1 in the dialog, under the 4.5:1
+// floor), not something the original bug report named. --cf-loose-muted
+// is that same pattern's muted counterpart, set on the identical two
+// ancestor scopes.
 .replyLine {
   margin: 0;
   font-family: var(--font-body);
   font-style: italic;
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  color: var(--cf-loose-muted, var(--color-text-muted));
 
   @include mixins.breakpoint-up(lg) {
     flex: 1 1 auto;
@@ -541,25 +583,11 @@
 }
 
 // --- States -------------------------------------------------------------------
-.successMessage {
-  margin: var(--space-6) 0 0;
-  max-width: 32rem;
-  font-family: var(--font-body);
-  font-size: 1.0625rem;
-  line-height: 1.7;
-  color: var(--color-text);
-}
-
-.formBanner {
-  padding: var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--color-amber) 60%, transparent);
-  border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--color-amber) 15%, var(--color-bg));
-}
-
-.formBannerText {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.9375rem;
-  color: var(--color-text);
+// Popup pass — success/error no longer render here at all: both are
+// ContactFormStatusPopup.tsx now, layered over the still-mounted form
+// (see that component's own top comment) instead of replacing it
+// (success) or banner-ing above it (error). .formShell is the position-
+// relative anchor the popup's own .scrim positions itself against.
+.formShell {
+  position: relative;
 }
