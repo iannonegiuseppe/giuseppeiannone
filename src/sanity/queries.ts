@@ -123,6 +123,25 @@ export const areaTaxonomyQuery = defineQuery(`
   }
 `);
 
+// Blog category-chip pass — counts only, no article fields, so the chip
+// row never has to ship article data just to know how many exist per
+// area. Nested count() reaches back into the enclosing pillarPage via
+// ^._id, same referencing style areaTaxonomyQuery's own subtopics
+// projection already uses. "other" (areaOther === true, or area
+// unset) is derived by the caller as total minus the sum of these
+// counts — it never gets a chip, so it doesn't need its own count here.
+export const areaChipCountsQuery = defineQuery(`
+  {
+    "total": count(*[_type == "article" && language == $locale]),
+    "areas": *[_type == "pillarPage" && language == $locale]{
+      _id,
+      title,
+      "slug": slug.current,
+      "count": count(*[_type == "article" && language == $locale && area._ref == ^._id])
+    }
+  }
+`);
+
 export const footerSettingsQuery = defineQuery(`
   *[_type == "footerSettings" && language == $locale][0]{
     columnHeadings,
@@ -667,6 +686,25 @@ export const articlesPageQuery = defineQuery(`
 
 export const articlesCountQuery = defineQuery(`
   count(*[_type == "article" && language == $locale])
+`);
+
+// Blog category-chip pass — the filtered twin of articlesPageQuery, for the
+// route handler a chip click fetches from (see /api/blog-by-area). Same
+// card fields, same slice shape, scoped to one pillar's articles by
+// area._ref instead of the whole locale.
+export const articlesByAreaQuery = defineQuery(`
+  *[_type == "article" && language == $locale && area._ref == $areaId] | order(publishedAt desc) [$start...$end]{
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    cover,
+    excerpt
+  }
+`);
+
+export const articlesByAreaCountQuery = defineQuery(`
+  count(*[_type == "article" && language == $locale && area._ref == $areaId])
 `);
 
 // End-of-article pass — "3 most recent, excluding this one." No

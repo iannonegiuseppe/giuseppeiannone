@@ -2,6 +2,8 @@ import { sanityFetch, sanityFetchPublished } from "./client";
 import {
   articleBySlugQuery,
   articleCounterpartQuery,
+  articlesByAreaCountQuery,
+  articlesByAreaQuery,
   articlesCountQuery,
   articlesPageQuery,
   articleSlugsQuery,
@@ -66,6 +68,36 @@ export async function getArticlesPage(
   const articles = await sanityFetch<ArticleListItem[]>(
     articlesPageQuery,
     { locale, start, end },
+    ["article"],
+  );
+
+  return { articles, page, totalPages, totalCount };
+}
+
+// Blog category-chip pass — filtered card data for one pillar, fetched
+// on demand by the /api/blog-by-area route handler when a chip is
+// clicked (never at initial page load — see areaChipCountsQuery's own
+// comment for why the chip row itself only ever ships counts). Flat
+// page size, no featured slot: unlike getArticlesPage's page 1, a
+// filtered view has no "most recent across the whole blog" article to
+// single out — it's already a subset.
+export async function getArticlesByArea(
+  locale: string,
+  areaId: string,
+  page: number,
+): Promise<ArticlesPageResult> {
+  const totalCount = await sanityFetch<number>(
+    articlesByAreaCountQuery,
+    { locale, areaId },
+    ["article"],
+  );
+  const totalPages = Math.max(1, Math.ceil(totalCount / BLOG_GRID_PAGE_SIZE));
+  const start = (page - 1) * BLOG_GRID_PAGE_SIZE;
+  const end = start + BLOG_GRID_PAGE_SIZE;
+
+  const articles = await sanityFetch<ArticleListItem[]>(
+    articlesByAreaQuery,
+    { locale, areaId, start, end },
     ["article"],
   );
 

@@ -1,22 +1,15 @@
-import Image from "next/image";
-import Link from "next/link";
 import { PortableText } from "next-sanity";
-import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
 import { LightPortraitHero } from "@/components/LightPortraitHero";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
-import {
-  getArticlesPage,
-  getBlogIndex,
-  getHeroPortrait,
-  type ArticleListItem,
-} from "@/sanity/articles";
-import { imageDimensions, urlFor } from "@/sanity/image";
-import { articlePath, articlesPath, type Locale } from "@/sanity/paths";
+import { getArticlesPage, getBlogIndex, getHeroPortrait } from "@/sanity/articles";
+import { getAreaChipCounts } from "@/sanity/areaTaxonomy";
+import { type Locale } from "@/sanity/paths";
 import { contactSectionQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
 import { BLOG_LIST_SECTION_ID, BlogPaginationScrollReset } from "./BlogPaginationScrollReset";
+import { BlogFilterableSection } from "./BlogFilterableSection";
 import {
   blogEditorialPortableTextComponents,
   splitEditorialIntoColumns,
@@ -44,155 +37,6 @@ function getContactSectionCopy(locale: string) {
 // is the honest, non-forked choice here too.
 const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
 const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
-
-function formatDate(publishedAt: string | null, locale: string) {
-  if (!publishedAt) return null;
-  return new Date(publishedAt).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function ArticleCard({
-  article,
-  locale,
-  large,
-}: {
-  article: ArticleListItem;
-  locale: Locale;
-  large?: boolean;
-}) {
-  const dims = article.cover ? imageDimensions(article.cover as SanityImage) : null;
-  const date = formatDate(article.publishedAt, locale);
-  const href = articlePath(locale, article.slug);
-
-  if (large) {
-    // Item 4 — was two separate nested <Link>s (cover + title, each its
-    // own hover target, plus a THIRD nested link for "Read article" —
-    // invalid HTML, an <a> can't contain another <a>). One outer Link now
-    // wraps the whole item, same single-hover-target shape the grid cards
-    // already use — hovering the image side triggers the title colour and
-    // image scale exactly like hovering the text side does, because both
-    // are just descendants of the one hoverable box now. "Read article"
-    // is a plain span (not its own link), matching .cardRead below.
-    return (
-      <RevealOnScroll>
-        <Link href={href} className={styles.featured}>
-          <div className={styles.featuredCover}>
-            {article.cover && dims ? (
-              <Image
-                src={urlFor(article.cover as SanityImage).width(1200).url()}
-                alt=""
-                fill
-                sizes="(min-width: 64rem) 50vw, 100vw"
-                className={styles.featuredCoverImg}
-                priority
-              />
-            ) : null}
-          </div>
-          <div className={styles.featuredText}>
-            <h2 className={styles.featuredTitle}>{article.title}</h2>
-            {article.excerpt ? <p className={styles.featuredExcerpt}>{article.excerpt}</p> : null}
-            <div className={styles.featuredMeta}>
-              {date ? (
-                <time dateTime={article.publishedAt ?? undefined}>{date}</time>
-              ) : (
-                <span />
-              )}
-              <span className={styles.featuredRead}>
-                {locale === "en" ? "Read article" : "Leggi l'articolo"}
-                <span aria-hidden="true">→</span>
-              </span>
-            </div>
-          </div>
-        </Link>
-      </RevealOnScroll>
-    );
-  }
-
-  return (
-    <RevealOnScroll>
-      <Link href={href} className={styles.card}>
-        <div className={styles.cardImage}>
-          {article.cover && dims ? (
-            <Image
-              src={urlFor(article.cover as SanityImage).width(800).url()}
-              alt=""
-              fill
-              sizes="(min-width: 64rem) 33vw, (min-width: 48rem) 50vw, 100vw"
-              className={styles.cardImg}
-            />
-          ) : null}
-        </div>
-        <p className={styles.cardTitle}>{article.title}</p>
-        {article.excerpt ? <p className={styles.cardExcerpt}>{article.excerpt}</p> : null}
-        <div className={styles.cardMeta}>
-          {date ? <time dateTime={article.publishedAt ?? undefined}>{date}</time> : <span />}
-          <span className={styles.cardRead}>
-            {locale === "en" ? "Read" : "Leggi"}
-            <span aria-hidden="true">→</span>
-          </span>
-        </div>
-      </Link>
-    </RevealOnScroll>
-  );
-}
-
-function Pagination({
-  locale,
-  pageNumber,
-  totalPages,
-}: {
-  locale: Locale;
-  pageNumber: number;
-  totalPages: number;
-}) {
-  function hrefFor(n: number) {
-    return n === 1 ? articlesPath(locale) : `${articlesPath(locale)}/page/${n}`;
-  }
-
-  // Bounded window of page numbers around the current one — a flat list
-  // of up to `totalPages` links (24 at the current article count) would
-  // be unusable; caps at 5 visible numbers, same idea as the reference's
-  // own compact « 1 2 3 » treatment.
-  const windowSize = 5;
-  let start = Math.max(1, pageNumber - Math.floor(windowSize / 2));
-  const end = Math.min(totalPages, start + windowSize - 1);
-  start = Math.max(1, end - windowSize + 1);
-  const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-
-  return (
-    <nav aria-label={locale === "en" ? "Pagination" : "Paginazione"} className={styles.pagination}>
-      <Link
-        href={hrefFor(Math.max(1, pageNumber - 1))}
-        aria-disabled={pageNumber === 1}
-        className={`${styles.pageArrow} ${pageNumber === 1 ? styles.pageArrowDisabled : ""}`}
-        aria-label={locale === "en" ? "Previous page" : "Pagina precedente"}
-      >
-        ‹
-      </Link>
-      {pages.map((n) => (
-        <Link
-          key={n}
-          href={hrefFor(n)}
-          className={`${styles.pageNumber} ${n === pageNumber ? styles.pageNumberActive : ""}`}
-          aria-current={n === pageNumber ? "page" : undefined}
-        >
-          {n}
-        </Link>
-      ))}
-      <Link
-        href={hrefFor(Math.min(totalPages, pageNumber + 1))}
-        aria-disabled={pageNumber === totalPages}
-        className={`${styles.pageArrow} ${pageNumber === totalPages ? styles.pageArrowDisabled : ""}`}
-        aria-label={locale === "en" ? "Next page" : "Pagina successiva"}
-      >
-        ›
-      </Link>
-    </nav>
-  );
-}
 
 // Item 2 (round 4) — full-width, two reading columns at lg (one below).
 // splitEditorialIntoColumns (blogEditorialPortableText.tsx) does the
@@ -226,14 +70,20 @@ export async function BlogIndexView({
 }) {
   const typedLocale = locale as Locale;
 
-  const [{ articles, totalPages }, blogIndex, heroPortrait, contactCopy, siteSettings] =
+  const [{ articles, totalPages }, blogIndex, heroPortrait, contactCopy, siteSettings, areaCounts] =
     await Promise.all([
       getArticlesPage(locale, pageNumber),
       getBlogIndex(locale),
       getHeroPortrait(locale),
       getContactSectionCopy(locale),
       getSiteSettings(locale),
+      getAreaChipCounts(typedLocale),
     ]);
+
+  // Category-chip pass — only pillars with at least one article in this
+  // locale get a chip (see getAreaChipCounts's own comment); "other" never
+  // gets one at all, it only ever shows under "Tutti"/"All".
+  const chips = areaCounts.areas.map((area) => ({ id: area.id, title: area.title }));
 
   // Item — featured article is the single most recent article, page 1
   // only (order is already publishedAt desc, so articles[0] IS the most
@@ -262,20 +112,17 @@ export async function BlogIndexView({
           mobileCutoutAnchor
         />
 
-        {/* 2. DARK SECTION — featured + grid + pagination */}
+        {/* 2. DARK SECTION — chips + featured/filtered + grid + pagination */}
         <section id={BLOG_LIST_SECTION_ID} className={styles.listSection}>
           <div className="container">
-            {featured ? <ArticleCard article={featured} locale={typedLocale} large /> : null}
-            {gridArticles.length > 0 ? (
-              <div className={styles.grid}>
-                {gridArticles.map((article) => (
-                  <ArticleCard key={article._id} article={article} locale={typedLocale} />
-                ))}
-              </div>
-            ) : null}
-            {totalPages > 1 ? (
-              <Pagination locale={typedLocale} pageNumber={pageNumber} totalPages={totalPages} />
-            ) : null}
+            <BlogFilterableSection
+              locale={typedLocale}
+              pageNumber={pageNumber}
+              totalPages={totalPages}
+              featured={featured}
+              gridArticles={gridArticles}
+              chips={chips}
+            />
           </div>
         </section>
 

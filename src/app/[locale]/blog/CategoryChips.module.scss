@@ -1,0 +1,133 @@
+@use "../../../styles/mixins";
+
+// Blog category-chip pass — same wrapper/scroll split as
+// portableTextComponents.module.scss's .tableScrollWrap/.tableScroll (see
+// ContentTable.tsx's own comment for why two elements, not one): the
+// fade pseudo-element must stay fixed to the row's edge, not scroll with
+// the buttons inside it.
+.chipsWrap {
+  position: relative;
+  margin: 0 0 var(--space-6);
+}
+
+.chipsScroll {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  // The row itself never wraps — overflow-x:auto + nowrap children is
+  // the whole mechanism (buttons below get flex-shrink:0, not this).
+  padding-block: var(--space-1);
+  padding-inline-end: var(--space-6); // keeps the last chip clear of the fade
+  scroll-behavior: smooth;
+  // Mouse-drag affordance (CategoryChips.tsx's pointer handlers) — grab
+  // by default, grabbing once a drag actually starts. Applies to the
+  // whole row, buttons included: which gesture wins (click vs. drag) is
+  // decided by movement, not by cursor zone, same as any tab-strip/
+  // carousel row a visitor has already used elsewhere.
+  cursor: grab;
+
+  // Scrollbar hidden, scrolling kept — the row's own affordance is the
+  // edge fade (below) plus the chips themselves visibly continuing past
+  // the container edge, not a scrollbar track. All three vendor paths
+  // are required; any one missing leaves a visible bar in that engine.
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // old Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome, Safari
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+}
+
+// Active-drag state (data-dragging, toggled once the pointer has moved
+// past the threshold) — grabbing cursor plus user-select:none as a
+// CSS-level backstop to handlePointerMove's own e.preventDefault() for
+// stopping text selection from starting mid-drag; belt and braces since
+// selection-prevention behaviour has historically varied slightly by
+// browser.
+.chipsScroll[data-dragging="true"] {
+  cursor: grabbing;
+  user-select: none;
+}
+
+// Right-edge fade, JS-toggled by real scroll position (CategoryChips.tsx's
+// own useEffect) — identical mechanism to ContentTable's own
+// .tableScrollWrap::after, fading to var(--color-bg), which .listSection's
+// tone-mid-surface reassigns to its own mid tone (not the plain ambient
+// dark --color-bg), so this lands on the section's actual background
+// either way.
+.chipsWrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.5rem;
+  background: linear-gradient(to right, transparent, var(--color-bg));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.chipsWrap[data-fade="true"]::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipsWrap::after {
+    transition: none;
+  }
+}
+
+// 44px tap target (measured against the reference's own compact chip
+// row, then raised to meet the touch-target floor the rest of this page's
+// own pagination circles already hold to — see .pageNumber/.pageArrow in
+// blogIndex.module.scss). Same token vocabulary as those pagination
+// controls: --radius-button (not a pill/full radius — no such token
+// exists in this system), --color-hairline border, --color-text-muted
+// default text, --color-accent/-contrast for the active state.
+.chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem; // 44px
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-hairline);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  // Inherits grab/grabbing from .chipsScroll rather than its own
+  // cursor:pointer — the row is draggable from anywhere inside it,
+  // chips included, and gesture (not cursor zone) is what decides click
+  // vs. drag (see handleClickCapture in CategoryChips.tsx).
+  cursor: inherit;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    color: var(--color-text);
+    border-color: var(--color-accent-hover);
+  }
+
+  &[aria-pressed="true"] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-contrast);
+
+    &:hover {
+      color: var(--color-accent-contrast);
+      border-color: var(--color-accent);
+    }
+  }
+
+  @include mixins.focus-ring;
+}

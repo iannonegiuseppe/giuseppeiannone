@@ -1,6 +1,28 @@
 @use "../../../styles/mixins";
 @use "../../../styles/tone";
 
+// Blog category-chip pass — screen-reader-only live region announcing
+// filtered-result counts (BlogFilterableSection.tsx). Visually hidden via
+// the shared mixin, not display:none, so it still reaches assistive tech.
+.visuallyHidden {
+  @include mixins.visually-hidden;
+}
+
+// Dims the grid while a filtered fetch is in flight (BlogFilterableSection
+// caches per areaId+page, so this only ever shows on a genuinely new
+// request, not on revisiting a filter already fetched this session).
+.filteredWrap {
+  transition: opacity 150ms ease;
+
+  &[data-loading="true"] {
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 // Blog index redesign pass — composition follows the Cyprus VIP Estates
 // blog index reference (cyprusvipestates.com/blog): light ivory hero,
 // dark article list (featured + grid + pagination), full-width contact
