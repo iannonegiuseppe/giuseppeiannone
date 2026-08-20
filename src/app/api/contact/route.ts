@@ -62,6 +62,16 @@ export async function POST(req: NextRequest) {
   }
 
   if (typeof body.companyWebsite === "string" && body.companyWebsite.length > 0) {
+    // The honeypot's own response is a silent 200 by design — a bot gets
+    // no signal it was caught. That silence means a false positive (a
+    // real visitor's browser autofilling the field — confirmed live,
+    // Android Chrome's Autofill did exactly this) is otherwise invisible
+    // too. This line is the fix for THAT: it shows up in the Vercel log
+    // even though the response itself stays a plain success. IP only,
+    // never the field's own value — logging what was typed into a
+    // honeypot would defeat rewriting its name to avoid exactly this
+    // kind of accidental data capture.
+    console.log(`[contact] Honeypot triggered — request rejected silently. ip=${ip}`);
     return NextResponse.json({ ok: true });
   }
 

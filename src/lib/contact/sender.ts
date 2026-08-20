@@ -100,6 +100,12 @@ const CHANNEL_LABELS: Record<ContactChannel, string> = {
 // including the not-configured and error paths below — only metadata
 // (which env vars are missing, the error itself).
 export async function sendContactMessage(payload: ContactMessagePayload): Promise<SendResult> {
+  // "Did the request even get here" was exactly the question that took
+  // tracing code to answer last time (the honeypot's own silent-success
+  // response meant the answer was "no" and nothing in the log said so).
+  // One line, metadata only, answers it directly from the log next time.
+  console.log(`[contact] sendContactMessage called — channel=${payload.channel} source=${payload.source ?? "contact"}`);
+
   if (!isConfigured()) {
     // No dev-mode stub: a stub that fakes { ok: true } without sending
     // lies about success at exactly the moment (testing SMTP setup)

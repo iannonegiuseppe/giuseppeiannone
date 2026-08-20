@@ -404,9 +404,22 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
         ) : null}
       </div>
 
+      {/* Hardening pass — Alex's real Android Chrome submission got caught
+          by this exact field: name="companyWebsite" reads to Chrome's
+          Autofill (not a bot, a browser feature) as a plausible
+          organization/URL field, and it filled it despite the CSS/aria
+          hiding — autofill matches on name/id/autocomplete, not on
+          whether the field is visible. Renamed to something with zero
+          dictionary overlap with any known autofill category (no "name",
+          "email", "company", "url", "website", "phone", "address" — the
+          terms autofill heuristics actually key off), which is the fix;
+          autoComplete="off" stays as a second, weaker layer (browsers are
+          known to override it for fields they're confident about, which
+          is exactly what happened here) — tabIndex/aria-hidden/off-screen
+          positioning are unchanged, they were never the problem. */}
       <div className={styles.honeypotWrap} aria-hidden="true">
         <label htmlFor={honeypotId}>{t.honeypotLabel}</label>
-        <input id={honeypotId} type="text" name="companyWebsite" ref={honeypotRef} tabIndex={-1} autoComplete="off" />
+        <input id={honeypotId} type="text" name="hp_x7k2" ref={honeypotRef} tabIndex={-1} autoComplete="off" />
       </div>
 
       {/* Submit + reply line: below lg, stacked (button then reply line,
