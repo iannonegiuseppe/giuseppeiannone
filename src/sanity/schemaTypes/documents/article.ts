@@ -64,6 +64,31 @@ export const article = defineType({
       initialValue: false,
       validation: (Rule) => Rule.custom(articleAreaOtherCheck),
     }),
+    // Blog category-chip pass (round 2) — deliberately separate from
+    // area/areaOther above, not a third state of that XOR. A pillar
+    // (area) says "this is what I treat"; a blog category says "this is
+    // what I have written about" — an article can be areaOther:true and
+    // ALSO carry a blogCategory (the 87-odd articles this pass assigns
+    // one to are exactly the areaOther pool), or in principle carry both
+    // a real pillar AND a blog category later, since nothing here
+    // enforces mutual exclusivity the way articleAreaValidator.ts does
+    // for area/areaOther. Optional: most articles have no blog category
+    // and that's fine — it's a filter convenience, not a required
+    // classification the way area/areaOther is.
+    defineField({
+      name: "blogCategory",
+      title: "Blog category",
+      description:
+        "Optional. A /blog filter-chip grouping only — independent of Area above. Leave empty unless this article belongs to one of the defined blog categories.",
+      type: "reference",
+      to: [{ type: "blogCategory" }],
+      options: {
+        filter: ({ document }) => ({
+          filter: "language == $lang",
+          params: { lang: document?.language },
+        }),
+      },
+    }),
     defineField({
       name: "cover",
       title: "Cover image",

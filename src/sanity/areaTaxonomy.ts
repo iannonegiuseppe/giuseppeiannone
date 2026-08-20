@@ -1,6 +1,6 @@
 import { sanityFetch } from "./client";
 import { pillarPath, subtopicPath, type Locale } from "./paths";
-import { areaChipCountsQuery, areaTaxonomyQuery } from "./queries";
+import { areaChipCountsQuery, areaTaxonomyQuery, blogCategoryChipCountsQuery } from "./queries";
 
 interface PillarTaxonomyDoc {
   _id: string;
@@ -123,4 +123,42 @@ export async function getAreaChipCounts(locale: Locale): Promise<BlogAreaCounts>
   const other = result.total - areas.reduce((sum, a) => sum + a.count, 0);
 
   return { total: result.total, other, areas };
+}
+
+interface BlogCategoryCountDoc {
+  _id: string;
+  title: string;
+  count: number;
+}
+
+export interface BlogCategoryChip {
+  id: string;
+  title: string;
+  count: number;
+}
+
+// Blog category-chip pass (round 2) — the blogCategory twin of
+// getAreaChipCounts above, rendered as five ADDITIONAL chips after the
+// seven pillars, never interleaved with them (see BlogIndexView.tsx's
+// own chip-array concatenation). Deliberately NOT sorted through
+// pillarOrderKey/PILLAR_ORDER — that function's alphabetical-last
+// fallback exists only because pillarPage itself carries no order field,
+// so PILLAR_ORDER has to live in code as a side list matched against
+// each document's _id. blogCategory doesn't have that problem: `order`
+// is a real field on the document itself (see blogCategory.ts), so the
+// GROQ query (`order(order asc)`) already returns them in the right
+// sequence — no code-side list to keep in sync, no alphabetical
+// fallback to fall into. Same "a category with zero articles gets no
+// chip" rule as pillars, for consistency, even though all five have
+// articles today.
+export async function getBlogCategoryChipCounts(locale: Locale): Promise<BlogCategoryChip[]> {
+  const rows = await sanityFetch<BlogCategoryCountDoc[]>(
+    blogCategoryChipCountsQuery,
+    { locale },
+    ["blogCategory", "article"],
+  );
+
+  return rows
+    .filter((row) => row.count > 0)
+    .map((row) => ({ id: row._id, title: row.title, count: row.count }));
 }

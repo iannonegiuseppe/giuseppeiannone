@@ -76,6 +76,11 @@ export const TRANSLATABLE_TYPES = new Set([
   "qualification",
   // Aree section pass: one row per intervention area, plain list type.
   "area",
+  // Blog category-chip pass (round 2) — plain list type, it/en pairs the
+  // same way pillarPage/article do, but deliberately outside
+  // PROTECTED_TYPES/SINGLETON_TYPES: there's no "exactly N" constraint,
+  // an editor can add a sixth category later without a code change.
+  "blogCategory",
 ]);
 
 const DEFAULT_LOCALE = "it";
@@ -389,6 +394,11 @@ export const structure: StructureResolver = (S, context) =>
               S.documentTypeListItem("diploma").title("Diplomi"),
               S.documentTypeListItem("service").title("Services"),
               S.documentTypeListItem("faqItem").title("FAQ questions"),
+              // Blog category-chip pass (round 2) — reference data reused
+              // by article.blogCategory, same shape as faqItem/sede/
+              // diploma above: no route of its own, just data other
+              // documents point at.
+              S.documentTypeListItem("blogCategory").title("Blog categories"),
             ]),
         ),
       S.divider(),

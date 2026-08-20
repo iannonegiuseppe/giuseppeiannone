@@ -690,10 +690,15 @@ export const articlesCountQuery = defineQuery(`
 
 // Blog category-chip pass — the filtered twin of articlesPageQuery, for the
 // route handler a chip click fetches from (see /api/blog-by-area). Same
-// card fields, same slice shape, scoped to one pillar's articles by
-// area._ref instead of the whole locale.
+// card fields, same slice shape, scoped to one chip's articles by
+// $areaId — matched against EITHER area._ref (a pillar chip) OR
+// blogCategory._ref (a blog-category chip, round 2). Safe as an OR, not
+// a param telling it which field to check: pillarPage and blogCategory
+// ids never collide (different `{type}-...` id prefixes), and no article
+// has both fields set to begin with (blogCategory is only ever assigned
+// to articles that are areaOther:true, i.e. area is empty on every one).
 export const articlesByAreaQuery = defineQuery(`
-  *[_type == "article" && language == $locale && area._ref == $areaId] | order(publishedAt desc) [$start...$end]{
+  *[_type == "article" && language == $locale && (area._ref == $areaId || blogCategory._ref == $areaId)] | order(publishedAt desc) [$start...$end]{
     _id,
     title,
     "slug": slug.current,
@@ -704,7 +709,21 @@ export const articlesByAreaQuery = defineQuery(`
 `);
 
 export const articlesByAreaCountQuery = defineQuery(`
-  count(*[_type == "article" && language == $locale && area._ref == $areaId])
+  count(*[_type == "article" && language == $locale && (area._ref == $areaId || blogCategory._ref == $areaId)])
+`);
+
+// Blog category-chip pass (round 2) — the blogCategory twin of
+// areaChipCountsQuery above. Ordered by each document's own `order`
+// field (never alphabetical — see areaTaxonomy.ts's own
+// getBlogCategoryChipCounts comment), unlike pillars, which sort via
+// PILLAR_ORDER in code because pillarPage carries no order field of its
+// own.
+export const blogCategoryChipCountsQuery = defineQuery(`
+  *[_type == "blogCategory" && language == $locale] | order(order asc) {
+    _id,
+    title,
+    "count": count(*[_type == "article" && language == $locale && blogCategory._ref == ^._id])
+  }
 `);
 
 // End-of-article pass — "3 most recent, excluding this one." No

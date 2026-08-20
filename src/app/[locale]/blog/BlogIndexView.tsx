@@ -4,7 +4,7 @@ import { LightPortraitHero } from "@/components/LightPortraitHero";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
 import { getArticlesPage, getBlogIndex, getHeroPortrait } from "@/sanity/articles";
-import { getAreaChipCounts } from "@/sanity/areaTaxonomy";
+import { getAreaChipCounts, getBlogCategoryChipCounts } from "@/sanity/areaTaxonomy";
 import { type Locale } from "@/sanity/paths";
 import { contactSectionQuery } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/seo";
@@ -70,7 +70,7 @@ export async function BlogIndexView({
 }) {
   const typedLocale = locale as Locale;
 
-  const [{ articles, totalPages }, blogIndex, heroPortrait, contactCopy, siteSettings, areaCounts] =
+  const [{ articles, totalPages }, blogIndex, heroPortrait, contactCopy, siteSettings, areaCounts, blogCategoryChips] =
     await Promise.all([
       getArticlesPage(locale, pageNumber),
       getBlogIndex(locale),
@@ -78,12 +78,21 @@ export async function BlogIndexView({
       getContactSectionCopy(locale),
       getSiteSettings(locale),
       getAreaChipCounts(typedLocale),
+      getBlogCategoryChipCounts(typedLocale),
     ]);
 
   // Category-chip pass — only pillars with at least one article in this
   // locale get a chip (see getAreaChipCounts's own comment); "other" never
-  // gets one at all, it only ever shows under "Tutti"/"All".
-  const chips = areaCounts.areas.map((area) => ({ id: area.id, title: area.title }));
+  // gets one at all, it only ever shows under "Tutti"/"All". Blog category-
+  // chip pass (round 2): the five blog-only categories render as
+  // ADDITIONAL chips after the seven pillars, never interleaved with them
+  // — pillars first (their own fixed PILLAR_ORDER), then blog categories
+  // (their own `order` field) — see getBlogCategoryChipCounts's own
+  // comment for why each list sorts itself independently.
+  const chips = [
+    ...areaCounts.areas.map((area) => ({ id: area.id, title: area.title })),
+    ...blogCategoryChips.map((category) => ({ id: category.id, title: category.title })),
+  ];
 
   // Item — featured article is the single most recent article, page 1
   // only (order is already publishedAt desc, so articles[0] IS the most

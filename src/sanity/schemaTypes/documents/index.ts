@@ -2,6 +2,7 @@ import { aboutPage } from "./aboutPage";
 import { area } from "./area";
 import { areeSection } from "./areeSection";
 import { article } from "./article";
+import { blogCategory } from "./blogCategory";
 import { blogIndexSection } from "./blogIndexSection";
 import { chiSonoSection } from "./chiSonoSection";
 import { contactPage } from "./contactPage";
@@ -85,6 +86,10 @@ export const documentTypes = [
   pillarPage,
   subtopicPage,
   article,
+  // Blog category-chip pass (round 2) — a /blog-only taxonomy, deliberately
+  // separate from pillarPage (see blogCategory.ts's own comment for the
+  // "what I treat" vs "what I have written about" distinction).
+  blogCategory,
   service,
   faqItem,
   // CMS-wiring pass: homepage's shared content, fetched directly by type
