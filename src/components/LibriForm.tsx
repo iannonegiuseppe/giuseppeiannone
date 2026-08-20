@@ -8,6 +8,7 @@ import { ContactFormInput } from "@/components/ContactFormField";
 import type { ContactFieldHandle } from "@/components/ContactFormField";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { validateEmail, validateNome } from "@/lib/contact/validation";
+import { useFormToken } from "@/lib/contact/useFormToken";
 import { privacyPath, type Locale } from "@/sanity/paths";
 import styles from "./LibriForm.module.scss";
 
@@ -91,6 +92,7 @@ export function LibriForm({
   // not just visually.
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const { getToken, refreshToken } = useFormToken();
 
   const nomeRef = useRef<ContactFieldHandle>(null);
   const emailRef = useRef<ContactFieldHandle>(null);
@@ -145,8 +147,9 @@ export function LibriForm({
     if (!pdfUrl) return;
 
     setStatus("submitting");
-    try {
-      const response = await fetch("/api/contact", {
+
+    async function submitOnce(formToken: string) {
+      return fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -158,8 +161,27 @@ export function LibriForm({
           consent: privacyConsent,
           marketingConsent,
           source: "libri",
+          formToken,
+          locale,
         }),
       });
+    }
+
+    try {
+      let response = await submitOnce(await getToken());
+
+      // Same "must not lose their message" retry as ContactForm.tsx — a
+      // token that expired while the visitor was reading/filling this
+      // form gets silently replaced and the exact same submission retried
+      // once, rather than surfacing an error over something the visitor
+      // did nothing wrong to cause.
+      if (response.status === 401) {
+        const expired: { code?: string } | null = await response.json().catch(() => null);
+        if (expired?.code === "token-expired") {
+          response = await submitOnce(await refreshToken());
+        }
+      }
+
       if (!response.ok) {
         setStatus("error");
         return;

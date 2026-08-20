@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendContactMessage } from "@/lib/contact/sender";
 import { isRateLimited } from "@/lib/contact/rateLimit";
+import { verifyFormToken } from "@/lib/contact/formToken";
+import { detectSpamSignals, formatSpamSignalsLine } from "@/lib/contact/contentSignals";
 import {
   validateContactForm,
   type ContactChannel,
@@ -29,6 +31,11 @@ interface ContactRequestBody {
   // contact-form behavior exactly.
   source?: unknown;
   marketingConsent?: unknown;
+  // Hardening pass — formToken.ts's own signed token (see that file's
+  // top comment) and the visitor's locale, threaded through for the
+  // confirmation email's language (see sender.ts's buildConfirmationEmail).
+  formToken?: unknown;
+  locale?: unknown;
 }
 
 const VALID_CHANNELS: ContactChannel[] = ["whatsapp", "telefonata", "email"];
@@ -58,6 +65,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Hardening pass — the layer that actually stops a script posting
+  // directly to this endpoint: without a currently-valid, server-signed
+  // token, the request is refused outright. "expired" gets its own code
+  // so the client can silently fetch a fresh token and resubmit once
+  // (see ContactForm.tsx/LibriForm.tsx's own retry) rather than losing
+  // whatever the visitor typed — everything else (missing, malformed, bad
+  // signature, submitted too fast to be human) is a flat, unhelpful
+  // rejection; a real browser that fetched its token on mount never hits
+  // any of those in normal use.
+  const formToken = typeof body.formToken === "string" ? body.formToken : undefined;
+  const tokenResult = verifyFormToken(formToken);
+  if (!tokenResult.ok) {
+    if (tokenResult.reason === "expired") {
+      return NextResponse.json(
+        { message: "La sessione del modulo è scaduta.", code: "token-expired" },
+        { status: 401 },
+      );
+    }
+    return NextResponse.json({ message: "Richiesta non valida." }, { status: 403 });
+  }
+
   const nome = typeof body.nome === "string" ? body.nome : "";
   const channel = VALID_CHANNELS.includes(body.channel as ContactChannel)
     ? (body.channel as ContactChannel)
@@ -68,6 +96,7 @@ export async function POST(req: NextRequest) {
   const consent = body.consent === true;
   const source = body.source === "libri" ? "libri" : "contact";
   const marketingConsent = body.marketingConsent === true;
+  const locale = body.locale === "en" ? "en" : "it";
 
   const values: ContactFormValues = { nome, channel, email, telefono, messaggio, consent };
   const errors = validateContactForm(values);
@@ -75,6 +104,12 @@ export async function POST(req: NextRequest) {
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ message: "Dati non validi.", errors }, { status: 400 });
   }
+
+  // Hardening pass — flags only, computed from the visitor's own message;
+  // never blocks, never reaches the visitor. See contentSignals.ts's own
+  // comment for why and formatSpamSignalsLine for why a clean message
+  // gets no line at all rather than a reassuring "nothing found" one.
+  const spamSignalsLine = formatSpamSignalsLine(detectSpamSignals(messaggio));
 
   // channel is guaranteed non-null past validateContactForm (validateChannel
   // would have populated errors.channel otherwise, caught above).
@@ -86,6 +121,8 @@ export async function POST(req: NextRequest) {
     messaggio: messaggio.trim(),
     source,
     marketingConsent,
+    locale,
+    spamSignalsLine: spamSignalsLine ?? undefined,
   });
 
   if (!result.ok) {

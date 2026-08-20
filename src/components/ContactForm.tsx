@@ -17,6 +17,7 @@ import {
   type ContactFormValues,
 } from "@/lib/contact/validation";
 import { contactErrorMessage } from "@/lib/contact/errorMessages";
+import { useFormToken } from "@/lib/contact/useFormToken";
 import styles from "./ContactForm.module.scss";
 
 // Merge pass — the polymorphic `contact` field (phone-or-email keyed by
@@ -105,6 +106,7 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [submittedNome, setSubmittedNome] = useState("");
   const [submittedChannel, setSubmittedChannel] = useState<ContactChannel | null>(null);
+  const { getToken, refreshToken } = useFormToken();
 
   const nomeRef = useRef<ContactFieldHandle>(null);
   const telefonoRef = useRef<ContactFieldHandle>(null);
@@ -161,8 +163,8 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
     setErrors({});
     setStatus("submitting");
 
-    try {
-      const res = await fetch("/api/contact", {
+    async function submitOnce(formToken: string) {
+      return fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -173,8 +175,25 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
           messaggio: messaggio.trim(),
           consent,
           companyWebsite: honeypot,
+          formToken,
+          locale,
         }),
       });
+    }
+
+    try {
+      let res = await submitOnce(await getToken());
+
+      // A token that expired while the visitor was still filling the form
+      // must not cost them their message (see formToken.ts's own
+      // lifetime comment) — one silent retry with a freshly-issued token,
+      // resubmitting the exact same values already sitting in the form.
+      if (res.status === 401) {
+        const expired: { code?: string } | null = await res.json().catch(() => null);
+        if (expired?.code === "token-expired") {
+          res = await submitOnce(await refreshToken());
+        }
+      }
 
       if (res.ok) {
         setSubmittedNome(nome.trim());
