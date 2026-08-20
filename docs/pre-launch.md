@@ -79,6 +79,24 @@ Things that must be done before the domain switches.
   untouched). Whatever code change the disable decision requires hasn't
   been written yet.
 
+- **Setting `NEXT_PUBLIC_SITE_URL` at launch fixes the contact-form
+  emails too, not just canonicals/hreflang/sitemap/JSON-LD — easy to
+  miss since nobody would think to check an email for this.**
+  `getSiteUrl()` (`src/sanity/metadata.ts`) is the one constant behind
+  every absolute URL in both the internal-notification and visitor
+  confirmation emails (`src/lib/contact/emailTemplate.ts`'s `siteUrl()`,
+  used for the header logo's click-through link). Locally, and on every
+  Vercel preview deployment today, `NEXT_PUBLIC_SITE_URL` is unset and
+  Vercel's own `VERCEL_URL` is the fallback — confirmed live (`.env.local`
+  has neither set, so it resolves all the way to `http://localhost:3000`
+  locally; on a real `dev`-branch preview, Vercel auto-populates
+  `VERCEL_URL` to that deployment's own `*.vercel.app` host instead), so
+  every link in a contact-form email sent from a preview deployment today
+  points at that preview's own throwaway URL, not the eventual production
+  domain. Setting `NEXT_PUBLIC_SITE_URL=https://giuseppeiannone.it` in
+  Vercel at launch is the single edit that corrects this — same one edit
+  that already fixes canonicals — no code change needed.
+
 - **Giuseppe owes:** studio photographs — Monza's is in now (`sede-monza`/
   `-en`, addr-1, uploaded and verified live in the map popup and the
   homepage's "Gli spazi" strip), Milano's two addresses and Cernusco's
@@ -450,3 +468,34 @@ range above; same sourcing discipline, checked live rather than assumed:**
 the Leaflet map attribution fix (Contatti build pass) was the one entry
 the previous version of this file actually kept up to date — confirmed
 still accurate, no change needed.
+
+## 6. Post-launch monitoring
+
+Not a pre-launch gate — nothing here blocks going live. Scheduled checks to
+run once real traffic exists.
+
+- **A week after launch, check the Vercel logs for `[contact] Honeypot
+  triggered`.** That line (added to `src/app/api/contact/route.ts` during
+  the contact-form hardening pass, alongside `EMAIL_USER`/`EMAIL_PASSWORD`
+  and the signed-token layer) fires every time the honeypot field rejects a
+  submission — logged with the requester's IP only, never the field's own
+  contents.
+  - **If it appears regularly against ordinary residential/mobile
+    addresses**, the trap is catching real visitors, not bots, and needs
+    loosening — this already happened once before launch: Android Chrome's
+    own Autofill filled the honeypot field on a real submission (it was
+    named `companyWebsite`, which reads to Chrome as a plausible
+    organization/URL field despite being visually and `aria-hidden` from
+    the visitor), silently swallowing a genuine enquiry. Fixed by renaming
+    the field to something with no autofill-dictionary overlap
+    (`hp_x7k2`), but the same failure mode could resurface from a different
+    browser/password-manager heuristic — this is the check that would catch
+    a recurrence.
+  - **If it only spikes occasionally**, the honeypot is working as
+    intended.
+  - **Why this needs an explicit check, not just "wait for a complaint":**
+    the honeypot rejects silently by design — a bot must not be able to
+    tell it was caught. That same silence means a false positive costs a
+    real enquiry and leaves no trace on the visitor's own side: they see
+    the normal success message and simply never hear back, with nothing to
+    suggest their message never arrived.
