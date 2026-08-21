@@ -31,6 +31,13 @@ import {
 // nothing was flagged) are both new and both optional/additive, same
 // precedent the libri fields already set: every existing caller that
 // doesn't pass them behaves exactly as before.
+// Internal-notification context pass — pageTitle/pagePath/deviceType are
+// all new, all optional/additive, same precedent as every prior field on
+// this payload: every existing caller that doesn't pass them behaves
+// exactly as before. Deliberately NOT added: IP address, a city derived
+// from it, or a search referrer — the message itself is health data on
+// this site, so the surrounding context is too, and none of those three
+// are needed to reply (see buildInternalContent's own comment).
 export interface ContactMessagePayload {
   nome: string;
   channel: ContactChannel;
@@ -41,6 +48,9 @@ export interface ContactMessagePayload {
   marketingConsent?: boolean;
   locale?: "it" | "en";
   spamSignalsLine?: string;
+  pageTitle?: string;
+  pagePath?: string;
+  deviceType?: "phone" | "desktop";
 }
 
 export interface SendResult {
@@ -165,26 +175,69 @@ const CANALE_PHRASES: Record<"it" | "en", Record<ContactChannel, string>> = {
   en: { whatsapp: "via WhatsApp", telefonata: "by phone", email: "via email" },
 };
 
-// Internal notification: real, final copy for both branches now. The
-// practical block in both is real, functional data (the submitted
-// contact details), never copy.
+const PAGE_LANGUAGE_LABEL: Record<"it" | "en", string> = { it: "Italiano", en: "Inglese" };
+const DEVICE_LABEL: Record<"phone" | "desktop", string> = { phone: "Telefono", desktop: "Desktop" };
+
+// Internal-notification context pass — "21 agosto 2026 alle ore 08:11",
+// always Europe/Rome regardless of the server's own default (Vercel
+// Node.js functions default to UTC unless TZ is set — confirmed no TZ is
+// configured for this project — so this is NOT relying on that default,
+// it converts explicitly). Computed fresh here, at email-build time,
+// rather than threaded through as a payload field from route.ts: the gap
+// between "request received" and "email composed" is sub-second, well
+// under the minute-level precision this displays, so there was nothing
+// real to gain from one more field on the payload.
+function formatSubmittedAt(): string {
+  return new Date().toLocaleString("it-IT", {
+    timeZone: "Europe/Rome",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// Internal notification: real, final copy for both branches now. Two
+// blocks, deliberately unequal in weight, per the owner's own instinct
+// (see emailTemplate.ts's own renderSecondaryBlockHtml comment for the
+// visual reasoning) — the FIRST is the person (what he reads first:
+// Nome, preferred channel, Email, Telefono, Messaggio), the SECOND is
+// the submission's own context (Pagina, Lingua della pagina,
+// Dispositivo, Orario), quieter and below, because it's about the
+// enquiry, not the person. The spam-signal line, when it fires, joins
+// the SECOND block for the same reason — it describes the submission,
+// not the person who sent it. Deliberately excludes IP/city/referrer —
+// see ContactMessagePayload's own comment for why; page title,
+// submission time, and device type are not personal data the way an
+// IP-derived location would be, and none of the three need a
+// privacy-policy change (see this pass's own report).
 function buildInternalContent(payload: ContactMessagePayload, isLibri: boolean): EmailContent {
-  const lines = [
+  const personLines = [
     isLibri ? "Tipo di richiesta: download manuale gratuito" : null,
     `Nome: ${payload.nome}`,
     isLibri ? null : `Preferisce essere ricontattato via: ${CHANNEL_LABELS[payload.channel]}`,
     `Email: ${payload.email}`,
   ].filter((line): line is string => line !== null);
   if (payload.telefono) {
-    lines.push(`Telefono: ${payload.telefono}`);
+    personLines.push(`Telefono: ${payload.telefono}`);
   }
   if (isLibri) {
-    lines.push(`Consenso marketing: ${payload.marketingConsent ? "Sì" : "No"}`);
+    personLines.push(`Consenso marketing: ${payload.marketingConsent ? "Sì" : "No"}`);
   } else {
-    lines.push(payload.messaggio ? `Messaggio: ${payload.messaggio}` : "Nessun messaggio aggiuntivo.");
+    personLines.push(payload.messaggio ? `Messaggio: ${payload.messaggio}` : "Nessun messaggio aggiuntivo.");
   }
+
+  const contextLines = [
+    payload.pageTitle
+      ? `Pagina: ${payload.pageTitle}${payload.pagePath ? ` — ${payload.pagePath}` : ""}`
+      : null,
+    `Lingua della pagina: ${PAGE_LANGUAGE_LABEL[payload.locale ?? "it"]}`,
+    `Dispositivo: ${DEVICE_LABEL[payload.deviceType ?? "desktop"]}`,
+    `Orario: ${formatSubmittedAt()}`,
+  ].filter((line): line is string => line !== null);
   if (payload.spamSignalsLine) {
-    lines.push(payload.spamSignalsLine);
+    contextLines.push(payload.spamSignalsLine);
   }
 
   return {
@@ -192,7 +245,8 @@ function buildInternalContent(payload: ContactMessagePayload, isLibri: boolean):
     openingLine: isLibri
       ? `${payload.nome} ha scaricato il manuale dal sito.`
       : `${payload.nome} ha scritto dal modulo.`,
-    practicalBlock: { lines },
+    practicalBlock: { lines: personLines },
+    secondaryBlock: { heading: "Contesto", lines: contextLines },
   };
 }
 

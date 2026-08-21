@@ -37,6 +37,12 @@ const COLOR_INK = "#2E2B28"; // dark ink body text
 const COLOR_MUTED = "#6B655A";
 const COLOR_PRACTICAL_BG = "#EFEAE0";
 const COLOR_FOOTER_BG = "#EFEAE0";
+// Two-block internal-notification pass — the secondary block's own top
+// rule reuses the practical block's fill color as a 1px border, rather
+// than a new token: it's already the "quiet" tone in this palette, so a
+// hairline in that same color reads as related-but-lesser, not as an
+// unrelated third color introduced just for this.
+const COLOR_HAIRLINE = COLOR_PRACTICAL_BG;
 
 // The CID this file's <img src="cid:..."> and sender.ts's attachment
 // definition must agree on — one constant, not a string repeated in two
@@ -108,6 +114,15 @@ export interface EmailContent {
   openingLine?: string;
   bodyParagraphs?: string[];
   practicalBlock?: EmailPracticalBlock;
+  // Two-block internal-notification pass — a second block, visually
+  // quieter than practicalBlock (smaller type, muted ink, no grey panel
+  // — see renderSecondaryBlockHtml's own comment for why not a second
+  // equal-weight panel), rendered directly below it. Internal-
+  // notification only today (sender.ts's buildConfirmationContent never
+  // sets this); nothing about the confirmation email's rendering changes
+  // by this existing either — renderEmailHtml/Text simply skip it when
+  // absent, same as practicalBlock itself already does.
+  secondaryBlock?: EmailPracticalBlock;
 }
 
 export interface EmailFooterLines {
@@ -137,6 +152,41 @@ function renderPracticalBlockHtml(block: EmailPracticalBlock): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px 0;background-color:${COLOR_PRACTICAL_BG};">
       <tr>
         <td style="padding:20px 24px;">
+          ${heading}
+          ${lines}
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Two-block internal-notification pass — deliberately NOT a second grey
+// panel of equal weight to practicalBlock: two equal panels would make
+// the person's own details and the submission's context compete for the
+// same amount of visual attention, when the point is exactly the
+// opposite (Nome/Email/Messaggio first, context after and quieter). No
+// background fill at all (sits directly on the ivory body), smaller type
+// (13px vs. practicalBlock's 15px), muted ink throughout (COLOR_MUTED,
+// the same tone the footer already uses for secondary text) instead of
+// full-strength COLOR_INK, and a 1px top hairline instead of a filled
+// rectangle — a division, not a second container.
+function renderSecondaryBlockHtml(block: EmailPracticalBlock): string {
+  const heading = block.heading
+    ? `<p style="margin:0 0 10px 0;font-family:${BODY_FONT};font-size:11px;font-weight:bold;letter-spacing:0.06em;text-transform:uppercase;color:${COLOR_MUTED};">${renderInlineHtml(block.heading)}</p>`
+    : "";
+  const lines = block.lines
+    .map((line) => {
+      const inner =
+        typeof line === "string"
+          ? renderInlineHtml(line)
+          : `<a href="${escapeHtml(line.href)}" style="color:${COLOR_MUTED};text-decoration:underline;">${renderInlineHtml(line.label)}</a>`;
+      return `<p style="margin:0 0 4px 0;font-family:${BODY_FONT};font-size:13px;line-height:1.5;color:${COLOR_MUTED};">${inner}</p>`;
+    })
+    .join("\n");
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="padding:16px 0 0 0;border-top:1px solid ${COLOR_HAIRLINE};">
           ${heading}
           ${lines}
         </td>
@@ -182,6 +232,7 @@ export function renderEmailHtml(
     : "";
   const bodyParagraphsHtml = (content.bodyParagraphs ?? []).map(renderParagraphHtml).join("\n");
   const practicalHtml = content.practicalBlock ? renderPracticalBlockHtml(content.practicalBlock) : "";
+  const secondaryHtml = content.secondaryBlock ? renderSecondaryBlockHtml(content.secondaryBlock) : "";
 
   return `<!doctype html>
 <html lang="${locale}">
@@ -212,6 +263,7 @@ ${EMAIL_STYLE}
               ${openingLineHtml}
               ${bodyParagraphsHtml}
               ${practicalHtml}
+              ${secondaryHtml}
             </td>
           </tr>
           <tr>
@@ -259,6 +311,21 @@ export function renderEmailText(
       lines.push(renderInlineText(content.practicalBlock.heading));
     }
     for (const line of content.practicalBlock.lines) {
+      lines.push(typeof line === "string" ? renderInlineText(line) : `${renderInlineText(line.label)}: ${line.href}`);
+    }
+    lines.push("");
+  }
+  // Two-block internal-notification pass — plain text has no font size
+  // or ink color to lean on, so the only signal a text-only client gets
+  // that this is the quieter, second block is the blank line before it
+  // and (when set) its own heading — same reason sender.ts always gives
+  // this one a heading ("Contesto") even though practicalBlock itself
+  // never has one.
+  if (content.secondaryBlock) {
+    if (content.secondaryBlock.heading) {
+      lines.push(renderInlineText(content.secondaryBlock.heading));
+    }
+    for (const line of content.secondaryBlock.lines) {
       lines.push(typeof line === "string" ? renderInlineText(line) : `${renderInlineText(line.label)}: ${line.href}`);
     }
     lines.push("");
