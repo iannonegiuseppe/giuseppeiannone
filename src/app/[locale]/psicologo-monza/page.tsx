@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AsymmetricOffsetBlock } from "@/components/AsymmetricOffsetBlock";
 import { CenteredHero } from "@/components/CenteredHero";
+import { CityWelcomeBlock } from "@/components/CityWelcomeBlock";
 import { ContactBlock } from "@/components/ContactBlock";
 import { EpigraphBand } from "@/components/EpigraphBand";
 import { PracticalClosing } from "@/components/PracticalClosing";
@@ -84,6 +85,43 @@ function getContactSectionCopy(locale: string) {
 const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
 const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
 
+// Mid-page portrait pass — see psicologo-milano/page.tsx's own comment
+// on this same pair of constants for the full reasoning (not 09.webp,
+// which this page already uses lower down; 04.webp is the same
+// photoshoot's unused dark-background frame). Rebuild pass: see that
+// same file's CityWelcomeBlock comment — this section is now a real
+// Welcome-shaped composition.
+const MID_PAGE_PHOTO_URL = "/design-lab/photos/04.webp";
+const MID_PAGE_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+
+const PRACTISING_SINCE_YEAR = "2013";
+
+function credentialLine(locale: Locale, registrationNumber: string | undefined) {
+  if (!registrationNumber) return null;
+  return locale === "en"
+    ? `Registered with the Order of Psychologists of Lombardy, no. ${registrationNumber} · practising since ${PRACTISING_SINCE_YEAR}`
+    : `Iscritto all'Albo degli Psicologi della Lombardia n. ${registrationNumber} · in studio dal ${PRACTISING_SINCE_YEAR}`;
+}
+
+// Identical to psicologo-milano/page.tsx's own CITY_WELCOME_COPY (verbatim,
+// per brief). No list — see CityWelcomeBlock.tsx's own top comment.
+const CITY_WELCOME_COPY = {
+  it: {
+    kicker: "Il primo passo",
+    heading: "Il primo colloquio serve a capire insieme cosa sta succedendo",
+    headingEmphasisWord: "capire insieme",
+    lead: "Dura quarantacinque minuti e non comporta impegno a proseguire. Le domande le faccio io — non serve arrivare preparato, e non serve sapere già da dove cominciare.",
+    ctaLabel: "Scrivimi",
+  },
+  en: {
+    kicker: "The first step",
+    heading: "A first session is there to work out together what is going on",
+    headingEmphasisWord: "together",
+    lead: "It lasts forty-five minutes and commits you to nothing. I ask the questions — you do not need to arrive prepared, and you do not need to know where to begin.",
+    ctaLabel: "Write to me",
+  },
+} as const;
+
 export async function generateMetadata({
   params,
 }: {
@@ -126,13 +164,19 @@ export default async function MonzaPage({
   setRequestLocale(locale);
   const typedLocale = locale as Locale;
 
-  const [data, contactCopy, siteSettings] = await Promise.all([
+  const [data, contactCopy, siteSettings, tDiplomi, tContactDialog] = await Promise.all([
     getMonzaPage(locale),
     getContactSectionCopy(locale),
     getSiteSettings(locale),
+    getTranslations({ locale, namespace: "Diplomi" }),
+    getTranslations({ locale, namespace: "ContactDialog" }),
   ]);
 
   const contactSection = contactCopy?.contactSection;
+  const midPageCredentialLine = credentialLine(typedLocale, siteSettings?.author?.registrationNumber);
+  const closeLabel = tDiplomi("closeLabel");
+  const contactDialogHeading = tContactDialog("heading");
+  const cityWelcomeCopy = CITY_WELCOME_COPY[typedLocale];
 
   return (
     <main className={styles.page} data-light-hero>
@@ -178,19 +222,39 @@ export default async function MonzaPage({
         <StackedBands tone="surface" bands={toBands(typedLocale, data?.fourAreas?.bands)} />
       </div>
 
-      {/* === 5. WORKING WHERE YOU LIVE — asymmetric offset === */}
+      {/* === 5. WORKING WHERE YOU LIVE — asymmetric offset. Its own offset
+          column is retired — this block now renders its main column
+          only; the mid-page section below carries its own, unrelated
+          copy. === */}
       <AsymmetricOffsetBlock
         kicker={data?.asymmetric?.kicker ?? ""}
         heading={data?.asymmetric?.heading ?? ""}
         headingEmphasisWord={data?.asymmetric?.headingEmphasisWord}
         p1={data?.asymmetric?.p1 ?? ""}
         p2={data?.asymmetric?.p2 ?? ""}
-        offset={{
-          heading: data?.asymmetric?.offset?.heading ?? "",
-          p1: data?.asymmetric?.offset?.p1 ?? "",
-          p2: data?.asymmetric?.offset?.p2 ?? "",
-        }}
       />
+
+      {/* === 5b. Real Welcome-shaped mid-page section — see
+          CityWelcomeBlock.tsx's own top comment and
+          psicologo-milano/page.tsx's own identical usage, including the
+          themeDark wrapper's own comment there (required — the sheen-
+          guard hazard pattern otherwise, not decorative). === */}
+      <div className="themeDark">
+        <CityWelcomeBlock
+          kicker={cityWelcomeCopy.kicker}
+          heading={cityWelcomeCopy.heading}
+          headingEmphasisWord={cityWelcomeCopy.headingEmphasisWord}
+          lead={cityWelcomeCopy.lead}
+          ctaLabel={cityWelcomeCopy.ctaLabel}
+          authorName={siteSettings?.author?.name ?? "Giuseppe Iannone"}
+          credentialLine={midPageCredentialLine ?? undefined}
+          photoUrl={MID_PAGE_PHOTO_URL}
+          photoAlt={MID_PAGE_PHOTO_ALT}
+          locale={typedLocale}
+          closeLabel={closeLabel}
+          contactDialogHeading={contactDialogHeading}
+        />
+      </div>
 
       {/* === 6. PRACTICAL — no closing quote on this page === */}
       <PracticalClosing

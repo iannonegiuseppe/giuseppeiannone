@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AsymmetricOffsetBlock } from "@/components/AsymmetricOffsetBlock";
 import { CenteredHero } from "@/components/CenteredHero";
+import { CityWelcomeBlock } from "@/components/CityWelcomeBlock";
 import { ContactBlock } from "@/components/ContactBlock";
 import { PracticalClosing } from "@/components/PracticalClosing";
 import { SplitBlock } from "@/components/SplitBlock";
@@ -87,6 +88,54 @@ function getContactSectionCopy(locale: string) {
 const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
 const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
 
+// Mid-page portrait pass — deliberately NOT 09.webp (the contact-section
+// photo already used lower on this same page): two identical portraits
+// on one page reads as an error, per the brief. 04.webp is the same
+// photoshoot's dark-background frame, already promoted to
+// /design-lab/photos/ at production quality, unused anywhere else on the
+// live site today. Rebuild pass: this section is now CityWelcomeBlock, a
+// real Welcome-shaped composition (see that component's own top comment)
+// — not a small thumbnail, not a scaled-down card.
+const MID_PAGE_PHOTO_URL = "/design-lab/photos/04.webp";
+const MID_PAGE_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+
+// No field for "in studio dal" exists anywhere in the schema (checked
+// siteSettings, chiSonoSection, homePage) — only registrationNumber does
+// (siteSettings.author.registrationNumber, already fetched below via
+// getSiteSettings). The year is a literal, per this pass's own brief.
+const PRACTISING_SINCE_YEAR = "2013";
+
+function credentialLine(locale: Locale, registrationNumber: string | undefined) {
+  if (!registrationNumber) return null;
+  return locale === "en"
+    ? `Registered with the Order of Psychologists of Lombardy, no. ${registrationNumber} · practising since ${PRACTISING_SINCE_YEAR}`
+    : `Iscritto all'Albo degli Psicologi della Lombardia n. ${registrationNumber} · in studio dal ${PRACTISING_SINCE_YEAR}`;
+}
+
+// CityWelcomeBlock copy pass — page-local, literal (not Sanity-driven),
+// matching this file's own established convention (CONTACT_PHOTO_URL/ALT
+// above are the same shape) rather than adding a new schema field for a
+// single mid-page section. Identical between Milan and Monza (verbatim,
+// per brief). No list — CityWelcomeBlock.tsx's own top comment on why
+// it was removed (the addresses/online-option/single-fee facts it named
+// were already stated three times above this section on the page).
+const CITY_WELCOME_COPY = {
+  it: {
+    kicker: "Il primo passo",
+    heading: "Il primo colloquio serve a capire insieme cosa sta succedendo",
+    headingEmphasisWord: "capire insieme",
+    lead: "Dura quarantacinque minuti e non comporta impegno a proseguire. Le domande le faccio io — non serve arrivare preparato, e non serve sapere già da dove cominciare.",
+    ctaLabel: "Scrivimi",
+  },
+  en: {
+    kicker: "The first step",
+    heading: "A first session is there to work out together what is going on",
+    headingEmphasisWord: "together",
+    lead: "It lasts forty-five minutes and commits you to nothing. I ask the questions — you do not need to arrive prepared, and you do not need to know where to begin.",
+    ctaLabel: "Write to me",
+  },
+} as const;
+
 export async function generateMetadata({
   params,
 }: {
@@ -118,13 +167,22 @@ export default async function MilanoPage({
   setRequestLocale(locale);
   const typedLocale = locale as Locale;
 
-  const [data, contactCopy, siteSettings] = await Promise.all([
+  const [data, contactCopy, siteSettings, tDiplomi, tContactDialog] = await Promise.all([
     getMilanPage(locale),
     getContactSectionCopy(locale),
     getSiteSettings(locale),
+    getTranslations({ locale, namespace: "Diplomi" }),
+    getTranslations({ locale, namespace: "ContactDialog" }),
   ]);
 
   const contactSection = contactCopy?.contactSection;
+  const midPageCredentialLine = credentialLine(typedLocale, siteSettings?.author?.registrationNumber);
+  // Same convention as page.tsx's own WelcomeBlock wiring — closeLabel/
+  // contactDialogHeading resolved server-side from the shared message
+  // catalogs, not new page-local strings.
+  const closeLabel = tDiplomi("closeLabel");
+  const contactDialogHeading = tContactDialog("heading");
+  const cityWelcomeCopy = CITY_WELCOME_COPY[typedLocale];
 
   return (
     <main className={styles.page} data-light-hero>
@@ -184,19 +242,51 @@ export default async function MilanoPage({
         />
       </div>
 
-      {/* === 4. HOW TO CHOOSE — asymmetric offset === */}
+      {/* === 4. HOW TO CHOOSE — asymmetric offset. Its own offset column
+          (the "if neither is convenient" closing argument) is retired —
+          this block now renders its main column only; the mid-page
+          section below carries its own, unrelated copy. === */}
       <AsymmetricOffsetBlock
         kicker={data?.asymmetric?.kicker ?? ""}
         heading={data?.asymmetric?.heading ?? ""}
         headingEmphasisWord={data?.asymmetric?.headingEmphasisWord}
         p1={data?.asymmetric?.p1 ?? ""}
         p2={data?.asymmetric?.p2 ?? ""}
-        offset={{
-          heading: data?.asymmetric?.offset?.heading ?? "",
-          p1: data?.asymmetric?.offset?.p1 ?? "",
-          p2: data?.asymmetric?.offset?.p2 ?? "",
-        }}
       />
+
+      {/* === 4b. Real Welcome-shaped mid-page section — same elements, same
+          order, same components (Button/ContactFormDialog/ShimmerText/
+          AnimatedDivider/SectionKicker), same card+photo proportions as
+          the homepage's own WelcomeBlock. See CityWelcomeBlock.tsx's own
+          top comment.
+
+          themeDark wrapper — required, not decorative: this page carries
+          data-light-hero on <main>, and mixins.upper-left-sheen has a
+          guard that renders a magenta/black hazard pattern instead of the
+          real glow whenever --tone-surface-scope inherits "light" from an
+          ancestor (see _tokens.scss's own ".themeDark, :root[data-theme=
+          dark]" rule and its "Sheen-guard fix" comment — the identical bug
+          already hit once on /prezzi's own dark band). Caught live: the
+          hazard pattern rendered on first screenshot before this wrapper
+          was added. .themeDark resets --tone-surface-scope: dark, same
+          fix as every other dark section already on this page
+          (SplitBlock/StackedBands above). === */}
+      <div className="themeDark">
+        <CityWelcomeBlock
+          kicker={cityWelcomeCopy.kicker}
+          heading={cityWelcomeCopy.heading}
+          headingEmphasisWord={cityWelcomeCopy.headingEmphasisWord}
+          lead={cityWelcomeCopy.lead}
+          ctaLabel={cityWelcomeCopy.ctaLabel}
+          authorName={siteSettings?.author?.name ?? "Giuseppe Iannone"}
+          credentialLine={midPageCredentialLine ?? undefined}
+          photoUrl={MID_PAGE_PHOTO_URL}
+          photoAlt={MID_PAGE_PHOTO_ALT}
+          locale={typedLocale}
+          closeLabel={closeLabel}
+          contactDialogHeading={contactDialogHeading}
+        />
+      </div>
 
       {/* === 5. ONLINE + FIRST MEETING — two stacked bands === */}
       <div className="themeDark">

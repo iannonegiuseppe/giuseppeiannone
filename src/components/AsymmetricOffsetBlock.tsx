@@ -23,6 +23,13 @@ function splitEmphasis(text: string, emphasis: string | undefined, render: (s: s
 // `p3` is optional — metodo's own version always has exactly two main-
 // column paragraphs, but the online-therapy page's time-zone section
 // needs a third (Europe / Americas / Asia-Oceania each get their own).
+//
+// `offset` is optional — Milan/Monza pass none: their own former offset
+// content (the "if neither is convenient"/"if a period gets complicated"
+// closing argument) now lives inside a new photo section right after this
+// one instead (see psicologo-milano/monza page.tsx's own comment), so
+// this block renders as the main column alone there. metodo and the
+// online-therapy page are unaffected — both always pass a real offset.
 export function AsymmetricOffsetBlock({
   kicker,
   heading,
@@ -38,7 +45,7 @@ export function AsymmetricOffsetBlock({
   p1: string;
   p2: string;
   p3?: string;
-  offset: { heading: string; p1: string; p2: string };
+  offset?: { heading: string; p1: string; p2: string };
 }) {
   const headingNode = splitEmphasis(heading, headingEmphasisWord, (s) => <ShimmerText>{s}</ShimmerText>);
 
@@ -54,11 +61,13 @@ export function AsymmetricOffsetBlock({
           <p className={styles.bodyP}>{p2}</p>
           {p3 ? <p className={styles.bodyP}>{p3}</p> : null}
         </div>
-        <div className={styles.approachOffset}>
-          <h3 className={styles.h3}>{offset.heading}</h3>
-          <p className={styles.bodyP}>{offset.p1}</p>
-          <p className={styles.bodyP}>{offset.p2}</p>
-        </div>
+        {offset ? (
+          <div className={styles.approachOffset}>
+            <h3 className={styles.h3}>{offset.heading}</h3>
+            <p className={styles.bodyP}>{offset.p1}</p>
+            <p className={styles.bodyP}>{offset.p2}</p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
