@@ -19,6 +19,14 @@
   @include mixins.container;
   padding-top: var(--space-9);
   padding-bottom: var(--space-7);
+
+  // Hero top-clearance pass — desktop only (mobile/tablet keep the base
+  // --space-9); the kicker sat too close under the fixed header at lg+.
+  // Same +24px composed the same way as Contatti's own .channelsSection —
+  // see that file's own comment.
+  @include mixins.breakpoint-up(lg) {
+    padding-top: calc(var(--space-9) + var(--space-5));
+  }
 }
 
 .kicker {

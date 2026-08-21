@@ -18,6 +18,15 @@
   @include mixins.container;
   padding-top: var(--space-9);
   padding-bottom: var(--space-9);
+
+  // Hero top-clearance pass — desktop only (mobile/tablet keep the base
+  // --space-9); the kicker sat too close under the fixed header at lg+.
+  // +24px via var(--space-5) added to the existing var(--space-9) rather
+  // than a new literal — both are real tokens, so this is still fully
+  // token-composed, just not a single named step in the scale.
+  @include mixins.breakpoint-up(lg) {
+    padding-top: calc(var(--space-9) + var(--space-5));
+  }
 }
 
 .header {
@@ -296,12 +305,27 @@
 // plain ambient ones verbatim) — applied anyway so this reads as a stated
 // choice, matching Welcome's/prezzi's own dark-band precedent, not "no
 // tone wrapper" mistaken for an oversight.
-.locationsSection {
+//
+// Sheen-placement fix — the glow used to live on .locationsSection
+// itself, which also carries mixins.container: since the sheen mixin's
+// radial gradient is painted relative to ITS OWN element's box, that put
+// the glow's edge inside the narrower, centered content column instead
+// of spanning the section's true (full-bleed) bounds — its circle got
+// clipped by the container's own inline padding instead of reading as a
+// corner glow on the section. Split the same way SediBlock.tsx/
+// sediSection.module.scss already do it (.sediWrap carries the tone +
+// sheen, a separate inner .locationsSection carries the container): the
+// outer wrapper here now owns tone/sheen, full-bleed; this class keeps
+// only the container + padding, no sheen of its own.
+.locationsWrap {
   @include tone.tone-base-surface;
   // Sheen pass — toggle is data-sheen="upper-left" on this same element
   // (contatti/page.tsx). See sectionWrappers.module.scss's own .sheenWrap
   // comment for the mixin.
   @include mixins.upper-left-sheen;
+}
+
+.locationsSection {
   @include mixins.container;
   padding-top: var(--space-9);
   padding-bottom: var(--space-9);

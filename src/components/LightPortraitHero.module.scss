@@ -278,7 +278,14 @@
     grid-template-columns: 1fr 1.15fr;
     gap: var(--space-9);
     align-items: stretch;
-    min-height: 42rem;
+    // Desktop height pass — 42rem -> 46rem (672px -> 736px), /faq only in
+    // practice: this min-height only ever binds at lg+ where .heroVisual
+    // (below) bottom-anchors the illustration inside it (justify/align:
+    // flex-end) with zero padding-bottom — any slack this min-height adds
+    // accumulates ABOVE the image, not below it, so this alone doesn't
+    // fix bottom clearance; see .heroVisual's own padding-bottom, added
+    // together with this change, for the part that actually does.
+    min-height: 46rem;
   }
 }
 
@@ -388,6 +395,15 @@
     justify-content: flex-end;
     align-items: flex-end;
     padding-top: 0;
+    // Desktop height pass — the still-life used to sit flush against
+    // .heroInner's own bottom edge (flex-end, zero bottom padding), which
+    // read as the composition being cropped right where the section
+    // meets the dark band below it, even though no pixels were actually
+    // clipped (no object-fit at this breakpoint — see .heroVisualImg).
+    // This padding is what turns .heroInner's own taller min-height
+    // (above) into real breathing room BELOW the image instead of empty
+    // space accumulating above it.
+    padding-bottom: var(--space-8);
   }
 }
 

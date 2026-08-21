@@ -361,43 +361,50 @@ export default async function ContattiPage({
           no tone mixin required for that alone. tone.tone-base-surface is
           still applied explicitly (a documented no-op today) so this
           reads as a stated choice, matching Welcome's/prezzi's own dark
-          band precedent, not "no tone wrapper" mistaken for an oversight. */}
-      <section className={styles.locationsSection} data-sheen="upper-left">
-        <div className={styles.locationsHeader}>
-          <p className={styles.kicker}>
-            <SectionKicker>{data?.sediKicker ?? ""}</SectionKicker>
-          </p>
-          <h2 className={styles.locationsHeading}>{data?.sediHeading}</h2>
-        </div>
-
-        {/* Nine-revisions pass, item 7: online strip moved above the four
-            location cards. */}
-        {onlineSede ? (
-          <div className={styles.onlineStrip}>
-            <h3 className={styles.onlineTitle}>{data?.online?.title}</h3>
-            <p className={styles.onlineBody}>{data?.online?.body}</p>
-            <Link href={onlineTherapyPath(typedLocale)} className={styles.onlineLink}>
-              {linkText.online}
-              <span aria-hidden="true"> →</span>
-            </Link>
+          band precedent, not "no tone wrapper" mistaken for an oversight.
+          Sheen-placement fix — data-sheen now lives on this OUTER,
+          full-bleed wrapper, not on .locationsSection (which carries the
+          container mixin) — see page.module.scss's own comment on
+          .locationsWrap for why the glow was clipping against the
+          container's edge before. */}
+      <div className={styles.locationsWrap} data-sheen="upper-left">
+        <section className={styles.locationsSection}>
+          <div className={styles.locationsHeader}>
+            <p className={styles.kicker}>
+              <SectionKicker>{data?.sediKicker ?? ""}</SectionKicker>
+            </p>
+            <h2 className={styles.locationsHeading}>{data?.sediHeading}</h2>
           </div>
-        ) : null}
 
-        {/* Nine-revisions pass, item 8: cards and map now share one
-            SediMapProvider — the same activeId-sync mechanism the
-            homepage's own SediBlock/SediInteractive pairing uses — so a
-            card click flies the map to that pin, not a second,
-            independently-invented mechanism. */}
-        <SediMapProvider>
-          <ContattiLocationCards
-            locations={mapLocations}
-            directionsLabel={tLocations("directionsLabel")}
-            showOnMapLabel={tLocations("showOnMapLabel")}
-            cityPageLinks={cityPageLinks}
-          />
-          <ContattiMap locations={mapLocations} labels={mapLabels} />
-        </SediMapProvider>
-      </section>
+          {/* Nine-revisions pass, item 7: online strip moved above the four
+              location cards. */}
+          {onlineSede ? (
+            <div className={styles.onlineStrip}>
+              <h3 className={styles.onlineTitle}>{data?.online?.title}</h3>
+              <p className={styles.onlineBody}>{data?.online?.body}</p>
+              <Link href={onlineTherapyPath(typedLocale)} className={styles.onlineLink}>
+                {linkText.online}
+                <span aria-hidden="true"> →</span>
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Nine-revisions pass, item 8: cards and map now share one
+              SediMapProvider — the same activeId-sync mechanism the
+              homepage's own SediBlock/SediInteractive pairing uses — so a
+              card click flies the map to that pin, not a second,
+              independently-invented mechanism. */}
+          <SediMapProvider>
+            <ContattiLocationCards
+              locations={mapLocations}
+              directionsLabel={tLocations("directionsLabel")}
+              showOnMapLabel={tLocations("showOnMapLabel")}
+              cityPageLinks={cityPageLinks}
+            />
+            <ContattiMap locations={mapLocations} labels={mapLabels} />
+          </SediMapProvider>
+        </section>
+      </div>
 
       <ContactBlock
         kicker={contactSection?.kicker ?? ""}
