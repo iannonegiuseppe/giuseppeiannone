@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/Button";
@@ -182,6 +183,17 @@ const POPUP_AUTO_DISMISS_MS = 7000;
 
 export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: string }) {
   const t = COPY[locale];
+  // Internal-notification context pass — the page this form is embedded
+  // on, captured from the browser itself rather than threaded down as a
+  // new prop through every one of the 13+ pages that render ContactBlock
+  // (and the 3 homepage-only ContactFormDialog triggers, which all report
+  // the homepage's own title/path, correctly — that IS the page they're
+  // on). document.title is each page's own <title>, already set
+  // correctly per page/locale by its own generateMetadata(); usePathname()
+  // is the equivalent for the URL. Read fresh inside handleSubmit (not
+  // captured once here) so a value is never stale if this ever renders
+  // somewhere the path can change without an unmount.
+  const pathname = usePathname();
 
   const [channel, setChannel] = useState<ContactChannel | null>(DEFAULT_CHANNEL);
   const [errors, setErrors] = useState<ContactFormErrors>({});
@@ -259,6 +271,12 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
           companyWebsite: honeypot,
           formToken,
           locale,
+          // Internal-notification context pass — document.title, not
+          // window.location.pathname, for pageTitle: pathname is only
+          // captured here (via next/navigation) as the secondary,
+          // machine-readable reference.
+          pageTitle: typeof document !== "undefined" ? document.title : undefined,
+          pagePath: pathname,
         }),
       });
     }

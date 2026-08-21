@@ -36,6 +36,15 @@ interface ContactRequestBody {
   // confirmation email's language (see sender.ts's buildConfirmationEmail).
   formToken?: unknown;
   locale?: unknown;
+  // Internal-notification context pass — pageTitle/pagePath come from the
+  // browser (ContactForm.tsx reads document.title/usePathname() at submit
+  // time, the same "one client, capture what the page already knows"
+  // approach the rest of this codebase uses rather than threading a new
+  // prop through 13+ page components). deviceType is NOT sent by the
+  // client — derived server-side from the request's own User-Agent
+  // header below, same trust level as getClientIp's own IP derivation.
+  pageTitle?: unknown;
+  pagePath?: unknown;
 }
 
 const VALID_CHANNELS: ContactChannel[] = ["whatsapp", "telefonata", "email"];
@@ -43,6 +52,21 @@ const VALID_CHANNELS: ContactChannel[] = ["whatsapp", "telefonata", "email"];
 function getClientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() || "unknown";
+}
+
+// Internal-notification context pass — phone vs. desktop only (no
+// tablet tier): the one distinction the internal email actually needs
+// ("someone writing from a phone is likelier to want WhatsApp back").
+// A real UA-parsing library is more than this needs — no such dependency
+// exists in this codebase today (checked package.json) and a one-line
+// regex covers the common case. Known limitation, not silently claimed
+// otherwise: modern iPadOS Safari's default UA reports as desktop Safari
+// with no "Mobile"/"iPad" token, so an iPad visitor is classified as
+// desktop here — same ambiguity any UA-sniffing approach has without a
+// heavier library, not something this regex alone can resolve.
+function getDeviceType(req: NextRequest): "phone" | "desktop" {
+  const userAgent = req.headers.get("user-agent") ?? "";
+  return /Mobi|Android|iPhone|iPod/i.test(userAgent) ? "phone" : "desktop";
 }
 
 export async function POST(req: NextRequest) {
@@ -107,6 +131,9 @@ export async function POST(req: NextRequest) {
   const source = body.source === "libri" ? "libri" : "contact";
   const marketingConsent = body.marketingConsent === true;
   const locale = body.locale === "en" ? "en" : "it";
+  const pageTitle = typeof body.pageTitle === "string" ? body.pageTitle : undefined;
+  const pagePath = typeof body.pagePath === "string" ? body.pagePath : undefined;
+  const deviceType = getDeviceType(req);
 
   const values: ContactFormValues = { nome, channel, email, telefono, messaggio, consent };
   const errors = validateContactForm(values);
@@ -133,6 +160,9 @@ export async function POST(req: NextRequest) {
     marketingConsent,
     locale,
     spamSignalsLine: spamSignalsLine ?? undefined,
+    pageTitle,
+    pagePath,
+    deviceType,
   });
 
   if (!result.ok) {
