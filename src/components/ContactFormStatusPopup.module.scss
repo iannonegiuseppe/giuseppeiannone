@@ -8,30 +8,48 @@
 // cross-scope token confusion). Using the theme-invariant --light-base-*
 // family instead means this popup looks identical and is correctly
 // readable in both places without any scope-aware branching.
-.scrim {
-  position: absolute;
+//
+// Portal pass — .scrim is gone; the backdrop is now the native
+// <dialog>'s own ::backdrop, and .popupDialog itself is the full-viewport
+// flex wrapper (same technique as ContactFormDialog.module.scss's own
+// .contactDialog), not a positioned ancestor .popup centers against.
+.popupDialog {
+  position: fixed;
   inset: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: auto;
   padding: var(--space-4);
-  // Literal, not a token — same reasoning as field-base's own literal
-  // #fff fill (ContactForm.module.scss): a scrim needs to read as "dark,
-  // dimming" regardless of which theme/scope it's layered over, and every
-  // token that could supply that meaning (--color-text, --color-bg) flips
-  // per scope here.
-  background: rgba(20, 18, 15, 0.55);
-  border-radius: inherit;
-  opacity: 1;
-  transition: opacity 200ms ease;
+  border: none;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100%;
+  height: 100%;
 
-  @starting-style {
-    opacity: 0;
+  // Literal, not a token — same reasoning as field-base's own literal
+  // #fff fill (ContactForm.module.scss): the backdrop needs to read as
+  // "dark, dimming" regardless of which theme/scope this popup renders
+  // inside, and every token that could supply that meaning (--color-text,
+  // --color-bg) flips per scope here.
+  &::backdrop {
+    background: rgba(20, 18, 15, 0.55);
+    opacity: 1;
+    transition: opacity 200ms ease;
+
+    @starting-style {
+      opacity: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    transition: none;
+    &::backdrop {
+      transition: none;
+    }
+  }
+
+  &[open] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -46,8 +64,8 @@
   background: var(--light-base-bg);
   color: var(--light-base-text);
   box-shadow: var(--shadow-soft);
-  transform: scale(1);
   opacity: 1;
+  transform: scale(1);
   transition:
     opacity 200ms ease,
     transform 200ms ease;

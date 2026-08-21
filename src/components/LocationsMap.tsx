@@ -475,7 +475,15 @@ export function LocationsMap({
       observer.disconnect();
       cleanupGestureGate?.();
       cleanupEscape?.();
-      popupRootRef.current?.unmount();
+      // Same fix as SediMap.tsx's own cleanup (this file's fork target) —
+      // see that file's comment for the full diagnosis. Currently unused
+      // in production (LocationsSection/this component were superseded by
+      // SediBlock/SediMap — see [locale]/page.tsx's own comment), fixed
+      // here too so an identical, already-diagnosed bug doesn't resurface
+      // if this ever gets reactivated.
+      const rootToUnmount = popupRootRef.current;
+      popupRootRef.current = null;
+      setTimeout(() => rootToUnmount?.unmount(), 0);
       mapRef.current?.remove();
       mapRef.current = null;
     };

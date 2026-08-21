@@ -328,7 +328,24 @@ export function SediMap({
       observer.disconnect();
       cleanupGestureGate?.();
       cleanupEscape?.();
-      popupRootRef.current?.unmount();
+      // Locale-switch bug, found live: this cleanup can run SYNCHRONOUSLY
+      // inside a React render pass (a locale switch remounts this whole
+      // subtree under next-intl/next/navigation, and that remount's own
+      // commit is what tears this instance down) — calling
+      // root.unmount() directly here threw "Attempted to synchronously
+      // unmount a root while React was already rendering." setTimeout(…,
+      // 0), not queueMicrotask: this file's own openForLocation already
+      // established (see its HONESTY-RULE CATCH comment) that a
+      // microtask can run BEFORE React 18 has actually flushed a commit
+      // on this exact codebase/React version — the opposite direction of
+      // risk than here, but the same lesson: only a genuine macrotask is
+      // reliably outside whatever render/commit triggered this cleanup.
+      // Captured into a local before nulling the ref, matching mapRef's
+      // own immediately-nulled pattern below, so nothing else can read a
+      // root that's about to be unmounted out from under it.
+      const rootToUnmount = popupRootRef.current;
+      popupRootRef.current = null;
+      setTimeout(() => rootToUnmount?.unmount(), 0);
       mapRef.current?.remove();
       mapRef.current = null;
     };

@@ -584,10 +584,7 @@
 
 // --- States -------------------------------------------------------------------
 // Popup pass — success/error no longer render here at all: both are
-// ContactFormStatusPopup.tsx now, layered over the still-mounted form
-// (see that component's own top comment) instead of replacing it
-// (success) or banner-ing above it (error). .formShell is the position-
-// relative anchor the popup's own .scrim positions itself against.
-.formShell {
-  position: relative;
-}
+// ContactFormStatusPopup.tsx now (see that component's own top comment)
+// instead of replacing the form (success) or banner-ing above it (error).
+// The popup portals straight to document.body as a native modal
+// <dialog>, so there's no wrapper element here left to style.

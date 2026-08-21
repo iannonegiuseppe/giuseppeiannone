@@ -209,6 +209,20 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
   const firstChannelRadioRef = useRef<HTMLInputElement>(null);
   const consentRef = useRef<HTMLInputElement>(null);
   const honeypotRef = useRef<HTMLInputElement>(null);
+  // Popup focus-return pass — HONESTY-RULE CATCH, found live: reading
+  // document.activeElement inside the popup's own mount effect (the first
+  // approach tried) captured <body>, not the submit button, on every real
+  // submission. Button.tsx's own `disabled={disabled || pending}` disables
+  // the submit button for the whole "submitting" state, and a browser
+  // blurs a focused element the instant it becomes disabled — by the time
+  // the async fetch resolves and status flips to "success"/"error", focus
+  // had already moved to <body> and re-enabling the button afterwards
+  // doesn't refocus it. Captured here instead, as the very first line of
+  // handleSubmit — synchronously, before setStatus("submitting") can
+  // disable anything — so it reflects whatever genuinely had focus at the
+  // moment of submission (the submit button in the mouse-click path, a
+  // focused field in the Enter-key path).
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const channelGroupId = useId();
   const honeypotId = useId();
@@ -237,6 +251,7 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
 
     const nome = nomeRef.current?.getValue() ?? "";
     const telefono = telefonoRef.current?.getValue() ?? "";
@@ -328,10 +343,12 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
   return (
     // Popup pass — the form is never unmounted or replaced by either the
     // success or error state now (it used to be, for success — see
-    // ContactFormStatusPopup.tsx's own top comment). This wrapper is what
-    // gives the popup something to lay OVER as an absolutely-positioned
-    // sibling; the <form> itself renders unconditionally below.
-    <div className={styles.formShell}>
+    // ContactFormStatusPopup.tsx's own top comment); the <form> itself
+    // renders unconditionally below. The popup itself portals straight to
+    // document.body as a native modal <dialog> (see
+    // ContactFormStatusPopup.tsx's own top comment), so there's no
+    // wrapper element to anchor it against any more.
+    <>
       <form className={styles.contactForm} onSubmit={handleSubmit} noValidate>
         {/* Row 1: Nome | Numero — equal width at sm+. */}
       <div className={styles.fieldRow}>
@@ -540,6 +557,7 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
           onClose={() => setStatus("idle")}
           closeLabel={t.popupCloseLabel}
           autoDismissMs={POPUP_AUTO_DISMISS_MS}
+          returnFocusTo={returnFocusRef.current}
         >
           {t.renderPopupSuccessBody(submittedNome, t.channelPhrases[submittedChannel])}
         </ContactFormStatusPopup>
@@ -551,10 +569,11 @@ export function ContactForm({ locale, replyLine }: { locale: Locale; replyLine: 
           heading={t.popupErrorHeading}
           onClose={() => setStatus("idle")}
           closeLabel={t.popupCloseLabel}
+          returnFocusTo={returnFocusRef.current}
         >
           {t.renderPopupErrorBody()}
         </ContactFormStatusPopup>
       ) : null}
-    </div>
+    </>
   );
 }
