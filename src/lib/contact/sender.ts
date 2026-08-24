@@ -62,26 +62,30 @@ export interface SendResult {
   reason?: "not-configured" | "send-failed";
 }
 
-// Contact form pass — SENDER ABSTRACTION, simplified: the owner settled
-// on Hostinger SMTP, so host/port/secure are no longer a per-environment
-// decision — they're fixed facts about that relay, not secrets, and
-// belong in code rather than three more env vars to keep in sync across
-// .env.local and Vercel. Only the mailbox credentials are still
-// per-environment secrets.
-const SMTP_HOST = "smtp.hostinger.com";
+// Contact form pass — SENDER ABSTRACTION, simplified: host/port/secure
+// are fixed facts about the relay, not secrets, and belong in code
+// rather than three more env vars to keep in sync across .env.local and
+// Vercel. Only the mailbox credentials are still per-environment
+// secrets.
+//
+// Mailbox-move pass — the mailbox is now on Giuseppe's own domain
+// (cPanel), not Hostinger's shared relay. Port 465 / secure:true are
+// unchanged — cPanel confirms the same settings the old relay used.
+const SMTP_HOST = "mail.giuseppeiannone.it";
 const SMTP_PORT = 465;
 const SMTP_SECURE = true;
 
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 
-// Both From and To are EMAIL_USER itself right now — Alex is testing
-// against his own mailbox before this points at Giuseppe's. ONE constant
-// used for both, not two independently-set ones that happen to match
-// today: repointing "To" at Giuseppe's address later (once testing is
-// done) is a single edit to CONTACT_RECIPIENT below, not a search across
-// this file for every place EMAIL_USER was reused as a recipient.
-const CONTACT_RECIPIENT = EMAIL_USER;
+// Mailbox-move pass — CONTACT_RECIPIENT decoupled from EMAIL_USER (was
+// `= EMAIL_USER`, back when Alex was testing against his own mailbox
+// before this pointed at Giuseppe's — see git history). Now a literal,
+// independent of whichever mailbox account this file authenticates and
+// sends as: enquiries go to Giuseppe from here on, and repointing who
+// RECEIVES them again later never again means repointing who SENDS them,
+// or vice versa.
+const CONTACT_RECIPIENT = "info@giuseppeiannone.it";
 
 const REQUIRED_ENV: Record<string, string | undefined> = {
   EMAIL_USER,
