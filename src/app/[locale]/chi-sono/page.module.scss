@@ -40,42 +40,24 @@
   position: relative;
 }
 
+// Single-composition pass — the height-gated `min-height: 0` fallback (and
+// ChiSonoGlassCard.module.scss's own matching card-position fallback) is
+// gone: reported live, a 20px height difference either side of that
+// threshold (1440x1010 vs 1440x990) flipped the whole hero between two
+// visibly different compositions — the card floating over the photo above
+// it, a full-width band replacing the photo's lower half below it. A
+// visitor resizing a window would see it jump. The card is now ALWAYS in
+// normal document flow (see that file's own .card comment), which can't
+// overlap this hero regardless of how tall it forces itself to be — so
+// there's no longer any reason to shrink the hero at short heights, and
+// it's forced full-viewport at every height again, same as originally
+// designed, one composition instead of two.
 .heroViewport {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100lvh;
   min-height: 100dvh;
-
-  // Overlap fix — real bug, reproduced and measured live (binary search,
-  // every 20px of width from 320 to 1920, both the standard viewport
-  // sweep and the browser-zoom-equivalent effective viewport): this
-  // min-height is what makes the hero's own dark band always at least
-  // one full viewport tall, which is exactly what makes ChiSonoGlassCard
-  // (absolutely positioned against .heroBoundary's bottom edge, see that
-  // component's own .card comment) drift out of sync with PillarHero's
-  // own vertically-centered standfirst as viewport height shrinks — the
-  // card's distance from the boundary's bottom scales 1:1 with total
-  // height, the centered text's distance from the top scales only 0.5:1,
-  // so the two are mathematically guaranteed to converge and overlap
-  // below SOME height, for any fixed card offset. Measured worst case:
-  // width 1200-1260 (this component's own narrower lg-only 30rem text
-  // column) needs height >= 884px to clear. Below this query's own
-  // 1000px threshold (real margin above that measured worst case, not
-  // tuned to it exactly), the hero is let go back to its own natural,
-  // content-driven height instead of being forced to fill the viewport —
-  // paired with ChiSonoGlassCard.module.scss's own matching query, which
-  // drops the card out of absolute positioning entirely at the same
-  // threshold, into normal document flow directly after the hero. Normal
-  // flow can't overlap by construction — the one guarantee no amount of
-  // retuning the absolute-position offset could give for an unbounded
-  // height range. This isn't only a resized-desktop-window edge case:
-  // ordinary phones in portrait (375x667, 390x844, ...) already fall
-  // well under the measured 884px worst case, so this path is reached in
-  // production today, not just under extreme zoom.
-  @media (max-height: 62.5rem) {
-    min-height: 0;
-  }
 }
 
 // "Di cosa mi occupo" — heading/intro/closing text stay in the normal
