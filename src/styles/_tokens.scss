@@ -303,6 +303,23 @@ $z-index: (
   // other --light-base-* token above.
   --light-base-surface: #ffffff;
 
+  // Chi sono credentials-band pass — the mirror image of --light-base-*
+  // above: those tokens escape a light island to pull the LIGHT theme's
+  // own literal values from a scope that's overridden them to dark;
+  // ChiSonoGlassCard's label chip needs the opposite escape — a
+  // guaranteed-DARK, opaque backing for text sitting directly on the hero
+  // photo, from INSIDE .lightIslandTop (light-island-surface has already
+  // reassigned --color-bg/--color-text to the LIGHT theme's values at that
+  // point in the tree, so reading those plain names there gives ivory-on-
+  // ivory, not the dark chip this needs). Same literal values as the real
+  // (and, per layout.tsx's own blocking script, currently only) dark
+  // theme's own :root[data-theme="dark"] block below: --color-bg's
+  // #081512 (sea-deep) and --color-text's #efe9db (ivory) — re-exported
+  // under theme-invariant names, declared once here and never reassigned,
+  // same discipline as every --light-base-* token above.
+  --dark-base-bg: #081512;
+  --dark-base-text: #efe9db;
+
   // Floating WhatsApp button pass — WhatsApp's own brand colors, theme-
   // invariant by construction (a brand mark must render identically
   // regardless of the site's own light/dark state, same reasoning as the
@@ -370,6 +387,18 @@ $z-index: (
   // not a quiet pause) — sits in the gap between the two.
   --fs-h2-lg: clamp(2rem, 3.5vw, 2.625rem); // EB Garamond 400
   --lh-h2-lg: 1.25;
+  // Chi sono credentials-band pass — one step DOWN from --fs-h2 (opposite
+  // direction from --fs-h2-lg above), for ChiSonoGlassCard's own .factValue
+  // at lg+. Sized to the binding constraint, not guessed: "Milano · Monza ·
+  // Cernusco" (this component's longest value) needs to clear its own
+  // available column width on one line at every width from 1024 to at
+  // least 1600 (see that component's own report for the exact measured
+  // margin) — --fs-h2 itself (28-36px) was too large for that to fit even
+  // at this plate's full container width. Still visibly larger than a
+  // label (0.75rem/12px there) at every point in this range, so the
+  // label/value hierarchy survives the shrink.
+  --fs-h2-sm: clamp(1.375rem, 1.8vw, 1.75rem); // EB Garamond 400
+  --lh-h2-sm: 1.2;
   // Fix pass 1 (§10.1): --fs-h2-lg against --fs-body (16px) only reaches
   // 2.0-2.625x — the CTA bridge is meant to be the page's clearest scale
   // jump after the hero, and never got there. --fs-display itself was

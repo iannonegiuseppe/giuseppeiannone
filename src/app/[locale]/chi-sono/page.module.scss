@@ -31,27 +31,18 @@
   padding-bottom: 1px;
 }
 
-// Wraps PillarHero (block 1) + ChiSonoGlassCard (block 2): the card is
-// absolutely positioned (at lg+) against THIS box's own bottom edge, not
-// PillarHero's own (PillarHero's .heroBand sets overflow:hidden for its
-// own zooming image — irrelevant here, since the card is a sibling of
-// PillarHero, not a descendant, so that clipping never applies to it).
+// Wraps PillarHero only now — the credentials band is no longer a
+// sibling positioned against this box's own bottom edge (that mechanism,
+// and the compact-card design it served, is gone). It's instead the
+// first child of .lightIslandTop below, pulled UP into this box's own
+// hero photo via its own negative margin — see ChiSonoGlassCard.module
+// .scss's own .card comment for why that DOM position (not this one) is
+// what makes its lower half actually sit on a light background.
+// position: relative kept, not proven dead by this pass.
 .heroBoundary {
   position: relative;
 }
 
-// Single-composition pass — the height-gated `min-height: 0` fallback (and
-// ChiSonoGlassCard.module.scss's own matching card-position fallback) is
-// gone: reported live, a 20px height difference either side of that
-// threshold (1440x1010 vs 1440x990) flipped the whole hero between two
-// visibly different compositions — the card floating over the photo above
-// it, a full-width band replacing the photo's lower half below it. A
-// visitor resizing a window would see it jump. The card is now ALWAYS in
-// normal document flow (see that file's own .card comment), which can't
-// overlap this hero regardless of how tall it forces itself to be — so
-// there's no longer any reason to shrink the hero at short heights, and
-// it's forced full-viewport at every height again, same as originally
-// designed, one composition instead of two.
 .heroViewport {
   display: flex;
   flex-direction: column;
@@ -60,57 +51,35 @@
   min-height: 100dvh;
 }
 
+// Band pivot — the credentials band is .lightIslandTop's own first
+// child now (see page.tsx), rendered before this heading/intro block,
+// not overlapping it. display: flow-root is load-bearing, not
+// decorative: without it, the band's own negative top margin (pulling
+// its label row up into the hero photo — ChiSonoGlassCard.module.scss's
+// own .card comment) would collapse through this parent's un-bordered,
+// un-padded top edge and drag THIS box's own light background up with
+// it, past the real hero/section seam — confirmed live during this
+// pass, the light fill crept up over the photo until this was added.
+// flow-root blocks that collapse (new block-formatting-context) without
+// clipping anything, unlike overflow: hidden, which would also cut off
+// the part of the band meant to render above this box.
+//
+// The old padding-left card-reservation and the padding-top inflation
+// for the (now-gone) 140px card overhang are both removed: the band
+// spans the full row width now, and it no longer overhangs into this
+// block at all (see ChiSonoGlassCard.module.scss's own .card margin-
+// bottom for its own clearance below the value row instead).
+.lightIslandTop {
+  display: flow-root;
+}
+
 // "Di cosa mi occupo" — heading/intro/closing text stay in the normal
 // container; AreaMosaic breaks out to full-bleed on its own.
-//
-// Fix pass — the glass card (ChiSonoGlassCard.module.scss) overlaps this
-// block's own top-LEFT corner now (moved from right to left — see that
-// file's own $card-left-edge comment — to free the hero's right side for
-// the portrait's face), straddling the hero/section seam. Below lg the
-// card doesn't overlap at all (plain horizontal bar, no absolute
-// positioning), so this reservation is lg+ only — the section keeps its
-// full width there, per instruction.
-//
-// padding-left (was padding-right, before the card moved) ADDS to
-// (rather than replaces) mixins.container's own padding-inline:
-// var(--space-7) component — 27.5rem is the card's own width (kept in
-// sync by comment cross-reference, same literal value
-// ChiSonoGlassCard.module.scss's own .card rule uses), plus a second
-// var(--space-7) as real clearance. Both this block and the card itself
-// anchor their left edges to the SAME container-content-edge reference
-// point (the card's own $card-left-edge formula is built to land exactly
-// there — see that file's own comment), so the resulting gap between
-// this text's new left edge and the card's right edge works out to
-// exactly var(--space-7) (48px) at any lg+ width, not just 1440 —
-// verified live at both 1440 and 1024 (see this pass's own report).
-// Text itself stays left-aligned WITHIN its own shifted column (not
-// right-aligned) — the whole block moves right, individual lines don't
-// flip direction.
-//
-// Fix pass 7 — real bug, measured: the previous pass-4/6 padding-top
-// (calc(var(--space-10)*2 + var(--space-6)) = 288px) was sized to clear
-// the CARD's own bottom edge, not to sit the text beside the card — with
-// the card's own position reverted since (see ChiSonoGlassCard.module.scss's
-// own .card comment, fix pass 6), that 288px was never re-derived and
-// left a large empty gap between the seam and the kicker (measured:
-// kicker started 312px below the seam). Dropped to var(--space-8) (64px,
-// an existing token, not a new one) — the same order of magnitude as the
-// header-clearance padding this page's other sections already use, and
-// small enough that the kicker starts close to the seam per instruction.
-// lg+ only, per instruction — below lg this value is untouched
-// (var(--space-9), the base rule below).
-//
-// padding-bottom is NEW this pass, lg+ only: with no padding-bottom at
-// all, the last paragraph's own border-box ended EXACTLY where the
-// mosaic began (measured 0px gap — .paragraph's own class has a
-// margin-TOP only, no trailing margin, so nothing was providing space
-// here). var(--space-8) (64px) matches the padding-top value above.
 .whatIWorkWith {
   @include mixins.container;
   padding-top: var(--space-9);
 
   @include mixins.breakpoint-up(lg) {
-    padding-left: calc(var(--space-7) + 27.5rem + var(--space-7));
     padding-top: var(--space-8);
     padding-bottom: var(--space-8);
   }

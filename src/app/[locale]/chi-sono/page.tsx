@@ -292,8 +292,8 @@ export default async function ChiSonoPage({
     <main>
       <JsonLdScript data={breadcrumbJsonLd} />
 
-      {/* Block 1 + 2: Hero (full-bleed, dark) + the glass card
-          overlapping its bottom boundary. */}
+      {/* Block 1 + 2: Hero (full-bleed, dark) + the credentials band
+          straddling its bottom boundary. */}
       <div className={styles.heroBoundary}>
         <div className={styles.heroViewport}>
           <PillarHero
@@ -306,94 +306,29 @@ export default async function ChiSonoPage({
             // Photo swap pass — portrait replaced (Sanity content, see
             // scripts/patch-chisono-portrait-09.ts) with the open-palms
             // photo already used sitewide as the contact-block photo.
-            // No imageObjectPosition override needed or passed: unlike
-            // the previous nearly-square portrait (which needed 50% 7.2%
-            // tuning to clear the header — see git history), this
-            // photo's own 1.5:1 aspect is close enough to the hero's own
-            // that a plain center crop (the component's own default)
-            // already shows the full head with real headroom — verified
-            // live at 1440/1024/390 before this pass, see its own
-            // report.
             //
-            // Card-move follow-up, explicit instruction — moving
-            // ChiSonoGlassCard to the left put the subject's own
-            // gesturing hand behind it instead. object-position-x can't
-            // fix this or the head-clearance issue below: this photo's
-            // own aspect (1.5:1) is close enough to the hero band's own
-            // (1.6:1) that there's barely any vertical crop margin either
-            // — object-position-y alone tops out around 60px of total
-            // travel, checked live, nowhere near enough on its own.
-            // imageZoom enlarges the image beyond object-fit:cover's own
-            // minimum, creating real margin on every side; imageShiftX/Y
-            // then carry the whole photo — subject included — right and
-            // down within it.
+            // Panel design (imageZoom/imageShiftX/imageShiftY, commit
+            // b19b6de) reverted: that shift existed to keep the subject's
+            // face and raised hand clear of ChiSonoGlassCard's former
+            // left-hand panel position. The panel is gone — the
+            // credentials render as a full-width band now — so the
+            // premise no longer holds. No horizontal shift.
             //
-            // Two real corrections during tuning, not assumed correct on
-            // the first pass:
-            // 1. An earlier value (1.2x/8%/8%) was reported as clearing
-            //    the header with a real gap — that reading came from a
-            //    plain cropped screenshot and was wrong. Overlaying a
-            //    literal reference line at the header's own measured
-            //    bottom edge (getBoundingClientRect, not a guess) showed
-            //    the hairline sitting almost exactly ON that line, not
-            //    below it — the earlier "looks fine" verdict didn't
-            //    survive a precise check.
-            // 2. Scale and vertical shift are coupled, not independent:
-            //    increasing zoom pushes the head further from the
-            //    transform's own center point (upward, since the head
-            //    sits above center), so a bigger shift is needed just to
-            //    hold the same clearance at a higher zoom, not gain any.
-            //    Several rounds of "more zoom + proportionally more
-            //    shift" produced the SAME marginal clearance instead of
-            //    improving it, until zoom was raised enough on its own to
-            //    create real slack independent of the shift.
+            // imageObjectPosition IS still needed, vertical-only: at very
+            // short/wide hero boxes (e.g. 1440x700) the container's aspect
+            // ratio is wider than this photo's own (~1.5:1), so
+            // object-fit:cover is width-constrained and crops vertically —
+            // a plain 50% 50% center crop measured live with the crown
+            // right at/through the viewport's own top edge. Shifting the
+            // vertical anchor toward the top of the source photo (lower
+            // Y%) preserves the head at the cost of cropping more from the
+            // bottom (hands/torso, which have real slack) instead. Only
+            // takes effect at lg+ (component's own default) — below lg the
+            // container is close enough to this photo's own aspect that a
+            // plain center crop already clears the head with real margin,
+            // confirmed live, so no override needed there.
+            imageObjectPosition="50% 12%"
             //
-            // 1.472x zoom (1.84x reduced 20%, direct instruction: "the
-            // face is now too large ... zoom out so the figure reads
-            // about 20% smaller"), 15.8% right, 15% down — this pass
-            // genuinely runs into the source image's own boundaries, as
-            // asked to report if it did. Reducing zoom shrinks the
-            // overscan margin available on every edge (formula confirmed
-            // live at every zoom level tried this session:
-            // shift_max ≈ 0.5 × (1 − 1/zoom) of the image's own box, same
-            // on both axes since object-fit:cover already matches this
-            // hero's width exactly) — at 1.84x the vertical ceiling was
-            // ≈22.8%, comfortably above the 22% shift used; at 1.472x the
-            // ceiling drops to ≈16.0%, so the same 22% down is no longer
-            // safe (confirmed live: produces a real gap,
-            // getBoundingClientRect top > 0). Re-tuned to 15% down,
-            // checked against the header's own measured bottom edge with
-            // a reference-line overlay: real but distinctly thinner
-            // clearance than the 1.84x version — a few loose hair strands
-            // reach the line, the bulk of the head sits clearly below it,
-            // at both 1440 and 1024.
-            //
-            // Horizontal shift also had to move, for a reason the zoom
-            // number alone doesn't explain: translate() percentages are
-            // relative to the image's OWN box, so the same 12% covers
-            // fewer actual pixels at a lower zoom (at 1440, 12% of the
-            // 1.472x box is roughly 180px less rightward travel than 12%
-            // of the 1.84x box was). That reintroduced an overlap this
-            // session had already solved once — the subject's raised
-            // hand crossing into ChiSonoGlassCard — confirmed live at
-            // 1024 with 12% still in place. Raised to 15.8% (ceiling
-            // ≈16.0%, same formula, checked live: left stays
-            // negative/safe at both breakpoints) to restore clearance
-            // from the card: a real, visible gap between fingertips and
-            // the card's edge at 1024, comfortable clearance at 1440.
-            //
-            // Net result of "20% smaller": meaningfully more of the
-            // figure is now in frame (the raised hand is fully visible at
-            // 1440, more of the torso/shoulders at 1024) at the cost of
-            // tighter margins on both the header and the card edge than
-            // the 1.84x version had — there is no more room to zoom out
-            // further without giving up either the head-clear-of-header
-            // or hand-clear-of-card constraint, since both are already
-            // within ~1 percentage point of this zoom level's own shift
-            // ceiling.
-            imageZoom={1.472}
-            imageShiftX="15.8%"
-            imageShiftY="15%"
             // contentAlign="left" — same left edge the rest of the
             // page's own content uses, not centered in the hero band.
             // Vertical position stays centered (PillarHero's own
@@ -412,10 +347,18 @@ export default async function ChiSonoPage({
             titleEmphasisShimmer
           />
         </div>
-        <ChiSonoGlassCard facts={chiSono?.glassCard?.facts ?? []} />
       </div>
 
       <div className={styles.lightIslandTop}>
+        {/* Credentials band — first child of the light section, not a
+            sibling inside .heroBoundary: its top half (each fact's
+            label) is pulled up via negative margin so it renders over
+            the hero photo, while its bottom half (each fact's value)
+            stays in normal flow, over this section's own light
+            background. See ChiSonoGlassCard.module.scss's own .card
+            comment for why this DOM position, not the hero, is what
+            makes the light half actually light. */}
+        <ChiSonoGlassCard facts={chiSono?.glassCard?.facts ?? []} />
         {/* Block 3: "Di cosa mi occupo" — heading/intro in the
             container, then the full-bleed area mosaic. The closing strip
             that used to follow the mosaic (a paragraph plus an italic
