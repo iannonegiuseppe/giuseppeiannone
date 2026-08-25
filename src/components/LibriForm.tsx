@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/Button";
 import { ContactFormInput } from "@/components/ContactFormField";
 import type { ContactFieldHandle } from "@/components/ContactFormField";
@@ -55,6 +56,15 @@ const STATUS_TEXT: Record<Locale, { success: string; error: string; notReady: st
   },
 };
 
+// Honeypot — same field ContactForm.tsx uses, copied verbatim rather than
+// shared: this label is aria-hidden (never read by a screen reader, never
+// seen by a sighted visitor) so its own translation matters far less than
+// the DOM attributes below matching exactly.
+const HONEYPOT_LABEL: Record<Locale, string> = {
+  it: "Non compilare questo campo",
+  en: "Don't fill in this field",
+};
+
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 // Download-flow build pass — the form now actually submits, reusing the
@@ -81,6 +91,12 @@ export function LibriForm({
 }) {
   const t = ERROR_TEXT[locale];
   const st = STATUS_TEXT[locale];
+  const hp = HONEYPOT_LABEL[locale];
+
+  // Internal-notification context pass, same as ContactForm.tsx's own
+  // pathname/document.title capture (see that file's own comment) — read
+  // fresh at submit time, not captured once, so it's never stale.
+  const pathname = usePathname();
 
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<SubmitStatus>("idle");
@@ -97,8 +113,10 @@ export function LibriForm({
   const nomeRef = useRef<ContactFieldHandle>(null);
   const emailRef = useRef<ContactFieldHandle>(null);
   const privacyCheckboxRef = useRef<HTMLInputElement>(null);
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   const groupId = useId();
+  const honeypotId = useId();
 
   function handleBlurNome(value: string) {
     if (!value.trim()) {
@@ -133,6 +151,7 @@ export function LibriForm({
 
     const nome = nomeRef.current?.getValue() ?? "";
     const email = emailRef.current?.getValue() ?? "";
+    const honeypot = honeypotRef.current?.value ?? "";
 
     const nextErrors: FieldErrors = {
       nome: validateNome(nome),
@@ -159,10 +178,13 @@ export function LibriForm({
           telefono: "",
           messaggio: "",
           consent: privacyConsent,
+          companyWebsite: honeypot,
           marketingConsent,
           source: "libri",
           formToken,
           locale,
+          pageTitle: typeof document !== "undefined" ? document.title : undefined,
+          pagePath: pathname,
         }),
       });
     }
@@ -283,6 +305,17 @@ export function LibriForm({
           />
           <span className={styles.consentText}>{copy.marketingLabel}</span>
         </label>
+
+        {/* Honeypot — same field ContactForm.tsx uses, same reasoning (see
+            that file's own comment): name="hp_x7k2" has zero dictionary
+            overlap with any autofill category, so it doesn't get
+            autofilled the way name="companyWebsite" once did. Read via
+            ref, sent under the JSON key companyWebsite — that's the key
+            route.ts inspects, and the two are deliberately different. */}
+        <div className={styles.honeypotWrap} aria-hidden="true">
+          <label htmlFor={honeypotId}>{hp}</label>
+          <input id={honeypotId} type="text" name="hp_x7k2" ref={honeypotRef} tabIndex={-1} autoComplete="off" />
+        </div>
 
         {status === "error" ? (
           <div className={styles.formBanner}>

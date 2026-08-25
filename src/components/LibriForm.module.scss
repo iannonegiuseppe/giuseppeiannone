@@ -123,3 +123,15 @@
   font-size: 0.9375rem;
   color: var(--color-text);
 }
+
+// Honeypot — same visually-hidden wrapper as ContactForm.module.scss's own
+// .honeypotWrap, copied verbatim (see LibriForm.tsx's own comment on the
+// input itself for why this exists and why the name matters).
+.honeypotWrap {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
