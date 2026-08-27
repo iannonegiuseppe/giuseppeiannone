@@ -1229,7 +1229,7 @@ export const homePage = defineType({
           title: "Questions shown on the homepage",
           type: "array",
           of: [{ type: "reference", to: [{ type: "faqItem" }] }],
-          validation: (Rule) => Rule.length(4),
+          validation: (Rule) => Rule.min(1),
         }),
       ],
     }),
