@@ -259,6 +259,147 @@
   }
 }
 
+// Grounded-cutout pass (/blog only, LightPortraitHero.tsx's own
+// cutoutGrounded prop) — direct instruction: the cutout's own bottom edge
+// (a straight horizontal cut, the desk) must sit flush with the section's
+// own bottom edge at every width, with no frame/glow/background around it
+// — "the cutout stands directly on the section background." Supersedes
+// mobileCutoutAnchor's own bottom alignment at mobile without deleting
+// that block (see this prop's own comment in the .tsx file for why).
+//
+// Correction pass: aspect-ratio is now UNCONDITIONAL (every width), not
+// lg+-only. The frame previously stretched to the grid row's own height at
+// lg+ (height: 100%, driven by the text column) — against a 1448x1040
+// source in a ~603px-wide column, object-fit: cover then had to crop 41%
+// of the source's WIDTH to fill that height, discarding the cup entirely
+// and pushing the books past the frame's right edge (confirmed live — see
+// this pass's own report). Fixed at the container, not the fit:
+// aspect-ratio: 1448/1040 makes the frame's own height a direct function
+// of its (unchanged) width, matching the source exactly at every
+// breakpoint — object-fit then has nothing to crop on either axis,
+// anywhere. This also replaces the previous mobile-only "height: auto on
+// the image" trick (implicit, via the image's own intrinsic size) with an
+// explicit rule on the frame itself, applied everywhere the same way.
+.hero[data-cutout-grounded] .heroVisualGlow {
+  display: none;
+}
+
+.hero[data-cutout-grounded] .heroVisualFrame {
+  max-width: none;
+  aspect-ratio: 1448 / 1040;
+}
+
+// object-position — removed, not just left at its old value. With the
+// container now matching the source's own aspect ratio exactly,
+// object-fit: cover has nothing to crop on either axis regardless of
+// where anything sits in the frame — the position value is inert, and
+// leaving the old 62% 0% in place would misleadingly suggest a crop
+// decision still applies here.
+//
+// Seam-fix pass — the previous version relied on width: 100%; height:
+// auto (the base rule) computing the image's OWN height from ITS OWN
+// intrinsic 1448x1040 ratio, landing it independently near — but not
+// exactly on — .heroVisualFrame's own aspect-ratio-computed height (two
+// separate rounding computations, off by ~0.6px at some widths). That gap
+// exposed .hero's own light background for one pixel row, read as a
+// visible seam between the photo and the dark section below it — the
+// "object-fit: cover as a rounding guard" comment above was wrong: cover
+// only crops an OVERSIZED image, it does nothing for an undersized one,
+// which is what was actually happening. Fixed by making the image share
+// the frame's OWN box outright (position: absolute; inset: 0, against
+// .heroVisualFrame's own position: relative, its base rule) instead of
+// computing its own independent size — there is now only one box's worth
+// of rounding, not two, so bottom cannot land anywhere but exactly on the
+// frame's own bottom. object-fit: cover stays, now genuinely doing
+// something: with the image's rendered box forced to the frame's exact
+// (aspect-matched) dimensions, it's an inert no-op in the typical case,
+// but a real safeguard against the same sub-pixel mismatch if it ever
+// recurs — cropping a fraction of a pixel is invisible, a gap is not.
+.hero[data-cutout-grounded] .heroVisualImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Below lg (mobile AND the 768-1023px tablet tier — everything before
+// .heroInner's own two-column grid kicks in, so text and photo are
+// stacked grid ROWS, not side-by-side columns): text first, photo last,
+// in NORMAL flow, not mobileCutoutAnchor's own fade/overlap treatment.
+// Widened from mobile-only (max-width: 47.9375rem) to just-below-lg
+// (63.9375rem) — the tablet tier was left on the OLD default small-frame
+// treatment in the first pass (matching mobileCutoutAnchor's own "tablet
+// untouched" precedent), which is exactly why it wasn't flush: this prop
+// supersedes that precedent for itself, it doesn't inherit it. The
+// simplest way to guarantee the photo's own bottom edge is the last thing
+// in the section, with nothing after it to add space below, at both
+// single-column tiers alike.
+@media (max-width: 63.9375rem) {
+  .hero[data-cutout-grounded] .heroText {
+    order: 1;
+    padding-bottom: 0;
+  }
+
+  .hero[data-cutout-grounded] .heroVisual {
+    order: 2;
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+    padding: 0;
+  }
+}
+
+@include mixins.breakpoint-up(lg) {
+  // .heroVisual keeps its own base-rule align-items: flex-end (never
+  // overridden by this attribute) — with the frame now shorter than the
+  // stretched row (736px) rather than stretched to fill it, flex-end is
+  // what keeps it bottom-anchored inside that taller row instead of
+  // floating at the top or center. padding-bottom: 0 (still needed) is
+  // what lets that bottom edge actually reach .heroInner's own bottom,
+  // rather than leaving the default treatment's breathing room below it.
+  //
+  // justify-content: flex-start — was the base rule's own flex-end. At
+  // width: 100% (unchanged until now) that made no visible difference,
+  // since a same-size-as-container item has no free space for either
+  // value to distribute. Now that the frame below is wider than its own
+  // flex container (120%), the two diverge: flex-end would anchor the
+  // frame's RIGHT edge to .heroVisual's own right edge and let the excess
+  // overflow LEFTWARD, past the seam and under the text column — the
+  // opposite of what's wanted. flex-start anchors the frame's LEFT edge
+  // instead (exactly where it already sat at 100% width, since a
+  // full-width item's left edge is identical under either value), so
+  // growing the width purely extends the RIGHT edge rightward, toward the
+  // viewport edge — see this pass's own report for the measured overflow
+  // past .container's own right margin at each width.
+  .hero[data-cutout-grounded] .heroVisual {
+    padding-bottom: 0;
+    justify-content: flex-start;
+  }
+
+  // Larger pass — direct instruction: the photo read as small and oddly
+  // cut at its previous 100%-of-column width. 120% grows it roughly a
+  // fifth wider, left edge fixed (see .heroVisual's own comment on
+  // justify-content above), right edge extending past .container's own
+  // right margin toward the viewport edge. aspect-ratio (unconditional,
+  // above) keeps the height in lockstep — nothing crops, the box just
+  // gets bigger. Checked live at 1440/1600/1920 that this never reaches
+  // the actual viewport edge (no horizontal scrollbar introduced) — see
+  // this pass's own report for the numbers at each.
+  .hero[data-cutout-grounded] .heroVisualFrame {
+    width: 120%;
+    // flex-shrink: 0 — .heroVisual is display: flex (row) with this as
+    // its only child; a flex item's default flex-shrink: 1 fights an
+    // explicit width larger than its own container by shrinking the item
+    // BACK DOWN to fit (there's "negative free space" to resolve, and
+    // shrink is what resolves it) — confirmed live: width: 120% alone
+    // measured as if it were never set, exactly 100% of the column, every
+    // time. flex-shrink: 0 is what actually lets the item render wider
+    // than its flex container instead of being shrunk back to match it.
+    flex-shrink: 0;
+  }
+}
+
 .heroInner {
   display: grid;
   grid-template-columns: 1fr;

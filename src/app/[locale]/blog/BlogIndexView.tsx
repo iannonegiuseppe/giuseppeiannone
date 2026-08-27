@@ -1,9 +1,11 @@
 import { PortableText } from "next-sanity";
+import type { Image as SanityImage } from "sanity";
 import { ContactBlock } from "@/components/ContactBlock";
 import { LightPortraitHero } from "@/components/LightPortraitHero";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
-import { getArticlesPage, getBlogIndex, getHeroPortrait } from "@/sanity/articles";
+import { getArticlesPage, getBlogIndex } from "@/sanity/articles";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
 import { getAreaChipCounts, getBlogCategoryChipCounts } from "@/sanity/areaTaxonomy";
 import { type Locale } from "@/sanity/paths";
 import { contactSectionQuery } from "@/sanity/queries";
@@ -31,12 +33,24 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-// Same photo the homepage's own ContactBlock invocation and the article
-// page's end-of-article ContactBlock both use — see article page.tsx's
-// own comment for why this hardcoded design-lab path (not a Sanity image)
-// is the honest, non-forked choice here too.
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts) — the
+// same photo the homepage's own ContactBlock invocation and the article
+// page's end-of-article ContactBlock both use.
+
+// Blog index hero photo — was heroPortrait?.photo (getHeroPortrait(),
+// reusing homePage.hero.photo via heroPortraitQuery). Replaced with the
+// same manually-constructed-reference pattern as welcomePhotoUrl/
+// portraitUrl/contactPhotoUrl (page.tsx) and metodo's own
+// FIT_ENDING_PHOTO_URL: a background-free cutout, uploaded directly, not
+// wired into any schema field. getHeroPortrait's own fetch and export are
+// now unused by this file but left in src/sanity/articles.ts — orphan, not
+// delete, matching this codebase's own established precedent (see this
+// file's own LightPortraitHero.tsx import comment for another instance of
+// the same rule).
+const HERO_PHOTO: SanityImage & { alt?: string } = {
+  _type: "image",
+  asset: { _type: "reference", _ref: "image-2201b21dfe4c64eed850f140faf6f66ffae76293-1448x1040-png" },
+};
 
 // Item 2 (round 4) — full-width, two reading columns at lg (one below).
 // splitEditorialIntoColumns (blogEditorialPortableText.tsx) does the
@@ -70,11 +84,10 @@ export async function BlogIndexView({
 }) {
   const typedLocale = locale as Locale;
 
-  const [{ articles, totalPages }, blogIndex, heroPortrait, contactCopy, siteSettings, areaCounts, blogCategoryChips] =
+  const [{ articles, totalPages }, blogIndex, contactCopy, siteSettings, areaCounts, blogCategoryChips] =
     await Promise.all([
       getArticlesPage(locale, pageNumber),
       getBlogIndex(locale),
-      getHeroPortrait(locale),
       getContactSectionCopy(locale),
       getSiteSettings(locale),
       getAreaChipCounts(typedLocale),
@@ -116,9 +129,9 @@ export async function BlogIndexView({
           heading={blogIndex?.heading ?? "Blog"}
           headingEmphasisWord={blogIndex?.headingEmphasisWord}
           intro={blogIndex?.intro}
-          photo={heroPortrait?.photo}
+          photo={HERO_PHOTO}
           priority
-          mobileCutoutAnchor
+          cutoutGrounded
         />
 
         {/* 2. DARK SECTION — chips + featured/filtered + grid + pagination */}

@@ -65,11 +65,24 @@ export interface LightPortraitHeroProps {
   // anchors to the section's bottom edge at its own natural aspect ratio
   // instead of being cropped to fill the frame; copy is allowed to
   // overlap its lower half (shoulders/chest), never the face. Opt-in,
-  // same "unset = today's behavior" convention as every other prop here
-  // — currently only /blog passes it, /faq never does (mobileFullBleed
-  // and mobileCutoutAnchor are mutually exclusive in practice, but
-  // nothing here enforces that structurally since no caller passes both).
+  // same "unset = today's behavior" convention as every other prop here.
+  // No current caller passes this — /blog used it until the
+  // cutoutGrounded pass below superseded it there; kept, not deleted (see
+  // that prop's own comment), in case a future cutout wants THIS
+  // treatment (overlap, not flush) instead.
   mobileCutoutAnchor?: boolean;
+  // Grounded-cutout pass (/blog only) — direct instruction: the photo's
+  // own bottom edge (a straight horizontal cut in the source) must sit
+  // flush with the SECTION's own bottom edge at every width, with no
+  // frame/glow/background around it. This supersedes mobileCutoutAnchor's
+  // own bottom alignment at mobile (that treatment deliberately overlaps
+  // text INTO the image from below via a negative margin, so the image's
+  // own bottom never reaches the section's own bottom) without deleting
+  // that block — same orphan-not-delete precedent this file's own top
+  // comment already established, and /faq never used mobileCutoutAnchor to
+  // begin with. See LightPortraitHero.module.scss's own comment on
+  // [data-cutout-grounded] for the CSS.
+  cutoutGrounded?: boolean;
 }
 
 function renderHeadingWithEmphasis(
@@ -105,6 +118,7 @@ export function LightPortraitHero({
   photoScale,
   mobileFullBleed,
   mobileCutoutAnchor,
+  cutoutGrounded,
 }: LightPortraitHeroProps) {
   const dims = photo ? imageDimensions(photo) : null;
 
@@ -122,6 +136,7 @@ export function LightPortraitHero({
       data-light-hero
       data-mobile-full-bleed={mobileFullBleed || undefined}
       data-mobile-cutout-anchor={mobileCutoutAnchor || undefined}
+      data-cutout-grounded={cutoutGrounded || undefined}
     >
       <div className={`container ${styles.heroInner}`}>
         <div className={styles.heroText}>
