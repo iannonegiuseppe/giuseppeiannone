@@ -29,6 +29,122 @@
   @include tone.light-island-surface;
 }
 
+// --- Section 6 ("Fit and Ending") photo pass -----------------------------
+// New page-level wrapper AROUND the still-untouched <StackedBands
+// tone="surface"> call (page.tsx) — StackedBands itself is not modified,
+// see this pass's own constraints. .fitEndingTextCol confines it to the
+// left 49% purely via width: StackedBands' own .inner reads
+// mixins.container, whose width: 100%/margin-inline: auto resolve
+// predictably against whatever ancestor width they're given — confirmed
+// before building — so no change inside StackedBands itself is needed for
+// it to sit correctly in a narrower column. MetodoFitEndingPhoto (its own
+// component/module, src/components/) fills the remaining right 51%,
+// absolutely positioned against THIS wrapper.
+// Grid pass — was text-in-normal-flow + photo absolutely positioned
+// against this wrapper. That let the photo's own height (a fixed 1:1
+// square tied to 51% of viewport width, growing linearly with it) drift
+// completely independently of this wrapper's auto-height (driven solely by
+// the text column, the only normal-flow child) — past ~1600px the square
+// grew taller than the text-driven height and overflowed both the dark
+// StackedBands <section> AND this wrapper itself, uncontained, into the
+// light sections above/below (confirmed live — see this pass's own
+// report). A CSS grid fixes this at the layout-model level: both the text
+// column and the photo are now real grid items, so the row's own auto
+// height is max(text item's height, photo item's height) by construction
+// — the section can no longer be shorter than the photo, at any width.
+.fitEndingOuter {
+  position: relative;
+
+  // Sheen pass — moved here from StackedBands' own <section> (see
+  // StackedBands.tsx's own comment on its sheen prop). This mixin's own
+  // ::before is inset:0 on whatever applies it, anchored at a fixed
+  // percentage (15% 10%) of THAT box — applying it here instead of the
+  // narrower nested <section> anchors it to the whole section's real
+  // upper-left corner, matching the brief. data-sheen="upper-left" lives
+  // on the JSX element itself (page.tsx), not here — this only supplies
+  // the CSS half of the pair.
+  @include mixins.upper-left-sheen;
+
+  // Tone plan — same reassignment StackedBands.module.scss's own
+  // .toneSurface performs (background + --color-bg both repointed at
+  // --color-surface), applied one level higher so the backdrop exposed by
+  // MetodoFitEndingPhoto's clip-path reveal (the not-yet-open region) is
+  // the section's own surface tone, not the ambient dark --color-bg —
+  // this is the exact check this project has been bitten by before
+  // (CLAUDE.md's own token-blast-radius note), confirmed live rather than
+  // assumed (see this pass's own verification report). This background now
+  // also IS the dark block's own fill for the full grid row's height —
+  // there's no narrower/shorter inner box for it to visually disagree with
+  // anymore.
+  background: var(--color-surface);
+  --color-bg: var(--color-surface);
+
+  @include mixins.breakpoint-up(md) {
+    display: grid;
+    // 62/38 pass — was 49/51. Photo keeps aspect-ratio: 1/1 (Metodo
+    // FitEndingPhoto.module.scss), so a narrower 38% column produces a
+    // shorter square directly — that's the point (see this pass's own
+    // report for the resulting section heights).
+    grid-template-columns: 62% 38%;
+    // Center, not stretch: stretch would force .root (aspect-ratio: 1/1)
+    // to fill the row's own height too, fighting the aspect-ratio instead
+    // of letting it size the square from its (grid-supplied) width. This
+    // is also literally the requirement: whichever of text/photo is
+    // shorter centers against the taller one within the shared row —
+    // one rule handles both directions symmetrically.
+    align-items: center;
+  }
+
+  // Below md: .seamRule is the only thing removed from normal flow
+  // (position: absolute, unconditionally) — .fitEndingTextCol and
+  // MetodoFitEndingPhoto's .root both stay in ordinary block flow here,
+  // same stacked-text-then-square-photo arrangement as before this pass,
+  // untouched.
+}
+
+// Padding pass — StackedBands' own .section already carries
+// padding-top/bottom: var(--space-9) internally (96px), so the text was
+// never literally flush against the section's edges even before this. This
+// adds ON TOP of that, at the wrapper level: independent of whatever
+// StackedBands does internally, so the section's own comfortable height
+// doesn't depend on a shared component's own choice. space-7 (48px), one
+// step down from StackedBands' own space-9 — additive, not doubling the
+// same tier.
+//
+// No width: 49%/62% anymore — .fitEndingOuter's own grid-template-columns
+// (above) now supplies that directly via the default stretch behaviour of
+// a non-absolute grid item, one source of truth instead of two.
+.fitEndingTextCol {
+  padding-block: var(--space-7);
+
+  // Container-left-edge pass — the text was starting at .fitEndingOuter's
+  // own left edge (the viewport's own edge, since that wrapper is
+  // full-bleed), not the site's actual container inset every other
+  // section on this page uses (mixins.container: max-width:
+  // var(--container-max-width), margin-inline: auto, on a full-width
+  // parent). Nesting mixins.container itself inside THIS column (already
+  // narrower than var(--container-max-width) at every real viewport width)
+  // would not reproduce that: its own max-width never binds inside an
+  // already-narrower parent, and margin-inline: auto has no spare width to
+  // center within — it would just silently collapse to this column's own
+  // width, contributing nothing.
+  //
+  // Fix: add ONLY the margin-inline: auto half here, computed directly
+  // against the real page width via 100vw (max(0px, ...) reproduces
+  // margin-inline: auto's own clamping — it never goes negative once the
+  // viewport is narrower than the container's own max-width). The
+  // padding-inline half (--space-5 / --space-7 at lg+) is deliberately
+  // NOT duplicated here — StackedBands' own .inner already applies
+  // mixins.container internally and supplies that half unconditionally;
+  // adding it again here would double it. Confirmed live against the
+  // section immediately above (AsymmetricOffsetBlock, which applies
+  // mixins.container directly on its own full-width root) — see this
+  // pass's own report for the matching x-positions.
+  @include mixins.breakpoint-up(md) {
+    padding-left: max(0px, (100vw - var(--container-max-width)) / 2);
+  }
+}
+
 // --- Shared primitives (section 3 only, post-extraction) ----------------
 .kicker {
   margin: 0;

@@ -4,14 +4,17 @@ import { AsymmetricOffsetBlock } from "@/components/AsymmetricOffsetBlock";
 import { CenteredHero } from "@/components/CenteredHero";
 import { ContactBlock } from "@/components/ContactBlock";
 import { EpigraphBand } from "@/components/EpigraphBand";
+import { MetodoFitEndingPhoto } from "@/components/MetodoFitEndingPhoto";
 import { PracticalClosing } from "@/components/PracticalClosing";
 import { SplitBlock } from "@/components/SplitBlock";
 import { StackedBands } from "@/components/StackedBands";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
 import { methodPath } from "@/sanity/paths";
 import { contactSectionQuery, methodPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
+import { urlFor } from "@/sanity/image";
 import styles from "./page.module.scss";
 
 interface MethodPhase {
@@ -90,8 +93,17 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts) — was
+// its own local const here.
+
+// Section 6 ("Fit and Ending") photo — same manually-constructed-reference
+// pattern as page.tsx's own welcomePhotoUrl/portraitUrl (this field isn't
+// wired into methodPageQuery's own GROQ projection, same reasoning as
+// those two).
+const FIT_ENDING_PHOTO_URL = urlFor({
+  asset: { _ref: "image-84b6209387b4bbdacd096b99966766b192d7958a-1440x1440-webp", _type: "reference" },
+}).url();
+const FIT_ENDING_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
 
 // Splits `text` at the first occurrence of `emphasis` and wraps that span
 // in the given render function — same indexOf-based mechanism every real
@@ -280,23 +292,41 @@ export default async function MetodoPage({
         }}
       />
 
-      {/* === 6. FIT AND ENDING — surface step, two stacked bands ============ */}
+      {/* === 6. FIT AND ENDING — surface step, two stacked bands + photo ====
+          StackedBands itself is unmodified apart from three opt-in props
+          (stacked, sheen={false}, panel={false}) — confined to the left 62%
+          by .fitEndingTextCol, a grid column, not a change to the
+          component's own layout. The photo is a separate element, not
+          folded into StackedBands' own slots. data-sheen="upper-left" now
+          lives on .fitEndingOuter (the whole section's own box) instead of
+          StackedBands' own <section>, and panel={false} drops that
+          <section>'s own background paint (.fitEndingOuter already paints
+          the same tone behind it) — see StackedBands.tsx's own comments on
+          both props for why. */}
       <div className="themeDark">
-        <StackedBands
-          tone="surface"
-          bands={[
-            {
-              heading: data?.fitEnding?.band1?.heading ?? "",
-              p1: data?.fitEnding?.band1?.p1 ?? "",
-              p2: data?.fitEnding?.band1?.p2,
-            },
-            {
-              heading: data?.fitEnding?.band2?.heading ?? "",
-              p1: data?.fitEnding?.band2?.p1 ?? "",
-              p2: data?.fitEnding?.band2?.p2,
-            },
-          ]}
-        />
+        <div className={styles.fitEndingOuter} data-sheen="upper-left">
+          <div className={styles.fitEndingTextCol}>
+            <StackedBands
+              tone="surface"
+              stacked
+              panel={false}
+              sheen={false}
+              bands={[
+                {
+                  heading: data?.fitEnding?.band1?.heading ?? "",
+                  p1: data?.fitEnding?.band1?.p1 ?? "",
+                  p2: data?.fitEnding?.band1?.p2,
+                },
+                {
+                  heading: data?.fitEnding?.band2?.heading ?? "",
+                  p1: data?.fitEnding?.band2?.p1 ?? "",
+                  p2: data?.fitEnding?.band2?.p2,
+                },
+              ]}
+            />
+          </div>
+          <MetodoFitEndingPhoto photoUrl={FIT_ENDING_PHOTO_URL} photoAlt={FIT_ENDING_PHOTO_ALT} />
+        </div>
       </div>
 
       {/* === 7. PRACTICAL AND CLOSING — light island ========================= */}
