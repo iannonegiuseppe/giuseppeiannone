@@ -424,10 +424,7 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
   const internalText = renderEmailText(internalContent, footerLines("it"), internalFooterData, "it");
 
   try {
-    const internalSubject = isLibri
-      ? `Manuale richiesto dal sito — ${payload.nome}`
-      : `Nuovo contatto dal sito — ${payload.nome}`;
-    const internalInfo = await transporter.sendMail({
+    await transporter.sendMail({
       from: EMAIL_USER,
       to: CONTACT_RECIPIENT,
       // Merge pass fix: email is now always collected regardless of
@@ -435,15 +432,13 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
       // whatsapp/telefonata submission left replyTo undefined — hitting
       // "Reply" in the inbox went nowhere useful.
       replyTo: payload.email,
-      subject: internalSubject,
+      subject: isLibri
+        ? `Manuale richiesto dal sito — ${payload.nome}`
+        : `Nuovo contatto dal sito — ${payload.nome}`,
       html: internalHtml,
       text: internalText,
       attachments: logoAttachment(),
     });
-    // TEMP DIAGNOSTIC — remove after the libri-vs-contact investigation.
-    console.log(
-      `[contact-diag] INTERNAL sent source=${payload.source ?? "contact"} to=${CONTACT_RECIPIENT} replyTo=${payload.email} subject="${internalSubject}" messageId=${internalInfo.messageId} response="${internalInfo.response}" accepted=${JSON.stringify(internalInfo.accepted)} rejected=${JSON.stringify(internalInfo.rejected)}`,
-    );
   } catch (error) {
     console.error("[contact] Failed to send message:", error instanceof Error ? error.message : error);
     return { ok: false, reason: "send-failed" };
@@ -465,19 +460,14 @@ export async function sendContactMessage(payload: ContactMessagePayload): Promis
     const confirmationHtml = renderEmailHtml(confirmationContent, footerLines(locale), confirmationFooterData, locale);
     const confirmationText = renderEmailText(confirmationContent, footerLines(locale), confirmationFooterData, locale);
 
-    const confirmationSubject = isLibri ? LIBRI_CONFIRMATION_SUBJECT[locale] : CONFIRMATION_SUBJECT[locale];
-    const confirmationInfo = await transporter.sendMail({
+    await transporter.sendMail({
       from: EMAIL_USER,
       to: payload.email,
-      subject: confirmationSubject,
+      subject: isLibri ? LIBRI_CONFIRMATION_SUBJECT[locale] : CONFIRMATION_SUBJECT[locale],
       html: confirmationHtml,
       text: confirmationText,
       attachments: logoAttachment(),
     });
-    // TEMP DIAGNOSTIC — remove after the libri-vs-contact investigation.
-    console.log(
-      `[contact-diag] CONFIRMATION sent source=${payload.source ?? "contact"} to=${payload.email} subject="${confirmationSubject}" messageId=${confirmationInfo.messageId} response="${confirmationInfo.response}" accepted=${JSON.stringify(confirmationInfo.accepted)} rejected=${JSON.stringify(confirmationInfo.rejected)}`,
-    );
   } catch (error) {
     console.error(
       "[contact] Confirmation email failed to send (internal notification already delivered):",
