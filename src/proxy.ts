@@ -21,11 +21,14 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip /studio (Sanity Studio), /api routes, /design-preview and
-  // /design-lab (standalone design artifact routes living outside the
-  // [locale] segment entirely — see src/app/design-preview/layout.tsx's
-  // own comment — so they must never be rewritten/redirected as if they
-  // needed locale handling), Next.js internals, and any request for a
-  // file with an extension (static assets: favicon.ico, images, etc).
-  matcher: ["/((?!api|studio|design-preview|design-lab|_next|_vercel|.*\\..*).*)"],
+  // Skip /studio (Sanity Studio), /api routes, /design-lab (standalone
+  // design artifact route living outside the [locale] segment entirely —
+  // its own layout.tsx supplies its own <html>/<body>, so it must never
+  // be rewritten/redirected as if it needed locale handling), Next.js
+  // internals, and any request for a file with an extension (static
+  // assets: favicon.ico, images, etc). /design-preview was excluded here
+  // too until its route tree was deleted pre-launch (tone-swatch, the one
+  // /design-lab route kept, was restored — see reservedSlugs.ts's own
+  // comment on the same restoration).
+  matcher: ["/((?!api|studio|design-lab|_next|_vercel|.*\\..*).*)"],
 };

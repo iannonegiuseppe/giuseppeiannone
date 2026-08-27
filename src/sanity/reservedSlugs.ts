@@ -55,8 +55,10 @@ const EXPLICIT_RESERVED_SLUGS: string[] = [
   // the non-locale-prefixed folders directly under src/app/.
   "api",
   "studio",
+  // /design-lab — restored down to a single route (tone-swatch, kept live
+  // at the client's own request as an ongoing tonal-scale reference) after
+  // the rest of the tree was deleted pre-launch. Still a real root segment.
   "design-lab",
-  "design-preview",
   "styleguide",
 
   // Locale codes. "en" is a real prefix; "it" is currently unprefixed

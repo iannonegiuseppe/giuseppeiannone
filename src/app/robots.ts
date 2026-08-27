@@ -15,7 +15,7 @@ const NAMED_BOTS = [
   "Google-Extended",
 ];
 
-const DISALLOWED_PATHS = ["/studio", "/api/", "/design-preview", "/design-lab"];
+const DISALLOWED_PATHS = ["/studio", "/api/"];
 
 export default function robots(): MetadataRoute.Robots {
   // PRE-LAUNCH STATE — currently active, verified live: isProductionDeployment()
@@ -37,7 +37,7 @@ export default function robots(): MetadataRoute.Robots {
   // VERCEL_ENV=production (Vercel sets this) and NEXT_PUBLIC_SITE_URL
   // configured in Vercel's production env vars — at that point this
   // function falls through to the `rules` object below (allow "/", disallow
-  // only /studio, /api/, /design-preview, /design-lab), and per-document
+  // only /studio, /api/), and per-document
   // seo.noIndex becomes the sole, correct mechanism for excluding
   // individual pages (privacy, cookie policy, anything still deliberately
   // noIndex) from the index — because crawling is now ALLOWED, Google can
