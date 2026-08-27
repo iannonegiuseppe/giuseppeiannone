@@ -20,11 +20,29 @@
   @include mixins.focus-ring;
 }
 
+// Vertical-source pass: this video is portrait (1080x2400) inside a 16/9
+// container (.videoPlayer above) — contain, not cover, so the full frame
+// is visible with letterboxing on the sides, no cropping. A horizontal
+// version may replace it later, at which point this reverts to filling
+// the box naturally with little/no letterboxing.
+//
+// background: var(--color-bg), not --color-greige (the container's own
+// fallback-before-poster backdrop above) — deliberately different token.
+// This component is rendered inside VideoBlock's own light-island wrapper
+// (VideoBlock.module.scss's .videoLightWrap, tone.light-island-surface)
+// today, and per that mixin's own contract --color-bg is one of the
+// tokens it explicitly reassigns to the light value, while --color-greige
+// is NOT — using --color-greige here would silently paint the letterbox
+// bars in the dark-theme literal even though everything around them is
+// ivory. Verified live at 1440/1024/390 (see this pass's own report) that
+// --color-bg matches the surrounding section exactly, not assumed from
+// the token name alone.
 .videoPlayerVideo {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-bg);
 }
 
 .videoPlayerPoster {
