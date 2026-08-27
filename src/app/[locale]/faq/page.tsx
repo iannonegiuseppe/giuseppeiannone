@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ContactBlock } from "@/components/ContactBlock";
 import { LightPortraitHero } from "@/components/LightPortraitHero";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
 import { buildFaqPageJsonLd, plainTextFromPortableText } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { faqPath } from "@/sanity/paths";
@@ -76,8 +77,7 @@ export async function generateMetadata({
   });
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
 
 export default async function FaqPage({
   params,

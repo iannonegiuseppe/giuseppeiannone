@@ -9,6 +9,8 @@ import { PracticalClosing } from "@/components/PracticalClosing";
 import { SplitBlock } from "@/components/SplitBlock";
 import { StackedBands } from "@/components/StackedBands";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
+import { MID_PAGE_PHOTO_URL, MID_PAGE_PHOTO_ALT } from "@/sanity/midPagePhoto";
 import { monzaPath, pillarPath, type Locale } from "@/sanity/paths";
 import { contactSectionQuery, monzaPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -82,17 +84,10 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
-
-// Mid-page portrait pass — see psicologo-milano/page.tsx's own comment
-// on this same pair of constants for the full reasoning (not 09.webp,
-// which this page already uses lower down; 04.webp is the same
-// photoshoot's unused dark-background frame). Rebuild pass: see that
-// same file's CityWelcomeBlock comment — this section is now a real
-// Welcome-shaped composition.
-const MID_PAGE_PHOTO_URL = "/design-lab/photos/04.webp";
-const MID_PAGE_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
+// MID_PAGE_PHOTO_URL/ALT: single-sourced (src/sanity/midPagePhoto.ts) —
+// was its own local const here, byte-for-byte duplicated in
+// psicologo-milano/page.tsx.
 
 const PRACTISING_SINCE_YEAR = "2013";
 

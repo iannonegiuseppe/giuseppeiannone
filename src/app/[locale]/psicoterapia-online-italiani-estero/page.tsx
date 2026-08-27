@@ -7,6 +7,7 @@ import { EpigraphBand } from "@/components/EpigraphBand";
 import { PracticalClosing } from "@/components/PracticalClosing";
 import { StackedBands } from "@/components/StackedBands";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
 import { onlineTherapyPath, pillarPath, type Locale } from "@/sanity/paths";
 import { contactSectionQuery, onlineTherapyPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -80,8 +81,7 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
 
 export async function generateMetadata({
   params,

@@ -13,6 +13,7 @@ import { SignatureMark } from "@/components/Logo";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { resolveDiplomiLabItems, type QualificationItemData } from "@/sanity/diplomi";
 import { urlFor } from "@/sanity/image";
 import type { Locale } from "@/sanity/paths";
@@ -460,14 +461,34 @@ export default async function Home({
   // photoAlt above — an asset description tied to a specific stock photo,
   // not CMS copy; flagged in this pass's own report, not silently
   // resolved as an i18n gap.
-  const welcomePhotoUrl = "/design-lab/03.webp";
-  const welcomePhotoAlt = "Giuseppe Iannone, ritratto in una galleria, sfondo chiaro.";
+  // Photo-swap pass — real Sanity asset now (uploaded, not a /design-lab/
+  // static path), same mechanism as contactPhotoUrl above: manually-built
+  // reference through urlFor() since this field isn't wired into the
+  // homePage schema. Landscape 5:4 source (1402x1122) — see this pass's
+  // own report on object-position, chosen to keep the crown of the head
+  // clear of the crop at every breakpoint.
+  const welcomePhotoUrl = urlFor({
+    asset: { _ref: "image-fdd2e5a03da79c2ea175fa11edf5a201c7c9c111-1402x1122-png", _type: "reference" },
+  }).url();
+  const welcomePhotoAlt = "Giuseppe Iannone, ritratto.";
 
-  const portraitUrl = "/design-lab/photos/01.webp";
+  // Photo-swap pass — real Sanity asset now, same mechanism as
+  // welcomePhotoUrl/contactPhotoUrl above. Landscape 4:3 source
+  // (1448x1086) — this section's own photo container is full-bleed and
+  // WIDER than 4:3 at every breakpoint measured (md+), so object-fit:
+  // cover crops vertically here, never horizontally — full source width
+  // always shows. See this pass's own report for the crop math and why
+  // chiSonoBlock.module.scss's previous scaleX(-1) flip (tuned for the
+  // OLD asset's own composition) was removed rather than kept for this one.
+  const portraitUrl = urlFor({
+    asset: { _ref: "image-d4826af8101b8002d66bf042e9352f35ff34f452-1448x1086-png", _type: "reference" },
+  }).url();
   const portraitAlt = "Giuseppe Iannone, psicoterapeuta — ritratto";
 
-  const contactPhotoUrl = "/design-lab/photos/09.webp";
-  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+  // Single-sourced (src/sanity/contactPhoto.ts) — was its own local const
+  // here, the ORIGINAL of what got copy-pasted into 12 other pages, only
+  // one of which (this one) was ever updated when the asset changed. See
+  // that module's own comment.
 
   const roomPhotoUrl = "/design-lab/photos/11.webp";
   const roomPhotoAlt =

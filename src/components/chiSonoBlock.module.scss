@@ -49,9 +49,23 @@
   width: 100%;
   overflow: hidden;
 
+  // Visible-area pass — was inset:0 (full section width, 2.057 aspect at
+  // 1440), painting roughly half the image underneath .scrim's own opaque
+  // right-hand fill and forcing a large upscale to cover a box far wider
+  // than the source's own 4:3 (only 64.8% of the source's height
+  // survived object-fit:cover's crop at 1440). Constrained to 51% width —
+  // the SAME literal value .scrim's mask-image and .seamRule's own left
+  // already use for the photo/panel boundary (not re-derived, reused
+  // verbatim so the three can never drift out of step) — so the photo
+  // now ends exactly where the panel begins, nothing painted and hidden
+  // underneath. top/bottom/left:0 instead of inset:0 — inset would also
+  // set right:0, which conflicts with an explicit width.
   @include mixins.breakpoint-up(md) {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 51%;
     aspect-ratio: auto;
   }
 
@@ -67,37 +81,44 @@
   clip-path: inset(0 0 0 0);
 }
 
-// Object-position pass: this portrait (the SAME asset Welcome already
-// uses, at object-position 82% 38% there) has its subject composed in
-// the RIGHT portion of the source frame, with a plain neutral backdrop
-// filling the left ~55% — verified by looking at the actual file, not
-// assumed. A literal mirror (flipping to an 18%-ish object-position)
-// would crop the subject OUT of frame entirely at this section's own
-// wide/tall aspect (the left portion is empty wall, no subject exists
-// there to reveal) — exactly the "doesn't work, don't force it" case
-// this pass's own brief anticipated. Solved instead with a horizontal
-// flip (scaleX(-1)) on top of the SAME object-position Welcome already
-// uses: the crop/zoom characteristics stay identical (known-good), the
-// whole frame mirrors, so the subject lands in the LEFT portion and the
-// empty backdrop lands on the right — under the scrim, where it belongs.
-// Safe specifically BECAUSE the backdrop is a plain, texture-free neutral
-// wall (no asymmetric detail a flip would visibly betray).
+// Object-position pass — retuned again after .photoLayer's own width was
+// constrained to 51% (the visible area, matching .scrim/.seamRule's own
+// cut — see that rule's own comment). That resize flipped which axis
+// object-fit: cover crops: the container is now NARROWER-per-height than
+// the 4:3 source at both 1440 (1.049) and 1024 (0.746), so cover matches
+// by HEIGHT and crops horizontally instead — full height always shows now
+// (confirmed live), the opposite of the full-bleed version's own vertical
+// crop this comment used to describe. Y is a genuine no-op here as a
+// result — kept at 50% only as a neutral default, not because it does
+// anything. X=50% (the source's own geometric horizontal center) was
+// chosen by actually cropping the real visible windows at both 1440
+// (78.7% of source width survives) and 1024 (56.0%) and looking at them:
+// comfortable margin on both sides at both, crown clear, face nowhere
+// near the seam on the right.
+//
+// The previous scaleX(-1) flip doesn't apply to this asset and was
+// removed, not kept: it existed specifically to relocate the OLD photo's
+// subject from the source's right portion to this section's own left
+// (uncovered by the scrim) side. This new photo's subject already sits
+// left-of-center in the source — confirmed by cropping the actual visible
+// window and looking at it — so flipping would move him TOWARD the right-
+// side scrim instead of away from it, the opposite of what this section
+// needs.
 .photoImg {
   object-fit: cover;
-  object-position: 82% 38%;
+  object-position: 50% 50%;
 
   // Reveal, layer 2 — unchanged timing/easing from Welcome's own (1.4s,
-  // same cubic-bezier), scaleX(-1) held constant across both states so
-  // only the trailing scale() interpolates. No mask, no filter, no
-  // opacity of any kind on this element — see this file's own top comment
-  // for why every transition moved off the photo and onto the
-  // surrounding layers instead.
-  transform: scaleX(-1) scale(1.12);
+  // same cubic-bezier). No mask, no filter, no opacity of any kind on
+  // this element — see this file's own top comment for why every
+  // transition moved off the photo and onto the surrounding layers
+  // instead.
+  transform: scale(1.12);
   transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .section[data-revealed="true"] .photoImg {
-  transform: scaleX(-1) scale(1);
+  transform: scale(1);
 }
 
 // Scrim — final correction. The previous two passes were chasing the wrong
@@ -290,7 +311,7 @@
   }
 
   .photoImg {
-    transform: scaleX(-1) scale(1);
+    transform: scale(1);
     transition: none;
   }
 }

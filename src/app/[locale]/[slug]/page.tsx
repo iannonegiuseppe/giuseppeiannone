@@ -13,6 +13,7 @@ import { RelatedArticlesGrid, type RelatedArticleDoc } from "@/components/Relate
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
+import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -225,12 +226,7 @@ export default async function RootSlugPage({
     });
 
     const contactSection = contactCopy?.contactSection;
-    // Same hardcoded design-lab asset the blog article page's own
-    // ContactBlock invocation uses — see that route's page.tsx for the
-    // full reasoning (matches the homepage's actual portrait, which is
-    // itself hardcoded, not CMS-sourced).
-    const contactPhotoUrl = "/design-lab/photos/09.webp";
-    const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+    // contactPhotoUrl/contactPhotoAlt: single-sourced (src/sanity/contactPhoto.ts).
     const t = await getTranslations({ locale, namespace: "PillarPage" });
     const relatedArticlesHeading = t("relatedArticlesHeading");
 

@@ -16,6 +16,7 @@ import { TimelineSection, type TimelineEntryData } from "@/components/TimelineSe
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { resolveDiplomiLabItems } from "@/sanity/diplomi";
 import { buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
@@ -273,8 +274,7 @@ export default async function ChiSonoPage({
   const diplomiLabItems = resolveDiplomiLabItems(diplomiData?.diplomi?.items);
 
   const contactSection = contactCopy?.contactSection;
-  const contactPhotoUrl = "/design-lab/photos/09.webp";
-  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+  // Single-sourced (src/sanity/contactPhoto.ts) — was its own local const.
 
   const whatIWorkWith = chiSono?.whatIWorkWith;
   const howIWork = chiSono?.howIWork;

@@ -1,4 +1,7 @@
+"use client";
+
 import NextImage from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { AnimatedDivider } from "@/components/AnimatedDivider";
 import { ContactForm } from "./ContactForm";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
@@ -42,6 +45,85 @@ export function ContactBlock({
   photoUrl: string;
   photoAlt: string;
 }) {
+  // Vertical-centering pass — the form column's midpoint has to match the
+  // photo column's midpoint specifically, not the grid row's own auto-
+  // height. Those aren't the same thing whenever the form (not the photo)
+  // ends up being the taller of the two — confirmed live at 1024, where
+  // the form's own content pushes it past the (now 15%-smaller) photo's
+  // height: plain align-self:center degenerates to a no-op there, since a
+  // grid row auto-sizes to its TALLEST item's own margin-box, and
+  // centering an item within a space exactly equal to its own height has
+  // no slack to move into. A pure-CSS calc() can't stand in for this
+  // either — both heights are independently responsive (frame width is a
+  // fraction of an fr-unit track; the heading wraps differently per
+  // breakpoint), so there's no fixed relationship to hardcode. Measuring
+  // both columns' actual rendered midpoints and translateY-ing the text
+  // column to match is the same "can't be done in CSS alone, so measure
+  // and drive a style value" idiom ChiSonoGlassCard.tsx's own seam-
+  // detection effect already uses on this codebase — transform, not
+  // margin, specifically because margin is part of the box grid auto-
+  // sizing reads, which would feed back into the very row height this is
+  // trying to correct against; transform never affects layout, so there's
+  // no circularity.
+  const photoColRef = useRef<HTMLDivElement>(null);
+  const textColRef = useRef<HTMLDivElement>(null);
+  const [formOffsetPx, setFormOffsetPx] = useState(0);
+  // Mirrors formOffsetPx for the effect below to read synchronously —
+  // the effect only runs once (mount + resize, not on every state
+  // change), so the offset captured in its own closure would otherwise
+  // go stale after the first correction; a ref always reads the latest
+  // value regardless of when the closure was created.
+  const formOffsetRef = useRef(0);
+
+  useEffect(() => {
+    const photoEl = photoColRef.current;
+    const textEl = textColRef.current;
+    if (!photoEl || !textEl) return;
+
+    let rafId: number | null = null;
+
+    const measure = () => {
+      rafId = null;
+      // Below lg the columns stack (photo hidden entirely — see
+      // .contactPhotoCol's own breakpoint-down(md) rule) and no offset
+      // applies; reset it so a resize crossing the breakpoint downward
+      // doesn't leave a stale transform behind.
+      if (!window.matchMedia("(min-width: 64rem)").matches) {
+        formOffsetRef.current = 0;
+        setFormOffsetPx((prev) => (prev === 0 ? prev : 0));
+        return;
+      }
+      // Read with the previous offset still applied but before any new
+      // one — transform doesn't affect layout, so photoEl's own rect is
+      // never influenced by textEl's transform either way; textEl's own
+      // rect IS shifted by its current transform, so its un-transformed
+      // midpoint is recovered by subtracting the offset already in play
+      // (read from the ref, not the state closure — see that ref's own
+      // comment for why).
+      const photoRect = photoEl.getBoundingClientRect();
+      const textRect = textEl.getBoundingClientRect();
+      const photoMidpoint = (photoRect.top + photoRect.bottom) / 2;
+      const textMidpointUntransformed = (textRect.top + textRect.bottom) / 2 - formOffsetRef.current;
+      const nextOffset = photoMidpoint - textMidpointUntransformed;
+      if (Math.abs(formOffsetRef.current - nextOffset) > 0.5) {
+        formOffsetRef.current = nextOffset;
+        setFormOffsetPx(nextOffset);
+      }
+    };
+
+    const scheduleMeasure = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("resize", scheduleMeasure);
+    return () => {
+      window.removeEventListener("resize", scheduleMeasure);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   const emphasisIndex = headingEmphasisWord ? heading.indexOf(headingEmphasisWord) : -1;
   const headingNode =
     headingEmphasisWord && emphasisIndex !== -1 ? (
@@ -64,8 +146,9 @@ export function ContactBlock({
               lg+, matching the reference), form second — see
               contactBlock.module.scss's own comment on why this doesn't
               create a Tab-order mismatch at either breakpoint. */}
-          <div className={styles.contactPhotoCol}>
+          <div className={styles.contactPhotoCol} ref={photoColRef}>
             <div className={styles.contactPhotoFrame}>
+              <AnimatedDivider className={styles.contactPhotoRule} />
               <NextImage
                 src={photoUrl}
                 alt={photoAlt}
@@ -76,7 +159,11 @@ export function ContactBlock({
             </div>
             <p className={styles.contactPhotoCaption}>{photoCaption}</p>
           </div>
-          <div className={styles.contactTextCol}>
+          <div
+            className={styles.contactTextCol}
+            ref={textColRef}
+            style={formOffsetPx ? { transform: `translateY(${formOffsetPx}px)` } : undefined}
+          >
             {/* Correction pass: was bare text — every other kicker on this
                 page (Diplomi/Sedi/Spazi/Pricing/Chi sono) precedes its
                 label with the small .kickerRule dash; this one was missing

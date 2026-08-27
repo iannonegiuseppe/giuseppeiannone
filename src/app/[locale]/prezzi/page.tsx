@@ -8,6 +8,7 @@ import { SectionKicker } from "@/components/ui/SectionKicker";
 import { ShimmerText } from "@/components/ShimmerText";
 import { getPillarTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL } from "@/sanity/contactPhoto";
 import { buildBreadcrumbListJsonLd, buildPersonJsonLd, buildServiceJsonLd } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
@@ -514,7 +515,7 @@ export default async function PricePage({
           googleProfileLabel={contactCopy?.googleProfileLabel ?? ""}
           googleProfileUrl={siteSettings?.googleProfileUrl}
           locale={typedLocale}
-          photoUrl="/design-lab/photos/09.webp"
+          photoUrl={CONTACT_PHOTO_URL}
           photoAlt={photoAlt}
         />
       </main>

@@ -435,9 +435,21 @@
   object-fit: cover;
   // White-balance treatment — unchanged.
   filter: sepia(0.08) saturate(0.95);
-  // Shifted right so the subject sits in the card's right portion, past
-  // where the seam-fade is weakest.
-  object-position: 82% 38%;
+  // Photo-swap pass — retuned for the new 5:4 landscape source (1402x1122):
+  // the container is much taller/narrower than the source at md+ (measured
+  // live: only 46-55% of the source's own width survives object-fit:cover's
+  // crop there), so X is set to where the face actually sits in THIS
+  // source (~54% of its width, confirmed by cropping candidate windows and
+  // looking at them, not eyeballed blind) rather than kept at the previous
+  // photo's own tuned value. Y matters only below md (at md+ the container
+  // is narrower-per-height than the source, so cover crops horizontally
+  // only — full height always shows, Y is a no-op there): the crown of
+  // hair sits at just 1.9% from the top of this source (measured directly
+  // off the pixels — a real, tight margin), and the old 38% would have
+  // cropped roughly 26.6px off the top at the one breakpoint (390) that
+  // does crop vertically — well past the hairline. 10% keeps that crop to
+  // ~7px, clear of the crown with real margin to spare.
+  object-position: 54% 10%;
   // Reveal, layer 2 — unchanged timing/easing, still layered on top of the
   // clip-path mask above.
   transform: scale(1.12);

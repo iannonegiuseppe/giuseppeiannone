@@ -13,6 +13,7 @@ import { ArticleProgress } from "./ArticleProgress";
 import { getArticleBySlug, getArticleHasCounterpart, getArticleSlugs } from "@/sanity/articles";
 import { getArticleTrail } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
+import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import { buildBlogPostingJsonLd, buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
@@ -212,16 +213,11 @@ export default async function ArticlePage({
   const authorBio = buildAuthorBio(chiSono?.paragraphs);
 
   const contactSection = contactCopy?.contactSection;
-  // Item 4 — same photo the homepage's own ContactBlock invocation uses
-  // (src/app/[locale]/page.tsx). Hardcoded there too, not something this
-  // pass introduces: a design-lab asset path, not a CMS image. Flagged in
-  // this pass's own report as a real tension with the avatar above (which
-  // deliberately uses a CMS-sourced image instead) — but item 4 asks for
-  // "same portrait" as the homepage, and the homepage's actual portrait IS
-  // this hardcoded path, so replicating it exactly is the honest choice
-  // over inventing a different (CMS) source the homepage itself doesn't use.
-  const contactPhotoUrl = "/design-lab/photos/09.webp";
-  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+  // contactPhotoUrl/contactPhotoAlt: single-sourced (src/sanity/contactPhoto.ts),
+  // same photo the homepage's own ContactBlock invocation uses. Flagged in
+  // an earlier pass's own report as a real tension with the avatar above
+  // (which deliberately uses a CMS-sourced image instead) — but this is
+  // the same "same portrait as the homepage" photo, honestly.
 
   // Fuller author section at the end of the article body: portrait, name,
   // credentials, bio, link. Seventh pass, item 4 — bio wired from

@@ -233,27 +233,27 @@ $z-index: (
   // other color token in this file DOES flip there; this one is the one
   // intentional exception).
   //
-  // Re-sampled this pass for the light-background portrait swap
-  // (public/design-lab/03.webp, replacing the old dark-background
-  // 04.webp — the value below is NOT that photo's dark corners anymore).
-  // Real bug caught while re-sampling: the first attempt (navigate
-  // straight to the image URL, screenshot the page, sample the PNG)
-  // silently sampled the browser's own default-viewport letterbox
-  // instead of the image — 03.webp's real size is 1800x1827, well past
-  // Playwright's default 1280x720 viewport, so the "screenshot" was
-  // actually the shrunk-to-fit rendering, not the source pixels; it
-  // happened to still report a plausible-looking dark value, which is
-  // exactly the kind of false-positive this method is supposed to catch,
-  // not produce. Fixed by drawing the real <img> element (its own
-  // naturalWidth/naturalHeight) onto a canvas directly, no screenshot
-  // step at all. The four corners do NOT closely agree this time: three
-  // cluster in a light warm-neutral grey (topLeft #b4b1b2, topRight
-  // #c5c4c7, bottomRight #afacb0), bottomLeft is a clear outlier
-  // (#766d6c, much darker) — almost certainly the subject's dark polo
-  // shoulder or the framed artwork's own edge/shadow falling in that
-  // corner, not neutral wall. Used the average of the three agreeing
-  // corners, excluding the outlier.
-  --color-photo-backdrop: #b8b6b8;
+  // Re-sampled AGAIN this pass for the Sanity-hosted welcome-image.png
+  // swap (was #b8b6b8, sampled from the previous 03.webp source — see
+  // git history on this file for that sampling's own notes). Sampled
+  // from within the crop window actually visible at 1440 (centered on
+  // x=54%, per WelcomeBlock's own object-position), from the top/upper-
+  // corner region — background wall, away from the subject.
+  //
+  // NOT the only consumer: CityWelcomeBlock.module.scss's own
+  // .cwPhotoLayer reads this same token, backing a DIFFERENT photo
+  // (psicologo-monza/-milano's MID_PAGE_PHOTO_URL, /design-lab/photos/
+  // 04.webp — explicitly documented at that constant's own definition as
+  // "the same photoshoot's unused DARK-background frame"). This was
+  // already a pre-existing mismatch before this pass touched anything —
+  // the token was last re-sampled for 03.webp (light) while
+  // CityWelcomeBlock kept using 04.webp (dark) as its own backdrop, and
+  // this pass's own re-sample for welcome-image.png doesn't fix or
+  // worsen that; it's the same one-token-two-different-photos gap,
+  // flagged again rather than silently split here — a real fix needs two
+  // separate tokens (one per photo), a decision left to whoever picks
+  // this up.
+  --color-photo-backdrop: #BAA28C;
 
   // Light island pass (Hope, /design-lab dark theme): same "declared
   // once, never reassigned in .themeDark" exception as

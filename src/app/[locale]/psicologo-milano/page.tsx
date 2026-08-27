@@ -9,6 +9,8 @@ import { SplitBlock } from "@/components/SplitBlock";
 import { StackedBands } from "@/components/StackedBands";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
+import { MID_PAGE_PHOTO_URL, MID_PAGE_PHOTO_ALT } from "@/sanity/midPagePhoto";
 import { milanPath, pillarPath, type Locale } from "@/sanity/paths";
 import { contactSectionQuery, milanPageQuery } from "@/sanity/queries";
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
@@ -85,19 +87,11 @@ function getContactSectionCopy(locale: string) {
   return sanityFetch<ContactSectionCopy | null>(contactSectionQuery, { locale }, ["homePage"]);
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
-
-// Mid-page portrait pass — deliberately NOT 09.webp (the contact-section
-// photo already used lower on this same page): two identical portraits
-// on one page reads as an error, per the brief. 04.webp is the same
-// photoshoot's dark-background frame, already promoted to
-// /design-lab/photos/ at production quality, unused anywhere else on the
-// live site today. Rebuild pass: this section is now CityWelcomeBlock, a
-// real Welcome-shaped composition (see that component's own top comment)
-// — not a small thumbnail, not a scaled-down card.
-const MID_PAGE_PHOTO_URL = "/design-lab/photos/04.webp";
-const MID_PAGE_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
+// MID_PAGE_PHOTO_URL/ALT: single-sourced (src/sanity/midPagePhoto.ts) —
+// deliberately a DIFFERENT photo from the contact-section one above (two
+// identical portraits on one page reads as an error, per the original
+// brief); see that module's own comment.
 
 // No field for "in studio dal" exists anywhere in the schema (checked
 // siteSettings, chiSonoSection, homePage) — only registrationNumber does

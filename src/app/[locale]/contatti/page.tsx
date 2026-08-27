@@ -10,6 +10,7 @@ import { ShimmerText } from "@/components/ShimmerText";
 import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
 import { whatsappUrl } from "@/sanity/contact";
+import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
 import {
   contactPath,
   hrefFor,
@@ -86,8 +87,7 @@ function getSedes(locale: string) {
   return sanityFetch<SedeData[]>(sedesQuery, { locale }, ["sede"]);
 }
 
-const CONTACT_PHOTO_URL = "/design-lab/photos/09.webp";
-const CONTACT_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+// CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
 
 // City-page links pass — these three pages were unreachable from
 // anywhere on the site before this pass (no nav, no footer, no in-page

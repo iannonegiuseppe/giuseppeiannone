@@ -10,6 +10,7 @@ import { ReadingArea } from "@/components/ReadingArea";
 import { SubtopicEpigraph } from "@/components/SubtopicEpigraph";
 import { getSubtopicTrail } from "@/sanity/breadcrumbs";
 import { sanityFetch, sanityFetchPublished } from "@/sanity/client";
+import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import {
   buildBreadcrumbListJsonLd,
@@ -181,11 +182,7 @@ export default async function SubtopicPage({
     getContactSectionCopy(locale),
   ]);
   const contactSection = contactCopy?.contactSection;
-  // Same hardcoded design-lab asset the pillar/article routes' own
-  // ContactBlock invocation uses — see [locale]/[slug]/page.tsx's own
-  // comment for the full reasoning.
-  const contactPhotoUrl = "/design-lab/photos/09.webp";
-  const contactPhotoAlt = "Giuseppe Iannone, ritratto.";
+  // contactPhotoUrl/contactPhotoAlt: single-sourced (src/sanity/contactPhoto.ts).
 
   return (
     <main>

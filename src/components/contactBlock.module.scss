@@ -175,20 +175,86 @@
   @include mixins.focus-ring;
 }
 
-// Edge without a drop shadow (§10 rules shadows/glows/blur out): a 1px
-// border — the one raw-px exception CLAUDE.md itself carves out — replaces
-// the old box-shadow: var(--shadow-soft), which was a real drop shadow.
+// Cutout pass — the card (fill/border/radius) is gone entirely: the
+// figure stands directly on the section's own background now, no plate
+// behind it. aspect-ratio matches the asset's own real pixel dimensions
+// (767x1542, a background-free cutout) instead of the old 4/5 card crop —
+// object-fit: contain below means nothing gets cropped, but matching the
+// ratio here means the box has no letterboxing to begin with either.
+// overflow: hidden is also gone on purpose, not an oversight: .contactPhotoRule
+// below deliberately extends past this box's own top/bottom edges, and
+// clipping it here would silently defeat that.
 .contactPhotoFrame {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
-  border-radius: var(--radius-l);
-  overflow: hidden;
-  border: 1px solid var(--color-line);
+  aspect-ratio: 767 / 1542;
+
+  // Sizing pass — figure scaled down 15% at lg+ specifically (was
+  // measured at 507.6x1020.5px at 1440, reduced 15% to 85% (~431x867),
+  // then a further 15% on TOP of that — 72% of the original column width
+  // — per this pass's own report. Frame width scales, not the image —
+  // aspect-ratio above keeps height in lockstep, so nothing crops or
+  // stretches. Below lg the figure is already display:none on the column
+  // itself (.contactPhotoCol), so no mobile/tablet tier needs its own
+  // value.
+  //
+  // margin-inline: auto — composition-fix pass. At 72% width the frame
+  // no longer fills its column, and as a plain left-aligned block it was
+  // sitting flush against the column's own left edge with the leftover
+  // 28% stranded entirely on the right (confirmed live: 0px offset from
+  // the column's left, 142px from its right) — reading as the whole
+  // figure+rule unit shifted left, not letterboxing inside the frame
+  // (image and frame boxes were already pixel-identical; ruled out
+  // first, not assumed). .contactPhotoRule is positioned relative to
+  // THIS element, so centering the frame centers the rule with it, as
+  // one unit.
+  @include mixins.breakpoint-up(lg) {
+    width: 72%;
+    margin-inline: auto;
+  }
 }
 
 .contactPhotoImg {
-  object-fit: cover;
+  object-fit: contain;
+  position: relative; // stacking context for z-index below, over .contactPhotoRule
+  z-index: 1;
+}
+
+// Vertical reuse of AnimatedDivider (AnimatedDivider.tsx/.module.scss,
+// .divider class) — the same reveal-gated shimmer line already used
+// elsewhere on this page (.contactRule above) and on Chi sono
+// (.credentialsRule, CredentialsBand.module.scss). Rotated via transform,
+// not reimplemented: AnimatedDivider's own IntersectionObserver/shimmer
+// logic is completely untouched, this only changes layout.
+//
+// Positioned at the image box's own right edge, BEHIND the figure
+// (z-index: 0 vs. .contactPhotoImg's 1) — the cutout's own right contour
+// reaches ~99.9% of the image width around its mid-height (the raised
+// elbow) while the shoulder above sits back at ~76-78% (measured directly
+// off the asset's alpha channel, not eyeballed), so the elbow occludes a
+// real stretch of this rule while the shoulder doesn't — that occlusion
+// is what reads as leaning against it, per this pass's own brief.
+//
+// width: 201.04% !important — pre-rotation "length" of the bar, expressed
+// as a % of the FRAME'S WIDTH (the only axis CSS % width can reference)
+// because the frame's aspect-ratio is locked (767/1542 above), so its
+// height is always width × 2.0104: this is exactly 100% of that height —
+// flush with the frame's own top and bottom, no overshoot (was 241.25%/
+// 120% in an earlier pass; corrected per direct instruction — the rule
+// now matches the figure's own height exactly instead of extending past
+// it). Rotating this 90° turns that pre-sized length into the correct
+// vertical extent. !important on width/height only: AnimatedDivider.module
+// .scss's own .divider sets both at the exact same specificity (0,1,0) —
+// relying on file/import order to break that tie is fragile, this pins it
+// explicitly instead of gambling on bundler concatenation order.
+.contactPhotoRule {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 201.04% !important;
+  height: 1px !important;
+  z-index: 0;
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 // Caption moved lower-right (reference's own placement), still beneath the
