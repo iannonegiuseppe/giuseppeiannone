@@ -320,11 +320,22 @@
   }
 }
 
-// --- Tile colour treatment (unchanged from the shared file's own recipe —
-// see LocationsSection.module.scss for the measured reasoning) -----------
+// --- Tile colour treatment (OSM retint pass — see LocationsSection.module
+// .scss for the measured reasoning; unchanged from that shared recipe) ---
+// Retuned for the switch from CARTO's Positron tiles (already muted/light
+// at the source) to OSM's own standard tiles (much more saturated, darker
+// road/building fills) — desaturate hard (grayscale(0.9), not the old
+// sepia-only touch), lighten (brightness(1.05)), flatten contrast
+// (contrast(0.85)) so it reads as a quiet backdrop, and a faint warm cast
+// (sepia(0.12)) to sit with the site's warm-neutral palette rather than
+// OSM's own cool cartographic blues/greens. Scoped to .leaflet-tile-pane
+// only — Leaflet keeps markers/popups in separate panes
+// (.leaflet-marker-pane/.leaflet-popup-pane), so this never touches the
+// gold marker dots or popup content, confirmed live (see this pass's own
+// report).
 :global(.leaflet-tile-pane) {
   .locationsMap:not(.locationsMapDark) & {
-    filter: sepia(0.06) brightness(0.98) contrast(1.05) saturate(1.02);
+    filter: grayscale(0.9) brightness(1.05) contrast(0.85) sepia(0.12);
   }
 }
 

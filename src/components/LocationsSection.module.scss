@@ -257,9 +257,11 @@
 // hue-rotate (no green-era correction needed here at all, unlike the
 // retired filter); brightness/contrast/saturation kept close to identity
 // since Positron needs far less correction than Voyager did.
+// OSM retint pass — see sediSection.module.scss's own comment (this
+// file's fork target) for the full reasoning behind the new values.
 :global(.leaflet-tile-pane) {
   .locationsMap:not(.locationsMapDark) & {
-    filter: sepia(0.06) brightness(0.98) contrast(1.05) saturate(1.02);
+    filter: grayscale(0.9) brightness(1.05) contrast(0.85) sepia(0.12);
   }
 }
 

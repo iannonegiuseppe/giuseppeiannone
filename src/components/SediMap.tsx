@@ -20,13 +20,21 @@ import styles from "./sediSection.module.scss";
 // route's own popup weighting/photo-gate, not LocationsPopupContent).
 const BASEMAP: "light" | "dark" = "light" as "light" | "dark";
 
-const CARTO_TILE_URL =
-  BASEMAP === "dark"
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const CARTO_SUBDOMAINS = "abcd";
-const CARTO_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+// CARTO retirement pass — CARTO began requiring an API key for their
+// basemaps and are retiring the raster tile CDN entirely; direct
+// instruction is not to get a key. Replaced with OSM's own standard raster
+// endpoint — no key, no subdomain sharding (the modern tile.openstreetmap.org
+// single host, not the old {s}-templated a/b/c pattern CARTO used) — and
+// the attribution updated to credit OpenStreetMap contributors only, per
+// their tile usage policy (a condition of using these tiles at all, not
+// optional). OSM has no separate "dark" raster style the way CARTO did
+// (dark_all/light_all) — BASEMAP's own dark branch is kept (it still drives
+// the CSS tile-filter choice below) but both branches now point at the
+// same OSM tiles; the retint is entirely a CSS filter job now, not a
+// different upstream tile set.
+const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const OSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
 
 const FIT_BOUNDS_PADDING: [number, number] = [48, 48];
 const WHEEL_ZOOM_SENSITIVITY = 100;
@@ -132,9 +140,8 @@ export function SediMap({
       mapRef.current = map;
       map.getContainer().setAttribute("aria-label", labelsRef.current.mapAriaLabel);
 
-      const tileLayer = L.tileLayer(CARTO_TILE_URL, {
-        subdomains: CARTO_SUBDOMAINS,
-        attribution: CARTO_ATTRIBUTION,
+      const tileLayer = L.tileLayer(OSM_TILE_URL, {
+        attribution: OSM_ATTRIBUTION,
         maxZoom: 19,
       });
       tileLayer.on("tileerror", (e) => {

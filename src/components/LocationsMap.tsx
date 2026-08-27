@@ -23,13 +23,14 @@ import styles from "./LocationsSection.module.scss";
 // "dark"` a compile error ("this comparison appears to be unintentional").
 const BASEMAP: "light" | "dark" = "light" as "light" | "dark";
 
-const CARTO_TILE_URL =
-  BASEMAP === "dark"
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const CARTO_SUBDOMAINS = "abcd";
-const CARTO_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+// CARTO retirement pass — same fix as SediMap.tsx's own (this file's fork
+// source); see that file's comment for the full reasoning. This component
+// is currently unused in production (superseded by SediBlock/SediMap — see
+// this file's own top comment), fixed here too so an identical, already-
+// retired tile source doesn't resurface if this ever gets reactivated.
+const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const OSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
 
 const FIT_BOUNDS_PADDING: [number, number] = [48, 48];
 
@@ -166,9 +167,8 @@ export function LocationsMap({
       mapRef.current = map;
       map.getContainer().setAttribute("aria-label", labelsRef.current.mapAriaLabel);
 
-      const tileLayer = L.tileLayer(CARTO_TILE_URL, {
-        subdomains: CARTO_SUBDOMAINS,
-        attribution: CARTO_ATTRIBUTION,
+      const tileLayer = L.tileLayer(OSM_TILE_URL, {
+        attribution: OSM_ATTRIBUTION,
         maxZoom: 19,
       });
       tileLayer.on("tileerror", (e) => {
