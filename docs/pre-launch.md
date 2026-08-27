@@ -49,6 +49,10 @@ Things that must be done before the domain switches.
   Re-confirm this with a live header check against the real Vercel
   preview before launch, since Vercel-dashboard-level config wouldn't
   show up in this repo — but nothing here points to action being needed.
+  **Reconfirmed 27 August 2026** (pre-launch batch 1, independent
+  re-investigation): still true, nothing has drifted. The launch-day
+  action here is setting `NEXT_PUBLIC_SITE_URL` in Vercel — not a code
+  change to this repo.
 
 - **Consent banner and gated script-loading both exist now — GA4 and
   Microsoft Clarity are wired, not just the mechanism.**
