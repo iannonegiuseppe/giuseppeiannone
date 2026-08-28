@@ -361,8 +361,30 @@
 // now comes from Button.tsx's own primary variant, see HeroOverlap.tsx's
 // own HeroCta call, not a local class here anymore). The real production
 // site never passes backgroundMedia, so none of this can ever affect it.
+// overflow: hidden removed — direct instruction, "mobile hero overflows on
+// short viewports" pass. It served no purpose here to begin with: the
+// video (.heroVideoEl, HeroBackgroundVideo.module.scss) is self-contained
+// via inset: 0 + object-fit: cover with no need for an ancestor clip, and
+// .heroOverlapSection below already uses min-height (not height), so
+// content genuinely grows the section rather than ever overflowing its
+// box — confirmed live at every checked viewport, nothing was ever
+// actually clipped by this. What WAS missing (see .heroVideoTextInner's
+// own comment below) was headroom for the fixed header, which this
+// property could never have fixed regardless.
+//
+// Explicit overflow: visible, not a blank rule — an empty ruleset here
+// gets optimized away entirely by this project's CSS Modules build
+// (Turbopack/lightningcss), which silently drops the class from the
+// compiled export: styles.heroVideoSection then resolves to undefined at
+// runtime, and HeroOverlap.tsx's own className string renders the literal
+// text "undefined" into the DOM instead of a real class — caught live via
+// a stashed before/after comparison for this pass's own report, not
+// assumed. overflow: visible is CSS's own initial value (so this changes
+// nothing versus a truly empty rule would have, had that worked) — it's
+// here only to keep this selector non-trivial enough to survive that
+// optimization.
 .heroVideoSection {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .heroVideoMediaWrap {
@@ -500,6 +522,27 @@
   flex-direction: column;
   justify-content: flex-end;
   padding-bottom: var(--space-8);
+  // Header-clearance pass — direct instruction, "mobile hero overflows on
+  // short viewports": nothing reserved room for the fixed header before
+  // this, so on a short viewport (content taller than the available
+  // space) the bottom-anchored block's own top edge could start ABOVE the
+  // header's bottom edge, rendering the eyebrow/heading behind it —
+  // confirmed live at 390x780/375x667/360x640 (negative measured
+  // clearance, -30.86/-64/-64px respectively; see this pass's own
+  // report). --header-height (100px below lg) + 1.5rem extra breathing
+  // room — the SAME margin .heroOverlapPhotoWrap's own header-clearance
+  // calc already uses elsewhere in this file, reused rather than a new
+  // value. .heroOverlapSection's own min-height (below) is what turns
+  // this into an actual fix rather than just moving the clipping problem
+  // around: reserving this space can only ever make the flex column need
+  // MORE total height, and min-height (not a fixed height) is exactly
+  // the property that lets the section grow to supply it instead of
+  // squeezing content into a box too short for it. lg+ is untouched
+  // (scoped below lg only) — desktop already clears the header with
+  // margin at every real desktop height.
+  @include mixins.breakpoint-down(lg) {
+    padding-top: calc(var(--header-height) + 1.5rem);
+  }
   @include mixins.container;
 
   @include mixins.breakpoint-up(lg) {
