@@ -55,21 +55,28 @@
   padding-left: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-5));
   padding-right: var(--space-5);
 
-  // Widen pass — the row's 62% column has real slack beyond the base
-  // 45rem (720px) measure at lg+: live-tested against all three real
-  // paragraphs (not just one), 45rem-50rem is a flat plateau where
-  // widening changes NOTHING about word-wrap (same line count, same
-  // chars/line, for every paragraph) — past 50rem (~810px content-box
-  // equivalent) at least one paragraph's word-wrap collapses onto fewer,
-  // much longer lines (chars/line jumping from 65/78/85 to 98+),
-  // breaking the ~75-char ceiling this pass was told to respect. 50rem is
-  // the actual ceiling before that cliff, not an arbitrary round number —
-  // see this pass's own report for the per-width, per-paragraph
-  // measurements that found it. Below lg: unchanged (still 45rem, via the
-  // base .relationshipColumn rule above) — this override only fires at
-  // breakpoint-up(lg), same as its own padding override below.
+  // Widen pass — first tried 50rem (800px), the actual ceiling before
+  // word-wrap collapses onto fewer/longer lines for at least one real
+  // paragraph (chars/line jumping from 65/78/85 to 98+, past the ~75-char
+  // guideline this was originally told to respect). Owner reviewed that
+  // result live and asked for wider regardless — closing the gap to the
+  // photo took priority over the char-count guideline once seen rendered.
+  // Settled at 59.375rem (950px) after also trying 75rem (1200px) and
+  // finding it too wide — though at the widest checked widths (1440-1920)
+  // the column's own 62% grid track (not this max-width) ends up the
+  // binding constraint regardless of the exact value here, so 950px and
+  // 1200px render IDENTICALLY at every checked width (content width caps
+  // at ~737-794px, gap to the photo at 48px either way). Anything from
+  // ~51rem up plateaus at that same result; below ~50.6rem, paragraph 1
+  // is back to 3 lines instead of 2 (a hard word-wrap cliff for this
+  // copy, not a smooth scale) — see this pass's own report. Paragraphs
+  // wrap to fewer, longer lines (98-107 chars/line) at these widths, a
+  // real, accepted-not-fixed tradeoff. Below lg: unchanged (still 45rem,
+  // via the base .relationshipColumn rule above) — this override only
+  // fires at breakpoint-up(lg), same as its own
+  // padding override below.
   @include mixins.breakpoint-up(lg) {
-    max-width: 50rem; // 800px
+    max-width: 59.375rem; // 950px
     padding-left: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-7));
     padding-right: var(--space-7);
   }
