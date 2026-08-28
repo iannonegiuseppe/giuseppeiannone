@@ -107,56 +107,55 @@
 // sizing (i.e. the % is silently ignored). cqw sidesteps this entirely:
 // it's relative to the nearest ancestor with container-type set — .wrap,
 // which has a normal, determinate width regardless of what .track does.
+// Drag/scroll rebuild pass — .wrap is now the real, native scroll
+// container in BOTH motion modes (overflow-x: auto unconditionally, not
+// gated behind reduced-motion any more). LocationsMarquee.tsx drives
+// .wrap's own scrollLeft directly (a requestAnimationFrame loop for
+// auto-scroll, pointer events for drag, native wheel/touch/keyboard for
+// everything else) — there is no CSS animation left at all, so there's
+// nothing left to fight between the auto-scroll, a drag, a trackpad swipe,
+// and the old reduced-motion fallback; they're all the same scrollLeft.
+// scrollbar hidden unconditionally too, since native scrolling is now
+// always the real mechanism, not just the reduced-motion fallback's own.
+// touch-action: pan-y hands horizontal gestures on this element entirely
+// to the JS pointer-drag handler instead of letting the browser ALSO try
+// to natively pan it on touch — without this, touch dragging double-
+// applies (native scroll + our own scrollLeft write racing each other).
 .wrap {
   container-type: inline-size;
   position: relative;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  cursor: grab;
   margin-top: var(--space-7);
+  @include mixins.focus-ring;
 
-  // Reduced-motion fallback: a plain, natively-scrollable static row —
-  // no animation, no duplicated half visible, user can scroll it like
-  // any other overflow list.
-  @media (prefers-reduced-motion: reduce) {
-    overflow-x: auto;
-    scrollbar-width: none;
+  &:active {
+    cursor: grabbing;
+  }
 
-    &::-webkit-scrollbar {
-      display: none;
-    }
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
-// The single moving element — BOTH halves (real + decorative duplicate)
-// are its own direct children, laid out in one continuous flex row, so
-// translateX(-50%) moves the whole thing exactly half its own total
-// width: precisely the point where the (identical) second half starts,
-// which is what makes the loop seamless. The gap here matches the
-// item-level gap below, so the seam between the two halves reads
-// identically to any other item-to-item gap — no visible "joint."
+// The single scrollable element — BOTH halves (real + decorative
+// duplicate) are its own direct children, laid out in one continuous flex
+// row. width: max-content (unconditional, every width AND every motion
+// preference) is the actual fix for the reduced-motion bug this pass's
+// own report diagnosed: the previous rule swapped this to width: auto
+// under reduced motion, which — on a block-level flex container — means
+// "stretch to fill .wrap exactly," leaving .wrap with nothing to scroll
+// through regardless of what its own overflow-x said. max-content always
+// hugs the track's own (unshrinkable — see .item's own flex-shrink: 0
+// below) content size instead, so .wrap always has real overflow to
+// scroll, with or without JS, with or without reduced motion.
 .track {
   display: flex;
   width: max-content;
   gap: var(--space-5);
-  animation: marqueeScroll 36s linear infinite;
-
-  &:hover,
-  &:focus-within {
-    animation-play-state: paused;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    width: auto;
-  }
-}
-
-@keyframes marqueeScroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 .trackHalf {
@@ -164,10 +163,15 @@
   gap: var(--space-5);
 }
 
-// The decorative duplicate half (aria-hidden, not tabbable) — hidden
-// entirely under reduced motion, since there's no animation left for it
-// to serve and it would otherwise just double the same 4 photos in the
-// static row.
+// The decorative duplicate half (aria-hidden, not tabbable) — kept hidden
+// under reduced motion, unchanged decision from before this pass: with no
+// auto-scroll loop to serve, showing it would just duplicate every real
+// office in a list a keyboard/touch user can now actually scroll and tab
+// through — confusing in exactly the context (accessible fallback) where
+// clarity matters most. The remaining single copy is still comfortably
+// wider than .wrap at every checked width (see this pass's own report),
+// so hiding it doesn't reintroduce the "nothing to scroll" bug — there's
+// still real, if roughly halved, scrollable distance.
 .trackHalfDuplicate {
   @media (prefers-reduced-motion: reduce) {
     display: none;
@@ -178,9 +182,18 @@
 // / ~1.2 mobile), same calc formula (2-gap budget divided by the target
 // count), different unit (cqw of .wrap, not % of .track — see .wrap's
 // own comment above for why).
+//
+// flex-shrink: 0 — already implied by the flex: 0 0 <basis> shorthand
+// below (the middle value), but stated explicitly per this pass's own
+// instruction: a card's width must never depend on how much room is left
+// in whatever .track's own outer box happens to be, only on .wrap's own
+// (the real, determinate reference) — that's what guarantees .track's
+// content can't be squeezed down to fit and erase the very overflow
+// .wrap needs to be scrollable at all.
 .item {
   position: relative;
   flex: 0 0 calc((100cqw - 2 * var(--space-5)) / 1.2);
+  flex-shrink: 0;
 
   @include mixins.breakpoint-up(md) {
     flex-basis: calc((100cqw - 2 * var(--space-5)) / 2.5);
