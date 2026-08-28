@@ -25,19 +25,6 @@
   --color-bg: var(--color-surface);
 }
 
-// panel={false} variants (StackedBands.tsx's own comment on that prop) —
-// same --color-bg reassignment, no background paint. "bg" tone's own
-// variant is a genuine no-op (--color-bg already equals the ambient
-// default) — kept only so the panel-vs-tone logic in StackedBands.tsx
-// doesn't need a special case for which tone it is.
-.toneSurfaceTransparent {
-  --color-bg: var(--color-surface);
-}
-
-.toneBgTransparent {
-  --color-bg: var(--color-bg);
-}
-
 .inner {
   @include mixins.container;
 }
@@ -52,19 +39,6 @@
     // "roughly 1:2.5" per metodo's own brief
     grid-template-columns: 1fr 2.5fr;
     gap: var(--space-8);
-  }
-}
-
-// Opt-in variant (StackedBands.tsx's own `stacked` prop) — heading above
-// prose at md+ too, instead of beside it. Compound selector (.band applied
-// together with .bandStacked on the same element) so its specificity beats
-// the plain .band rule above outright, not by source-order tie-break. gap
-// reverts to var(--space-5), the same vertical rhythm already used below md
-// for this exact heading-above-prose arrangement — not a new value.
-.band.bandStacked {
-  @include mixins.breakpoint-up(md) {
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
   }
 }
 

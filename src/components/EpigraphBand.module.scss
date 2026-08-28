@@ -32,6 +32,69 @@
   max-width: 45rem; // 720px, exactly — the single measure is the point of this section
 }
 
+// Photo pass — when EpigraphBand is given photoUrl, .relationshipColumn
+// moves out of .relationshipInner into .relationshipRow below, alongside
+// the photo, and this scoped selector (only matches .relationshipColumn
+// as a DIRECT CHILD of .relationshipRow — never the no-photo path, where
+// it's still a child of .relationshipInner) gives it back the inset it
+// lost by leaving that container. .relationshipInner (mixins.container)
+// supplied that inset via margin-inline: auto (centers a max-width:1320px
+// box) plus its own padding-inline — since .relationshipRow is a
+// full-bleed sibling with neither, this reproduces both halves directly:
+// max(0px, (100vw - container-max-width) / 2) is the same centering math,
+// added to (not replacing) the base padding-inline. Exactly the split
+// section 6's own .fitEndingTextCol (page.module.scss) used for its photo
+// row, reused here since it's the same "full-bleed row, text needs the
+// site's real container inset" problem. Only added on the LEFT: the right
+// edge is the grid column boundary (the seam), not the viewport edge, so
+// no matching offset belongs there — same asymmetry .fitEndingTextCol
+// used (no padding-right of its own either). See this pass's own report
+// for the live-measured confirmation that this lands at the exact same
+// left edge as the epigraph above it, at every checked width.
+.relationshipRow > .relationshipColumn {
+  padding-left: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-5));
+  padding-right: var(--space-5);
+
+  // Widen pass — the row's 62% column has real slack beyond the base
+  // 45rem (720px) measure at lg+: live-tested against all three real
+  // paragraphs (not just one), 45rem-50rem is a flat plateau where
+  // widening changes NOTHING about word-wrap (same line count, same
+  // chars/line, for every paragraph) — past 50rem (~810px content-box
+  // equivalent) at least one paragraph's word-wrap collapses onto fewer,
+  // much longer lines (chars/line jumping from 65/78/85 to 98+),
+  // breaking the ~75-char ceiling this pass was told to respect. 50rem is
+  // the actual ceiling before that cliff, not an arbitrary round number —
+  // see this pass's own report for the per-width, per-paragraph
+  // measurements that found it. Below lg: unchanged (still 45rem, via the
+  // base .relationshipColumn rule above) — this override only fires at
+  // breakpoint-up(lg), same as its own padding override below.
+  @include mixins.breakpoint-up(lg) {
+    max-width: 50rem; // 800px
+    padding-left: calc(max(0px, (100vw - var(--container-max-width)) / 2) + var(--space-7));
+    padding-right: var(--space-7);
+  }
+}
+
+// Photo row — a NEW full-bleed sibling of .relationshipInner (not nested
+// inside it), so the photo can bleed to the section's real right edge
+// exactly like section 6's own .fitEndingOuter did, while .relationshipInner
+// above keeps the kicker/epigraph at the ordinary container width. Same
+// 62/38 split, same align-items: center (not stretch — MetodoRelationshipPhoto
+// keeps aspect-ratio: 1/1 unconditionally, so whichever of the paragraph
+// column or the photo is taller drives this row's own auto height, and the
+// shorter one centers within it; the row can never end up shorter than the
+// photo, and the photo can never end up taller than the row — see this
+// pass's own report for the measured heights at each width).
+.relationshipRow {
+  position: relative;
+
+  @include mixins.breakpoint-up(md) {
+    display: grid;
+    grid-template-columns: 62% 38%;
+    align-items: center;
+  }
+}
+
 .bodyP {
   margin: 0;
   font-family: var(--font-body);

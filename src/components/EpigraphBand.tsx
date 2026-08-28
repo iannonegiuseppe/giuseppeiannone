@@ -1,3 +1,4 @@
+import { MetodoRelationshipPhoto } from "./MetodoRelationshipPhoto";
 import { SectionKicker } from "./ui/SectionKicker";
 import styles from "./EpigraphBand.module.scss";
 
@@ -13,15 +14,40 @@ import styles from "./EpigraphBand.module.scss";
 // version originally didn't, and the section rendered ivory-on-ivory
 // (near-invisible) until that was caught live and fixed. Do not remove
 // this pair on the assumption the ancestor wrapper already covers it.
+//
+// photoUrl/photoAlt — optional, opt-in only (default: unset, no photo,
+// unchanged for every existing caller). Added for Metodo's own "La
+// relazione" section: the epigraph itself (and its kicker) stay directly
+// inside .relationshipInner, completely untouched — a pull-quote squeezed
+// into a narrow column stops reading as one, so it was never a candidate
+// for sharing a row with anything. Only .relationshipColumn (the
+// paragraphs) moves into a NEW sibling row, .relationshipRow, alongside
+// the photo — see that class's own comment for the layout mechanics.
+// psicologo-monza and psicoterapia-online-italiani-estero also call this
+// component without a photo and render exactly as before.
 export function EpigraphBand({
   kicker,
   epigraph,
   paragraphs,
+  photoUrl,
+  photoAlt,
 }: {
   kicker: string;
   epigraph: string;
   paragraphs: string[];
+  photoUrl?: string;
+  photoAlt?: string;
 }) {
+  const paragraphColumn = (
+    <div className={styles.relationshipColumn}>
+      {paragraphs.map((p, i) => (
+        <p key={i} className={styles.bodyP}>
+          {p}
+        </p>
+      ))}
+    </div>
+  );
+
   return (
     <section className={styles.relationshipSection} data-sheen="upper-left">
       <div className={styles.relationshipInner}>
@@ -29,14 +55,14 @@ export function EpigraphBand({
           <SectionKicker>{kicker}</SectionKicker>
         </p>
         <p className={styles.epigraph}>{epigraph}</p>
-        <div className={styles.relationshipColumn}>
-          {paragraphs.map((p, i) => (
-            <p key={i} className={styles.bodyP}>
-              {p}
-            </p>
-          ))}
-        </div>
+        {!photoUrl ? paragraphColumn : null}
       </div>
+      {photoUrl ? (
+        <div className={styles.relationshipRow}>
+          {paragraphColumn}
+          <MetodoRelationshipPhoto photoUrl={photoUrl} photoAlt={photoAlt ?? ""} />
+        </div>
+      ) : null}
     </section>
   );
 }

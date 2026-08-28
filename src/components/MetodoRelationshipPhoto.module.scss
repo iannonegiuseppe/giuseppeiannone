@@ -1,0 +1,101 @@
+@use "../styles/mixins";
+
+// Metodo section 4 ("La relazione") photo — moved from section 6's own
+// MetodoFitEndingPhoto.module.scss (renamed to match). Mechanism
+// (scrim/photoLayer/seamRule/reveal) copied verbatim from that file; the
+// one deliberate difference is .root below — see this file's own comment
+// there, and MetodoRelationshipPhoto.tsx's own top comment, for why.
+.root {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+}
+
+// Flat, tone-matched, non-animating backdrop — background is var(--color-bg)
+// here (not var(--color-surface), MetodoFitEndingPhoto's own value): THIS
+// section paints its own background as var(--color-bg) directly (see
+// EpigraphBand.module.scss's own .relationshipSection), no "surface" tone
+// reassignment happens anywhere in this section the way section 6's
+// StackedBands tone="surface" did — so the tone-matched fallback/reveal
+// backdrop must match THAT value instead, or it'd paint a visibly
+// different colour behind the reveal than the section around it.
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--color-bg);
+}
+
+// Seam rule — a sibling of .root (both direct children of
+// EpigraphBand.module.scss's .relationshipRow), positioned against that
+// row (not the whole <section>, which also contains the epigraph above
+// this row) so it always runs the row's own full height regardless of
+// which of .root/.relationshipColumn is taller. 62% — matches
+// .relationshipRow's own grid-template-columns split.
+.seamRule {
+  display: none;
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    position: absolute;
+    left: 62%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-accent) 55%, transparent) 14%,
+      color-mix(in srgb, var(--color-accent) 55%, transparent) 86%,
+      transparent
+    );
+  }
+}
+
+.photoLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+
+  // Reveal, layer 1 — grows from the box's own RIGHT edge, same
+  // convention as MetodoFitEndingPhoto.module.scss's own (matches
+  // Welcome's own).
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 1.1s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.root[data-revealed="true"] .photoLayer {
+  clip-path: inset(0 0 0 0);
+}
+
+// object-fit: cover has nothing to crop here at any width — .root's
+// aspect-ratio (1/1) matches the source (1440x1440) exactly, unconditionally,
+// unlike MetodoFitEndingPhoto's own md+ override. No object-position tuning
+// needed for the same reason.
+.photoImg {
+  object-fit: cover;
+
+  // Reveal, layer 2 — unchanged timing/easing from MetodoFitEndingPhoto's own.
+  transform: scale(1.12);
+  transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.root[data-revealed="true"] .photoImg {
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoLayer {
+    clip-path: inset(0 0 0 0);
+    transition: none;
+  }
+
+  .photoImg {
+    transform: scale(1);
+    transition: none;
+  }
+}

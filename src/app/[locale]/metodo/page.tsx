@@ -4,7 +4,7 @@ import { AsymmetricOffsetBlock } from "@/components/AsymmetricOffsetBlock";
 import { CenteredHero } from "@/components/CenteredHero";
 import { ContactBlock } from "@/components/ContactBlock";
 import { EpigraphBand } from "@/components/EpigraphBand";
-import { MetodoFitEndingPhoto } from "@/components/MetodoFitEndingPhoto";
+import { MetodoRelationshipPhoto } from "@/components/MetodoRelationshipPhoto";
 import { PracticalClosing } from "@/components/PracticalClosing";
 import { SplitBlock } from "@/components/SplitBlock";
 import { StackedBands } from "@/components/StackedBands";
@@ -96,14 +96,15 @@ function getContactSectionCopy(locale: string) {
 // CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts) — was
 // its own local const here.
 
-// Section 6 ("Fit and Ending") photo — same manually-constructed-reference
+// Section 4 ("La relazione") photo — same manually-constructed-reference
 // pattern as page.tsx's own welcomePhotoUrl/portraitUrl (this field isn't
 // wired into methodPageQuery's own GROQ projection, same reasoning as
-// those two).
-const FIT_ENDING_PHOTO_URL = urlFor({
+// those two). Moved here from section 6 ("Fit and Ending") — same asset,
+// renamed constant to match its new home.
+const RELATIONSHIP_PHOTO_URL = urlFor({
   asset: { _ref: "image-84b6209387b4bbdacd096b99966766b192d7958a-1440x1440-webp", _type: "reference" },
 }).url();
-const FIT_ENDING_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
+const RELATIONSHIP_PHOTO_ALT = "Giuseppe Iannone, ritratto.";
 
 // Splits `text` at the first occurrence of `emphasis` and wraps that span
 // in the given render function — same indexOf-based mechanism every real
@@ -265,16 +266,23 @@ export default async function MetodoPage({
         </div>
       </section>
 
-      {/* === 4. THE RELATIONSHIP — dark, epigraph + single 720px column =====
+      {/* === 4. THE RELATIONSHIP — dark, epigraph + paragraphs beside a photo
           EpigraphBand paints its own explicit background/color (see its
           own file comment for why) — themeDark here still needed for
           every OTHER token it reads (--color-accent via SectionKicker,
-          --color-hairline, etc.), same rule as sections 2/6. */}
+          --color-hairline, etc.), same rule as sections 2/6. Photo moved
+          here from section 6 ("Fit and Ending") — the epigraph itself
+          keeps full width (EpigraphBand.module.scss's own .relationshipInner
+          is untouched); only the paragraph row below it gains a photo
+          column, so the pull-quote is never narrowed. See
+          EpigraphBand.tsx's own comment on the photo props. */}
       <div className="themeDark">
         <EpigraphBand
           kicker={data?.relationship?.kicker ?? ""}
           epigraph={data?.relationship?.epigraph ?? ""}
           paragraphs={relationshipParagraphs}
+          photoUrl={RELATIONSHIP_PHOTO_URL}
+          photoAlt={RELATIONSHIP_PHOTO_ALT}
         />
       </div>
 
@@ -292,41 +300,23 @@ export default async function MetodoPage({
         }}
       />
 
-      {/* === 6. FIT AND ENDING — surface step, two stacked bands + photo ====
-          StackedBands itself is unmodified apart from three opt-in props
-          (stacked, sheen={false}, panel={false}) — confined to the left 62%
-          by .fitEndingTextCol, a grid column, not a change to the
-          component's own layout. The photo is a separate element, not
-          folded into StackedBands' own slots. data-sheen="upper-left" now
-          lives on .fitEndingOuter (the whole section's own box) instead of
-          StackedBands' own <section>, and panel={false} drops that
-          <section>'s own background paint (.fitEndingOuter already paints
-          the same tone behind it) — see StackedBands.tsx's own comments on
-          both props for why. */}
+      {/* === 6. FIT AND ENDING — surface step, two side-by-side bands ======= */}
       <div className="themeDark">
-        <div className={styles.fitEndingOuter} data-sheen="upper-left">
-          <div className={styles.fitEndingTextCol}>
-            <StackedBands
-              tone="surface"
-              stacked
-              panel={false}
-              sheen={false}
-              bands={[
-                {
-                  heading: data?.fitEnding?.band1?.heading ?? "",
-                  p1: data?.fitEnding?.band1?.p1 ?? "",
-                  p2: data?.fitEnding?.band1?.p2,
-                },
-                {
-                  heading: data?.fitEnding?.band2?.heading ?? "",
-                  p1: data?.fitEnding?.band2?.p1 ?? "",
-                  p2: data?.fitEnding?.band2?.p2,
-                },
-              ]}
-            />
-          </div>
-          <MetodoFitEndingPhoto photoUrl={FIT_ENDING_PHOTO_URL} photoAlt={FIT_ENDING_PHOTO_ALT} />
-        </div>
+        <StackedBands
+          tone="surface"
+          bands={[
+            {
+              heading: data?.fitEnding?.band1?.heading ?? "",
+              p1: data?.fitEnding?.band1?.p1 ?? "",
+              p2: data?.fitEnding?.band1?.p2,
+            },
+            {
+              heading: data?.fitEnding?.band2?.heading ?? "",
+              p1: data?.fitEnding?.band2?.p1 ?? "",
+              p2: data?.fitEnding?.band2?.p2,
+            },
+          ]}
+        />
       </div>
 
       {/* === 7. PRACTICAL AND CLOSING — light island ========================= */}
