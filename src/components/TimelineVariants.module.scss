@@ -302,6 +302,11 @@
     align-items: start;
   }
 }
+// Mobile pass — the deck/overlap treatment below lg was tried and
+// pulled back out (see TimelineRoute.tsx's own history): mobile now
+// renders as a plain sequential list, spaced by .routeList's own gap
+// like any other breakpoint. The postcard overlap stays lg+-only, its
+// original scope before that attempt.
 .routeEntry:not(:first-child) {
   @include mixins.breakpoint-up(lg) {
     margin-top: -1.5rem;
@@ -375,18 +380,52 @@
 }
 .routeBody { margin: 0 0 var(--space-3); max-width: 38rem; line-height: 1.75; font-size: 0.9375rem; color: var(--color-text); }
 .routeBody:last-of-type { margin-bottom: 0; }
-// --tilt-img keeps the existing static "postcard" rotation as its own
-// named value (same reasoning as .routeCard's own --tilt) so the
-// parallax keyframes below can hold it constant while only animating
-// translateY — one transform property, two independent concerns.
+// Mobile layout pass — below md, .routeHasImage .routeCols stacks
+// (column, see that rule above), so this used to be the ONLY sizing
+// rule active there too: a fixed 12rem (192px) width designed for the
+// md+ SIDE column, forcing every real source (all four are landscape,
+// 1.5-1.78:1 — confirmed live against Sanity's own asset metadata, none
+// carry EXIF rotation) through a 3:4 PORTRAIT aspect-ratio via
+// object-fit: cover. That crops a wide interior/room photo down to a
+// narrow vertical sliver, which reads as "sideways" to a non-technical
+// eye even though nothing is actually rotated. width:100% + 16/9 below
+// md: fills the card's own content width (the padding is on .routeCard,
+// not here, so this needs no width subtraction of its own), and 16/9
+// matches 3 of the 4 real sources almost exactly (1.777/1.784/1.779) —
+// the fourth (Amsterdam, 1.5:1) crops ~7% off top and bottom under
+// cover, not the severe crop the old 3:4 box produced against a WIDE
+// source. md+ (where .routeCols goes row) restores today's exact
+// fixed-column treatment, unchanged.
+//
+// Straighten pass — the decorative --tilt-img rotation is 0deg below
+// md now (was -1.2deg at every width): direct instruction, the client
+// wants the photos themselves straight. .routeCard's own --tilt (±0.5deg,
+// alternating per card via :nth-child, see that rule) is untouched at
+// every width — that's the CARD's own resting rotation, a separate
+// declaration on a separate element, not what was asked to change.
+// 0deg here, not simply omitting the declaration: --tilt-img also feeds
+// @keyframes routeParallax's own translateY wobble below (rotate(var(
+// --tilt-img)) translateY(...)) — an UNSET custom property in an angle
+// context makes the whole transform invalid and silently drops both the
+// rotation AND the translateY together, which would break the parallax
+// wobble as an unintended side effect of a fix that was only asked to
+// remove the tilt. md+ restores -1.2deg exactly as before.
 .routeImage {
-  flex: 0 0 12rem;
-  width: 12rem;
-  aspect-ratio: 3 / 4;
+  display: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 4px;
   box-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.35);
-  --tilt-img: -1.2deg;
+  --tilt-img: 0deg;
   transform: rotate(var(--tilt-img));
+
+  @include mixins.breakpoint-up(md) {
+    display: block;
+    flex: 0 0 12rem;
+    width: 12rem;
+    aspect-ratio: 3 / 4;
+    --tilt-img: -1.2deg;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
