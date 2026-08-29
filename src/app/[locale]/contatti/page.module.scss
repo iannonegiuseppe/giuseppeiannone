@@ -33,6 +33,59 @@
   max-width: 42rem;
 }
 
+// Photo pass — a new row wrapping .header, not a change to .header
+// itself (still 42rem, unchanged at every width — verified live). Plain
+// block below xl: .headerPhotoCol just stacks under .header in normal
+// flow, spanning the same container width .header/.channels already do
+// (no extra width rule needed for that — matches "the section already
+// does" below md, and this pass's own decision to extend the same
+// stacked treatment up through the whole md-xl range too).
+//
+// xl (1280px), not lg (1024px) — measured live: the room beside .header
+// (container inner width minus .header's own fixed 672px) is only 256px
+// at 1024, a sliver a real photo doesn't read in. At 1280 it's 512px,
+// healthy. Below xl the photo stays stacked rather than showing that
+// sliver — see this pass's own report for the measured widths at every
+// checked breakpoint.
+.headerRow {
+  @include mixins.breakpoint-up(xl) {
+    display: grid;
+    grid-template-columns: 42rem 1fr;
+    gap: var(--space-9); // same column-gap token this page's own .factsStrip/.channels already use
+    align-items: center;
+  }
+}
+
+.headerPhotoCol {
+  margin-top: var(--space-8);
+
+  @include mixins.breakpoint-up(xl) {
+    margin-top: 0;
+  }
+}
+
+// Frame treatment — reuses BookCover.module.scss's own real-photo recipe
+// (.coverImageOnly/.coverImageShadow: plain rectangle, no border-radius,
+// var(--shadow-soft) only — "the image does the visual work", per that
+// file's own comment) rather than a new one. aspect-ratio matches the
+// source (1448x1086) exactly, so object-fit: cover never crops on either
+// axis, at any width. Filter is the site-wide real-photo grade
+// (docs/design-direction.md's own "Photo tonal treatment" rule, current
+// taupe-palette value — same one welcome.module.scss/sharedSections.
+// module.scss/CityWelcomeBlock.module.scss already apply, not a new or
+// hand-rolled one).
+.headerPhotoFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1448 / 1086;
+  box-shadow: var(--shadow-soft);
+}
+
+.headerPhotoImg {
+  object-fit: cover;
+  filter: sepia(0.08) saturate(0.95);
+}
+
 .kicker {
   margin: 0;
 }

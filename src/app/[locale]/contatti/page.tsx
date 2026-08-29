@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import NextImage from "next/image";
 import Link from "next/link";
 import { PortableText, type PortableTextComponents } from "next-sanity";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -11,6 +12,7 @@ import { SectionKicker } from "@/components/ui/SectionKicker";
 import { sanityFetch } from "@/sanity/client";
 import { whatsappUrl } from "@/sanity/contact";
 import { CONTACT_PHOTO_URL, CONTACT_PHOTO_ALT } from "@/sanity/contactPhoto";
+import { urlFor } from "@/sanity/image";
 import {
   contactPath,
   hrefFor,
@@ -88,6 +90,25 @@ function getSedes(locale: string) {
 }
 
 // CONTACT_PHOTO_URL/ALT: single-sourced (src/sanity/contactPhoto.ts).
+
+// Hero photo — same manually-constructed-reference pattern as
+// page.tsx's own welcomePhotoUrl/portraitUrl (this field isn't wired
+// into contactPageQuery's own GROQ projection, same reasoning as
+// those). Deliberately the SAME asset as the homepage's own Chi-sono
+// portrait (portraitUrl there), not the contact-form cutout further
+// down this page or the /blog hero cutout — chosen because he's seated
+// facing the camera in the room a visitor would actually come to,
+// which matters more here than on the blog (where he's looking down,
+// absorbed in his own notebook). Appearing on the homepage too is
+// fine: the two pages are never viewed back to back, and the room
+// itself is the point on a contact page.
+// Decorative, same as every other hero photo on this site (LightPortraitHero's
+// own heroVisual wrapper/image pair) — aria-hidden on the column, alt=""
+// on the <img> itself; the kicker/heading/intro beside it carry the real
+// content, this is atmospheric support, not information of its own.
+const HERO_PHOTO_URL = urlFor({
+  asset: { _ref: "image-d4826af8101b8002d66bf042e9352f35ff34f452-1448x1086-png", _type: "reference" },
+}).url();
 
 // City-page links pass — these three pages were unreachable from
 // anywhere on the site before this pass (no nav, no footer, no in-page
@@ -252,13 +273,32 @@ export default async function ContattiPage({
           own decision not to rename it). */}
       <div className={styles.channelsWrap} data-light-hero>
         <section className={styles.channelsSection}>
-          <header className={styles.header}>
-            <p className={styles.kicker}>
-              <SectionKicker>{data?.kicker ?? ""}</SectionKicker>
-            </p>
-            <h1 className={styles.title}>{titleNode}</h1>
-            <PortableText value={data?.intro ?? []} components={getIntroComponents(typedLocale)} />
-          </header>
+          {/* Photo pass — header's own 672px width/heading font-size are
+              untouched: the photo is a new sibling column beside it, not
+              a change to .header itself. Below xl (1280px) the room
+              beside .header drops to a sliver (256px at 1024) before a
+              real photo can read there, so the row only splits into
+              columns at xl+ — see .headerRow's own comment. */}
+          <div className={styles.headerRow}>
+            <header className={styles.header}>
+              <p className={styles.kicker}>
+                <SectionKicker>{data?.kicker ?? ""}</SectionKicker>
+              </p>
+              <h1 className={styles.title}>{titleNode}</h1>
+              <PortableText value={data?.intro ?? []} components={getIntroComponents(typedLocale)} />
+            </header>
+            <div className={styles.headerPhotoCol} aria-hidden="true">
+              <div className={styles.headerPhotoFrame}>
+                <NextImage
+                  src={HERO_PHOTO_URL}
+                  alt=""
+                  fill
+                  sizes="(min-width: 80rem) 35vw, (min-width: 48rem) 80vw, 100vw"
+                  className={styles.headerPhotoImg}
+                />
+              </div>
+            </div>
+          </div>
 
           <div className={styles.channels}>
             {/* WhatsApp — dark surface nested inside this light-island
