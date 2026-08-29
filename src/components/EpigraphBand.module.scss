@@ -10,7 +10,7 @@
   color: var(--color-text);
   @include mixins.upper-left-sheen;
   padding-top: var(--space-9);
-  padding-bottom: var(--space-9);
+  // padding-bottom: var(--space-9);
 }
 
 .relationshipInner {
