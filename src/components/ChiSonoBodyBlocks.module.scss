@@ -128,35 +128,79 @@
   object-fit: cover;
 }
 
-// Quote scrim — bottom third only, same non-linear-ramp discipline as
-// PillarHero's own .heroFade (a flat linear gradient reads as a Mach
-// band); a simpler 3-stop version is enough at this scale since the
-// quote itself sits right at the bottom, not spread across the whole
-// fade.
+// Quote scrim — legibility pass. The old 3-stop linear gradient never
+// reached true full opacity (topped out at 75% of --light-base-text) and
+// was too short relative to the quote's own position on some real
+// photos — live-sampled contrast behind these two real quotes ranged as
+// low as 2.17:1 at 390px (a bright wall/window area showing through).
+// Replaced with the same smootherstep-sampled ramp PillarHero's own
+// .heroFade already uses (PillarHero.module.scss — the one surviving
+// concrete implementation in this codebase; chiSonoBlock.module.scss had
+// an equivalent pass but its own was deleted outright, per that file's
+// own comment) rather than inventing a second curve: stops placed at
+// even 10% position intervals, each one's color-mix percentage set to
+// smootherstep S(t) = 6t⁵ - 15t⁴ + 10t³ at that decile instead of a
+// linear 0/10/20…/100 — a flat ramp reads as a visible Mach band right
+// where it hits full opacity, this doesn't. The final stop is the bare
+// color (true 100% opacity, matching .heroFade's own endpoint) — the old
+// version's own 75%-opacity ceiling is exactly why it still let bright
+// photo content through at the very bottom, directly behind the quote
+// text itself.
+// 70% height, not 60% — live-resampled: at 70%, the quote's own topmost
+// line sits inside the t>=0.8 (94%+ opacity) region of the curve at
+// every checked width (1440/1024/390/360), which is what actually
+// closes the contrast gap; 60% left part of the mobile quote (2 lines,
+// before the sizing pass below) inside the t~0.3 (13% opacity) region,
+// which is the real reason mobile failed so much harder than desktop.
 .imageScrim {
   position: absolute;
   inset: auto 0 0 0;
   z-index: 1;
-  height: 60%;
+  height: 70%;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    color-mix(in srgb, var(--light-base-text) 20%, transparent) 40%,
-    color-mix(in srgb, var(--light-base-text) 75%, transparent) 100%
+    color-mix(in srgb, var(--light-base-text) 1%, transparent) 10%,
+    color-mix(in srgb, var(--light-base-text) 6%, transparent) 20%,
+    color-mix(in srgb, var(--light-base-text) 16%, transparent) 30%,
+    color-mix(in srgb, var(--light-base-text) 32%, transparent) 40%,
+    color-mix(in srgb, var(--light-base-text) 50%, transparent) 50%,
+    color-mix(in srgb, var(--light-base-text) 68%, transparent) 60%,
+    color-mix(in srgb, var(--light-base-text) 84%, transparent) 70%,
+    color-mix(in srgb, var(--light-base-text) 94%, transparent) 80%,
+    color-mix(in srgb, var(--light-base-text) 99%, transparent) 90%,
+    var(--light-base-text) 100%
   );
 }
 
+// Sizing/position pass, mobile only (below md) — the real quotes wrapped
+// to 2 lines below 390px at the old 22px size, pushing their own top
+// line up into the scrim's much more transparent middle region (see
+// .imageScrim's own comment: ~13% opacity there at the old 60% height).
+// 1.125rem (18px) is the largest size that keeps BOTH real quotes on one
+// line at 360px, the narrowest checked width (live-tested: 19px still
+// wraps "Spegnere la spia non ripara il guasto." to 2 lines there) — and
+// still comfortably above --fs-body, not a shrink-to-illegible fallback.
+// Bottom inset also tightened (space-6 -> space-4, 32px -> 16px) per
+// instruction to move the quote closer to the photo's own bottom edge;
+// left/right left at space-6, unchanged — only the vertical position was
+// asked to move. Desktop (md+) restores today's exact values, unchanged.
 .imageQuote {
   position: absolute;
   z-index: 2;
-  inset: auto var(--space-6) var(--space-6) var(--space-6);
+  inset: auto var(--space-6) var(--space-4) var(--space-6);
   margin: 0;
   font-family: var(--font-display);
   font-style: italic;
-  font-size: var(--fs-h3);
+  font-size: 1.125rem; // 18px, mobile only — see this rule's own comment
   line-height: 1.4;
   color: var(--light-base-bg);
+
+  @include mixins.breakpoint-up(md) {
+    inset: auto var(--space-6) var(--space-6) var(--space-6);
+    font-size: var(--fs-h3); // 22px — unchanged from today
+  }
 }
 
 // Text alignment pass — at lg+, the OUTWARD side (away from the image)
