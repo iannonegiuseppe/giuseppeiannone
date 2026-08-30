@@ -19,6 +19,13 @@ import {
   sitemapSubtopicsQuery,
 } from "@/sanity/queries";
 
+// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// [locale]/page.tsx's own comment for the full rationale. sitemap.ts
+// fetches Sanity too (every singleton/pillar/subtopic/article/page path),
+// so it gets the same time-based backstop as every other Sanity-driven
+// route rather than staying pure-static indefinitely.
+export const revalidate = 1800;
+
 function isLocale(value: string): value is Locale {
   return value === "it" || value === "en";
 }

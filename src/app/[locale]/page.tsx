@@ -88,6 +88,32 @@ import { SignatureBandTuned } from "@/components/SignatureBandTuned";
 // import { FormazioneBand } from "@/components/FormazioneBand";
 // import { PricingSection } from "@/components/PricingSection";
 
+// Time-based revalidation fallback beneath the webhook — see
+// src/app/api/revalidate/route.ts's own comment for the on-demand path
+// (revalidateTag, fired by Sanity's publish webhook). That path alone,
+// with no time-based backstop anywhere in this app, was a single point
+// of failure: every route was pure SSG with no `revalidate` at all, so
+// a missed or misconfigured webhook meant the page could stay stale
+// indefinitely — measured live at 22+ hours stale on this exact route
+// after a video swap the webhook never picked up. 1800s (30 minutes) is
+// deliberately loose: this is a psychotherapy practice site, not a news
+// site, and content changes are occasional manual edits in Studio, not
+// continuous — the interval only needs to be short enough that a missed
+// webhook self-heals within a visit-to-visit timeframe, not so short
+// that ordinary traffic triggers frequent regenerations. This does not
+// race or override revalidateTag: Next treats a route's `revalidate`
+// value as an UPPER BOUND on staleness, not a fixed schedule — a
+// successful webhook call still purges the cache immediately, same as
+// today; this interval only matters for the case where that call never
+// arrives. Every Sanity-driven route in this app uses the same 1800s
+// value, applied per-file (Next's segment-config extraction statically
+// parses each route file's own top-level consts — it does not follow
+// `export { revalidate } from "./other-file"` re-exports, so the
+// locale-mirror route folders (about-me, contact, method, ...) each
+// restate this line rather than inheriting it from their canonical
+// counterpart).
+export const revalidate = 1800;
+
 interface HomePageData {
   title?: string;
   hero?: {

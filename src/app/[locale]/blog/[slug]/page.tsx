@@ -26,6 +26,12 @@ import styles from "./article.module.scss";
 import { getArticlePortableTextComponents } from "./articlePortableText";
 import { getReadingTimeMinutes } from "./readingTime";
 
+// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// [locale]/page.tsx's own comment for the full rationale. Applies per
+// generated article slug, same as any other ISR route with
+// generateStaticParams.
+export const revalidate = 1800;
+
 const ARTICLE_BODY_ID = "article-body";
 
 interface ArticleData {

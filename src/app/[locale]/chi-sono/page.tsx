@@ -32,6 +32,13 @@ import {
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import styles from "./page.module.scss";
 
+// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// [locale]/page.tsx's own comment for the full rationale. about-me/
+// page.tsx re-exports this route's default/generateMetadata but restates
+// this const on its own — Next's segment-config extraction doesn't
+// follow re-exports across files.
+export const revalidate = 1800;
+
 interface WhatIWorkWithData {
   kicker?: string;
   heading?: string;
