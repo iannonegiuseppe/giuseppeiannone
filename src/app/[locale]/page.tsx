@@ -22,6 +22,7 @@ import {
   latestArticlesLabQuery,
   sedesQuery,
 } from "@/sanity/queries";
+import { SEDE_PLACEHOLDER_ALT, SEDE_PLACEHOLDER_URL } from "@/sanity/sedePlaceholder";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 // Design-lab-to-production migration — these now render in place of
 // JourneySection/ChiSonoSection/DiplomiSection (all three still real
@@ -351,25 +352,6 @@ function renderHeadingEmphasis(text: string, emphasisWord: string | undefined, e
   );
 }
 
-// Stage 2b-2 — copied verbatim from DesignLabHomepage.tsx's own interim
-// fallback (structure pass, slot 13): for each physical address, use
-// addr.photo if Sanity has one (none do yet — checked live, not assumed),
-// else the assigned interim stock file. §9 gate already applied to every
-// file in public/interiors (see design-lab's own pass report) — all 5 are
-// empty rooms, no people, no staged session; none excluded. Reserved/
-// unused: public/interiors/interior-5.jpg (5 stock photos supplied, only
-// 4 physical locations to fill).
-//
-// INTERIM MARKER: once real per-location interiors are uploaded to
-// Sanity (sede.addresses[].photo), this whole map becomes dead weight —
-// safe to delete then, not before. Also registered in docs/pre-launch.md.
-const INTERIOR_STOCK_FALLBACK: Record<string, string> = {
-  "addr-1_sede-milano": "/interiors/interior-1.jpg", // Milano · Via Buonarroti
-  "addr-2_sede-milano": "/interiors/interior-2.jpg", // Milano · Via Trivulziana
-  "addr-1_sede-monza": "/interiors/interior-3.jpg", // Monza
-  "addr-2_sede-cernusco": "/interiors/interior-4.jpg", // Cernusco sul Naviglio
-};
-
 // Stage 2b-2 — copied verbatim from DesignLabHomepage.tsx's own lookup:
 // addr.district on the two Milano addresses holds the name of the
 // third-party medical centre hosting each studio — dropped from this
@@ -469,13 +451,19 @@ export default async function Home({
   const diplomiLabItems: DiplomiLabItem[] = resolveDiplomiLabItems(homePage?.diplomi?.items);
 
   // Stage 2c — hero background-video poster, fallback chain per explicit
-  // instruction: homePage.hero.backgroundVideoPoster if set, else the
-  // same hardcoded placeholder interior photo this slot has always used
-  // — so the hero's own LCP element never renders blank mid-migration,
-  // whether or not the client has uploaded a real poster yet.
+  // instruction: homePage.hero.backgroundVideoPoster if set, else a
+  // placeholder — so the hero's own LCP element never renders blank
+  // mid-migration, whether or not the client has uploaded a real poster
+  // yet. Was one of the public/interiors stock photos (a different room
+  // than any actual sede), removed along with the rest of that set — see
+  // this pass's own report. Currently dormant either way (a real poster
+  // is set in Sanity today), but reuses SEDE_PLACEHOLDER_URL rather than
+  // leaving a dangling reference to a deleted file: it's the one asset in
+  // this codebase already designed to be a safe, on-palette placeholder,
+  // not a photo of a specific room.
   const heroPosterUrl = homePage?.hero?.backgroundVideoPoster
     ? urlFor(homePage.hero.backgroundVideoPoster).url()
-    : "/interiors/interior-3.jpg";
+    : SEDE_PLACEHOLDER_URL;
 
   // Stage 2b-2 — Welcome/Chi sono/Contact/Lo spazio photos: same static
   // asset references design-lab uses (not new Sanity image fields — this
@@ -521,33 +509,31 @@ export default async function Home({
     "Lo studio: la finestra con vista sul verde, la scrivania con l'orchidea, durante una seduta.";
 
   // Stage 2b-2 — Locations marquee ("Spazi"), same fallback logic as
-  // design-lab's own (see INTERIOR_STOCK_FALLBACK/MILANO_STREET_CAPTION
-  // above): for each physical address, use addr.photo if Sanity has one,
-  // else the assigned interim stock file. allPhotosReal gates
-  // LocationsMarquee's own introLine (true only once every item came from
-  // a real addr.photo, not the interim stock fallback).
+  // design-lab's own (see MILANO_STREET_CAPTION above): for each physical
+  // address, use addr.photo if Sanity has one, else the drawn
+  // SEDE_PLACEHOLDER_URL illustration (see that module's own comment for
+  // why this is a code-level constant, not a per-document Sanity field).
+  // Universal placeholder, not a per-address lookup — the old
+  // INTERIOR_STOCK_FALLBACK map needed a different stock file per address;
+  // this is the same one drawing everywhere, so there's nothing to key by
+  // address/locale anymore. allPhotosReal gates LocationsMarquee's own
+  // introLine (true only once every item came from a real addr.photo, not
+  // the placeholder).
   const marqueeItems: LocationsMarqueeItem[] = [];
   let allPhotosReal = true;
   for (const sede of sedes ?? []) {
     if (sede.isOnline) continue; // no physical interior to show
     for (const addr of sede.addresses ?? []) {
       const name = MILANO_STREET_CAPTION[addr.address] ?? sede.city;
-      // INTERIOR_STOCK_FALLBACK's keys are built from the IT sede _id
-      // (unsuffixed, e.g. "sede-milano") — the EN sede documents reuse the
-      // same addr._key values but carry a "-en"-suffixed _id ("sede-milano-
-      // en"), so the raw sede._id must be locale-normalized here or the
-      // lookup misses on /en for every address without a real Sanity photo.
-      const fallbackKey = `${addr._key}_${sede._id.replace(/-en$/, "")}`;
       const photoUrl = addr.photo
         ? urlFor(addr.photo).width(640).format("webp").url()
-        : INTERIOR_STOCK_FALLBACK[fallbackKey];
-      if (!photoUrl) continue;
+        : SEDE_PLACEHOLDER_URL;
       if (!addr.photo) allPhotosReal = false;
       marqueeItems.push({
         id: `${sede._id}-${addr._key}`,
         name,
         photoUrl,
-        alt: `${name} — interno dello studio`,
+        alt: addr.photo ? `${name} — interno dello studio` : `${name} — ${SEDE_PLACEHOLDER_ALT}`,
       });
     }
   }

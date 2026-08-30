@@ -27,6 +27,23 @@ import styles from "./sediSection.module.scss";
 // address without a photo (three of four today) renders exactly as before
 // — plain solid var(--color-bg), no scrim, nothing conditional on that
 // path changes.
+//
+// Placeholder pass — tried wiring SEDE_PLACEHOLDER_IMAGE (the marquee's
+// own drawn-illustration fallback) in here too, for the same "a location
+// looks the same everywhere" reasoning, then reverted after checking the
+// actual rendered result: .popupScrim's 76% color-mix toward --color-bg
+// was measured and tuned against a real photo's own brightness (see that
+// class's own comment) — against this illustration's much paler, flatter
+// palette, the same scrim doesn't just dim it, it muddies the crisp
+// line-art into a washed-out smudge, undermining the one property that
+// made a drawing the right choice here (reads clearly as "not a photo").
+// Screenshotted at 1440 to confirm before reverting, not assumed. Fixing
+// this properly means a treatment designed for the illustration, not a
+// data-layer fallback swap — a follow-up worth doing deliberately, not as
+// a side effect of this pass. Every address without a real photo keeps
+// its existing, already-correct plain-background rendering here; the
+// marquee (a plain image card, no scrim, no overlaid text) is where the
+// illustration actually reads correctly today.
 export function SediPopupContent({
   location,
   labels,
