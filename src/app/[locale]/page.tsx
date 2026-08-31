@@ -21,7 +21,7 @@ import {
   sedesQuery,
 } from "@/sanity/queries";
 import { SEDE_PLACEHOLDER_ALT, SEDE_PLACEHOLDER_URL } from "@/sanity/sedePlaceholder";
-import { buildMetadata, getSiteSettings } from "@/sanity/seo";
+import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 // Design-lab-to-production migration — these now render in place of
 // JourneySection/ChiSonoSection/DiplomiSection (all three still real
 // files, just no longer imported here — see this file's own comments at
@@ -321,6 +321,7 @@ interface HomePageData {
     linkLabel?: string;
     items?: { _id: string; question: string; answer: unknown }[];
   };
+  seo?: SeoFields;
 }
 
 // EN GATE LIFTED: homePage-en now has real (translated, still
@@ -368,12 +369,15 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const siteSettings = await getSiteSettings(locale);
+  const [siteSettings, homePage] = await Promise.all([
+    getSiteSettings(locale),
+    sanityFetch<HomePageData | null>(homePageQuery, { locale }, ["homePage"]),
+  ]);
 
   return await buildMetadata({
     locale: locale as Locale,
     title: "Giuseppe Iannone",
-    seo: siteSettings?.seo,
+    seo: homePage?.seo,
     siteName: siteSettings?.title ?? "",
     siteSeo: siteSettings?.seo,
     localizedPaths: { it: "/", en: "/en" },
