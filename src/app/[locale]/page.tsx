@@ -4,12 +4,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AreeSection, type AreaRow } from "@/components/AreeSection";
 import { HeroBackgroundVideo } from "@/components/HeroBackgroundVideo";
 import { HeroOverlap } from "@/components/HeroOverlap";
-import heroOverlapStyles from "@/components/HeroOverlap.module.scss";
 import { HeroVideoActions } from "@/components/HeroVideoActions";
 import { HopeSection } from "@/components/HopeSection";
 import { FaqSection } from "@/components/FaqSection";
 import type { SedeData } from "@/components/LocationsSection";
-import { SignatureMark } from "@/components/Logo";
 import { RecognitionSection } from "@/components/RecognitionSection";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { sanityFetch } from "@/sanity/client";
@@ -543,12 +541,17 @@ export default async function Home({
     <main>
       {/* Stage 2c fix: matches design-lab's own Hero exactly now (was the
           only permitted difference in this pass's own acceptance test,
-          per explicit instruction to close it anyway). eyebrow is the
-          signature-only logo mark (SignatureMark, same asset Footer/
-          Header use), not author-credentials text — its own built-in
-          aria-label ("Dr. Giuseppe Iannone") carries the meaning.
-          backgroundMedia/actions are pre-rendered ReactNodes, same pattern
-          HeroOverlap.tsx already established for both slots. */}
+          per explicit instruction to close it anyway). backgroundMedia/
+          actions are pre-rendered ReactNodes, same pattern HeroOverlap.tsx
+          already established for both slots.
+          Client-call pass — the eyebrow (signature-only logo mark,
+          SignatureMark) is removed per direct instruction. No prop passed
+          at all, not an empty one: HeroOverlap.tsx's own
+          `{eyebrow ? <div className={styles.heroVideoEyebrow}>...} : null}`
+          already treats a missing eyebrow as "render nothing," so the
+          heading simply sits at the top of .heroVideoContent with no
+          leftover gap — verified live, see this pass's own report for the
+          before/after spacing. */}
       <HeroOverlap
         treatment="treated"
         headline={homePage?.hero?.headline ?? ""}
@@ -557,7 +560,6 @@ export default async function Home({
         ctaLabel={homePage?.hero?.ctaLabel ?? ""}
         photo={homePage?.hero?.photo}
         youtubeId={homePage?.hero?.youtubeId}
-        eyebrow={<SignatureMark className={heroOverlapStyles.heroVideoEyebrow} />}
         backgroundMedia={
           <HeroBackgroundVideo
             // Stage 2c — Sanity-driven. Both fields optional/independent;
@@ -872,22 +874,40 @@ export default async function Home({
         {/* Stage 2b-2 — Spazi (photo strip), new to production
             (design-lab-to-production migration). Semantically part of the
             Sedi map block, not its own tonal moment — reversed onto Sedi's
-            own mid-tone surface (toneMidWrap). */}
-        <div
-          className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
-          data-sheen="upper-left"
-        >
-          <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
-            <LocationsMarquee
-              kicker={homePage?.spaces?.kicker ?? ""}
-              heading={homePage?.spaces?.heading ?? ""}
-              headingEmphasisWord={homePage?.spaces?.headingEmphasisWord}
-              introLine={homePage?.spaces?.introLine}
-              allPhotosReal={allPhotosReal}
-              items={marqueeItems}
-            />
-          </section>
-        </div>
+            own mid-tone surface (toneMidWrap).
+            Client-call pass — the whole wrapper (tone-mid surface + section,
+            not just <LocationsMarquee> itself) is gated on allPhotosReal:
+            data-driven, not a hardcoded flag — allPhotosReal is already
+            computed above from real Sanity data (false the moment any
+            address falls back to the drawn placeholder), and this reappears
+            on its own the moment the last real photo is uploaded, no code
+            change needed then. LocationsMarquee's OWN `items.length === 0`
+            check isn't enough on its own here: items is never empty (every
+            address always contributes either a real photo or the
+            placeholder), so without this outer gate the tone-mid band and
+            its aria-label="Gli spazi in fotografia" section would still
+            render — an empty-looking, orphaned band — the moment
+            allPhotosReal is false but items.length > 0. Heading/kicker/
+            introLine live INSIDE LocationsMarquee itself, so gating the
+            whole wrapper here hides them together with the strip, not just
+            the photos. */}
+        {allPhotosReal ? (
+          <div
+            className={`${sectionWrapperStyles.toneMidWrap} ${sectionWrapperStyles.sheenWrap}`}
+            data-sheen="upper-left"
+          >
+            <section className={marqueeStyles.stripSection} aria-label="Gli spazi in fotografia">
+              <LocationsMarquee
+                kicker={homePage?.spaces?.kicker ?? ""}
+                heading={homePage?.spaces?.heading ?? ""}
+                headingEmphasisWord={homePage?.spaces?.headingEmphasisWord}
+                introLine={homePage?.spaces?.introLine}
+                allPhotosReal={allPhotosReal}
+                items={marqueeItems}
+              />
+            </section>
+          </div>
+        ) : null}
       </SediMapProvider>
 
       {/* Stage 2b-2 — ContactBlock replaces FinalContactSection here

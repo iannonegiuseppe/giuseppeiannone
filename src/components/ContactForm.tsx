@@ -69,7 +69,7 @@ const COPY = {
       telefonoRequired: "Numero di telefono",
       telefonoOptional: "Numero (facoltativo)",
       email: "Email",
-      messaggio: "Se vuoi, scrivi due righe — anche solo un saluto",
+      messaggio: "Contattami e vediamo insieme come procedere",
     },
     channelLegend: "Come preferisci essere ricontattato?",
     channelOptions: [
@@ -124,7 +124,7 @@ const COPY = {
       telefonoRequired: "Phone number",
       telefonoOptional: "Phone (optional)",
       email: "Email",
-      messaggio: "If you like, write a few lines — even just hello",
+      messaggio: "Write to me and let's work out where to start together.",
     },
     channelLegend: "How would you prefer to be contacted?",
     channelOptions: [
