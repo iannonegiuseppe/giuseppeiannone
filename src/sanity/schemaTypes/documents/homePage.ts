@@ -977,7 +977,7 @@ export const homePage = defineType({
         defineField({
           name: "detailsItems",
           title: "Practical details (one flowing line, joined by a decorative middot — do not type separators into the copy itself)",
-          description: "Exactly 4 short phrases, e.g. \"45 minuti\", \"Ricevuta sempre rilasciata\".",
+          description: "1 to 4 short phrases, e.g. \"45 minuti\", \"Detrazione 19% come spesa sanitaria\". PricingBlock.tsx's own middot separator sits only between items, so any count in that range renders as a clean line.",
           type: "array",
           of: [
             {
@@ -991,7 +991,16 @@ export const homePage = defineType({
               validation: (Rule) => Rule.required().custom(deontologyCheckAllowingSymbols(["%"])),
             },
           ],
-          validation: (Rule) => Rule.length(4),
+          // Relaxed from Rule.length(4): the "Ricevuta sempre rilasciata"
+          // item was removed per direct instruction, dropping the live
+          // count to 3 — length(4) then flags every future edit on this
+          // document as invalid in Studio for a state that's now correct,
+          // not a mistake to fix. min(1) still guards against emptying the
+          // line out entirely (PricingBlock.tsx always expects at least
+          // one practical-details phrase); max(4) keeps the original
+          // upper bound, since that's a real layout/tone ceiling, not an
+          // exact-count requirement.
+          validation: (Rule) => Rule.min(1).max(4),
         }),
         // Kept from the previous pass, unchanged: the deduction's
         // traceable-payment condition, always rendered below the details
