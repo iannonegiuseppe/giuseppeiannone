@@ -71,6 +71,22 @@
   }
 }
 
+// Client-call pass — VideoBlock.tsx's own source order is now text
+// column first, player column second (mobile needs to read kicker/
+// heading/description before the video, both visually and for a screen
+// reader — see that file's own comment). Below lg the grid is a single
+// column (.videoBlockGrid above), so source order IS visual order there;
+// nothing to override. At lg+ this restores the original player-left/
+// text-right arrangement in CSS only — `order` changes paint position,
+// not DOM position, so desktop's own reading order also becomes text-
+// before-player now, which is fine (arguably better), while sighted
+// desktop users see no visual change at all.
+.videoBlockPlayerCol {
+  @include mixins.breakpoint-up(lg) {
+    order: -1;
+  }
+}
+
 // Reused display-scale heading class (the same one Chi sono's headline
 // uses) instead of the real component's own (un-editable) .videoHeading,
 // which caps at --fs-h2 — too small for this treatment.

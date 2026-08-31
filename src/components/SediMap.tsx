@@ -44,6 +44,23 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+// Same "below md" check LibriHeroVisual.tsx's own mobile-layout branch
+// already uses — reused, not a new media-query string.
+const MOBILE_QUERY = "(max-width: 47.9375rem)";
+
+// Mobile-only popup clipping pass — with no offset, the popup's default
+// Leaflet position (tip aligned to the marker, body extending upward)
+// pushed it above the map frame's own top edge on every one of the four
+// mobile addresses, worst measured at 63px past the frame (autoPan
+// couldn't fully correct it: the frame itself is short at mobile widths,
+// there's no room above a marker in the upper half to pan into). 96px
+// down clears the worst case with real margin, verified live at 390/360/
+// 430. Desktop's own map is much taller and wasn't reported broken —
+// scoped to mobile only so nothing changes there.
+function popupOffset(): [number, number] {
+  return window.matchMedia(MOBILE_QUERY).matches ? [0, 96] : [0, 0];
+}
+
 function isApplePlatform(): boolean {
   if (typeof navigator === "undefined") return false;
   const uaData = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData;
@@ -273,6 +290,7 @@ export function SediMap({
         className: styles.popupWrap,
         maxWidth: 320,
         autoPan: true,
+        offset: popupOffset(),
       });
       popupRef.current = popup;
 

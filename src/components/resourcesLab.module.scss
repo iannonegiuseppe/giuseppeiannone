@@ -284,10 +284,13 @@
 // ::after so the hit area and the visual mark can differ without a
 // wrapper element. Inactive: --color-hairline (the same quiet-neutral
 // token this section's own card border-ish elements already use).
-// Active: --color-accent, plus a wider oval instead of a circle — a
-// shape change reads as "current" independent of colour alone, so this
-// still communicates state under prefers-contrast/forced-colors, not
-// just visually.
+// Active: --color-accent.
+//
+// Client-call pass — the active dot's own width used to grow to 1.25rem
+// with no matching height change, which turns a 50%-radius circle into a
+// squashed oval (measured live: 20x8px at 390 before this pass). Direct
+// instruction: a true circle at every state, same width and height,
+// distinguished by colour only — width no longer changes here.
 .dot {
   display: inline-flex;
   align-items: center;
@@ -308,11 +311,10 @@
     height: 0.5rem;
     border-radius: 50%;
     background: var(--color-hairline);
-    transition: background-color 150ms ease, width 150ms ease;
+    transition: background-color 150ms ease;
   }
 
   &[data-active="true"]::after {
-    width: 1.25rem;
     background: var(--color-accent);
   }
 

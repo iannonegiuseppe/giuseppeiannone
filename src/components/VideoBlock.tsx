@@ -71,18 +71,18 @@ export async function VideoBlock({
   return (
     <section className={densityStyles.videoLightWrap} aria-labelledby="video-block-heading">
       <div className={`${densityStyles.section} ${densityStyles.videoLightContent}`}>
+        {/* Client-call pass — source order swapped (text column first,
+            player column second) so mobile (no grid reordering below lg,
+            see .videoBlockGrid's own comment) reads kicker/heading/
+            description then video, both visually and for a screen reader
+            — not just visually via a flex/grid `order` trick, which would
+            leave the DOM (and reading order) as video-first everywhere.
+            Desktop's own left-player/right-text layout is restored purely
+            in CSS (.videoBlockPlayerCol's own `order` at lg+), so sighted
+            desktop users see no change; a desktop screen-reader user now
+            hears text before player too, which was already the more
+            sensible order, not a regression. */}
         <div className={densityStyles.videoBlockGrid}>
-          <div className={densityStyles.videoBlockPlayerCol}>
-            <div className={densityStyles.videoPlateFrame}>
-              <VideoPlayer
-                src={videoUrl}
-                poster={posterSrc}
-                posterAlt=""
-                captionsSrc={captionsUrl}
-                wrapperAriaLabel={wrapperAriaLabel}
-              />
-            </div>
-          </div>
           <div className={densityStyles.videoBlockTextCol}>
             <p className={videoStyles.videoKicker}>
               <span className={videoStyles.videoKickerRule} aria-hidden="true" />
@@ -97,6 +97,17 @@ export async function VideoBlock({
               {heading}
             </h2>
             {lead ? <p className={videoStyles.videoLead}>{lead}</p> : null}
+          </div>
+          <div className={densityStyles.videoBlockPlayerCol}>
+            <div className={densityStyles.videoPlateFrame}>
+              <VideoPlayer
+                src={videoUrl}
+                poster={posterSrc}
+                posterAlt=""
+                captionsSrc={captionsUrl}
+                wrapperAriaLabel={wrapperAriaLabel}
+              />
+            </div>
           </div>
         </div>
       </div>

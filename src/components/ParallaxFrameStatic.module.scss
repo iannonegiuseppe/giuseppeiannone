@@ -48,6 +48,22 @@
   }
 }
 
+// Client-call pass — below md, this used to keep position:fixed +
+// height:100dvh from the desktop reveal. That combination is what
+// produced "jumps and grows" on a real phone: dvh is deliberately meant
+// to track the ACTUAL visible viewport as mobile browser chrome (the
+// address bar/toolbar) hides and shows, but it keeps recalculating
+// continuously WHILE that chrome is animating mid-scroll — so a
+// position:fixed element sized to 100dvh visibly resizes (and, being
+// fixed, appears to jump) in real time as the chrome collapses/expands,
+// not just once at load. Reduced-motion already had the fix for a
+// different reason (motion preference, not this) — same treatment
+// (position:absolute, no viewport unit) applied below md too: the frame
+// still reveals via its own clip-path as the page scrolls past it (that
+// part is unaffected either way), the image itself is just genuinely
+// static now, not fighting a moving viewport. Not tuned/subtler — fully
+// off, per direct instruction. Desktop (md+) keeps the original fixed
+// reveal untouched.
 .spaceParallaxImage {
   position: fixed;
   inset: 0;
@@ -55,6 +71,12 @@
   height: 100dvh;
   object-fit: cover;
   pointer-events: none;
+
+  @include mixins.breakpoint-down(md) {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     position: absolute;
