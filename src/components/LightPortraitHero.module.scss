@@ -32,9 +32,25 @@
 // caller opts in (currently /faq only; /blog never passes it, so this
 // entire block is inert there by construction, not by convention).
 @media (max-width: 47.9375rem) {
+  // Mobile-hero-overflow pass (matching the homepage's own fix,
+  // HeroOverlap.module.scss's .heroOverlapSection) — height:80vh/80dvh
+  // was a fixed box; on a short viewport with more FAQ intro copy than
+  // today's, or wherever dvh itself shrinks (address-bar animation mid-
+  // scroll — the same dvh-recalculation risk already fixed twice
+  // elsewhere on this project), content taller than 80dvh had nowhere to
+  // go but clip. min-height lets the section grow instead. display:flex
+  // + .heroInner's own flex:1 (below) replaces .heroInner's old
+  // height:100% — a percentage height only resolves against a parent
+  // with a DEFINITE height, which min-height alone no longer provides;
+  // flex:1 fills the same available space without needing one, so
+  // .heroInner still grows to match .hero's real height (whatever that
+  // turns out to be) and align-content:center still has real space to
+  // center within, exactly as before.
   .hero[data-mobile-full-bleed] {
-    height: 80vh;
-    height: 80dvh;
+    display: flex;
+    flex-direction: column;
+    min-height: 80vh;
+    min-height: 80dvh;
   }
 
   // Scrim: unlike /libri's dark-ground version (which blends toward
@@ -80,7 +96,8 @@
   // .hero::before now compare directly within .hero's own stacking
   // context, with no intermediate ancestor stacking context in the way.
   .hero[data-mobile-full-bleed] .heroInner {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     align-content: center;
   }
 
@@ -127,10 +144,29 @@
     object-position: center;
   }
 
+  // Header-clearance spacing pass — measured live at 15.8px/26.6px
+  // clearance from the header's real bottom edge (360x640/375x667),
+  // under the 40px floor. NOT var(--header-height)-derived, unlike every
+  // other fix in this pass — deliberately: .heroText sits inside
+  // .heroInner's own align-content:center (this block's own flex:1 +
+  // min-height:0 pair, added by the earlier mobile-overflow pass), so
+  // padding added on ONE side only (padding-bottom stays 0) gets HALVED
+  // by that centering — only half of it becomes real top clearance, and
+  // the other half is subtracted from the bottom clearance instead (the
+  // centered block grows by the padding amount and re-centers, shifting
+  // both edges by half the addition, in opposite directions from the
+  // block's own middle). var(--header-height) alone (100px) already
+  // exceeds the maximum this box can absorb without breaking the 40px
+  // BOTTOM floor at the tightest viewport (360x640, which only has
+  // 71.95px of existing bottom slack to spend) — solved by picking the
+  // padding value directly against both constraints instead:
+  // calc(space-7 + space-2) = 56px, verified to land both new edges
+  // (43.8px top / 43.95px bottom at the worst case) inside the 40px
+  // floor with real margin, at every one of the five checked viewports.
   .hero[data-mobile-full-bleed] .heroText {
     position: relative;
     z-index: 3;
-    padding-top: 0;
+    padding-top: calc(var(--space-7) + var(--space-2));
     padding-bottom: 0;
   }
 
@@ -336,8 +372,23 @@
 // in the section, with nothing after it to add space below, at both
 // single-column tiers alike.
 @media (max-width: 63.9375rem) {
+  // Header-clearance spacing pass — .heroText's own base padding-top
+  // (var(--space-8)/var(--space-9) below, unconditional) was never
+  // derived from the fixed header's height at all — it's generic
+  // breathing room that happens to land close to the header's own
+  // footprint by coincidence, not by reservation. Measured live: only
+  // 7.9px of real clearance from the header's actual bottom edge, at
+  // every one of the five checked viewports (the worst offender of this
+  // whole pass) — .hero here has no min-height/height at all (pure
+  // content flow, see .hero[data-cutout-grounded]'s own comment further
+  // up), so this replacement grows the section as a plain consequence,
+  // never the mechanism. calc(header-height + space-3), the same shape
+  // used elsewhere in this pass — no centering to halve it here (text
+  // and photo are separate stacked grid rows via `order`, not one
+  // centered block), so the full addition becomes real clearance.
   .hero[data-cutout-grounded] .heroText {
     order: 1;
+    padding-top: calc(var(--header-height) + var(--space-3));
     padding-bottom: 0;
   }
 

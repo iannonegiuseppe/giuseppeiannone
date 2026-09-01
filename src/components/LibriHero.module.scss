@@ -24,18 +24,26 @@
 // other. Collapsed into one full-bleed layer instead: the book image
 // becomes the section's own background (see LibriHeroVisual.module.scss's
 // own mobile block for the object-fit/position), the copy sits centered
-// on top of it. height (not min-height) is a fixed 80dvh — a background
-// needs a real, bounded box to fill, not a content-driven one — with a
-// vh fallback for browsers that don't parse dvh: declared first, so a
-// browser that can't parse the second (dvh) line simply keeps this one
-// (an unparseable value drops the whole declaration, never overwrites
-// the previous valid one), while a dvh-capable browser uses the later,
-// more correct value.
+// on top of it.
+//
+// Mobile-hero-overflow pass (matching the homepage's own fix,
+// HeroOverlap.module.scss's .heroOverlapSection) — was a fixed height:
+// 80vh/80dvh, which had nowhere to go but clip if content ever grew
+// taller than that (more lead copy, or dvh itself shrinking mid-scroll
+// as mobile browser chrome animates — the same dvh-recalculation risk
+// already fixed twice elsewhere on this project). min-height instead:
+// the section still starts at 80vh/80dvh (identical to before whenever
+// content fits, which it does today at every checked viewport) but can
+// grow past it instead of clipping. .hero is already display:flex +
+// align-items:center (the base rule above) — unlike LightPortraitHero's
+// grid + height:100% + align-content:center, flex's align-items:center
+// centers .inner within whatever the container's REAL resolved height
+// is, with no percentage-height-of-min-height problem to work around,
+// so no other structural change is needed here.
 @media (max-width: 47.9375rem) {
   .hero {
-    min-height: 0;
-    height: 80vh;
-    height: 80dvh;
+    min-height: 80vh;
+    min-height: 80dvh;
     align-items: center;
     padding-top: 0;
   }

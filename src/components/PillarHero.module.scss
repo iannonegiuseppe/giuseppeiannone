@@ -56,6 +56,25 @@
   padding-top: var(--header-height);
   padding-bottom: var(--header-height);
 
+  // Header-clearance spacing pass — below lg only, desktop untouched.
+  // Measured live: the fixed header often renders at its COLLAPSED height
+  // (--header-height-collapsed, 64px) rather than the rest-state value
+  // this padding reserves (--header-height, 100px below lg) — worst case
+  // clearance from the header's real bottom edge measured only 36px
+  // (100-64) at three of five checked viewports, under the 40px floor.
+  // +var(--space-3) on BOTH padding-top and padding-bottom (not just
+  // top) is what keeps this a pure clearance fix and not a composition
+  // change: this rule's own comment above already proves a SYMMETRIC
+  // change to both paddings doesn't move align-items:center's own
+  // centering point (bandHeight/2, independent of the padding value) —
+  // only an asymmetric change would. So content stays exactly where it
+  // already sits relative to the band's center; every edge just gets 12px
+  // more real clearance.
+  @include mixins.breakpoint-down(lg) {
+    padding-top: calc(var(--header-height) + var(--space-3));
+    padding-bottom: calc(var(--header-height) + var(--space-3));
+  }
+
   // Chi sono pass 4, lg+ only — see PillarHero.tsx's own contentAlign
   // comment. Left-aligns .heroContent to the site's real container edge
   // instead of centering it in the full band width; vertical position is

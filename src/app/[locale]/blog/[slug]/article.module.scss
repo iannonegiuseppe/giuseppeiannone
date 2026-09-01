@@ -108,6 +108,21 @@
   // resolves to the right value at each width.
   padding-top: calc(var(--header-height) + var(--space-2));
   padding-bottom: 0;
+
+  // Header-clearance spacing pass — below lg only, desktop untouched.
+  // padding-bottom:0 above means align-items:center splits ALL slack
+  // below padding-top evenly above/below the content (see this rule's
+  // own "Seventh pass, item 2" comment) — measured live, that slack was
+  // only 3.8px total (1.9px each side) at every checked viewport, since
+  // min-height here is a width-driven floor with no margin to spare.
+  // padding-bottom: var(--space-7) reserves a real 48px floor the same
+  // way .heroBand's own symmetric padding does elsewhere in this pass;
+  // .coverBand's min-height (unedited, above) is a floor, not a fixed
+  // height, so content genuinely needing more room grows the band as a
+  // consequence rather than being clipped.
+  @include mixins.breakpoint-down(lg) {
+    padding-bottom: var(--space-7);
+  }
 }
 
 .coverImage {
