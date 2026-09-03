@@ -111,7 +111,7 @@ import { SignatureBandTuned } from "@/components/SignatureBandTuned";
 // locale-mirror route folders (about-me, contact, method, ...) each
 // restate this line rather than inheriting it from their canonical
 // counterpart).
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 interface HomePageData {
   title?: string;

@@ -12,4 +12,4 @@ export { generateMetadata, default } from "../psicologo-milano/page";
 // consts and does not follow cross-file re-exports, so this restates
 // psicologo-milano/page.tsx's own value. See that file's own comment (in
 // turn pointing to [locale]/page.tsx) for the full rationale.
-export const revalidate = 1800;
+export const revalidate = 86400;

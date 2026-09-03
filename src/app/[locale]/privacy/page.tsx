@@ -15,7 +15,7 @@ import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 
 // 30-minute ISR fallback beneath the revalidateTag webhook — see
 // [locale]/page.tsx's own comment for the full rationale.
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 interface PrivacyPageData {
   title?: string;

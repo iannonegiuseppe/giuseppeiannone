@@ -30,7 +30,7 @@ import { getReadingTimeMinutes } from "./readingTime";
 // [locale]/page.tsx's own comment for the full rationale. Applies per
 // generated article slug, same as any other ISR route with
 // generateStaticParams.
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 const ARTICLE_BODY_ID = "article-body";
 

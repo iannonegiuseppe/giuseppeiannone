@@ -10,7 +10,7 @@ import { BlogIndexView } from "../../BlogIndexView";
 // [locale]/page.tsx's own comment for the full rationale. Applies per
 // generated page number, same as any other ISR route with
 // generateStaticParams.
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export async function generateStaticParams({
   params,

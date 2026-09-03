@@ -19,7 +19,7 @@ import styles from "./page.module.scss";
 // page.tsx re-exports this route's default/generateMetadata but restates
 // this const on its own — Next's segment-config extraction doesn't
 // follow re-exports across files.
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 export interface LibriChapter {
   title: string;
