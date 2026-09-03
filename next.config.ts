@@ -63,6 +63,30 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
+    // Image-transformation quota pass. Both arrays were previously unset,
+    // so Next's defaults applied: 8 deviceSizes + 7 imageSizes = 15
+    // candidate widths per source image, and a transformation is billed
+    // once per unique source+width+format. With ~700 distinct source URLs
+    // (517 referenced Sanity assets, article covers existing at three
+    // different urlFor().width() values each) that is a ceiling in the
+    // several thousands — measured at 4,174 of 5,000 for September.
+    //
+    // 3840 and 2048 are dropped because nothing on this site is displayed
+    // that wide AND, decisively, Next's optimizer never upscales past its
+    // source: only 8.1% of referenced assets are wider than 1920 and 2.5%
+    // wider than 2048 (measured against the real dataset), so for the
+    // other ~92% the 1920/2048/3840 entries all returned the byte-
+    // IDENTICAL image — three separate billed transformations for one
+    // result. 750 and 1200 go for the same reason: they sit within ~15% of
+    // 828/1080 and split traffic across near-duplicate variants without
+    // adding perceptible detail.
+    //
+    // imageSizes keeps 96/256/384 (dropping 32/48/64/128): the smallest
+    // real slot on the site is the 48px article-author avatar, which is a
+    // FIXED-width image and so uses Next's `x` descriptor path (width and
+    // 2*width, snapped up this list) rather than this array's vw filter.
+    deviceSizes: [640, 828, 1080, 1920],
+    imageSizes: [96, 256, 384],
     // The current seed image is an SVG placeholder — Next.js blocks SVG
     // optimization by default (an SVG can carry a <script>). Safe here
     // because every asset comes from an editor publishing through Studio,
