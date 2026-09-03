@@ -164,11 +164,37 @@ export function LightPortraitHero({
             <div className={styles.heroVisualGlow} />
             {photo && dims ? (
               <Image
-                src={urlFor(photo).width(900).url()}
+                // Was .width(900), which capped the optimizer's INPUT below
+                // what the widest case needs: /blog renders this frame at
+                // 720px, so a 2x display needs 1440 device px and the
+                // optimizer — correctly asking for 1920 — could only ever
+                // return the 900px source (0.62x). Still one URL and no
+                // extra variants: the source width is the optimizer's
+                // input, not the srcSet, so raising it changes no
+                // transformation count. Math.min keeps the never-upscale
+                // rule (Sanity DOES upscale on request); 1600 covers the
+                // 1440 worst case with headroom and stays under
+                // deviceSizes' own 1920 ceiling.
+                src={urlFor(photo).width(Math.min(dims.width, 1600)).url()}
                 alt=""
                 width={dims.width}
                 height={dims.height}
-                sizes="(min-width: 64rem) 34rem, 60vw"
+                // Was "(min-width: 64rem) 34rem, 60vw", which under-declared
+                // at nearly every breakpoint: 34rem is 544px but this frame
+                // renders 724px at 1280+ on /blog, and 60vw is 460px at the
+                // md breakpoint where the real width is 720px. The browser
+                // sized from those figures and fetched a variant smaller
+                // than the box — measured 640 served into a 724px frame at
+                // 1440, and 640 into a 684px need at 390@2x.
+                //
+                // These are per-breakpoint upper bounds across BOTH routes
+                // that render this component, measured on localhost
+                // (/blog and /faq, 390/768/1024/1280/1440/1920): /blog is
+                // the wider of the two everywhere except below md, peaking
+                // at 720px at the md breakpoint and 724px from xl up;
+                // /faq peaks at 462px. Declaring the max of the two keeps
+                // one string correct for both.
+                sizes="(min-width: 80rem) 724px, (min-width: 64rem) 58vw, (min-width: 48rem) 94vw, 100vw"
                 className={styles.heroVisualImg}
                 priority={priority}
               />
