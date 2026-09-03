@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Image as SanityImage } from "sanity";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import type { ArticleListItem, ArticlesPageResult } from "@/sanity/articles";
-import { imageDimensions, urlFor } from "@/sanity/image";
+import { articleCoverUrl } from "@/sanity/image";
 import { articlePath, articlesPath, type Locale } from "@/sanity/paths";
 import { CategoryChips, type CategoryChipData } from "./CategoryChips";
 import styles from "./blogIndex.module.scss";
@@ -29,7 +29,11 @@ function ArticleCard({
   locale: Locale;
   large?: boolean;
 }) {
-  const dims = article.cover ? imageDimensions(article.cover as SanityImage) : null;
+  // One shared cover source for both card shapes — see articleCoverUrl's
+  // own comment. It returns null for exactly the case `dims` was guarding
+  // (an asset ref with no parseable dimensions), so guarding on the URL
+  // covers both and keeps the two in step.
+  const coverSrc = article.cover ? articleCoverUrl(article.cover as SanityImage) : null;
   const date = formatDate(article.publishedAt, locale);
   const href = articlePath(locale, article.slug);
 
@@ -38,9 +42,9 @@ function ArticleCard({
       <RevealOnScroll>
         <Link href={href} className={styles.featured}>
           <div className={styles.featuredCover}>
-            {article.cover && dims ? (
+            {coverSrc ? (
               <Image
-                src={urlFor(article.cover as SanityImage).width(1200).url()}
+                src={coverSrc}
                 alt=""
                 fill
                 sizes="(min-width: 64rem) 50vw, 100vw"
@@ -73,9 +77,9 @@ function ArticleCard({
     <RevealOnScroll>
       <Link href={href} className={styles.card}>
         <div className={styles.cardImage}>
-          {article.cover && dims ? (
+          {coverSrc ? (
             <Image
-              src={urlFor(article.cover as SanityImage).width(800).url()}
+              src={coverSrc}
               alt=""
               fill
               sizes="(min-width: 64rem) 33vw, (min-width: 48rem) 50vw, 100vw"

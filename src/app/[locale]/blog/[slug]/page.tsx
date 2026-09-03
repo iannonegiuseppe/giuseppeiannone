@@ -15,7 +15,7 @@ import { getArticleTrail } from "@/sanity/breadcrumbs";
 import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
-import { imageDimensions, urlFor } from "@/sanity/image";
+import { articleCoverUrl, imageDimensions, urlFor } from "@/sanity/image";
 import { buildBlogPostingJsonLd, buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
@@ -185,6 +185,15 @@ export default async function ArticlePage({
     ? `Dr. ${siteSettings.author.name}`
     : undefined;
   const authorJobTitle = siteSettings?.author?.credentials;
+  // The hero's rendered source — the one shared article-cover URL (see
+  // articleCoverUrl). Deliberately NOT the same as coverImageUrl below.
+  const coverSrc = data.cover ? articleCoverUrl(data.cover) : null;
+  // JSON-LD only, never next/image: this is emitted as a raw cdn.sanity.io
+  // URL into BlogPosting structured data, so it costs no Vercel image
+  // transformation and is intentionally left at a flat 1200 — Google's
+  // structured-data guidance wants >=1200px wide, and the shared cover URL
+  // above resolves below that for the 56% of covers whose natural width is
+  // under 1200.
   const coverImageUrl = data.cover ? urlFor(data.cover).width(1200).url() : undefined;
   const blogPostingJsonLd = authorName
     ? buildBlogPostingJsonLd({
@@ -285,9 +294,9 @@ export default async function ArticlePage({
           before .readingArea instead, so its full-bleed width math runs
           against the real viewport with nothing bounding it. */}
       <div className={styles.coverBand}>
-        {data.cover ? (
+        {coverSrc ? (
           <Image
-            src={urlFor(data.cover).width(2400).height(1029).url()}
+            src={coverSrc}
             alt=""
             fill
             sizes="100vw"

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Image as SanityImage } from "sanity";
-import { imageDimensions, urlFor } from "@/sanity/image";
+import { articleCoverUrl } from "@/sanity/image";
 import { articlePath, type Locale } from "@/sanity/paths";
 import styles from "./RelatedArticlesGrid.module.scss";
 
@@ -41,7 +41,10 @@ export function RelatedArticlesGrid({
         <h2 className={styles.relatedHeading}>{heading}</h2>
         <div className={styles.relatedGrid}>
           {items.map((item) => {
-            const dims = item.cover ? imageDimensions(item.cover) : null;
+            // Shared single cover source (see articleCoverUrl). It returns
+            // null for exactly the unparseable-ref case the old `dims`
+            // guard covered, so the URL is now the guard.
+            const coverSrc = item.cover ? articleCoverUrl(item.cover) : null;
             return (
               <Link
                 key={item._id}
@@ -49,9 +52,9 @@ export function RelatedArticlesGrid({
                 className={styles.relatedCard}
               >
                 <div className={styles.relatedCardImage}>
-                  {item.cover && dims ? (
+                  {coverSrc ? (
                     <Image
-                      src={urlFor(item.cover).width(800).url()}
+                      src={coverSrc}
                       alt=""
                       fill
                       sizes="(min-width: 48rem) 33vw, 100vw"

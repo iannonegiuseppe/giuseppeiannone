@@ -1,6 +1,6 @@
 import type { Image as SanityImage } from "sanity";
 import { articlesPath, type Locale } from "@/sanity/paths";
-import { urlFor } from "@/sanity/image";
+import { articleCoverUrl } from "@/sanity/image";
 import { plainTextFromPortableText } from "@/sanity/jsonLd";
 import { ResourcesCardSlider } from "./ResourcesCardSlider";
 import styles from "./resourcesLab.module.scss";
@@ -47,14 +47,17 @@ type ResolvedArticle = {
   coverUrl?: string;
 };
 
-// Card-sized cover request — Next's own responsive pipeline (the
-// slider's own sizes prop) generates the actual per-viewport variant
-// from this capped source.
-const CARD_COVER_WIDTH = 800;
-
-function coverUrl(cover: SanityImage | undefined, width: number): string | undefined {
+// Was a card-sized `.width(800).format("webp").quality(80)` request, which
+// made the homepage slider's copy of a cover a FOURTH distinct source URL
+// for the same asset (alongside the blog grid card, featured slot and
+// article hero) — each with its own full set of billed transformations.
+// Now the one shared article-cover source; see articleCoverUrl's own
+// comment for why one URL serves every surface, and why the webp/q80 hop
+// was actively counterproductive (next/image re-encodes to WebP at q75
+// regardless, so this double-compressed).
+function coverUrl(cover: SanityImage | undefined): string | undefined {
   if (!cover) return undefined;
-  return urlFor(cover).width(width).format("webp").quality(80).url();
+  return articleCoverUrl(cover) ?? undefined;
 }
 
 // Still real and still needed: articles have no stored category field, so
@@ -89,7 +92,7 @@ function resolveArticles(realArticles: RealArticleLab[], locale: Locale): Resolv
     publishedAt: article.publishedAt,
     category: categories[i % categories.length]!,
     excerpt: deriveExcerpt(article.body),
-    coverUrl: coverUrl(article.cover, CARD_COVER_WIDTH),
+    coverUrl: coverUrl(article.cover),
   }));
 }
 
