@@ -28,10 +28,21 @@ const MD_BREAKPOINT_QUERY = "(min-width: 48rem)";
 // disabled and produces no hydration flash (unlike a client-side
 // matchMedia mount/unmount, which would still ship the image in the
 // initial SSR HTML before JS could remove it).
+// sizes was "192px" — px-only, so Next's vw filter never engaged and this
+// 192px slot generated the full width list (a 3840px variant for a 12rem
+// box). Note this is the ONE image on the site that reaches the optimizer
+// through getImageProps() rather than a <Image sizes=...> prop, which is
+// why an audit of JSX props alone misses it — and it's the only timeline
+// image production actually renders (TimelineSection is always called with
+// variant="route"). .routeImage is `flex: 0 0 12rem` at md+, measured live
+// at 195px (1440, reduced-motion). The 25vw fallback is that same 192px
+// expressed at the md breakpoint itself (192/768): below md the <source
+// media> below never matches, so no vw branch is ever actually selected —
+// it engages the filter, at the one width where it could apply.
 function RouteImage({ src, alt }: { src: string; alt: string }) {
   const {
     props: { srcSet, sizes, ...rest },
-  } = getImageProps({ src, alt, fill: true, sizes: "192px", className: styles.imagePhoto });
+  } = getImageProps({ src, alt, fill: true, sizes: "(min-width: 48rem) 192px, 25vw", className: styles.imagePhoto });
 
   return (
     <picture>

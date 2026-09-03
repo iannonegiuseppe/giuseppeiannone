@@ -111,7 +111,16 @@ export function SediPopupContent({
             src={photoUrl!}
             alt={location.photo?.alt ?? ""}
             fill
-            sizes="320px"
+            // Was "320px". Next only narrows the generated srcSet when the
+            // sizes string contains a `vw` token — a px-only value falls
+            // through to EVERY width in deviceSizes+imageSizes, so this
+            // 288px popup was authorising a 3840px variant. Measured live
+            // (localhost, /contatti, all four markers): .leaflet-popup-
+            // content is exactly 288px at 390, 1024 and 1440 — the width is
+            // min(18rem, 100vw - var(--space-5)*2), so it only drops below
+            // 288 under a ~328px viewport, which is what the 90vw fallback
+            // describes.
+            sizes="(min-width: 24rem) 288px, 90vw"
             className={styles.popupPhotoBg}
           />
           <div className={styles.popupScrim} aria-hidden="true" />

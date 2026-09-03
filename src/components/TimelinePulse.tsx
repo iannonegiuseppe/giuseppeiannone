@@ -48,7 +48,18 @@ export function TimelinePulse({ entries }: { entries: TimelineEntryResolved[] })
               <div className={`${styles.pulseCols} ${entry.image ? styles.pulseHasImage : ""}`}>
                 {entry.image ? (
                   <div className={`${styles.pulseImage} ${styles.imageFrame}`}>
-                    <Image src={entry.image.src} alt={entry.image.alt} fill sizes="144px" className={styles.imagePhoto} />
+                    {/* Was "144px" — px-only, so Next's vw filter never
+                        engaged. .pulseImage is `flex: 0 0 9rem` with no
+                        breakpoint override, so it is 144px at every
+                        viewport; 40vw is that width at the narrowest
+                        supported one (~360px). */}
+                    <Image
+                      src={entry.image.src}
+                      alt={entry.image.alt}
+                      fill
+                      sizes="(min-width: 24rem) 144px, 40vw"
+                      className={styles.imagePhoto}
+                    />
                   </div>
                 ) : null}
                 <div>

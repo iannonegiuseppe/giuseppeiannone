@@ -53,7 +53,17 @@ export function TimelineEntry({
       <p className={styles.entryPlaceMobile}>{place}</p>
       {image ? (
         <div className={styles.entryImage}>
-          <Image src={image.src} alt={image.alt} fill sizes="420px" className={styles.entryImagePhoto} />
+          {/* Was "420px" — px-only, so Next's vw filter never engaged and
+              every width in the list was authorised. .entryImage tracks
+              --timeline-image-width (TimelineSection.module.scss): 420px at
+              xl+, 320px at lg, and the full stacked column below lg. */}
+          <Image
+            src={image.src}
+            alt={image.alt}
+            fill
+            sizes="(min-width: 80rem) 420px, (min-width: 64rem) 320px, 90vw"
+            className={styles.entryImagePhoto}
+          />
         </div>
       ) : null}
       <div className={styles.entryText}>

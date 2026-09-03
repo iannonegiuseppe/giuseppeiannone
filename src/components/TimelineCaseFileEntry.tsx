@@ -37,7 +37,17 @@ export function TimelineCaseFileEntry({
               ))}
             </div>
             <div className={`${styles.cfImage} ${styles.imageFrame}`}>
-              <Image src={entry.image.src} alt={entry.image.alt} fill sizes="128px" className={styles.imagePhoto} />
+              {/* Was "128px" — px-only, so Next's vw filter never engaged.
+                  .cfImage is `flex: 0 0 8rem` with no breakpoint override,
+                  so it is 128px at every viewport; 36vw is that width at
+                  the narrowest supported one (~360px). */}
+              <Image
+                src={entry.image.src}
+                alt={entry.image.alt}
+                fill
+                sizes="(min-width: 24rem) 128px, 36vw"
+                className={styles.imagePhoto}
+              />
             </div>
           </div>
         ) : (
