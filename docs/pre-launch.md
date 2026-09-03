@@ -1,5 +1,29 @@
 # Pre-launch checklist
 
+> **THE SITE LAUNCHED ON 31 AUGUST 2026. Read this whole file as post-launch.**
+>
+> `NEXT_PUBLIC_SITE_URL` was set in Vercel on 31 August 2026, before the DNS
+> cutover, and the site has been live and indexable on `giuseppeiannone.it`
+> ever since — owner-verified on the live domain: `robots.txt` serves
+> `Allow: /` with only `/studio` and `/api/` disallowed, plus the sitemap
+> line on the new domain.
+>
+> That single env var is what `isProductionDeployment()`
+> (`src/sanity/metadata.ts`) gates on, so it silently flipped the behaviour
+> of everything downstream of it — `robots.ts`, canonicals, hreflang,
+> `sitemap.ts`, JSON-LD, and the contact-form email links — all at once,
+> with no commit in this repo to mark the moment. **That is exactly why this
+> file went stale without looking stale**, and why entries below still
+> written in the future tense ("at launch", "before the domain switches")
+> are describing something that has already happened. Individual entries
+> carry a dated correction where they were wrong; anything without one is
+> still to be re-verified against the live site rather than trusted.
+>
+> Corrected 3 September 2026, after this file's pre-launch framing caused a
+> real misdiagnosis: a robots.txt change was reported as inert dead code on
+> the strength of the `NEXT_PUBLIC_SITE_URL` entry below, when the rules
+> were in fact live in production.
+
 Rebuilt from the code and the data as they actually are (not patched from the
 previous version — that one had drifted too far from reality to trust). Each
 entry names what it's based on: a file, a live query, or a specific commit.
@@ -8,9 +32,29 @@ content both move.
 
 ## 1. Blocks launch
 
-Things that must be done before the domain switches.
+Things that were meant to be done before the domain switched. The switch has
+happened, so anything still open here is now live-site work, not preparation
+— re-check each against the live domain before acting on it.
 
-- **`seo.noIndex` is `true` on 81 documents right now, not a fixed small
+- **DONE — the `seo.noIndex` flags have been cleared. This entry is stale
+  and its 81-document count no longer describes the dataset.** Verified
+  3 September 2026 from the locally-rendered `/sitemap.xml`, which filters
+  out any document with `noIndex === true` (`src/app/sitemap.ts:115`), so
+  presence in it is proof the flag is off: 519 URLs, including every page
+  this entry listed as noindexed — `/chi-sono`, `/metodo`, `/prezzi`,
+  `/faq`, `/contatti`, the pillars (`/disturbi-d-ansia`), the location
+  pages (`/psicologo-milano`), their `/en` counterparts, and all five of
+  the English articles named below. 471 article URLs in total.
+  - Caveat on precision: this is a sitemap-derived signal, not a document
+    count. It proves the flag is off for everything the sitemap lists; it
+    can't prove no document anywhere still carries it. The authoritative
+    check remains a live `*[seo.noIndex == true]` GROQ query against the
+    dataset.
+  - The original entry follows, kept for the type-by-type breakdown and
+    the reversal instructions, both still accurate as a description of
+    what was done.
+- **(HISTORICAL — completed) `seo.noIndex` is `true` on 81 documents right
+  now, not a fixed small
   number — this entry previously said 79 and was stale by exactly
   `libriPage`'s 2 documents (missing from the breakdown below since
   whenever this file last checked; re-verified live just now).** Live
@@ -34,25 +78,31 @@ Things that must be done before the domain switches.
     each, or a scripted batch unset. Re-deploy so the sitemap and each
     page's own `<meta name="robots">` pick it up.
 
-- **`robots.txt` currently blocks all crawling (verified live:
-  `User-Agent: *` / `Disallow: /`) — this is correct and load-bearing
-  pre-launch, and needs no separate sitemap exception.** Checked whether
-  `/sitemap.xml` also carries an `X-Robots-Tag: noindex` header (it would
-  need excluding from that at launch, since Google won't read a sitemap
-  marked noindex): it doesn't. `proxy.ts`'s middleware — the only thing
-  that sets that header — has a matcher that excludes any path containing
-  a dot (meant for static assets), so it never runs for `/sitemap.xml` on
-  any hostname; confirmed with a live header check. `robots.ts`'s
-  production branch already both allows crawling and lists
-  `sitemap: .../sitemap.xml` — that flips on automatically the same
-  moment `isProductionDeployment()` does (see `robots.ts`'s own comment).
-  Re-confirm this with a live header check against the real Vercel
-  preview before launch, since Vercel-dashboard-level config wouldn't
-  show up in this repo — but nothing here points to action being needed.
-  **Reconfirmed 27 August 2026** (pre-launch batch 1, independent
-  re-investigation): still true, nothing has drifted. The launch-day
-  action here is setting `NEXT_PUBLIC_SITE_URL` in Vercel — not a code
-  change to this repo.
+- **DONE — 31 August 2026. `robots.txt` now allows crawling on the live
+  domain** (`Allow: /`, disallowing only `/studio` and `/api/`, with the
+  `Sitemap:` line pointing at `giuseppeiannone.it` — owner-verified on the
+  live domain). It flipped automatically the moment `NEXT_PUBLIC_SITE_URL`
+  was set in Vercel, exactly as the entry below predicted; no code change
+  was involved. Local dev and Vercel previews still serve
+  `User-Agent: *` / `Disallow: /`, which is correct and unchanged — so a
+  local `curl localhost:3000/robots.txt` shows the blanket disallow and
+  says nothing at all about production. To render the production branch
+  locally, set `VERCEL_ENV=production` and `NEXT_PUBLIC_SITE_URL` on the
+  dev server.
+  - The sitemap-exception investigation this entry originally carried still
+    holds and needed no action: `/sitemap.xml` does **not** carry an
+    `X-Robots-Tag: noindex` header (which would have had to be excluded at
+    launch, since Google won't read a sitemap marked noindex). `proxy.ts`'s
+    middleware — the only thing that sets that header — has a matcher
+    excluding any path containing a dot (meant for static assets), so it
+    never runs for `/sitemap.xml` on any hostname; confirmed with a live
+    header check, reconfirmed 27 August 2026.
+  - Bot-allow policy on top of this is now an active, ongoing concern
+    rather than a launch item — the site is being crawled for real. See
+    `src/app/robots.ts` for the current named-bot groups and, in
+    particular, its comment on which Meta agents are blocked and which are
+    deliberately left allowed because they serve WhatsApp/Facebook link
+    previews.
 
 - **Consent banner and gated script-loading both exist now — GA4 and
   Microsoft Clarity are wired, not just the mechanism.**
@@ -83,23 +133,29 @@ Things that must be done before the domain switches.
   untouched). Whatever code change the disable decision requires hasn't
   been written yet.
 
-- **Setting `NEXT_PUBLIC_SITE_URL` at launch fixes the contact-form
-  emails too, not just canonicals/hreflang/sitemap/JSON-LD — easy to
-  miss since nobody would think to check an email for this.**
-  `getSiteUrl()` (`src/sanity/metadata.ts`) is the one constant behind
-  every absolute URL in both the internal-notification and visitor
-  confirmation emails (`src/lib/contact/emailTemplate.ts`'s `siteUrl()`,
-  used for the header logo's click-through link). Locally, and on every
-  Vercel preview deployment today, `NEXT_PUBLIC_SITE_URL` is unset and
-  Vercel's own `VERCEL_URL` is the fallback — confirmed live (`.env.local`
-  has neither set, so it resolves all the way to `http://localhost:3000`
-  locally; on a real `dev`-branch preview, Vercel auto-populates
-  `VERCEL_URL` to that deployment's own `*.vercel.app` host instead), so
-  every link in a contact-form email sent from a preview deployment today
-  points at that preview's own throwaway URL, not the eventual production
-  domain. Setting `NEXT_PUBLIC_SITE_URL=https://giuseppeiannone.it` in
-  Vercel at launch is the single edit that corrects this — same one edit
-  that already fixes canonicals — no code change needed.
+- **DONE — 31 August 2026. `NEXT_PUBLIC_SITE_URL=https://giuseppeiannone.it`
+  is set in Vercel's production environment.** This was the single launch
+  edit, and it corrected canonicals, hreflang, `sitemap.ts`, JSON-LD,
+  `robots.txt`, and the contact-form email links in one go — no code change
+  was needed, and none was made.
+  - **This entry is the one that misled a later reader (3 September 2026),
+    so note the trap rather than just the fix:** a doc entry describing an
+    unset env var reads as current fact long after the var has been set,
+    because setting it happens in the Vercel dashboard and leaves no trace
+    in this repo — no commit, no diff, nothing `git log` will show. There
+    is no way to check it from the codebase. **The only reliable check is
+    the live domain** (`curl -sI https://giuseppeiannone.it/` and friends,
+    or the Vercel project's env var list) — never local dev, which still
+    resolves to `http://localhost:3000` and always will.
+  - Retained because the mechanism is still worth knowing: `getSiteUrl()`
+    (`src/sanity/metadata.ts`) is the one constant behind every absolute
+    URL in both the internal-notification and visitor confirmation emails
+    (`src/lib/contact/emailTemplate.ts`'s `siteUrl()`, used for the header
+    logo's click-through link). It falls back
+    `NEXT_PUBLIC_SITE_URL` → `VERCEL_URL` → `http://localhost:3000`, so on
+    `dev`-branch previews — where the var is still unset — contact-form
+    emails continue to link to that preview's own throwaway `*.vercel.app`
+    host. That is expected on previews and does not affect production.
 
 - **Giuseppe owes:** studio photographs — Monza's is in now (`sede-monza`/
   `-en`, addr-1, uploaded and verified live in the map popup and the

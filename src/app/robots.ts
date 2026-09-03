@@ -17,6 +17,26 @@ const NAMED_BOTS = [
 
 const DISALLOWED_PATHS = ["/studio", "/api/"];
 
+// Crawlers blocked outright — one robots.txt group each, since user-agent
+// matching is per-token and each entry should read as its own decision.
+//
+// meta-externalagent: Meta's bulk sweeper. It was re-crawling the whole site
+// repeatedly, every page three times over, including the RSC payload variants
+// (?_rsc=) that Next serves as separate cache entries — a material share of
+// this month's ISR invocations and image transformations, for traffic that
+// sends back no visitors. It is a discovery/AI-training crawler with no
+// link-preview role, so blocking it costs nothing user-facing.
+//
+// DELIBERATELY NOT BLOCKED, do not "complete the set" here:
+// meta-externalfetcher, FacebookBot, and facebookexternalhit are the agents
+// that fetch Open Graph tags when someone shares a link on Facebook,
+// Messenger, or WhatsApp. WhatsApp is this practice's primary contact
+// channel — the floating button, the wa.me links, the contact form's default
+// — so people paste these URLs into chats constantly. Blocking those agents
+// would strip the title and description out of every one of those shares and
+// leave a bare URL. That is worth more than the fetches it would save.
+const BLOCKED_BOTS = ["meta-externalagent"];
+
 export default function robots(): MetadataRoute.Robots {
   // PRE-LAUNCH STATE — currently active, verified live: isProductionDeployment()
   // is false on any preview deployment (Vercel sets VERCEL_ENV to "preview"
@@ -53,6 +73,7 @@ export default function robots(): MetadataRoute.Robots {
 
   return {
     rules: [
+      ...BLOCKED_BOTS.map((userAgent) => ({ userAgent, disallow: "/" })),
       { userAgent: NAMED_BOTS, allow: "/", disallow: DISALLOWED_PATHS },
       { userAgent: "*", allow: "/", disallow: DISALLOWED_PATHS },
     ],

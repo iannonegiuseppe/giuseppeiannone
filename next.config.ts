@@ -87,6 +87,31 @@ const nextConfig: NextConfig = {
     // 2*width, snapped up this list) rather than this array's vw filter.
     deviceSizes: [640, 828, 1080, 1920],
     imageSizes: [96, 256, 384],
+    // One year (Next's own default is 14400 = 4h). Same quota pass as the
+    // two arrays above: billing is per unique source+width+format per cache
+    // window, so a 4-hour window means a crawler sweeping the site every
+    // couple of hours lands in a fresh window each time and re-bills every
+    // variant it touches. At a year, each variant is a one-time cost.
+    //
+    // Safe because every URL this optimizer sees is content-addressed:
+    // Sanity asset URLs carry the asset's own content hash
+    // (cdn.sanity.io/images/<project>/<dataset>/<hash>-<w>x<h>.<ext>), so
+    // replacing an image in Studio produces a NEW URL — a long TTL keeps
+    // serving the old variant under the old URL, which nothing references
+    // any more. Local images imported statically (public/libri/book-hero.png
+    // in LibriHeroVisual) are content-addressed the same way by the build:
+    // /_next/static/media/book-hero.<hash>.png.
+    //
+    // The exception: the four public/ images referenced by literal STRING
+    // path, whose URL does not change when the file does —
+    //   /design-lab/01.webp            (HeroOverlap photo fallback)
+    //   /design-lab/photos/04.webp     (midPagePhoto.ts, psicologo-milano/-monza)
+    //   /design-lab/photos/11.webp     (homepage ParallaxFrameStatic)
+    //   /design-lab/photos/lo-spazio.webp (chi-sono ParallaxFrameStatic)
+    // Overwriting one of those in place under the same filename can serve
+    // the stale variant for up to a year. Replace them by committing a new
+    // filename (or move them to Sanity), never by overwriting in place.
+    minimumCacheTTL: 31536000,
     // The current seed image is an SVG placeholder — Next.js blocks SVG
     // optimization by default (an SVG can carry a <script>). Safe here
     // because every asset comes from an editor publishing through Studio,
