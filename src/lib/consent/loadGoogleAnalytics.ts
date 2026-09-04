@@ -47,8 +47,23 @@ export function loadGoogleAnalytics(): void {
   loaded = true;
 
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer!.push(args);
+  // MUST push the `arguments` object itself — NOT a rest-parameter array.
+  // They look equivalent and are not. gtag.js shares dataLayer with GTM,
+  // where a pushed plain object/array is data, so it identifies COMMANDS by
+  // type: only an entry whose Object.prototype.toString is "[object
+  // Arguments]" is treated as gtag("consent"|"js"|"config"|"event", ...).
+  // A rest parameter produces "[object Array]", which gtag.js silently
+  // ignores — the script still loads 200, still pushes its own gtm.dom /
+  // gtm.load entries, and never sends a single measurement hit. That was
+  // this file's bug from the start: GA recorded zero traffic from launch
+  // (31 Aug 2026) until 4 Sept, with no error anywhere to notice.
+  // Verified as an A/B on one page, same measurement ID, only this line
+  // differing: array push -> 0 hits to /g/collect, arguments push -> 4.
+  // Google's own snippet is `function gtag(){dataLayer.push(arguments);}`
+  // for exactly this reason. Do not "modernise" it to a rest parameter.
+  window.gtag = function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments);
   };
   // Sent FIRST, before "js"/"config" — confirmed live that sending this
   // as a later "update" (after config/event had already been queued)
