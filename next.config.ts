@@ -99,6 +99,28 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Custom loader — Sanity's own image CDN does the resizing and format
+    // negotiation, and /_next/image is out of the path entirely. This is
+    // the fix for a visitor-facing outage: the free plan's 5,000
+    // transformations/month ran out mid-September and most blog covers
+    // rendered as empty boxes. See src/sanity/imageLoader.ts's own
+    // comment for the mechanism and for the never-upscale clamp that
+    // keeps this from being a quality regression.
+    //
+    // WHAT THIS TURNS OFF. A custom loader bypasses the built-in
+    // optimizer, so four of the options below stop having any effect and
+    // are kept only so they are correct again if the loader is ever
+    // removed: remotePatterns (nothing is validated against it any more),
+    // minimumCacheTTL (that is the optimizer's own cache), and the
+    // dangerouslyAllowSVG/contentSecurityPolicy pair (the optimizer's own
+    // SVG guard — Sanity serves SVG assets directly now, and its CDN sets
+    // its own headers).
+    //
+    // deviceSizes/imageSizes DO still apply: they are what next/image
+    // uses to build each srcset, and so decide the widths this loader is
+    // called with. Their own reasoning below is unchanged and still live.
+    loader: "custom",
+    loaderFile: "./src/sanity/imageLoader.ts",
     remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
     // Image-transformation quota pass. Both arrays were previously unset,
     // so Next's defaults applied: 8 deviceSizes + 7 imageSizes = 15

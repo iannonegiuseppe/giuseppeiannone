@@ -95,9 +95,18 @@ const ARTICLE_COVER_MAX_WIDTH = 1920;
  * fake ones. The new behaviour crops once, in CSS, from the full frame at
  * native resolution. The mobile change is a fix, not a regression.
  *
- * No `.format()`/`.quality()` either: next/image re-encodes to WebP at
- * q75 regardless, so asking Sanity for webp/q80 first only double-
- * compressed the homepage slider's copy.
+ * No `.format()`/`.quality()` either. That used to be because next/image
+ * re-encoded everything to WebP at q75 anyway, so asking Sanity for
+ * webp/q80 first only double-compressed the homepage slider's copy. The
+ * reason changed but the conclusion did not: since the custom loader
+ * (src/sanity/imageLoader.ts) there IS no second encoder, and the loader
+ * appends `auto=format` and `q` to this URL per srcset entry. Setting
+ * either here would just be overwritten.
+ *
+ * The `Math.min(natural, 1920)` cap above is likewise no longer the only
+ * thing standing between a small asset and an upscale — the loader clamps
+ * per requested width too, which is the guarantee that actually matters
+ * now that Sanity, not Vercel, decides what a `?w=` means.
  */
 export function articleCoverUrl(cover: Image): string | null {
   const dims = imageDimensions(cover);
