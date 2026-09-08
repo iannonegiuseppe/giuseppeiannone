@@ -84,9 +84,25 @@ const EXPLICIT_RESERVED_SLUGS: string[] = [
   // Old WordPress URLs that still redirect (next.config.ts) — same
   // reasoning as the two above: a document slug here would be shadowed
   // by a redirect that fires before routing, and nothing would say so.
+  // The document would publish, appear in the sitemap and look live,
+  // while every visit to its URL was carried off by the redirect — no
+  // build error, no log line, nothing in Studio.
+  //
+  // The first three arrived with their own redirects; the rest are older
+  // hand-curated sources (next.config.ts) that were never registered
+  // here. None of the six appears in the frozen 468-entry WordPress
+  // article snapshot, so adding them changes no generated redirect —
+  // getWordPressArticleRedirects()'s own reserved-slug filter has
+  // nothing here to drop.
   "cassa",
   "pagamento",
   "contattami",
+  "ansia",
+  "privacy-policy",
+  "privacy-policy-2",
+  "scarica-e-book",
+  "psicoterapia-online-metodo",
+  "studio-psicologia-psicoterapia-milano",
 
   // Framework internals and well-known files served from the root.
   "_next",
