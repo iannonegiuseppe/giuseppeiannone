@@ -75,8 +75,6 @@ export function LocationsMarquee({
   allPhotosReal: boolean;
   items: LocationsMarqueeItem[];
 }) {
-  if (items.length === 0) return null;
-
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -287,6 +285,21 @@ export function LocationsMarquee({
       wrap.removeEventListener("keydown", onKeyDown);
     };
   }, []);
+
+  // Empty-items guard, deliberately BELOW every hook rather than at the top
+  // of the component. React identifies hooks by call ORDER, not by name, so
+  // an early return above useRef/useEffect meant this component called two
+  // hooks on a render with items and zero on a render without — the exact
+  // shape that makes React throw "Rendered fewer hooks than expected" and
+  // take down the whole subtree, not just this carousel. Harmless today
+  // (items arrives as a server-rendered prop and never changes for a
+  // mounted instance) and a crash the moment it doesn't. Caught by
+  // react-hooks/rules-of-hooks.
+  //
+  // Safe to run the effect first: its dependency list is empty and its very
+  // first statement bails on a null wrapRef, which is exactly what an empty
+  // carousel leaves behind.
+  if (items.length === 0) return null;
 
   const emphasisIndex = headingEmphasisWord ? heading.indexOf(headingEmphasisWord) : -1;
   const headingNode =
