@@ -2,6 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { getWordPressArticleRedirects } from "./src/sanity/buildTimeRedirects";
+import { getLocaleSlugRedirects } from "./src/sanity/localeSlugRedirects";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -19,8 +20,18 @@ const nextConfig: NextConfig = {
     // article is added/removed.
     const wordPressArticleRedirects = await getWordPressArticleRedirects();
 
+    // Wrong-locale duplicates of the fixed singleton pages: /method
+    // (the English slug without the /en prefix) and /en/metodo (the
+    // Italian slug under it) both answered 200 with the wrong locale's
+    // content, because both literal route folders live under the
+    // `[locale]` dynamic segment. Derived from SINGLETON_ROUTES, not
+    // hand-listed — see localeSlugRedirects.ts's own comment for the
+    // full mechanism and why this is a 301 rather than a 404.
+    const localeSlugRedirects = getLocaleSlugRedirects();
+
     return [
       ...wordPressArticleRedirects,
+      ...localeSlugRedirects,
       // The risorse/resources PREVIEW-GATE routes were live on preview
       // and may be linked from somewhere — redirect rather than 404.
       { source: "/risorse", destination: "/blog", permanent: true },
