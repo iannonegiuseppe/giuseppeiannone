@@ -81,6 +81,12 @@ const EXPLICIT_RESERVED_SLUGS: string[] = [
   // A document slug here would be shadowed by the redirect.
   "risorse",
   "resources",
+  // Old WordPress URLs that still redirect (next.config.ts) — same
+  // reasoning as the two above: a document slug here would be shadowed
+  // by a redirect that fires before routing, and nothing would say so.
+  "cassa",
+  "pagamento",
+  "contattami",
 
   // Framework internals and well-known files served from the root.
   "_next",

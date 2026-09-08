@@ -70,6 +70,32 @@ const nextConfig: NextConfig = {
       // artifact, "-2" suffix) — both real, both live, both point here.
       { source: "/privacy-policy", destination: "/privacy", permanent: true },
       { source: "/privacy-policy-2", destination: "/privacy", permanent: true },
+      // The rest of the old WordPress installation's own URL surface,
+      // taken from Search Console's 404 report rather than guessed: 17
+      // date archives, the WooCommerce checkout tree, and one duplicate
+      // contact page, all still being re-crawled months after the
+      // migration. Same no-trailing-slash rule as the block above.
+      //
+      // Date archives -> the blog listing: a monthly archive was a list
+      // of posts, and /blog is the only page that still is one. Both
+      // depths are covered because WordPress served /2024/ as well as
+      // /2024/11/. Safe as a numeric pattern: no root-level document
+      // slug is all digits (checked against the frozen 468-entry
+      // WordPress snapshot and every pillar/page slug), so this can
+      // never shadow real content.
+      { source: "/:year(\\d{4})", destination: "/blog", permanent: true },
+      { source: "/:year(\\d{4})/:month(\\d{2})", destination: "/blog", permanent: true },
+      // WooCommerce cart/checkout tree and the standalone payment page.
+      // Both point at /prezzi — paying through the old site was for
+      // sessions, and the pricing page is where that conversation now
+      // starts. :path* covers conferma-di-acquisto, cronologia-acquisti
+      // and transazione-fallita without listing each.
+      { source: "/cassa", destination: "/prezzi", permanent: true },
+      { source: "/cassa/:path*", destination: "/prezzi", permanent: true },
+      { source: "/pagamento", destination: "/prezzi", permanent: true },
+      // Old site's second contact page, alongside
+      // /studio-psicologia-psicoterapia-milano above.
+      { source: "/contattami", destination: "/contatti", permanent: true },
     ];
   },
   images: {
