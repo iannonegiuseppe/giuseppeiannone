@@ -68,6 +68,10 @@ export const TRANSLATABLE_TYPES = new Set([
   // list types, not singleton/protected (no "exactly N" constraint), but
   // still it/en pairs via the same mechanism as article/service.
   "sede",
+  // diploma is hidden in Studio and has no row of its own any more (it
+  // was superseded twice over — see diploma.ts), kept here for exactly
+  // the same reason as qualification below: its existing, orphaned it/en
+  // document pairs must stay valid.
   "diploma",
   // Diplomi rebuild pass — replaced diploma's own role for the homepage
   // card row, itself now superseded by homePage.diplomi.items (owner call,
@@ -391,13 +395,25 @@ export const structure: StructureResolver = (S, context) =>
             .title("Reference data")
             .items([
               S.documentTypeListItem("sede").title("Sedi"),
-              S.documentTypeListItem("diploma").title("Diplomi"),
+              // "Diplomi" (the `diploma` type) was here until the owner
+              // asked why a row full of placeholders changed nothing on
+              // the site. It changed nothing because it is two
+              // generations dead: diploma -> qualification ->
+              // homePage.diplomi.items, which is what the home page has
+              // actually read since the homePage-array migration. Both
+              // diplomasQuery and qualificationsQuery are unimported.
+              // `qualification` was hidden when it was superseded;
+              // `diploma` was missed, so it kept a Studio row of its own
+              // — an owner could edit those documents for an hour and see
+              // nothing happen. See diploma.ts's own comment. Documents
+              // are orphaned, not deleted, and the type stays in
+              // TRANSLATABLE_TYPES above so its it/en pairs stay valid.
               S.documentTypeListItem("service").title("Services"),
               S.documentTypeListItem("faqItem").title("FAQ questions"),
               // Blog category-chip pass (round 2) — reference data reused
-              // by article.blogCategory, same shape as faqItem/sede/
-              // diploma above: no route of its own, just data other
-              // documents point at.
+              // by article.blogCategory, same shape as faqItem/sede
+              // above: no route of its own, just data other documents
+              // point at.
               S.documentTypeListItem("blogCategory").title("Blog categories"),
             ]),
         ),
