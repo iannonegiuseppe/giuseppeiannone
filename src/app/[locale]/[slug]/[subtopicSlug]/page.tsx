@@ -30,11 +30,11 @@ import { allSubtopicSlugsQuery, contactSectionQuery, subtopicPageQuery } from "@
 import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import styles from "./page.module.scss";
 
-// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// 7-day ISR fallback beneath the revalidateTag webhook — see
 // [locale]/page.tsx's own comment for the full rationale. Applies per
 // generated slug, same as any other ISR route with generateStaticParams
 // — each subtopic page gets its own independent revalidation window.
-export const revalidate = 86400;
+export const revalidate = 604800;
 
 interface SubtopicPageData {
   _id: string;

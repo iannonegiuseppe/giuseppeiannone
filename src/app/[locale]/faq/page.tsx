@@ -13,9 +13,9 @@ import { buildMetadata, getSiteSettings, type SeoFields } from "@/sanity/seo";
 import { FaqExplorer, type FaqExplorerSection } from "./FaqExplorer";
 import styles from "./faq.module.scss";
 
-// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// 7-day ISR fallback beneath the revalidateTag webhook — see
 // [locale]/page.tsx's own comment for the full rationale.
-export const revalidate = 86400;
+export const revalidate = 604800;
 
 interface FaqItemData {
   _id: string;

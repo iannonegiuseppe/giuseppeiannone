@@ -94,24 +94,35 @@ import { SignatureBandTuned } from "@/components/SignatureBandTuned";
 // of failure: every route was pure SSG with no `revalidate` at all, so
 // a missed or misconfigured webhook meant the page could stay stale
 // indefinitely — measured live at 22+ hours stale on this exact route
-// after a video swap the webhook never picked up. 1800s (30 minutes) is
-// deliberately loose: this is a psychotherapy practice site, not a news
-// site, and content changes are occasional manual edits in Studio, not
-// continuous — the interval only needs to be short enough that a missed
-// webhook self-heals within a visit-to-visit timeframe, not so short
-// that ordinary traffic triggers frequent regenerations. This does not
-// race or override revalidateTag: Next treats a route's `revalidate`
-// value as an UPPER BOUND on staleness, not a fixed schedule — a
-// successful webhook call still purges the cache immediately, same as
-// today; this interval only matters for the case where that call never
-// arrives. Every Sanity-driven route in this app uses the same 1800s
+// after a video swap the webhook never picked up. This does not race or
+// override revalidateTag: Next treats a route's `revalidate` value as an
+// UPPER BOUND on staleness, not a fixed schedule — a successful webhook
+// call still purges the cache immediately; this interval only matters
+// for the case where that call never arrives.
+//
+// WHY 7 DAYS (604800s), not shorter — it is billed, and heavily:
+// every expired page is regenerated on the next crawler hit, and crawlers
+// touch every page, so the interval effectively sets how often the whole
+// site is rewritten to the ISR cache. Each regeneration writes the HTML,
+// the RSC payload and ~8 Next 16 prefetch segment files (.segments/
+// _tree, _full, _head, _index, __PAGE__, ...), each at least one 8 KB
+// write unit. Measured on Vercel after launch (Hobby limit 200K ISR
+// write units / 30 days): 1800s (the original value) ran 50-75K units
+// PER DAY; 86400s (from 3 Sept 2026) still ran a steady ~12K/day,
+// ~360K/month. 7 days brings the steady state to roughly 1.7K/day.
+// The cost is the trade-off above: a missed webhook now self-heals within
+// a week rather than a day. If the webhook proves unreliable, fix the
+// webhook — do not shorten this to compensate without re-checking the
+// ISR Writes chart in Vercel Usage.
+//
+// Every Sanity-driven route in this app uses the same 604800s
 // value, applied per-file (Next's segment-config extraction statically
 // parses each route file's own top-level consts — it does not follow
 // `export { revalidate } from "./other-file"` re-exports, so the
 // locale-mirror route folders (about-me, contact, method, ...) each
 // restate this line rather than inheriting it from their canonical
 // counterpart).
-export const revalidate = 86400;
+export const revalidate = 604800;
 
 interface HomePageData {
   title?: string;

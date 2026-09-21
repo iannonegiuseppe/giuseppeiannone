@@ -5,9 +5,9 @@ import { articlesPath } from "@/sanity/paths";
 import { buildMetadata, getSiteSettings } from "@/sanity/seo";
 import { BlogIndexView } from "./BlogIndexView";
 
-// 30-minute ISR fallback beneath the revalidateTag webhook — see
+// 7-day ISR fallback beneath the revalidateTag webhook — see
 // [locale]/page.tsx's own comment for the full rationale.
-export const revalidate = 86400;
+export const revalidate = 604800;
 
 export async function generateMetadata({
   params,
