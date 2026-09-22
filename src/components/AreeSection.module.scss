@@ -58,6 +58,24 @@
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--color-text-muted);
+
+  // Two columns from md up: each column keeps roughly the old 52ch
+  // measure, so the full width grows instead of the line length.
+  @include mixins.breakpoint-up(md) {
+    max-width: none;
+    column-count: 2;
+    column-gap: var(--space-7);
+  }
+}
+
+.areeIntroParagraph {
+  margin: 0 0 var(--space-4);
+  white-space: pre-line;
+  break-inside: avoid;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 // --- Card-grid rebuild pass ------------------------------------------------

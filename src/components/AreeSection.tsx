@@ -77,7 +77,23 @@ export function AreeSection({
         <h2 id="aree-heading" className={styles.areeTitle}>
           {title}
         </h2>
-        {intro ? <p className={styles.areeIntro}>{intro}</p> : null}
+        {/* Two-column intro: the editor's text is split into paragraphs on
+            blank lines (a plain `text` field, no schema change); single
+            line breaks inside a paragraph are kept via white-space:
+            pre-line, and break-inside: avoid keeps each paragraph whole
+            within one column. */}
+        {intro?.trim() ? (
+          <div className={styles.areeIntro}>
+            {intro
+              .trim()
+              .split(/\n\s*\n/)
+              .map((paragraph, index) => (
+                <p key={index} className={styles.areeIntroParagraph}>
+                  {paragraph.trim()}
+                </p>
+              ))}
+          </div>
+        ) : null}
       </div>
 
       <ul className={styles.areeGrid} role="list">
