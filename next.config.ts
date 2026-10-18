@@ -1,7 +1,10 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
-import { getWordPressArticleRedirects } from "./src/sanity/buildTimeRedirects";
+import {
+  getCrossLocaleArticleRedirects,
+  getWordPressArticleRedirects,
+} from "./src/sanity/buildTimeRedirects";
 import { getLocaleContentRedirects } from "./src/sanity/localeContentRedirects";
 import { getLocaleSlugRedirects } from "./src/sanity/localeSlugRedirects";
 
@@ -45,10 +48,19 @@ const nextConfig: NextConfig = {
     // order, so leaving them first preserves today's behaviour exactly.
     const localeContentRedirects = await getLocaleContentRedirects();
 
+    // Same rule again, for the blog namespace: /en/blog/{italian-slug}
+    // is 477 of the 540 URLs in the 18 Oct 2026 "Not found" report, and
+    // none of them will ever have an English counterpart. Derived from
+    // the frozen WordPress snapshot minus the slugs real English
+    // articles occupy — see getCrossLocaleArticleRedirects's own comment
+    // for why the filter is mandatory and what happens without it.
+    const crossLocaleArticleRedirects = await getCrossLocaleArticleRedirects();
+
     return [
       ...wordPressArticleRedirects,
       ...localeSlugRedirects,
       ...localeContentRedirects,
+      ...crossLocaleArticleRedirects,
       // The risorse/resources PREVIEW-GATE routes were live on preview
       // and may be linked from somewhere — redirect rather than 404.
       { source: "/risorse", destination: "/blog", permanent: true },
