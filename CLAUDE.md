@@ -82,6 +82,33 @@ matching `NAV_ROUTE_KEYS` entry and a matching row in `structure.ts`'s
 `PINNED_SINGLETON_PAGES`. Run it before committing anything that touches
 singleton-page registration (a new fixed route, nav, or the Studio desk).
 
+## Working on this repo from a non-Windows shell
+
+The working tree lives on Windows, and two consequences of that break
+tools which assume otherwise. Both have already cost time.
+
+**`node_modules` is built for win32.** A Linux shell (a cloud agent
+session, WSL, a container mounting this folder) cannot run `npm test`,
+`eslint` or `next build` against it — the installed binaries are for the
+wrong platform. Verify changed modules in an isolated harness instead and
+leave the full `npm test` / `next build` run to the Windows side. Do not
+"fix" it by reinstalling node_modules for Linux on top; that just breaks
+the Windows run instead.
+
+**Line endings are CRLF in the working tree and LF in the repository**,
+because `core.autocrlf=true` is set in the Windows user's GLOBAL git
+config — which does not travel with the folder. A Linux shell therefore
+sees `core.autocrlf` unset, compares CRLF bytes against LF blobs, and
+reports EVERY tracked file as modified (545 of them, the first time this
+happened). Nothing is actually wrong, but two rules follow:
+
+- Run git as `git -c core.autocrlf=true ...` from such a shell, so status,
+  diff, add and commit behave the way they do on Windows. Never `git add
+  -A` against the unconfigured view.
+- A script that rewrites a file must preserve CRLF. Reading with Python's
+  text mode and writing back converts the whole file to LF, which turns a
+  one-line change into a whole-file diff — caught once, before a commit.
+
 ## Styling (SCSS Modules, no Tailwind)
 
 - Component styles live in co-located `Component.module.scss` files next to

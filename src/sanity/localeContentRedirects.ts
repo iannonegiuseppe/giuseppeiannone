@@ -67,6 +67,16 @@ import { RESERVED_ROOT_SLUGS } from "./reservedSlugs";
 // enforces it in Studio — so a hit here means something upstream broke,
 // which is why it warns rather than passing quietly.
 
+// Where the generator reports the candidates it skipped. next.config.ts
+// passes the console, so a build log still explains every drop; a unit
+// test passes nothing, so `npm test` stays free of warnings that are
+// really just fixtures exercising the guards. Keeping the pure function
+// free of console calls is the point — it is the half that gets tested.
+export interface RedirectReporter {
+  info(message: string): void;
+  warn(message: string): void;
+}
+
 export interface LocalizedDoc {
   _type: string;
   language: string | null;
@@ -119,7 +129,10 @@ function rootSegmentOf(routePath: string, locale: Locale): string | null {
 // Pure, so the whole rule is testable without a dataset — see
 // localeContentRedirects.test.ts. getLocaleContentRedirects() below is
 // the only part that needs Sanity.
-export function buildLocaleContentRedirects(docs: LocalizedDoc[]): StaticRedirect[] {
+export function buildLocaleContentRedirects(
+  docs: LocalizedDoc[],
+  report?: RedirectReporter,
+): StaticRedirect[] {
   const resolved = docs
     .map(resolve)
     .filter((doc): doc is ResolvedDoc => doc !== null);
@@ -169,17 +182,17 @@ export function buildLocaleContentRedirects(docs: LocalizedDoc[]): StaticRedirec
   }
 
   if (droppedAsReal.length > 0) {
-    console.log(
+    report?.info(
       `[redirects] Cross-locale: skipped ${droppedAsReal.length} candidate(s) whose URL is itself a real page (a slug spelled the same in both languages): ${droppedAsReal.sort().join(", ")}`,
     );
   }
   if (droppedAsReserved.length > 0) {
-    console.warn(
+    report?.warn(
       `[redirects] Cross-locale: skipped ${droppedAsReserved.length} candidate(s) on a RESERVED root slug — a document should never hold one, check rootSlugValidator: ${droppedAsReserved.sort().join(", ")}`,
     );
   }
   if (conflicting.length > 0) {
-    console.warn(
+    report?.warn(
       `[redirects] Cross-locale: dropped ${conflicting.length} source(s) claimed by two documents with different destinations: ${conflicting.sort().join("; ")}`,
     );
   }
@@ -219,7 +232,8 @@ export async function getLocaleContentRedirects(): Promise<StaticRedirect[]> {
     return [];
   }
 
-  const redirects = buildLocaleContentRedirects(docs);
+  // `console` satisfies RedirectReporter structurally.
+  const redirects = buildLocaleContentRedirects(docs, console);
   console.log(
     `[redirects] Cross-locale content redirects: ${redirects.length} from ${docs.length} document(s).`,
   );
