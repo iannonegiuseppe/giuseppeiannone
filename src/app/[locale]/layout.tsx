@@ -53,11 +53,28 @@ const ebGaramond = EB_Garamond({
 
 // Global restyle pass: Source Sans 3 replaces Lato. Config mirrors the two
 // scoped loaders already proven in this repo (design-preview, styleguide)
-// rather than Lato's older/narrower one: latin-ext added (better Italian
-// diacritic coverage) and display: "swap" added (both strictly better,
-// not just a literal swap). 700 is kept for inline emphasis within body
-// copy only, matching the same convention as before; italic is loaded for
-// the restricted Portable Text `em` mark, as before.
+// rather than Lato's older/narrower one: display: "swap" added. 700 is
+// kept for inline emphasis within body copy only, matching the same
+// convention as before; italic is loaded for the restricted Portable Text
+// `em` mark, as before.
+//
+// LATIN-EXT REMOVED (mobile LCP pass). It was added here "for better
+// Italian diacritic coverage" — a misreading of what that subset holds.
+// Italian's accented vowels (à è é ì ò ù, and È) are all in the basic
+// `latin` subset; `latin-ext` covers the Central/Eastern European letters
+// this site never uses. Measured before removing rather than assumed:
+// every article, pillarPage, subtopicPage and page in the dataset — 530
+// documents, 3.18 million characters of body text and titles — contains
+// ZERO codepoints in U+0100–U+024F.
+//
+// It was not free. The homepage's LCP element is the H1, not an image:
+// the hero poster is 44 KB at mobile widths and preloaded, while the H1
+// paints first in the metric-matched fallback and is RE-recorded as LCP
+// when the real EB Garamond arrives. So LCP is whenever that font
+// finishes downloading, and every byte queued ahead of it pushes LCP
+// out — 221 KB across six preloaded woff2 files, of which latin-ext was
+// roughly half of the Source Sans 3 share, against a measured mobile LCP
+// of 4.6s.
 //
 // Header/hero restyle pass: 500 added — the header nav wants a real
 // medium weight (calmer than 700, more substantial than 400). Without a
@@ -76,7 +93,7 @@ const ebGaramond = EB_Garamond({
 // not assumed: 300 was NOT in this list previously.
 const sourceSans3 = Source_Sans_3({
   variable: "--font-source-sans-3",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
   style: ["normal", "italic"],
   display: "swap",
