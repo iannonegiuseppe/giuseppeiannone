@@ -15,7 +15,22 @@ const NAMED_BOTS = [
   "Google-Extended",
 ];
 
-const DISALLOWED_PATHS = ["/studio", "/api/"];
+// "/studio" alone is a PREFIX match, not an exact one: a robots.txt rule
+// matches any path that STARTS WITH the given string, so a bare "/studio"
+// also disallowed /studio-psicologia-psicoterapia-milano — the old
+// WordPress contact page, which next.config.ts already 301s to /contatti.
+// Google never got to see that redirect: it read the disallow, stopped,
+// and kept the dead URL in the index as "Indexed, though blocked by
+// robots.txt" (18 Oct 2026 Coverage export, last crawled 22 Sep — i.e.
+// after the redirect shipped on 8 Sep, so this was not stale data). The
+// same prefix also swallowed that page's /embed/ child.
+//
+// "/studio$" pins the exact path and "/studio/" covers the Studio's own
+// subtree: together they block everything the single entry was meant to
+// block, and nothing else. "$" is end-of-match in the robots.txt spec and
+// is honoured by Google and Bing. Keep both — dropping "/studio$" would
+// leave the bare /studio URL crawlable.
+const DISALLOWED_PATHS = ["/studio$", "/studio/", "/api/"];
 
 // Crawlers blocked outright — one robots.txt group each, since user-agent
 // matching is per-token and each entry should read as its own decision.
