@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { PortableText, type PortableTextComponents } from "next-sanity";
+import type { PortableTextComponents } from "next-sanity";
+import { FaqAccordion, type FaqAccordionPair } from "@/components/FaqAccordion";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import styles from "./article.module.scss";
 
@@ -14,13 +15,15 @@ import styles from "./article.module.scss";
 // element selectors scoped under .body in article.module.scss — no custom
 // component needed for those, they're not the parts this pass changes.
 //
-// keyTakeaways/faqBlock/relatedTopics/ctaBlock/conditionCard/treatmentCard
-// have NO component registered here — confirmed via a direct dataset
-// query (this pass's own report) that none of the 468 imported articles
-// use any of the six, so this is a real gap only in theory. Should one
-// ever appear, next-sanity's PortableText renders nothing for a type with
-// no matching component (a console warning in dev), which is the "report
-// as unstyled" outcome this pass's brief explicitly allows.
+// keyTakeaways/relatedTopics/ctaBlock/conditionCard/treatmentCard still
+// have NO component registered here — a dataset query confirmed none of
+// the 468 imported articles used any of them, so the gap was theoretical.
+// faqBlock is the one that stopped being theoretical, and the outcome was
+// not "unstyled" as assumed: next-sanity's PortableText renders NOTHING
+// at all for a type with no component, so the content simply disappeared
+// from the page. It has one now (below). Treat the remaining five as a
+// live trap rather than an accepted limitation: the moment an editor
+// inserts one, its content is gone with no error anywhere.
 // headingIds: block._key -> slug id, from src/sanity/headings.ts's own
 // extractHeadings/headingIdsByKey (the same shared utility pillarPage's
 // TOC uses) — so the TOC pass's jump-links can never point at an id that
@@ -28,9 +31,7 @@ import styles from "./article.module.scss";
 export function getArticlePortableTextComponents(
   headingIds?: Map<string, string>,
 ): PortableTextComponents {
-  // Named rather than returned inline so faqBlock below can render its
-  // answers through this same map.
-  const components: PortableTextComponents = {
+  return {
     block: {
       h2: ({ children, value }) => (
         <h2 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h2}>
@@ -107,33 +108,24 @@ export function getArticlePortableTextComponents(
       // the answers off the live pages. Caught by checking the rendered
       // HTML after the content change, not by any test.
       //
-      // <details>, same as the shared pillar/subtopic renderer: a
-      // collapsed answer is still in the DOM, so crawlers and answer
-      // engines read it whether or not a visitor opens it. items[] arrives
+      // Renders through FaqAccordion — the same component /faq, FaqSection
+      // and PillarFaq already use — rather than a hand-rolled <details>:
+      // one panel open at a time, CSS-animated open/close, and closed
+      // panels collapsed rather than unmounted, so every answer stays in
+      // the rendered HTML for crawlers and answer engines. items[] arrives
       // already dereferenced by bodyProjection in queries.ts.
       faqBlock: ({ value }) => {
         const items =
           (value as { items?: { _id: string; question: string; answer: unknown }[] }).items ?? [];
         if (items.length === 0) return null;
 
-        return (
-          <div className={styles.faqBlock}>
-            {items.map((item) => (
-              <details key={item._id} className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  <span>{item.question}</span>
-                  <span className={styles.faqIcon} aria-hidden="true" />
-                </summary>
-                <div className={styles.faqAnswer}>
-                  <PortableText value={item.answer as never} components={components} />
-                </div>
-              </details>
-            ))}
-          </div>
-        );
+        const pairs: FaqAccordionPair[] = items.map((item) => ({
+          question: item.question,
+          answer: item.answer,
+        }));
+
+        return <FaqAccordion pairs={pairs} />;
       },
     },
   };
-
-  return components;
 }

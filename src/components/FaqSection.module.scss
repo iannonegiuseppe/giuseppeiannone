@@ -330,3 +330,19 @@
     transition: none;
   }
 }
+
+// Links inside an FAQ answer. Underlined in the accent so they read as
+// links against the answer's muted ink without introducing a second text
+// colour.
+.faqRowAnswerLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    text-decoration-color: currentColor;
+  }
+
+  @include mixins.focus-ring;
+}

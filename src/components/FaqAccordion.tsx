@@ -30,6 +30,37 @@ function makeAnswerComponents(answerClassName: string | undefined): PortableText
     block: {
       normal: ({ children }) => <p className={answerClassName}>{children}</p>,
     },
+    marks: {
+      // faqAnswer allows exactly one annotation (linkAnnotation) and no
+      // component was ever registered for it, so @portabletext/react fell
+      // back to unknownMark: the text survived, the anchor did not. Every
+      // link an editor put in an FAQ answer silently stopped being a link
+      // — on /faq, on every pillar and subtopic page. Found while moving
+      // the article FAQs onto this component, because one of those answers
+      // has a real link in it.
+      //
+      // rel follows linkAnnotation.ts's own stated rule: external links
+      // get noopener, nofollow only when the field asks for it, internal
+      // (relative) links get neither.
+      link: ({ value, children }) => {
+        const href = (value?.href as string | undefined) ?? "#";
+        const isExternal = /^https?:\/\//.test(href);
+        const rel = isExternal
+          ? ["noopener", value?.nofollow ? "nofollow" : null].filter(Boolean).join(" ")
+          : undefined;
+
+        return (
+          <a
+            href={href}
+            target={isExternal ? "_blank" : undefined}
+            rel={rel}
+            className={styles.faqRowAnswerLink}
+          >
+            {children}
+          </a>
+        );
+      },
+    },
   };
 }
 
