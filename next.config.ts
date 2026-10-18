@@ -16,28 +16,21 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  // Mobile LCP pass. The homepage shipped six separate render-blocking
-  // <link rel="stylesheet"> tags (~51 KB), each costing 498-829 ms on
-  // Lighthouse's throttled mobile profile and holding the text LCP (the
-  // hero H1) at 3.46 s. inlineCss emits that CSS as <style> in the HTML
-  // instead, so nothing on the critical path waits for a stylesheet round
-  // trip. Lighthouse's own estimate for removing them was 720 ms.
+  // DO NOT re-add experimental.inlineCss here. Tried 2026-10-18 to remove
+  // the six render-blocking stylesheet links; it moved mobile Performance
+  // the WRONG way, 89 -> 78, and was reverted the same evening.
   //
-  // Measured before changing anything, not guessed: the FONTS are not the
-  // bottleneck here, despite looking like the obvious suspect at 104 KB.
-  // Source Sans 3 is served as a variable font, so weights 300/400/500/700
-  // all resolve to a single file - dropping the unused-looking weights
-  // would save exactly zero bytes - and both EB Garamond cuts are used by
-  // the H1 itself (its accent word is an <em>, .heroOverlapEmphasis).
-  //
-  // Trade-off accepted: CSS is no longer a separately cached file, so every
-  // HTML response carries it (~10 KB brotli). This site is entered one page
-  // at a time from search, and internal clicks go through the client router,
-  // so the round trip saved is worth more than the cross-page reuse lost.
-  // App Router + production build only; `next dev` is unaffected.
-  experimental: {
-    inlineCss: true,
-  },
+  // Why it backfires on this site: the ~51 KB of render-blocking CSS is the
+  // COMPRESSED weight. Inlined into the document it goes in uncompressed,
+  // measured live at 546 KB of CSS text in a single <style> and a 1.5 MB
+  // HTML document (143.7 KB brotli, up from roughly 91 KB for the document
+  // plus all six stylesheets). That trades six parallel, separately
+  // cacheable requests for one blocking stream of nearly double the bytes,
+  // and on Lighthouse's throttled mobile profile the 4x-slowed CPU then has
+  // to parse half a megabyte of CSS text before it can finish rendering.
+  // Lighthouse's own "720 ms saving" estimate for the blocking links does
+  // not account for either cost. If the blocking CSS is attacked again, the
+  // lever is less CSS per route, not the same CSS moved into the HTML.
   async redirects() {
     // WordPress migration pass — generated from the live article slug
     // list (see buildTimeRedirects.ts), not hand-maintained. Static
