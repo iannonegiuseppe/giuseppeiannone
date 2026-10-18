@@ -125,6 +125,43 @@ const nextConfig: NextConfig = {
       // Old site's second contact page, alongside
       // /studio-psicologia-psicoterapia-milano above.
       { source: "/contattami", destination: "/contatti", permanent: true },
+      // Articles whose slug was RENAMED during the migration. The frozen
+      // snapshot is built from the NEW slugs and silently assumes the old
+      // WordPress slug matched; where it didn't, the old URL kept 404ing
+      // with no redirect. per-post-report.json stores wpId, new slug and
+      // title but never the original WP slug, and the old site is gone —
+      // so Search Console's "Not found" report is the only way these
+      // surface, one at a time, as Google re-crawls. Two so far.
+      //
+      // wpId 886, "La psicologia ai tempi del Coronavirus" (found in the
+      // 9 Sep pass, never shipped).
+      {
+        source: "/la-psicologia-ai-tempi-del-coronavirus",
+        destination: "/blog/paura-del-coronavirus",
+        permanent: true,
+      },
+      // wpId 964, "La psicoterapia per il disturbo post-traumatico da
+      // stress" (18 Oct Coverage export). Confirmed two ways before
+      // being added: that record's own metaDescription opens with the
+      // old slug verbatim ("La psicoterapia per la cura del disturbo
+      // post-traumatico da stress"), and /blog/come-combattere-lo-stress
+      // serves exactly that article today — a destination whose slug
+      // says "stress management" while its content is about PTSD, which
+      // is why this pairing has to be stated rather than inferred.
+      {
+        source: "/la-psicoterapia-per-la-cura-del-disturbo-post-traumatico-da-stress",
+        destination: "/blog/come-combattere-lo-stress",
+        permanent: true,
+      },
+      // Written after the migration, so it is not in the frozen snapshot
+      // and getCrossLocaleArticleRedirects() cannot reach it — the one
+      // /en/blog URL in the 18 Oct report that pass leaves behind (the
+      // other 16 are pagination, deliberately left to 404).
+      {
+        source: "/en/blog/cosa-fare-durante-un-attacco-di-panico",
+        destination: "/blog/cosa-fare-durante-un-attacco-di-panico",
+        permanent: true,
+      },
     ];
   },
   images: {

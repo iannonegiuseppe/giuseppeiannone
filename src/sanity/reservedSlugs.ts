@@ -103,6 +103,13 @@ const EXPLICIT_RESERVED_SLUGS: string[] = [
   "scarica-e-book",
   "psicoterapia-online-metodo",
   "studio-psicologia-psicoterapia-milano",
+  // Articles renamed during the migration, whose OLD WordPress slug now
+  // redirects to the new one (next.config.ts). Same reasoning as the
+  // block above, and neither appears in the frozen 468-entry snapshot
+  // either — the snapshot holds new slugs, and these are the old ones —
+  // so adding them changes no generated redirect.
+  "la-psicologia-ai-tempi-del-coronavirus",
+  "la-psicoterapia-per-la-cura-del-disturbo-post-traumatico-da-stress",
 
   // Framework internals and well-known files served from the root.
   "_next",
