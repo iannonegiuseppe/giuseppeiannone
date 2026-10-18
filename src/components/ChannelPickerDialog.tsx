@@ -19,13 +19,33 @@ export type ChannelPickerDialogHandle = {
   open: () => void;
 };
 
+// Every visitor-facing string this dialog owns, resolved server-side in
+// Header.tsx and handed down — this codebase's stated rule is that no
+// client component calls useTranslations() itself (see LocationsSection
+// and DiplomiSection, which pass their own labels the same way).
+export type ChannelPickerLabels = {
+  kicker: string;
+  heading: string;
+  replyLine: string;
+  privacyLine: string;
+  closeLabel: string;
+};
+
 // WhatsApp prefill pass — locale is new on this component, threaded down
 // from HeaderInteractive (which already had it) solely so the WhatsApp
-// link below can carry the right-language prefilled message. This dialog's
-// OWN copy ("Chiudi", "Scrivimi come ti è più comodo.", etc.) is still
-// hardcoded Italian regardless of site locale — a pre-existing gap, found
-// while wiring this, not touched here: fixing that is a bigger, separate
-// job than "give the WhatsApp link a locale to read."
+// link below can carry the right-language prefilled message.
+//
+// The gap that pass flagged and left — this dialog's OWN copy hardcoded
+// in Italian regardless of site locale — is closed: all five strings now
+// arrive through `labels`. Two of them were worse than untranslated. The
+// reply line read "Rispondo personalmente, in genere entro [segnaposto]
+// giorni", a literal placeholder shown to visitors, and a leftover of a
+// CANCELLED decision at that: homePage.ts's finalCta comment records that
+// the "within N days" promise was replaced by "rispondo entro 24 ore".
+// Hence the 24-hour wording already live in ContactBlock and
+// ContactFormDialog, rather than a number filled into the old sentence.
+// The confidentiality line, meanwhile, was being shown to English
+// visitors in Italian.
 function channelHref(channel: ContactChannel, locale: Locale): string {
   if (channel.type === "whatsapp") return whatsappUrl(channel.value, locale);
   if (channel.type === "phone") return `tel:${channel.value}`;
@@ -56,8 +76,9 @@ export const ChannelPickerDialog = forwardRef<
   {
     contactChannels?: ContactChannel[];
     locale: Locale;
+    labels: ChannelPickerLabels;
   }
->(function ChannelPickerDialog({ contactChannels, locale }, ref) {
+>(function ChannelPickerDialog({ contactChannels, locale, labels }, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const cardRef = useRef<HTMLDivElement | null>(null);
     const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -163,7 +184,7 @@ export const ChannelPickerDialog = forwardRef<
           <button
             type="button"
             className={styles.channelDialogCloseButton}
-            aria-label="Chiudi"
+            aria-label={labels.closeLabel}
             onClick={requestClose}
           >
             <span aria-hidden="true">×</span>
@@ -173,10 +194,10 @@ export const ChannelPickerDialog = forwardRef<
 
           <p className={styles.channelDialogKicker}>
             <span className={styles.channelDialogKickerRule} aria-hidden="true" />
-            Primo contatto
+            {labels.kicker}
           </p>
           <h2 id="channel-dialog-heading" className={styles.channelDialogHeading}>
-            Scrivimi come ti è più comodo.
+            {labels.heading}
           </h2>
 
           <div className={styles.channelDialogChannels}>
@@ -201,12 +222,8 @@ export const ChannelPickerDialog = forwardRef<
           </div>
 
           <div className={styles.channelDialogQuietLines}>
-            <p className={styles.channelDialogQuietLine}>
-              Rispondo personalmente, in genere entro [segnaposto] giorni.
-            </p>
-            <p className={styles.channelDialogQuietLine}>
-              I tuoi dati saranno trattati con la massima riservatezza.
-            </p>
+            <p className={styles.channelDialogQuietLine}>{labels.replyLine}</p>
+            <p className={styles.channelDialogQuietLine}>{labels.privacyLine}</p>
           </div>
         </div>
       </dialog>

@@ -23,6 +23,13 @@
   "ContactDialog": {
     "heading": "Scrivimi"
   },
+  "ChannelPicker": {
+    "kicker": "Primo contatto",
+    "heading": "Scrivimi come ti è più comodo.",
+    "replyLine": "Rispondo personalmente, entro 24 ore.",
+    "privacyLine": "I tuoi dati saranno trattati con la massima riservatezza.",
+    "closeLabel": "Chiudi"
+  },
   "Diplomi": {
     "prevLabel": "Diploma precedente",
     "nextLabel": "Diploma successivo",

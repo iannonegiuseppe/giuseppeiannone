@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { resolveNavItems } from "./headerNavItems";
 import { HeaderInteractive } from "./HeaderInteractive";
 import type { Locale } from "@/sanity/paths";
@@ -34,6 +35,22 @@ export async function Header({
   // because the flag wasn't set yet" as a real state to design for.
   const areaTaxonomy = await getAreaTaxonomy(locale);
 
+  // Server-resolved, passed down as plain props — the same pattern
+  // LocationsSection and DiplomiSection use, and the reason is stated in
+  // their own comments: no client component in this codebase calls
+  // useTranslations() itself. ChannelPickerDialog had carried this copy
+  // hardcoded in Italian regardless of site locale, so an English visitor
+  // was shown an Italian confidentiality line and a reply-time promise
+  // with an unfilled [segnaposto] marker in it.
+  const tChannelPicker = await getTranslations({ locale, namespace: "ChannelPicker" });
+  const channelPickerLabels = {
+    kicker: tChannelPicker("kicker"),
+    heading: tChannelPicker("heading"),
+    replyLine: tChannelPicker("replyLine"),
+    privacyLine: tChannelPicker("privacyLine"),
+    closeLabel: tChannelPicker("closeLabel"),
+  };
+
   return (
     <HeaderInteractive
       navItems={navItems}
@@ -41,6 +58,7 @@ export async function Header({
       locale={locale}
       ctaLabel={headerSettings?.ctaButtonText ?? "Inizia il percorso"}
       contactChannels={contactChannels}
+      channelPickerLabels={channelPickerLabels}
     />
   );
 }

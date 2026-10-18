@@ -23,6 +23,13 @@
   "ContactDialog": {
     "heading": "Message me"
   },
+  "ChannelPicker": {
+    "kicker": "First contact",
+    "heading": "Write to me however suits you best.",
+    "replyLine": "I reply personally, within 24 hours.",
+    "privacyLine": "Your information will be treated in the strictest confidence.",
+    "closeLabel": "Close"
+  },
   "Diplomi": {
     "prevLabel": "Previous qualification",
     "nextLabel": "Next qualification",
