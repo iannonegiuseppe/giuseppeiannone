@@ -2,6 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { getWordPressArticleRedirects } from "./src/sanity/buildTimeRedirects";
+import { getLocaleContentRedirects } from "./src/sanity/localeContentRedirects";
 import { getLocaleSlugRedirects } from "./src/sanity/localeSlugRedirects";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
@@ -29,9 +30,25 @@ const nextConfig: NextConfig = {
     // full mechanism and why this is a 301 rather than a 404.
     const localeSlugRedirects = getLocaleSlugRedirects();
 
+    // The same rule for the Sanity-driven routes the array above cannot
+    // reach — pillarPage, subtopicPage, page. Their slugs live in the
+    // dataset, so this one queries for them at config time (same
+    // build-time client as the WordPress pass) instead of deriving from a
+    // constant. 50 of these URLs were still 404ing in the 18 Oct 2026
+    // Coverage export. See localeContentRedirects.ts's own comment for
+    // the collision rule that keeps a slug spelled the same in both
+    // languages (e.g. "trauma") from being redirected onto itself.
+    //
+    // Ordered AFTER the two lists above on purpose: both of those own
+    // their sources by an older and stronger claim (a completed
+    // migration, a route defined in code), and Next matches redirects in
+    // order, so leaving them first preserves today's behaviour exactly.
+    const localeContentRedirects = await getLocaleContentRedirects();
+
     return [
       ...wordPressArticleRedirects,
       ...localeSlugRedirects,
+      ...localeContentRedirects,
       // The risorse/resources PREVIEW-GATE routes were live on preview
       // and may be linked from somewhere — redirect rather than 404.
       { source: "/risorse", destination: "/blog", permanent: true },

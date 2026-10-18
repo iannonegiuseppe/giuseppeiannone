@@ -1,25 +1,6 @@
-import { createClient } from "@sanity/client";
+import { getBuildTimeClient } from "./buildTimeClient";
 import { RESERVED_ROOT_SLUGS } from "./reservedSlugs";
 import wordpressArticleSlugs from "./wordpressArticleSlugs.json";
-
-// Config-time-only Sanity access for next.config.ts's redirects(). That
-// function runs before the Next.js app exists (no request context), so it
-// can't use src/sanity/client.ts (that file imports next/headers). Uses
-// the plain @sanity/client package directly instead — same package
-// scripts/migrate-wordpress-articles.ts already imports the same way, so
-// this isn't a new dependency, just a second call site for one that's
-// already resolvable.
-function getBuildTimeClient() {
-  const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
-  const token = process.env.SANITY_API_READ_TOKEN;
-
-  if (!projectId || !dataset) {
-    throw new Error("Missing NEXT_PUBLIC_SANITY_PROJECT_ID or NEXT_PUBLIC_SANITY_DATASET");
-  }
-
-  return createClient({ projectId, dataset, token, apiVersion: "2026-07-05", useCdn: false });
-}
 
 // Root-namespace pass — the redirect SOURCE list is now a frozen,
 // committed snapshot (wordpressArticleSlugs.json, 468 entries, generated
