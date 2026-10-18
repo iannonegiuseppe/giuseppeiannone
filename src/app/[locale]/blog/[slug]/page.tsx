@@ -16,7 +16,12 @@ import { Breadcrumbs } from "@/sanity/BreadcrumbsNav";
 import { CONTACT_PHOTO_URL as contactPhotoUrl, CONTACT_PHOTO_ALT as contactPhotoAlt } from "@/sanity/contactPhoto";
 import { extractHeadings, headingIdsByKey } from "@/sanity/headings";
 import { articleCoverUrl, imageDimensions, urlFor } from "@/sanity/image";
-import { buildBlogPostingJsonLd, buildBreadcrumbListJsonLd } from "@/sanity/jsonLd";
+import {
+  buildBlogPostingJsonLd,
+  buildBreadcrumbListJsonLd,
+  buildFaqPageJsonLd,
+  extractFaqEntries,
+} from "@/sanity/jsonLd";
 import { JsonLdScript } from "@/sanity/JsonLdScript";
 import { getSiteUrl } from "@/sanity/metadata";
 import { aboutPath, articlePath, articlesPath } from "@/sanity/paths";
@@ -207,6 +212,15 @@ export default async function ArticlePage({
       })
     : undefined;
 
+  // extractFaqEntries has existed in jsonLd.ts since the FAQ work, with a
+  // comment describing exactly this call site, and was never wired to
+  // anything — dead code found while auditing why article FAQs carried no
+  // structured data. It does now: an article whose body contains a
+  // faqBlock emits FAQPage alongside BlogPosting. Articles without one
+  // emit nothing extra, so this changes no existing page.
+  const faqEntries = extractFaqEntries(data.body);
+  const faqPageJsonLd = faqEntries.length > 0 ? buildFaqPageJsonLd(faqEntries) : undefined;
+
   const headings = extractHeadings(data.body);
   const headingIds = headingIdsByKey(headings);
   const tocHeadings = headings.filter((h) => h.level === "h2");
@@ -284,6 +298,7 @@ export default async function ArticlePage({
       <main className={styles.page}>
       {breadcrumbJsonLd ? <JsonLdScript data={breadcrumbJsonLd} /> : null}
       {blogPostingJsonLd ? <JsonLdScript data={blogPostingJsonLd} /> : null}
+      {faqPageJsonLd ? <JsonLdScript data={faqPageJsonLd} /> : null}
       {/* Sixth pass, item 1 — moved OUT of .readingArea entirely: that div
           is now bounded by mixins.container (for the TOC's alignment,
           see .readingArea's own comment), and a container-bound ancestor

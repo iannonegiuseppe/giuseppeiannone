@@ -579,3 +579,83 @@
 // .relatedSection/.relatedInner/.relatedHeading/.relatedGrid/.relatedCard*
 // extracted to the shared src/components/RelatedArticlesGrid.module.scss
 // (reuse pass) — see RelatedArticlesGrid.tsx's own comment.
+
+// FAQ block inside an article body. Mirrors the shared pillar/subtopic
+// renderer's treatment (src/sanity/portableTextComponents.module.scss) so
+// the same content reads the same way wherever it appears, with this
+// route's own spacing scale. Emphasis on the question is size-based, not
+// weight-based, matching that file's own note.
+.faqBlock {
+  margin: var(--space-6) 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.faqItem {
+  @include mixins.hairline-divider;
+  padding-block: var(--space-5);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.faqQuestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--fs-body-lg);
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  @include mixins.focus-ring;
+}
+
+.faqIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    background: var(--color-accent);
+  }
+
+  &::before {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  &::after {
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+}
+
+.faqItem[open] .faqIcon::after {
+  content: none;
+}
+
+.faqAnswer {
+  color: var(--color-text);
+
+  // The answer's own paragraphs come through .paragraph, whose top margin
+  // would double the gap under the question on the first one.
+  > :first-child {
+    margin-top: var(--space-3);
+  }
+}

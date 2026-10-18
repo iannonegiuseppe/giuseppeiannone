@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { PortableTextComponents } from "next-sanity";
+import { PortableText, type PortableTextComponents } from "next-sanity";
 import { imageDimensions, urlFor } from "@/sanity/image";
 import styles from "./article.module.scss";
 
@@ -28,7 +28,9 @@ import styles from "./article.module.scss";
 export function getArticlePortableTextComponents(
   headingIds?: Map<string, string>,
 ): PortableTextComponents {
-  return {
+  // Named rather than returned inline so faqBlock below can render its
+  // answers through this same map.
+  const components: PortableTextComponents = {
     block: {
       h2: ({ children, value }) => (
         <h2 id={value._key ? headingIds?.get(value._key) : undefined} className={styles.h2}>
@@ -98,6 +100,40 @@ export function getArticlePortableTextComponents(
           />
         );
       },
+      // The gap the comment at the top of this file called "real only in
+      // theory" stopped being theoretical: three hand-published posts had
+      // their typed-out FAQ moved into a real faqBlock, and PortableText
+      // renders NOTHING for a type with no component — which silently took
+      // the answers off the live pages. Caught by checking the rendered
+      // HTML after the content change, not by any test.
+      //
+      // <details>, same as the shared pillar/subtopic renderer: a
+      // collapsed answer is still in the DOM, so crawlers and answer
+      // engines read it whether or not a visitor opens it. items[] arrives
+      // already dereferenced by bodyProjection in queries.ts.
+      faqBlock: ({ value }) => {
+        const items =
+          (value as { items?: { _id: string; question: string; answer: unknown }[] }).items ?? [];
+        if (items.length === 0) return null;
+
+        return (
+          <div className={styles.faqBlock}>
+            {items.map((item) => (
+              <details key={item._id} className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  <span>{item.question}</span>
+                  <span className={styles.faqIcon} aria-hidden="true" />
+                </summary>
+                <div className={styles.faqAnswer}>
+                  <PortableText value={item.answer as never} components={components} />
+                </div>
+              </details>
+            ))}
+          </div>
+        );
+      },
     },
   };
+
+  return components;
 }
