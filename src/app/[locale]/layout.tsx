@@ -40,10 +40,14 @@ import "./globals.scss";
 // alongside it for any heading tier). Regular (400) is still the only
 // weight requested, matching this codebase's "only load what's used"
 // discipline — no component sets a heavier display weight. Unlike
-// Marcellus, EB Garamond has a real italic cut, loaded here too even
-// though nothing currently sets font-style italic on --font-display —
-// cheap to have available now that it's real, rather than the browser's
-// faux-slanted fallback if a future block needs it.
+// Marcellus, EB Garamond has a real italic cut, loaded here too — and it
+// is load-bearing, not a spare. An earlier version of this comment said
+// nothing set font-style italic on --font-display and that the cut was
+// merely "cheap to have available"; that was wrong on both counts. The
+// hero H1's accent word is an <em> carrying .heroOverlapEmphasis, which
+// sets font-style: italic (HeroOverlap.module.scss) — so this cut paints
+// inside the LCP element itself. Do not drop it to save bytes: the
+// fallback is a browser-synthesized slant on the largest text on the page.
 const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
   subsets: ["latin"],

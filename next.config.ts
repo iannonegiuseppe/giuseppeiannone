@@ -16,6 +16,28 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Mobile LCP pass. The homepage shipped six separate render-blocking
+  // <link rel="stylesheet"> tags (~51 KB), each costing 498-829 ms on
+  // Lighthouse's throttled mobile profile and holding the text LCP (the
+  // hero H1) at 3.46 s. inlineCss emits that CSS as <style> in the HTML
+  // instead, so nothing on the critical path waits for a stylesheet round
+  // trip. Lighthouse's own estimate for removing them was 720 ms.
+  //
+  // Measured before changing anything, not guessed: the FONTS are not the
+  // bottleneck here, despite looking like the obvious suspect at 104 KB.
+  // Source Sans 3 is served as a variable font, so weights 300/400/500/700
+  // all resolve to a single file - dropping the unused-looking weights
+  // would save exactly zero bytes - and both EB Garamond cuts are used by
+  // the H1 itself (its accent word is an <em>, .heroOverlapEmphasis).
+  //
+  // Trade-off accepted: CSS is no longer a separately cached file, so every
+  // HTML response carries it (~10 KB brotli). This site is entered one page
+  // at a time from search, and internal clicks go through the client router,
+  // so the round trip saved is worth more than the cross-page reuse lost.
+  // App Router + production build only; `next dev` is unaffected.
+  experimental: {
+    inlineCss: true,
+  },
   async redirects() {
     // WordPress migration pass — generated from the live article slug
     // list (see buildTimeRedirects.ts), not hand-maintained. Static
