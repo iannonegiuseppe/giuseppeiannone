@@ -28,16 +28,27 @@ import styles from "./heroBackgroundVideo.module.scss";
 //    to 0 and keeps playing instead), so there is no separate handler
 //    needed for that.
 //
-// prefers-reduced-motion: reduce, or navigator.connection.saveData, both
-// skip step 2 entirely — the <video> element is never rendered, so the
-// browser never requests any video file at all; the poster is what's
-// shown, permanently. A CONTINUOUSLY LOOPING full-screen background is
-// exactly what that setting exists to suppress, and this site's audience
-// is people with anxiety and panic disorders — this pass's own loop
-// change makes that guard more load-bearing than it was before, not
-// less; still untouched here, still skips the video entirely.
+// Three conditions skip step 2 entirely — the <video> element is never
+// rendered, so the browser requests no video file at all and the poster is
+// what's shown, permanently:
 //
-// Source selection: native <source media="..."> — no JS viewport check.
+//   - prefers-reduced-motion: reduce. A CONTINUOUSLY LOOPING full-screen
+//     background is exactly what that setting exists to suppress, and this
+//     site's audience is people with anxiety and panic disorders — the
+//     loop behaviour described above makes that guard more load-bearing
+//     than it was before, not less. Untouched by later passes.
+//
+//   - navigator.connection.saveData, i.e. the user asked for less data.
+//
+//   - a viewport below 768px, on measured mobile-performance grounds: the
+//     file is over half of everything the homepage loads. The gate itself
+//     carries the measurements and the consequence for Sanity's mobile
+//     video field.
+//
+// Source selection: WHICH file, once a <video> mounts at all, is decided
+// by native <source media="..."> — no JS viewport check for that. (WHETHER
+// one mounts is a separate question, answered by the three conditions
+// above, one of which does read the viewport in JS.)
 // The browser evaluates each <source>'s media query itself, before
 // requesting anything, and fetches only the one that matches. When BOTH
 // desktop and mobile fields are populated, the 1080p desktop source
@@ -90,6 +101,33 @@ export function HeroBackgroundVideo({
     ).connection;
     if (connection?.saveData) {
       return; // data-saver: poster only
+    }
+
+    // MOBILE: poster only, no video bytes at all. Measured on the live
+    // homepage (PageSpeed mobile, 19 Oct 2026): this video is 635 KB of a
+    // 1197 KB page - 53% of everything the page loads.
+    //
+    // On a real connection it is harmless and the trace says so: the file
+    // lands at 1208 ms while first paint is at 2429 ms, so it blocks
+    // nothing, and window-load gating above already keeps it off the
+    // critical path. But the SCORE is computed from Lighthouse's SIMULATED
+    // 1.6 Mbps link, and there 635 KB is ~3.2 s of occupied bandwidth taken
+    // from the fonts and CSS the H1 needs. That gap is the whole story of
+    // simulated LCP 3981 ms against observed 2477 ms, and it holds mobile
+    // Performance at 83-89 across runs.
+    //
+    // The condition deliberately mirrors the mobile <source>'s own
+    // (max-width: 767px) further down rather than using a rem token, so the
+    // two can never disagree about where "mobile" ends.
+    //
+    // CONSEQUENCE worth knowing before editing Sanity: with this gate in
+    // place the backgroundVideoMobile field never plays on a phone. It is
+    // still used on desktop in the single-file case, where its <source>
+    // carries no media condition and therefore matches every width.
+    // Deleting this block is all it takes to bring ambient motion back to
+    // phones - at the measured cost above.
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      return; // poster stays permanent, video never requested
     }
 
     function requestVideo() {
